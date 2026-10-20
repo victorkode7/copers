@@ -1,0 +1,157 @@
+{
+    "experienceBase": 100,
+    "experiencePerLevel": 100,
+    "nodes": [
+        {
+            "id": "origin",
+            "name": "Wayfarer",
+            "icon": "✦",
+            "effect": "Your journey begins here.",
+            "requires": [],
+            "column": 3,
+            "row": 3,
+            "start": true,
+            "maxRank": 0,
+            "stats": {}
+        },
+        {
+            "id": "mightyBlows",
+            "name": "Mighty Blows",
+            "icon": "⚔",
+            "effect": "+1 damage",
+            "requires": [
+                "origin"
+            ],
+            "column": 2,
+            "row": 2,
+            "maxRank": 1,
+            "stats": {
+                "damage": 1
+            }
+        },
+        {
+            "id": "crushingForce",
+            "name": "Crushing Force",
+            "icon": "✹",
+            "effect": "+2 damage",
+            "requires": [
+                "mightyBlows"
+            ],
+            "column": 1,
+            "row": 1,
+            "maxRank": 1,
+            "stats": {
+                "damage": 2
+            }
+        },
+        {
+            "id": "quickHands",
+            "name": "Quick Hands",
+            "icon": "➶",
+            "effect": "Attack 1% faster",
+            "requires": [
+                "origin"
+            ],
+            "column": 4,
+            "row": 2,
+            "maxRank": 1,
+            "stats": {
+                "attackSpeedMultiplier": 0.99
+            }
+        },
+        {
+            "id": "fleetFooted",
+            "name": "Fleet-Footed",
+            "icon": "➤",
+            "effect": "+0.5% attack speed per character level",
+            "requires": [
+                "quickHands"
+            ],
+            "column": 5,
+            "row": 1,
+            "maxRank": 1,
+            "stats": {
+                "attackSpeedPerLevel": 0.005
+            }
+        },
+        {
+            "id": "thickHide",
+            "name": "Thick Hide",
+            "icon": "⬟",
+            "effect": "+2 evasion",
+            "requires": [
+                "origin"
+            ],
+            "column": 2,
+            "row": 4,
+            "maxRank": 1,
+            "stats": {
+                "evasion": 2
+            }
+        },
+        {
+            "id": "untouchable",
+            "name": "Untouchable",
+            "icon": "◈",
+            "effect": "+5 evasion",
+            "requires": [
+                "thickHide"
+            ],
+            "column": 1,
+            "row": 5,
+            "maxRank": 1,
+            "stats": {
+                "evasion": 5
+            }
+        },
+        {
+            "id": "scavenger",
+            "name": "Scavenger",
+            "icon": "◉",
+            "effect": "+10% gold from battles",
+            "requires": [
+                "origin"
+            ],
+            "column": 4,
+            "row": 4,
+            "maxRank": 1,
+            "stats": {
+                "goldBonus": 0.1
+            }
+        },
+        {
+            "id": "treasureHunter",
+            "name": "Treasure Hunter",
+            "icon": "❖",
+            "effect": "+15% gold from battles",
+            "requires": [
+                "scavenger"
+            ],
+            "column": 5,
+            "row": 5,
+            "maxRank": 1,
+            "stats": {
+                "goldBonus": 0.15
+            }
+        },
+        {
+            "id": "healthNode",
+            "name": "Health",
+            "icon": "♥",
+            "effect": "+10 maximum health",
+            "type": "health",
+            "stats": {
+                "health": 10
+            },
+            "size": 1,
+            "column": 4,
+            "row": 3,
+            "maxRank": 1,
+            "requires": [
+                "origin"
+            ],
+            "requiresMode": "all",
+            "start": false
+        }
+    ]
+}

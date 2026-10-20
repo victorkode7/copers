@@ -1,0 +1,2863 @@
+html {
+    scrollbar-gutter: stable;
+}
+
+.game-three,
+.game-three * {
+    box-sizing: border-box;
+}
+
+.game-three {
+    --adventure-bg: #0c151d;
+    --adventure-panel: #172632;
+    --adventure-raised: #243949;
+    --adventure-card: #1b2d3b;
+    --adventure-border: rgba(164, 194, 220, 0.22);
+    --adventure-text: #f0f5fa;
+    --adventure-muted: #a8b9c9;
+    --adventure-green: #65dfb5;
+    --adventure-amber: #ffc56f;
+    --adventure-coral: #ff817b;
+    --adventure-blue: #73baff;
+    --adventure-purple: #c29bff;
+    --adventure-danger: #ff637c;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto 1fr auto;
+    row-gap: 0;
+    align-content: start;
+    min-height: 100vh;
+    background: var(--adventure-bg);
+    color: var(--adventure-text);
+}
+
+.game-three > header {
+    width: 100%;
+    background: var(--adventure-panel);
+}
+
+.game-three .game-three-links {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--adventure-border);
+    background: #09121a;
+}
+
+.game-three .game-three-links a {
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    color: var(--adventure-muted);
+    font-size: 0.9rem;
+}
+
+.game-three .game-three-links a:hover,
+.game-three .game-three-links a[aria-current="page"] {
+    background: rgba(115, 186, 255, 0.14);
+    color: var(--adventure-blue);
+}
+
+.game-three .container {
+    width: 100%;
+    max-width: none;
+    height: auto;
+    margin: 0 auto;
+    background: transparent;
+}
+
+.game-three .nav-header {
+    --nav-logo-left: 1.25rem;
+    --nav-logo-size: 66px;
+    --tutorial-notice-gap: 0.75rem;
+    position: relative;
+    justify-content: center;
+    min-height: 88px;
+    margin: 0;
+    padding: 0.7rem 1.25rem;
+}
+
+.game-three .logo {
+    position: absolute;
+    left: var(--nav-logo-left);
+    width: var(--nav-logo-size);
+    height: var(--nav-logo-size);
+    overflow: hidden;
+    border: 1px solid var(--adventure-border);
+    border-radius: 18px;
+}
+
+.game-three .logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.game-three .navbar {
+    flex: 0 1 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    margin: 0 auto;
+}
+
+.game-three .reset-nav-item {
+    position: absolute;
+    right: 1.25rem;
+}
+
+.game-three .gold-display {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    padding: 0.45rem 0.7rem;
+    color: var(--adventure-muted);
+    white-space: nowrap;
+}
+
+.game-three .gold-display strong {
+    color: var(--adventure-amber);
+    font-variant-numeric: tabular-nums;
+}
+
+.game-three .nav-button {
+    position: relative;
+    min-height: 38px;
+    padding: 0.45rem 0.85rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 10px;
+    background: var(--adventure-raised);
+    color: var(--adventure-text);
+    font: inherit;
+    cursor: pointer;
+}
+
+.game-three #mapButton { --view-accent: var(--adventure-blue); }
+.game-three #townButton { --view-accent: var(--adventure-amber); }
+.game-three #upgradesButton { --view-accent: var(--adventure-purple); }
+.game-three #inventoryButton { --view-accent: var(--adventure-green); }
+
+.game-three .nav-button:hover {
+    border-color: var(--view-accent, var(--adventure-green));
+    color: var(--view-accent, var(--adventure-green));
+}
+
+.game-three .nav-button[aria-pressed="true"] {
+    border-color: var(--view-accent, var(--adventure-green));
+    color: var(--view-accent, var(--adventure-green));
+    background: color-mix(in srgb, var(--view-accent, var(--adventure-green)) 11%, var(--adventure-raised));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--view-accent, var(--adventure-green)) 28%, transparent);
+}
+
+.game-three .nav-button.tutorial-attention {
+    border-color: var(--adventure-amber);
+    animation: tutorial-pulse 1.15s ease-in-out infinite;
+}
+
+.game-three #upgradesButton.tutorial-attention {
+    outline: 2px solid var(--adventure-amber);
+    outline-offset: 3px;
+}
+
+.game-three #mapButton.tutorial-attention {
+    outline: 2px solid var(--adventure-amber);
+    outline-offset: 3px;
+    animation: tutorial-confirm-pulse 1.05s ease-in-out infinite;
+}
+
+.game-three .nav-button.tutorial-attention::after {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 9px;
+    height: 9px;
+    border: 1px solid var(--adventure-bg);
+    border-radius: 50%;
+    background: var(--adventure-coral);
+    box-shadow: 0 0 8px rgba(255, 144, 123, 0.75);
+    content: "";
+}
+
+.game-three .reset-button:hover {
+    border-color: var(--adventure-coral);
+    color: var(--adventure-coral);
+}
+
+.game-three .experience-strip {
+    width: min(1500px, calc(100% - 2rem));
+    margin: 0 auto;
+    padding: 0.25rem 0 0.15rem;
+}
+
+.game-three .experience-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    color: var(--adventure-muted);
+    font-size: 0.72rem;
+    line-height: 1.2;
+}
+
+.game-three .experience-meta strong:first-child {
+    color: var(--adventure-amber);
+}
+
+.game-three #skillPointDisplay {
+    margin-left: auto;
+    color: var(--adventure-green);
+}
+
+.game-three .dev-level-button {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid rgba(241, 189, 102, 0.38);
+    border-radius: 6px;
+    background: rgba(241, 189, 102, 0.08);
+    color: var(--adventure-amber);
+    font: inherit;
+    font-size: 0.68rem;
+    cursor: pointer;
+}
+
+.game-three .dev-level-button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.game-three .experience-track {
+    height: 4px;
+    margin-top: 0.4rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #263746;
+    box-shadow: inset 0 0 0 1px rgba(164, 194, 220, 0.14);
+}
+
+.game-three .experience-bar {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--adventure-blue), var(--adventure-green));
+    box-shadow: 0 0 8px rgba(99, 223, 197, 0.7);
+    transition: width 220ms ease;
+}
+
+.game-three .tutorial-notifications {
+    position: absolute;
+    z-index: 3;
+    top: 0.7rem;
+    left: calc(var(--nav-logo-left) + var(--nav-logo-size) + var(--tutorial-notice-gap));
+    display: flex;
+    width: min(300px, calc(100vw - var(--nav-logo-left) - var(--nav-logo-size) - var(--tutorial-notice-gap) - 0.75rem));
+    max-height: min(300px, calc(100vh - 1.4rem));
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    overflow-y: auto;
+}
+
+.game-three .tutorial-notifications[hidden] {
+    display: none;
+}
+
+.game-three .tutorial-notice {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid rgba(241, 189, 102, 0.42);
+    border-radius: 10px;
+    background: linear-gradient(110deg, rgba(112, 83, 43, 0.32), rgba(32, 56, 61, 0.92));
+    color: var(--adventure-text);
+}
+
+.game-three .tutorial-notice--flash {
+    animation: tutorial-notice-flash 1.1s ease-in-out;
+}
+
+.game-three .tutorial-notice--pulse {
+    animation: tutorial-pulse 1.15s ease-in-out infinite;
+}
+
+@keyframes tutorial-notice-flash {
+    0%, 20%, 40%, 60% {
+        border-color: var(--adventure-amber);
+        box-shadow: 0 0 0 8px rgba(241, 189, 102, 0.75), 0 0 34px rgba(255, 187, 80, 0.95);
+        filter: brightness(1.8);
+        transform: scale(1.06);
+    }
+    10%, 30%, 50%, 100% {
+        border-color: rgba(241, 189, 102, 0.42);
+        box-shadow: none;
+        filter: brightness(1);
+        transform: scale(1);
+    }
+}
+
+.game-three .tutorial-notice p {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    font-size: 0.76rem;
+    line-height: 1.4;
+}
+
+.game-three .tutorial-dismiss {
+    display: grid;
+    width: 26px;
+    height: 26px;
+    flex: 0 0 26px;
+    place-items: center;
+    margin: -0.2rem -0.3rem 0 0;
+    padding: 0;
+    border: 1px solid rgba(241, 189, 102, 0.35);
+    border-radius: 7px;
+    background: rgba(12, 23, 26, 0.65);
+    color: var(--adventure-text);
+    font: inherit;
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.game-three .tutorial-dismiss:hover,
+.game-three .tutorial-dismiss:focus-visible {
+    border-color: var(--adventure-amber);
+    color: var(--adventure-amber);
+}
+
+.game-three .tutorial-highlight {
+    outline: 2px solid var(--adventure-amber);
+    outline-offset: 3px;
+    animation: tutorial-pulse 1.15s ease-in-out infinite;
+}
+
+.game-three .tutorial-highlight-item {
+    border-color: var(--adventure-amber);
+    animation: tutorial-pulse 1.15s ease-in-out infinite;
+}
+
+@keyframes tutorial-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(241, 189, 102, 0.18);
+        filter: brightness(1);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(241, 189, 102, 0.35);
+        filter: brightness(1.12);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .game-three .nav-button.tutorial-attention,
+    .game-three .map-button.tutorial-highlight,
+    .game-three .tutorial-highlight,
+    .game-three .tutorial-highlight-item,
+    .game-three .tutorial-notice--flash,
+    .game-three .tutorial-notice--pulse,
+    .game-three .skill-tree-link.tutorial-skill-link,
+    .game-three .skill-tree-control.tutorial-skill-confirm,
+    .game-three .combat-status.is-fighting::before,
+    .game-three .loot-panel,
+    .game-three .loot-panel-toggle::after,
+    .game-three .loot-panel-content {
+        animation: none;
+        transition: none;
+    }
+
+    .game-three .health-track.is-dodging::after {
+        animation: none;
+        opacity: 0.32;
+    }
+
+    .game-three .tutorial-notice--flash,
+    .game-three .tutorial-notice--pulse {
+        border-color: var(--adventure-amber);
+        box-shadow: 0 0 0 5px rgba(241, 189, 102, 0.58), 0 0 24px rgba(255, 187, 80, 0.8);
+        filter: brightness(1.45);
+    }
+
+    .game-three #upgradesButton.tutorial-attention {
+        box-shadow: 0 0 0 4px rgba(241, 189, 102, 0.5), 0 0 18px rgba(255, 187, 80, 0.7);
+    }
+
+    .game-three #mapButton.tutorial-attention,
+    .game-three .map-button.tutorial-highlight {
+        animation: none;
+        box-shadow: 0 0 0 5px rgba(241, 189, 102, 0.58), 0 0 20px rgba(255, 187, 80, 0.8);
+        filter: brightness(1.3);
+    }
+
+    .game-three .skill-tree-link.tutorial-skill-link {
+        stroke: var(--adventure-amber);
+        stroke-width: 6;
+        filter: drop-shadow(0 0 8px rgba(255, 187, 80, 0.9));
+    }
+
+    .game-three .skill-tree-control.tutorial-skill-confirm {
+        box-shadow: 0 0 0 5px rgba(241, 189, 102, 0.58), 0 0 20px rgba(255, 187, 80, 0.8);
+        filter: brightness(1.3);
+    }
+
+    .game-three .map-panel,
+    .game-three .map-panel .section-heading,
+    .game-three .map-panel .map-selection-hint,
+    .game-three .map-list,
+    .game-three .map-button,
+    .game-three .map-progress-fill,
+    .game-three .player-health-damage,
+    .game-three .enemy-health-damage {
+        transition: none;
+    }
+}
+
+.game-three button:focus-visible {
+    outline: 2px solid var(--adventure-green);
+    outline-offset: 3px;
+}
+
+.game-three .adventure-layout {
+    display: grid;
+    width: min(1500px, calc(100% - 2rem));
+    grid-template-columns:
+        minmax(145px, 0.55fr)
+        minmax(0, 3fr)
+        minmax(145px, 0.55fr);
+    grid-template-areas: "side main loot";
+    align-items: start;
+    gap: 1rem;
+    margin: 0.5rem auto 1.5rem;
+}
+
+.game-three .adventure-page {
+    grid-area: main;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 0;
+    padding: clamp(1rem, 3vw, 2rem);
+    border: 1px solid var(--adventure-border);
+    border-radius: 22px;
+    background: var(--adventure-panel);
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.22);
+}
+
+.game-three .side-panel {
+    min-width: 0;
+    padding: 0.8rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 16px;
+    background: linear-gradient(145deg, var(--adventure-raised), var(--adventure-panel) 78%);
+}
+
+.game-three .side-panel-stack {
+    grid-area: side;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.game-three .world-panel[hidden] {
+    display: none;
+}
+
+.game-three .loot-panel {
+    grid-area: loot;
+    display: grid;
+    width: 64px;
+    min-height: 52px;
+    grid-template-columns: 42px 0fr;
+    align-items: stretch;
+    gap: 0;
+    padding: 0.35rem;
+    overflow: hidden;
+    transition: width 280ms ease, grid-template-columns 280ms ease;
+}
+
+.game-three .loot-panel[open] {
+    width: 100%;
+    grid-template-columns: 42px minmax(0, 1fr);
+}
+
+.game-three .loot-panel-toggle {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem;
+    border-radius: 10px;
+    cursor: pointer;
+    list-style: none;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+}
+
+.game-three .loot-panel-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.game-three .loot-panel-toggle::after {
+    width: 0.45rem;
+    height: 0.45rem;
+    flex: 0 0 auto;
+    margin-top: 0.5rem;
+    border-right: 2px solid var(--adventure-green);
+    border-bottom: 2px solid var(--adventure-green);
+    content: "";
+    transform: rotate(45deg);
+    transition: transform 220ms ease;
+}
+
+.game-three .loot-panel[open] .loot-panel-toggle::after {
+    transform: rotate(225deg);
+}
+
+.game-three .loot-panel-content {
+    min-width: 0;
+    display: block;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 160ms ease;
+}
+
+.game-three .loot-panel[open] .loot-panel-content {
+    opacity: 1;
+}
+
+.game-three .loot-list {
+    max-height: 360px;
+    margin: 0;
+    padding: 0.8rem 0.5rem 0.8rem 0;
+    overflow: auto;
+}
+
+.game-three .side-panel-heading {
+    margin-bottom: 0.75rem;
+}
+
+.game-three .side-panel-heading h2 {
+    margin: 0.2rem 0 0;
+    font-size: 1.05rem;
+}
+
+.game-three .page-view[hidden] {
+    display: none !important;
+}
+
+.game-three #mapView,
+.game-three #townView,
+.game-three #upgradesView,
+.game-three #inventoryView {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.game-three .subtle {
+    color: var(--adventure-muted);
+}
+
+.game-three .game-panel {
+    padding: 1.15rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 16px;
+    background: var(--adventure-card);
+}
+
+.game-three .map-panel {
+    padding: 0.75rem 0.9rem;
+    transition: padding 220ms ease, border-radius 220ms ease, background-color 220ms ease;
+}
+
+.game-three .map-panel .section-heading {
+    margin-bottom: 0.35rem;
+    max-height: 42px;
+    overflow: hidden;
+    opacity: 1;
+    transition: max-height 220ms ease, margin 220ms ease, opacity 160ms ease;
+}
+
+.game-three .map-panel .section-heading h1 {
+    font-size: 1.05rem;
+}
+
+.game-three .map-panel #mapProgressSummary {
+    font-size: 0.72rem;
+}
+
+.game-three .map-panel .map-selection-hint {
+    margin: 0 0 0.45rem;
+    max-height: 24px;
+    overflow: hidden;
+    opacity: 1;
+    font-size: 0.7rem;
+    transition: max-height 220ms ease, margin 220ms ease, opacity 160ms ease;
+}
+
+.game-three .map-panel.is-collapsed {
+    padding: 0.38rem 0.55rem;
+}
+
+.game-three .map-panel.is-collapsed .section-heading {
+    max-height: 0;
+    margin: 0;
+    opacity: 0;
+}
+
+.game-three .map-panel.is-collapsed .map-selection-hint {
+    max-height: 0;
+    margin: 0;
+    opacity: 0;
+}
+
+.game-three .section-heading,
+.game-three .combat-heading,
+.game-three .enemy-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.game-three .section-heading {
+    margin-bottom: 0.9rem;
+}
+
+.game-three .section-heading h1,
+.game-three .section-heading h2,
+.game-three .combat-heading h2 {
+    margin: 0.15rem 0 0;
+    font-size: 1.25rem;
+}
+
+.game-three .eyebrow {
+    color: var(--adventure-green);
+    font-size: 0.68rem;
+    font-weight: 750;
+    letter-spacing: 0.12em;
+}
+
+.game-three .section-heading .subtle,
+.game-three .combat-heading .subtle {
+    margin: 0.35rem 0 0;
+    font-size: 0.9rem;
+}
+
+.game-three .world-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.65rem;
+}
+
+.game-three .world-button {
+    display: flex;
+    width: 100%;
+    min-height: 62px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 12px;
+    background: var(--adventure-raised);
+    color: var(--adventure-text);
+    text-align: left;
+    cursor: pointer;
+}
+
+.game-three .world-button strong {
+    font-size: 0.95rem;
+}
+
+.game-three .world-button span {
+    color: var(--adventure-muted);
+    font-size: 0.8rem;
+}
+
+.game-three .world-button:hover:not(:disabled),
+.game-three .world-button.selected {
+    border-color: var(--adventure-amber);
+    box-shadow: inset 0 0 0 1px rgba(241, 189, 102, 0.15);
+}
+
+.game-three .world-button.selected strong {
+    color: var(--adventure-amber);
+}
+
+.game-three .world-button:disabled {
+    border-color: rgba(173, 221, 211, 0.1);
+    background: #18272a;
+    color: #758b85;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.game-three .map-selection-hint {
+    margin: 0 0 0.65rem;
+    font-size: 0.78rem;
+}
+
+.game-three .map-list {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.4rem;
+    transition: grid-template-columns 220ms ease, gap 220ms ease;
+}
+
+.game-three .map-list.collapsed {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+}
+
+.game-three .map-list.collapsed .map-button:not(.selected) {
+    min-height: 0;
+    max-height: 0;
+    padding-block: 0;
+    border-width: 0;
+    opacity: 0;
+    transform: translateY(-5px);
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+        max-height 220ms ease,
+        min-height 220ms ease,
+        padding 220ms ease,
+        border-width 220ms ease,
+        opacity 150ms ease,
+        transform 220ms ease,
+        visibility 0s linear 220ms;
+}
+
+.game-three .map-button {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    min-width: 0;
+    min-height: 54px;
+    max-height: 72px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.15rem;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 12px;
+    background: var(--adventure-raised);
+    color: var(--adventure-text);
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+    transition:
+        min-height 220ms ease,
+        max-height 220ms ease,
+        padding 220ms ease,
+        border-color 180ms ease,
+        border-width 220ms ease,
+        background-color 180ms ease,
+        box-shadow 180ms ease,
+        opacity 150ms ease,
+        transform 220ms ease,
+        visibility 0s;
+}
+
+.game-three .map-progress-fill {
+    position: absolute;
+    z-index: 0;
+    inset: 0 auto 0 0;
+    background: rgba(0, 0, 0, 0.24);
+    pointer-events: none;
+    transition: width 220ms ease;
+}
+
+.game-three .map-button > strong,
+.game-three .map-button > span {
+    position: relative;
+    z-index: 1;
+}
+
+.game-three .map-list.collapsed .map-button.selected {
+    min-height: 34px;
+    max-height: 38px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0.28rem 0.55rem;
+    border-radius: 8px;
+    transform: translateY(0);
+}
+
+.game-three .map-list.collapsed .map-button.selected strong {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 0.76rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.game-three .map-list.collapsed .map-button.selected span {
+    flex: 0 0 auto;
+    font-size: 0.65rem;
+    white-space: nowrap;
+}
+
+.game-three .map-button.incomplete {
+    border-color: #f1a04b;
+}
+
+.game-three .map-button.completed {
+    border-color: var(--adventure-green);
+}
+
+.game-three .map-button.locked {
+    border-color: #667477;
+}
+
+.game-three .map-button strong {
+    font-size: 0.82rem;
+}
+
+.game-three .map-button span {
+    color: var(--adventure-muted);
+    font-size: 0.68rem;
+}
+
+.game-three .map-button:hover:not(:disabled) {
+    box-shadow: inset 0 0 0 1px rgba(99, 223, 197, 0.15);
+}
+
+.game-three .map-button.incomplete.selected,
+.game-three .map-button.incomplete:hover:not(:disabled) {
+    border-color: #f1a04b;
+    box-shadow: inset 0 0 0 1px rgba(241, 160, 75, 0.22);
+}
+
+.game-three .map-button.completed.selected,
+.game-three .map-button.completed:hover:not(:disabled) {
+    border-color: var(--adventure-green);
+    box-shadow: inset 0 0 0 1px rgba(99, 223, 197, 0.2);
+}
+
+.game-three .map-button.selected {
+    z-index: 2;
+    border: 2px solid #ffe09a;
+    background: linear-gradient(135deg, rgba(241, 189, 102, 0.24), rgba(46, 53, 43, 0.96));
+    box-shadow: 0 0 0 2px rgba(255, 224, 154, 0.3), 0 0 15px rgba(241, 189, 102, 0.3);
+}
+
+.game-three .map-button.selected::before {
+    position: absolute;
+    z-index: 2;
+    top: 0.35rem;
+    bottom: 0.35rem;
+    left: 0;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: #ffe09a;
+    box-shadow: 0 0 9px rgba(255, 224, 154, 0.75);
+    content: '';
+    pointer-events: none;
+}
+
+.game-three .map-button.selected strong {
+    color: #fff0c4;
+    text-shadow: 0 0 8px rgba(255, 224, 154, 0.35);
+}
+
+.game-three .map-button.selected > span {
+    color: #ffe09a;
+}
+
+.game-three .map-button.tutorial-highlight {
+    z-index: 3;
+    border-color: var(--adventure-amber);
+    outline: 2px solid var(--adventure-amber);
+    outline-offset: 3px;
+    animation: tutorial-confirm-pulse 1.05s ease-in-out infinite;
+}
+
+.game-three .map-button:disabled {
+    border-color: #667477;
+    background: #18272a;
+    color: #758b85;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.game-three .kill-goal {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.2rem;
+    color: var(--adventure-muted);
+    font-size: 0.8rem;
+    text-align: right;
+}
+
+.game-three .kill-goal strong {
+    color: var(--adventure-amber);
+    font-size: 1.2rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.game-three .enemy-roster {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+    gap: 0.65rem;
+    margin-top: 1rem;
+}
+
+.game-three .enemy-card {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-top: 0;
+    padding: 1rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 14px;
+    background: #142528;
+}
+
+.game-three .enemy-card.is-shockwave-splashed {
+    animation: shockwave-card-hit 650ms ease-out;
+}
+
+.game-three .combat-hit-badge {
+    position: absolute;
+    z-index: 3;
+    top: -0.65rem;
+    left: 50%;
+    padding: 0.22rem 0.65rem;
+    border: 1px solid #b9fff1;
+    border-radius: 999px;
+    background: #087c70;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 950;
+    letter-spacing: 0.08em;
+    line-height: 1rem;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, 4px) scale(0.9);
+    box-shadow: 0 0 10px rgba(99, 223, 197, 0.55);
+    transition: opacity 140ms ease, transform 180ms ease, visibility 0s linear 180ms;
+}
+
+.game-three .combat-hit-badge.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0) scale(1);
+    transition-delay: 0s;
+}
+
+.game-three .combat-hit-badge.is-multihit {
+    border-color: #f2bd82;
+    background: #89532f;
+    color: #fff2df;
+    box-shadow: 0 0 10px rgba(205, 132, 76, 0.52);
+}
+
+.game-three .combat-hit-badge[hidden] {
+    display: none;
+}
+
+@keyframes shockwave-card-hit {
+    0%, 100% { filter: brightness(1); box-shadow: 0 0 0 0 rgba(99, 223, 197, 0); }
+    28% { filter: brightness(1.18); box-shadow: 0 0 0 2px rgba(99, 223, 197, 0.62), 0 0 12px rgba(99, 223, 197, 0.42); }
+    68% { filter: brightness(1.08); box-shadow: 0 0 0 1px rgba(99, 223, 197, 0.38), 0 0 7px rgba(99, 223, 197, 0.28); }
+}
+
+.game-three .enemy-roster.has-multiple .enemy-card {
+    gap: 0.65rem;
+    padding: 0.7rem;
+}
+
+.game-three .enemy-roster.has-multiple .enemy-mark {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+    border-radius: 13px;
+    font-size: 1.35rem;
+}
+
+.game-three .enemy-roster.is-crowded .enemy-card {
+    gap: 0.45rem;
+    padding: 0.55rem;
+}
+
+.game-three .enemy-roster.is-crowded {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: 0.4rem;
+}
+
+.game-three .enemy-roster.is-crowded .enemy-mark {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+    border-radius: 10px;
+    font-size: 1.1rem;
+}
+
+.game-three .enemy-roster.is-crowded .hit-chance {
+    display: none;
+}
+
+.game-three .enemy-card.is-target {
+    border: 2px solid #f1bd66;
+    background: linear-gradient(90deg, rgba(241, 189, 102, 0.13), #142528 48%);
+    box-shadow: 0 0 0 2px rgba(241, 189, 102, 0.25), 0 0 12px rgba(241, 189, 102, 0.18);
+}
+
+.game-three .enemy-card.is-target::before {
+    position: absolute;
+    top: 0.35rem;
+    bottom: 0.35rem;
+    left: -2px;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: #ffd98e;
+    box-shadow: 0 0 9px rgba(255, 217, 142, 0.72);
+    content: '';
+    pointer-events: none;
+}
+
+.game-three .enemy-card.is-respawning {
+    opacity: 0.76;
+}
+
+.game-three .enemy-card.is-defeating {
+    animation: enemy-death-shake 0.48s ease-in-out;
+}
+
+@keyframes enemy-death-shake {
+    0%, 100% { transform: translateX(0); }
+    15% { transform: translateX(-5px); }
+    30% { transform: translateX(5px); }
+    45% { transform: translateX(-4px); }
+    60% { transform: translateX(4px); }
+    75% { transform: translateX(-2px); }
+    90% { transform: translateX(2px); }
+}
+
+.game-three .enemy-title {
+    display: flex;
+    min-height: 2.5rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.game-three .enemy-status {
+    display: flex;
+    flex: 0 0 auto;
+    min-height: 2.5rem;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 0.2rem;
+    margin-left: auto;
+}
+
+.game-three .enemy-target-label {
+    padding: 0.2rem 0.48rem;
+    border: 1px solid rgba(255, 217, 142, 0.7);
+    border-radius: 999px;
+    background: rgba(122, 78, 31, 0.48);
+    color: #ffe3ac;
+    font-size: 0.68rem;
+    font-weight: 950;
+    text-transform: uppercase;
+    box-shadow: 0 0 8px rgba(241, 189, 102, 0.2);
+}
+
+.game-three .enemy-target-label[hidden] {
+    display: none;
+}
+
+.game-three .enemy-mark {
+    display: grid;
+    width: 64px;
+    height: 64px;
+    flex: 0 0 64px;
+    place-items: center;
+    border: 1px solid rgba(255, 144, 123, 0.35);
+    border-radius: 18px;
+    background: rgba(255, 144, 123, 0.1);
+    color: var(--adventure-coral);
+    font-size: 2rem;
+}
+
+.game-three .enemy-details {
+    min-width: 0;
+    flex: 1;
+}
+
+.game-three .enemy-title h3 {
+    min-width: 0;
+    flex: 1 1 auto;
+    margin: 0;
+    overflow: hidden;
+    font-size: 1rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.game-three .combat-status {
+    display: inline-flex;
+    min-height: 32px;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid rgba(99, 223, 197, 0.38);
+    border-radius: 999px;
+    background: rgba(99, 223, 197, 0.12);
+    color: var(--adventure-green);
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 0.025em;
+    white-space: nowrap;
+}
+
+.game-three .combat-status::before {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 9px currentColor;
+    content: "";
+}
+
+.game-three .combat-status.is-fighting::before {
+    animation: combat-indicator-pulse 1.2s ease-in-out infinite;
+}
+
+.game-three .combat-status.combat-dead {
+    border-color: rgba(255, 144, 123, 0.5);
+    background: rgba(255, 144, 123, 0.14);
+    color: var(--adventure-coral);
+}
+
+.game-three .combat-status .resume-button {
+    flex: 0 0 auto;
+    width: auto;
+    margin: 0;
+    padding: 0.24rem 0.48rem;
+    border-color: rgba(255, 144, 123, 0.55);
+    background: var(--adventure-coral);
+    color: #241719;
+    font-size: 0.68rem;
+    line-height: 1.1;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+@keyframes combat-indicator-pulse {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 9px currentColor;
+    }
+    50% {
+        opacity: 0.5;
+        box-shadow: 0 0 2px currentColor;
+    }
+}
+
+.game-three .hit-chance {
+    margin: 0.55rem 0 0;
+    color: var(--adventure-muted);
+    font-size: 0.8rem;
+}
+
+.game-three .hit-chance strong {
+    color: var(--adventure-green);
+    font-variant-numeric: tabular-nums;
+}
+
+.game-three .hit-chance strong.accuracy-good {
+    color: var(--adventure-green);
+}
+
+.game-three .hit-chance strong.accuracy-caution {
+    color: #f1d66b;
+}
+
+.game-three .hit-chance strong.accuracy-warning {
+    color: #f1a04b;
+}
+
+.game-three .hit-chance strong.accuracy-danger {
+    color: var(--adventure-coral);
+}
+
+.game-three .health-track {
+    position: relative;
+    height: 10px;
+    margin-top: 0.75rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #304247;
+}
+
+.game-three .health-track::after {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    border-radius: inherit;
+    background: #fff;
+    content: "";
+    opacity: 0;
+    pointer-events: none;
+}
+
+.game-three .health-track.is-dodging::after {
+    animation: health-dodge-flash 420ms ease-out;
+}
+
+.game-three .health-track.is-shockwave-hit {
+    animation: shockwave-health-impact 380ms ease-out;
+}
+
+@keyframes shockwave-health-impact {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(99, 223, 197, 0);
+        filter: brightness(1);
+    }
+    30% {
+        box-shadow: 0 0 0 1px rgba(99, 223, 197, 0.48), 0 0 8px rgba(99, 223, 197, 0.38);
+        filter: brightness(1.16);
+    }
+    65% {
+        box-shadow: 0 0 0 1px rgba(99, 223, 197, 0.25), 0 0 5px rgba(99, 223, 197, 0.2);
+        filter: brightness(1.05);
+    }
+}
+
+@keyframes health-dodge-flash {
+    0%, 35% {
+        opacity: 0.32;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+.game-three .health-fill {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    border-radius: 999px 0 0 999px;
+    background: var(--adventure-coral);
+    transition: width 150ms linear;
+}
+
+.game-three .player-health {
+    margin-top: 0.75rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 12px;
+    background: var(--adventure-raised);
+}
+
+.game-three .player-health-row {
+    display: flex;
+    max-width: 500px;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.game-three .player-health-row .player-health {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.game-three .player-health-row .combat-status {
+    margin-top: 0.75rem;
+    flex: 0 0 190px;
+    width: 190px;
+    box-sizing: border-box;
+    justify-content: flex-start;
+}
+
+.game-three .player-health + .health-track {
+    margin-top: 0.9rem;
+}
+
+.game-three .combat-heading > div:first-child {
+    min-width: 0;
+    flex: 1;
+}
+
+.game-three .health-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    color: var(--adventure-text);
+    font-size: 0.85rem;
+}
+
+.game-three .health-heading span {
+    color: var(--adventure-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.game-three .loot-table-panel {
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 14px;
+    background: var(--adventure-raised);
+}
+
+.game-three .loot-table-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    cursor: pointer;
+    list-style: none;
+}
+
+.game-three .loot-table-heading::-webkit-details-marker {
+    display: none;
+}
+
+.game-three .loot-table-heading::after {
+    width: 0.55rem;
+    height: 0.55rem;
+    flex: 0 0 auto;
+    color: var(--adventure-green);
+    border-right: 2px solid var(--adventure-green);
+    border-bottom: 2px solid var(--adventure-green);
+    content: '';
+    transform: rotate(45deg) translateY(-0.15rem);
+}
+
+.game-three .loot-table-panel[open] .loot-table-heading::after {
+    transform: rotate(225deg) translate(-0.1rem, -0.05rem);
+}
+
+.game-three .loot-table-panel[open] .loot-table-heading {
+    margin-bottom: 0.65rem;
+}
+
+.game-three .loot-table-heading h3 {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.game-three .loot-table-heading .subtle {
+    margin: 0;
+    font-size: 0.78rem;
+}
+
+.game-three .loot-table-panel:not([open]) .map-loot-table {
+    display: none;
+}
+
+.game-three .map-loot-table {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.game-three .map-loot-table li {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.45rem 0.55rem;
+    border-radius: 8px;
+    background: var(--adventure-card);
+    color: var(--adventure-muted);
+    font-size: 0.8rem;
+}
+
+.game-three .map-loot-table strong {
+    color: var(--adventure-text);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.game-three .player-health-track {
+    position: relative;
+    margin-top: 0.5rem;
+}
+
+.game-three .player-health-track.is-damaged {
+    animation: player-health-damage-nudge 0.24s ease-out;
+}
+
+@keyframes player-health-damage-nudge {
+    0%, 100% { transform: translateX(0); }
+    35% { transform: translateX(-4px); }
+    65% { transform: translateX(-1px); }
+}
+
+.game-three .player-health-fill {
+    background: var(--adventure-green);
+}
+
+.game-three .player-health-damage {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 0;
+    background: var(--adventure-coral);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 700ms ease;
+}
+
+.game-three .player-health-damage.is-visible {
+    opacity: 1;
+}
+
+.game-three .enemy-health-damage {
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    bottom: 0;
+    border-radius: 0;
+    background: #d94156;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 300ms ease;
+}
+
+.game-three .enemy-health-damage.is-visible {
+    opacity: 1;
+}
+
+.game-three .enemy-health-poison-damage {
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-radius: 0;
+    background: #54d878;
+    box-shadow: 0 0 6px rgba(84, 216, 120, 0.4);
+    opacity: 1;
+    pointer-events: none;
+    transition: left 150ms linear, width 150ms linear;
+}
+
+.game-three .enemy-details .subtle {
+    margin: 0.3rem 0 0;
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.game-three .enemy-health-summary {
+    display: flex;
+    min-height: 1.5rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: nowrap;
+}
+
+.game-three .enemy-health-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.game-three .enemy-health-value > span:first-child {
+    color: #ff5f6d;
+    font-size: 1.25rem;
+}
+
+.game-three .enemy-health-summary .subtle {
+    margin-top: 0.3rem;
+}
+
+.game-three .enemy-offense {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.game-three .enemy-attack-interval {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--adventure-muted);
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+.game-three .enemy-attack-interval > span {
+    font-size: 0.9rem;
+}
+
+.game-three .enemy-attack-interval strong {
+    color: var(--adventure-text);
+    font-variant-numeric: tabular-nums;
+}
+
+.game-three .enemy-damage {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--adventure-coral);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.game-three .enemy-damage strong {
+    color: var(--adventure-text);
+    font-variant-numeric: tabular-nums;
+}
+
+.game-three .enemy-roster.is-crowded .enemy-offense {
+    gap: 0.35rem;
+}
+
+.game-three .enemy-roster.is-crowded .enemy-attack-interval {
+    font-size: 0.68rem;
+}
+
+.game-three .enemy-proc-notice {
+    min-height: 1rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    color: var(--adventure-amber);
+    font-size: 0.67rem;
+    font-weight: 850;
+    letter-spacing: 0.045em;
+    line-height: 1rem;
+    text-overflow: ellipsis;
+    text-shadow: 0 0 8px rgba(241, 189, 102, 0.4);
+    text-transform: uppercase;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 120ms ease;
+}
+
+.game-three .enemy-proc-notice.is-visible {
+    opacity: 1;
+}
+
+.game-three .enemy-effect-row {
+    display: flex;
+    height: 1.2rem;
+    min-height: 1.2rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin: 0.12rem 0 0.1rem;
+}
+
+.game-three .enemy-dot-status {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.08rem 0.42rem;
+    border: 1px solid rgba(105, 224, 137, 0.38);
+    border-radius: 999px;
+    background: rgba(56, 145, 81, 0.18);
+    color: #80e59a;
+    font-size: 0.7rem;
+    line-height: 1rem;
+    font-variant-numeric: tabular-nums;
+    box-shadow: 0 0 9px rgba(78, 212, 111, 0.12);
+}
+
+.game-three .enemy-dot-status[hidden] {
+    display: none;
+}
+
+.game-three .enemy-dot-status svg {
+    width: 0.85rem;
+    height: 0.85rem;
+    fill: currentColor;
+    filter: drop-shadow(0 0 3px rgba(91, 231, 122, 0.48));
+}
+
+.game-three .enemy-dot-status strong {
+    color: #c2ffd0;
+}
+
+.game-three .enemy-dot-status.is-applying {
+    animation: poison-stack-proc 420ms ease-out;
+}
+
+@keyframes poison-stack-proc {
+    0% { transform: scale(1); box-shadow: 0 0 8px rgba(78, 212, 111, 0.25); }
+    35% { transform: scale(1.2); box-shadow: 0 0 15px rgba(78, 236, 119, 0.9); }
+    100% { transform: scale(1); box-shadow: 0 0 8px rgba(78, 212, 111, 0.25); }
+}
+
+.game-three .enemy-roster.is-crowded .enemy-proc-notice {
+    font-size: 0.6rem;
+}
+
+.game-three .enemy-respawn-status {
+    margin: 0;
+    color: var(--adventure-amber);
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1rem;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.game-three .drop-message {
+    min-height: 1.2em;
+    margin: 0.55rem 0 0;
+    color: var(--adventure-amber);
+    font-size: 0.85rem;
+}
+
+.game-three .combat-note {
+    margin: 0.85rem 0 0;
+    color: var(--adventure-muted);
+    font-size: 0.82rem;
+}
+
+.game-three .town-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.game-three .gear-workspace {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.game-three .town-section {
+    min-width: 0;
+    padding: 1rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 13px;
+    background: var(--adventure-raised);
+}
+
+.game-three .town-section h2 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.game-three .town-section-heading {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.game-three .town-section-description {
+    margin: -0.65rem 0 0.2rem;
+    font-size: 0.82rem;
+}
+
+.game-three .inventory-subheading {
+    margin: 0.9rem 0 0.45rem;
+    color: var(--adventure-green);
+    font-size: 0.83rem;
+}
+
+.game-three .town-section > .subtle {
+    margin: 0.35rem 0 0.8rem;
+    font-size: 0.82rem;
+}
+
+.game-three .item-list,
+.game-three .inventory-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.game-three .game-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 0.7rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 10px;
+    background: var(--adventure-card);
+}
+
+.game-three .game-item-copy {
+    min-width: 0;
+}
+
+.game-three .game-item-copy strong,
+.game-three .game-item-copy span {
+    display: block;
+}
+
+.game-three .game-item-copy strong {
+    font-size: 0.9rem;
+}
+
+.game-three .game-item-copy span {
+    margin-top: 0.2rem;
+    color: var(--adventure-muted);
+    font-size: 0.78rem;
+    white-space: pre-line;
+}
+
+.game-three .crafting-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0.2rem 0 0.15rem;
+}
+
+.game-three .crafting-heading h2 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.game-three .crafting-heading p {
+    margin: 0.25rem 0 0;
+    font-size: 0.8rem;
+}
+
+.game-three .crafting-tools {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin: 0.3rem 0 0.2rem;
+}
+
+.game-three .craft-category-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0.2rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 10px;
+    background: rgba(10, 22, 27, 0.5);
+}
+
+.game-three .craft-filter {
+    min-height: 34px;
+    padding: 0.4rem 0.65rem;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--adventure-muted);
+    font: inherit;
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.game-three .craft-filter:hover {
+    color: var(--adventure-text);
+}
+
+.game-three .craft-filter.is-selected {
+    border-color: rgba(99, 223, 197, 0.28);
+    background: rgba(99, 223, 197, 0.12);
+    color: var(--adventure-green);
+}
+
+.game-three .craftable-filter {
+    border-color: rgba(241, 189, 102, 0.24);
+    background: rgba(241, 189, 102, 0.06);
+}
+
+.game-three .craftable-filter.is-selected {
+    border-color: rgba(241, 189, 102, 0.55);
+    background: rgba(241, 189, 102, 0.14);
+    color: var(--adventure-amber);
+}
+
+.game-three .crafting-summary {
+    margin: 0 0 0 auto;
+    color: var(--adventure-muted);
+    font-size: 0.73rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.game-three .crafting-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.game-three .crafting-category-section {
+    min-width: 0;
+}
+
+.game-three .crafting-category-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.55rem;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid var(--adventure-border);
+}
+
+.game-three .crafting-category-heading h3 {
+    margin: 0;
+    color: var(--adventure-text);
+    font-size: 0.94rem;
+}
+
+.game-three .crafting-category-progress {
+    flex: 0 0 auto;
+    color: var(--adventure-green);
+    font-size: 0.69rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.game-three .crafting-category-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 320px));
+    align-items: stretch;
+    justify-content: start;
+    gap: 0.7rem;
+}
+
+.game-three .crafting-empty {
+    margin: 0;
+    padding: 1rem;
+    border: 1px dashed var(--adventure-border);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.game-three .craft-card {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0.85rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 12px;
+    background: linear-gradient(150deg, rgba(43, 68, 71, 0.86), rgba(24, 42, 46, 0.96));
+    box-shadow: inset 0 1px 0 rgba(238, 248, 245, 0.025);
+}
+
+.game-three .craft-card.is-crafted {
+    border-color: rgba(99, 223, 197, 0.34);
+}
+
+.game-three .craft-card.is-craftable {
+    border-color: rgba(99, 223, 197, 0.38);
+}
+
+.game-three .craft-card-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.game-three .craft-card-copy {
+    min-width: 0;
+}
+
+.game-three .craft-card-copy h4 {
+    margin: 0;
+    color: var(--adventure-text);
+    font-size: 0.92rem;
+    line-height: 1.25;
+}
+
+.game-three .craft-slot-tag {
+    flex: 0 0 auto;
+    padding: 0.22rem 0.45rem;
+    border: 1px solid rgba(99, 223, 197, 0.24);
+    border-radius: 999px;
+    color: var(--adventure-green);
+    font-size: 0.62rem;
+    font-weight: 750;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.game-three .craft-card-effect {
+    margin: 0;
+    color: var(--adventure-amber);
+    font-size: 0.86rem;
+    font-weight: 750;
+    white-space: pre-line;
+}
+
+.game-three .craft-card-description {
+    min-height: 2.5em;
+    margin: 0;
+    color: var(--adventure-muted);
+    font-size: 0.74rem;
+    line-height: 1.4;
+}
+
+.game-three .craft-materials {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin: 0;
+    padding: 0.55rem 0 0;
+    border-top: 1px solid var(--adventure-border);
+    list-style: none;
+}
+
+.game-three .craft-materials li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    color: var(--adventure-muted);
+    font-size: 0.72rem;
+}
+
+.game-three .craft-material-copy {
+    display: grid;
+    gap: 0.08rem;
+}
+
+.game-three .craft-material-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+}
+
+.game-three .craft-material-info {
+    display: inline-grid;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    place-items: center;
+    padding: 0;
+    border: 1px solid rgba(173, 221, 211, 0.38);
+    border-radius: 50%;
+    background: rgba(173, 221, 211, 0.08);
+    color: var(--adventure-muted);
+    font: inherit;
+    font-size: 0.62rem;
+    font-weight: 800;
+    line-height: 1;
+    cursor: help;
+}
+
+.game-three .craft-material-info-wrap {
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+}
+
+.game-three .craft-material-tooltip {
+    position: absolute;
+    z-index: 20;
+    bottom: calc(100% + 7px);
+    left: 0;
+    display: grid;
+    min-width: 150px;
+    max-width: min(250px, calc(100vw - 32px));
+    gap: 0.35rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid rgba(173, 221, 211, 0.3);
+    border-radius: 9px;
+    background: #102029;
+    color: var(--adventure-text);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    font-size: 0.72rem;
+    line-height: 1.25;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(3px);
+    transition: opacity 120ms ease, transform 120ms ease, visibility 120ms ease;
+    pointer-events: none;
+}
+
+.game-three .craft-material-info-wrap:hover .craft-material-tooltip,
+.game-three .craft-material-info-wrap:focus-within .craft-material-tooltip {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.game-three .craft-material-tooltip > strong {
+    color: var(--adventure-green);
+    font-size: 0.68rem;
+}
+
+.game-three .craft-material-tooltip-source {
+    display: grid;
+    gap: 0.08rem;
+}
+
+.game-three .craft-material-tooltip-source small {
+    color: var(--adventure-muted);
+    font-size: 0.65rem;
+}
+
+.game-three .craft-material-info:hover,
+.game-three .craft-material-info:focus-visible {
+    border-color: var(--adventure-green);
+    color: var(--adventure-green);
+    outline: none;
+}
+
+.game-three .craft-materials li strong {
+    flex: 0 0 auto;
+    color: var(--adventure-coral);
+    font-variant-numeric: tabular-nums;
+}
+
+.game-three .craft-materials li.has-enough strong {
+    color: var(--adventure-green);
+}
+
+.game-three .craft-card .craft-action {
+    width: 100%;
+    margin-top: auto;
+    padding: 0.58rem 0.7rem;
+}
+
+.game-three .craft-card .craft-action:disabled {
+    opacity: 0.72;
+}
+
+.game-three .unique-drop,
+.game-three .unique-drop strong,
+.game-three .unique-drop .game-item-copy strong,
+.game-three .unique-drop .game-item-copy span {
+    color: #d19aff !important;
+}
+
+.game-three li.unique-drop {
+    border: 1px solid rgba(209, 154, 255, 0.38);
+    background: rgba(151, 83, 204, 0.14);
+}
+
+.game-three .map-loot-table li.unique-drop,
+.game-three .map-loot-table li.unique-drop strong {
+    color: #d19aff;
+}
+
+.game-three .game-item.unique-drop {
+    border-color: rgba(209, 154, 255, 0.38);
+    background: rgba(151, 83, 204, 0.12);
+}
+
+.game-three .action-button {
+    flex: 0 0 auto;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 8px;
+    background: var(--adventure-green);
+    color: #102322;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.game-three .action-button:hover:not(:disabled) {
+    filter: brightness(1.08);
+}
+
+.game-three .action-button:disabled {
+    border-color: rgba(173, 221, 211, 0.1);
+    background: #364649;
+    color: #a2afad;
+    cursor: not-allowed;
+}
+
+.game-three .inventory-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0 0;
+}
+
+.game-three .inventory-list .inventory-empty {
+    grid-column: 1 / -1;
+}
+
+.game-three .inventory-empty {
+    margin: 0;
+    padding: 0.6rem 0;
+    font-size: 0.85rem;
+}
+
+.game-three .material-entry {
+    display: flex;
+    min-height: 68px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 10px;
+    background: var(--adventure-card);
+    color: var(--adventure-text);
+    font-size: 0.95rem;
+}
+
+.game-three .material-entry strong {
+    color: var(--adventure-green);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.05rem;
+}
+
+.game-three .gear-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin-top: 1rem;
+}
+
+.game-three .equipment-slot {
+    display: flex;
+    min-width: 0;
+    min-height: 112px;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.65rem 0.45rem;
+    border: 1px solid rgba(241, 189, 102, 0.46);
+    border-radius: 11px;
+    background: linear-gradient(160deg, rgba(241, 189, 102, 0.11), rgba(20, 37, 40, 0.8) 58%);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.24), 0 3px 10px rgba(0, 0, 0, 0.12);
+    color: var(--adventure-text);
+    font: inherit;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
+}
+
+.game-three .equipment-slot:hover {
+    border-color: var(--adventure-amber);
+    transform: translateY(-1px);
+}
+
+.game-three .equipment-slot.is-selected {
+    border-color: var(--adventure-green);
+    box-shadow: inset 0 0 0 1px rgba(99, 223, 197, 0.2), 0 0 0 1px rgba(99, 223, 197, 0.12);
+}
+
+.game-three .equipment-slot.tutorial-highlight {
+    border-color: var(--adventure-amber);
+}
+
+.game-three .equipment-slot.is-empty {
+    border-style: dashed;
+    border-color: rgba(173, 221, 211, 0.25);
+    background: rgba(20, 37, 40, 0.45);
+    box-shadow: none;
+}
+
+.game-three .equipment-slot-label {
+    color: var(--adventure-muted);
+    font-size: 0.66rem;
+    font-weight: 750;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.game-three .equipment-slot-icon {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    border: 2px solid rgba(241, 189, 102, 0.62);
+    border-radius: 10px;
+    background: radial-gradient(circle at 35% 25%, #49636a, #17272b 72%);
+    color: var(--adventure-amber);
+    font-size: 1.65rem;
+    line-height: 1;
+    text-shadow: 0 2px 7px rgba(0, 0, 0, 0.65);
+}
+
+.game-three .equipment-slot.is-empty .equipment-slot-icon {
+    border-style: dashed;
+    border-color: rgba(173, 221, 211, 0.28);
+    background: #17272b;
+    color: #728681;
+}
+
+.game-three .equipment-slot-name {
+    max-width: 100%;
+    color: var(--adventure-amber);
+    font-size: 0.78rem;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.game-three .equipment-slot.is-empty .equipment-slot-name {
+    color: var(--adventure-muted);
+    font-weight: 500;
+}
+
+.game-three .equipment-slot-bonus {
+    margin-top: auto;
+    color: var(--adventure-text);
+    font-size: 0.68rem;
+    line-height: 1.3;
+    white-space: pre-line;
+}
+
+.game-three .equipment-slot.unique-drop {
+    border-color: rgba(209, 154, 255, 0.65);
+    background: linear-gradient(160deg, rgba(151, 83, 204, 0.2), rgba(20, 37, 40, 0.84) 58%);
+}
+
+.game-three .equipment-slot.unique-drop .equipment-slot-icon {
+    border-color: rgba(209, 154, 255, 0.72);
+    color: #d19aff;
+}
+
+.game-three .equipment-status {
+    flex: 0 0 auto;
+    color: var(--adventure-green);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.game-three .loot-list {
+    display: flex;
+    max-height: 360px;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    color: var(--adventure-muted);
+    font-size: 0.82rem;
+    list-style: none;
+}
+
+.game-three .loot-list li::marker {
+    color: var(--adventure-green);
+}
+
+.game-three .loot-empty {
+    padding-left: 0.1rem;
+    color: var(--adventure-muted);
+    list-style: none;
+}
+
+.game-three .combat-stat-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.game-three .combat-stat-group > h3 {
+    margin: 0 0 0.45rem;
+    color: var(--adventure-green);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.game-three .stat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.game-three .combat-stat {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.7rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 10px;
+    background: var(--adventure-raised);
+    color: var(--adventure-muted);
+    font-size: 0.85rem;
+}
+
+.game-three .combat-stat strong {
+    color: var(--adventure-amber);
+    font-variant-numeric: tabular-nums;
+}
+
+.game-three .skill-tree-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(99, 223, 197, 0.25);
+    border-radius: 11px;
+    background: linear-gradient(110deg, rgba(99, 223, 197, 0.1), rgba(28, 48, 53, 0.8));
+}
+
+.game-three .skill-tree-summary > div {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+}
+
+.game-three .skill-tree-summary strong {
+    color: var(--adventure-amber);
+    white-space: nowrap;
+}
+
+.game-three .skill-tree-summary span,
+.game-three .skill-tree-summary p {
+    margin: 0;
+    color: var(--adventure-muted);
+    font-size: 0.82rem;
+}
+
+.game-three .adventure-page:has(#upgradesView:not([hidden])) {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.game-three #upgradesView {
+    position: relative;
+    gap: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.game-three #upgradeList {
+    min-width: 0;
+}
+
+.game-three .skill-tree-viewport {
+    position: relative;
+    height: clamp(260px, calc(100dvh - 220px), 800px);
+    min-height: 0;
+    max-width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--adventure-border);
+    border-radius: 14px;
+    background:
+        radial-gradient(ellipse at center, rgba(77, 128, 162, 0.16), transparent 68%),
+        #111f2b;
+    cursor: grab;
+}
+.game-three .skill-tree-viewport.is-panning {
+    cursor: grabbing;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.game-three .skill-tree-board {
+    position: relative;
+    user-select: none;
+    -webkit-user-select: none;
+    display: grid;
+    min-width: 800px;
+    min-height: 800px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-rows: repeat(5, 160px);
+    padding: 0;
+    isolation: isolate;
+    transform-origin: top left;
+}
+
+.game-three .skill-points-bar {
+    position: absolute;
+    z-index: 2;
+    top: 0.85rem;
+    left: 0.85rem;
+    right: 0.85rem;
+    padding: 0.55rem 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    color: var(--adventure-amber);
+    font-weight: 700;
+    font-size: 0.9rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 10px;
+    background: rgba(19, 34, 37, 0.94);
+}
+
+.game-three .skill-points-total {
+    margin-right: auto;
+    color: var(--adventure-muted);
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.game-three #skillPointsDisplay {
+    position: absolute;
+    left: 50%;
+    margin: 0;
+    transform: translateX(-50%);
+    color: var(--adventure-text);
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-align: center;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.game-three .skill-tree-control {
+    padding: 0.4rem 0.7rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 7px;
+    background: var(--adventure-raised);
+    color: var(--adventure-text);
+    font: inherit;
+    cursor: pointer;
+}
+
+.game-three .skill-tree-control:not(:disabled):hover {
+    border-color: var(--adventure-green);
+    color: var(--adventure-green);
+}
+
+.game-three .skill-tree-control.is-active {
+    border-color: var(--adventure-amber);
+    color: var(--adventure-amber);
+    box-shadow: 0 0 0 1px rgba(241, 189, 102, 0.18);
+}
+
+.game-three .skill-tree-control.tutorial-skill-confirm {
+    border-color: var(--adventure-amber);
+    outline: 2px solid var(--adventure-amber);
+    outline-offset: 3px;
+    animation: tutorial-confirm-pulse 1.05s ease-in-out infinite;
+}
+
+.game-three .skill-tree-control:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.game-three .skill-tree-control[hidden] {
+    display: none !important;
+}
+
+.game-three .skill-tree-links {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.game-three .skill-tree-link {
+    stroke: rgba(162, 187, 181, 0.28);
+    stroke-width: 3;
+    vector-effect: non-scaling-stroke;
+}
+
+.game-three .skill-tree-link.is-active {
+    stroke: var(--adventure-green);
+    filter: drop-shadow(0 0 4px rgba(99, 223, 197, 0.65));
+}
+
+.game-three .skill-tree-link.is-pending {
+    stroke: #fff;
+    stroke-width: 4;
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8));
+}
+
+.game-three .skill-tree-link.tutorial-skill-link {
+    animation: tutorial-skill-line-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes tutorial-skill-line-pulse {
+    0%, 100% {
+        stroke: rgba(241, 189, 102, 0.5);
+        stroke-width: 4;
+        filter: drop-shadow(0 0 3px rgba(255, 187, 80, 0.5));
+    }
+    50% {
+        stroke: var(--adventure-amber);
+        stroke-width: 7;
+        filter: drop-shadow(0 0 9px rgba(255, 187, 80, 1));
+    }
+}
+
+@keyframes tutorial-confirm-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 2px rgba(241, 189, 102, 0.35), 0 0 8px rgba(255, 187, 80, 0.45);
+        filter: brightness(1);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(241, 189, 102, 0.65), 0 0 22px rgba(255, 187, 80, 0.95);
+        filter: brightness(1.35);
+    }
+}
+
+.game-three .skill-node {
+    z-index: 1;
+    display: flex;
+    width: 78px;
+    min-width: 0;
+    height: 78px;
+    min-height: 78px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    justify-self: center;
+    align-self: center;
+    padding: 0;
+    border: 1px solid rgba(162, 187, 181, 0.22);
+    border-radius: 50%;
+    background-color: #172631;
+    background-clip: padding-box;
+    background-image: linear-gradient(160deg, #26383b, #17282c);
+    color: var(--adventure-muted);
+    font: inherit;
+    text-align: center;
+    cursor: not-allowed;
+    transition: border-color 140ms ease, transform 140ms ease, filter 140ms ease;
+}
+
+.game-three .skill-node:not(:disabled) {
+    cursor: pointer;
+}
+
+.game-three .skill-node:not(:disabled):hover {
+    transform: translateY(-2px);
+    filter: brightness(1.13);
+}
+
+.game-three .skill-node.is-available {
+    border-color: rgba(241, 189, 102, 0.75);
+    background: linear-gradient(160deg, rgba(112, 83, 43, 0.9), #1b2d30);
+    color: var(--adventure-text);
+    box-shadow: 0 0 15px rgba(241, 189, 102, 0.1);
+}
+
+.game-three .skill-node.is-available:not(.is-pending):not(.is-allocated) {
+    animation: available-skill-node-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes available-skill-node-pulse {
+    0%, 100% {
+        filter: grayscale(0) brightness(1);
+        box-shadow: 0 0 10px rgba(241, 189, 102, 0.12);
+    }
+    50% {
+        filter: grayscale(0.65) brightness(0.82);
+        box-shadow: 0 0 18px rgba(177, 184, 184, 0.3);
+    }
+}
+
+.game-three .skill-node.is-pending {
+    border-color: var(--adventure-amber);
+    box-shadow: 0 0 12px rgba(241, 189, 102, 0.24);
+}
+
+.game-three .skill-node.is-allocated {
+    border-color: rgba(99, 223, 197, 0.72);
+    background: linear-gradient(160deg, rgba(45, 106, 97, 0.9), #1b2d30);
+    color: var(--adventure-text);
+    box-shadow: inset 0 0 0 1px rgba(99, 223, 197, 0.14), 0 0 15px rgba(99, 223, 197, 0.12);
+}
+
+.game-three .skill-node.is-refundable {
+    outline: 2px dashed var(--adventure-amber);
+    outline-offset: 4px;
+    cursor: crosshair;
+}
+
+.game-three .skill-node.is-origin {
+    padding: 0;
+    border: 2px solid var(--adventure-amber);
+    background: radial-gradient(circle, #786039, #272c2a 72%);
+    color: var(--adventure-text);
+    box-shadow: inset 0 0 0 4px rgba(241, 189, 102, 0.12), 0 0 18px rgba(241, 189, 102, 0.16);
+}
+
+.game-three .skill-node-icon {
+    display: block;
+    color: var(--adventure-amber);
+    font-size: 1.8rem;
+    line-height: 1;
+}
+
+.game-three .skill-node.is-allocated .skill-node-icon {
+    color: var(--adventure-green);
+}
+
+.game-three .skill-node-name {
+    display: none;
+}
+
+.game-three .skill-node-effect {
+    display: none;
+}
+
+.game-three .skill-node-status {
+    display: none;
+}
+
+.game-three .skill-node.is-base-health,
+.game-three .skill-node.is-origin.is-base-health {
+    border-color: #ff6f78;
+    background: radial-gradient(circle, #73353f, #34252a 74%);
+}
+
+.game-three .skill-node.is-base-health .skill-node-icon { color: #ff7777; }
+
+.game-three .skill-node.is-base-attackSpeed {
+    border-color: #a6e56f;
+    background: radial-gradient(circle, #527b36, #273322 74%);
+}
+
+.game-three .skill-node.is-base-attackSpeed .skill-node-icon { color: #c5f28d; }
+
+.game-three .skill-node-tooltip {
+    position: absolute;
+    z-index: 5;
+    width: min(260px, calc(100% - 1rem));
+    padding: 0.75rem 0.9rem;
+    border: 1px solid rgba(164, 194, 220, 0.48);
+    border-radius: 11px;
+    background: rgba(10, 20, 29, 0.97);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(115, 186, 255, 0.12);
+    color: var(--adventure-text);
+    pointer-events: none;
+}
+
+.game-three .skill-node-tooltip[hidden] {
+    display: none;
+}
+
+.game-three .skill-node-tooltip strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--adventure-blue);
+    font-size: 0.9rem;
+}
+
+.game-three .skill-node-tooltip span {
+    display: block;
+    color: var(--adventure-muted);
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+
+.game-three .skill-node.is-base-accuracy {
+    border-color: #67aeff;
+    background: radial-gradient(circle, #315b88, #1d2938 74%);
+}
+
+.game-three .skill-node.is-base-accuracy .skill-node-icon { color: #78baff; }
+
+.game-three .skill-node.is-base-damage,
+.game-three .skill-node.is-origin.is-base-damage {
+    border-color: #f0c34f;
+    background: radial-gradient(circle, #79602c, #312b20 74%);
+}
+
+.game-three .skill-node.is-base-damage .skill-node-icon { color: #ffdc71; }
+
+.game-three .skill-node.is-locked {
+    filter: brightness(0.62) saturate(0.55);
+}
+
+.game-three > footer {
+    height: 20px;
+    background: transparent;
+}
+
+@media (max-width: 1050px) {
+    .game-three .adventure-layout {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+            "main main"
+            "side side"
+            "loot loot";
+    }
+
+    .game-three .side-panel-stack {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+    }
+}
+
+@media (max-width: 700px) {
+    .game-three .skill-tree-viewport {
+        height: clamp(260px, calc(100dvh - 300px), 800px);
+    }
+
+    .game-three .skill-points-total {
+        order: -2;
+        flex: 1 0 100%;
+        text-align: left;
+    }
+
+    .game-three #skillPointsDisplay {
+        position: static;
+        order: -1;
+        flex: 1 0 100%;
+        transform: none;
+    }
+
+    .game-three .nav-header {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .game-three .logo {
+        position: static;
+        left: auto;
+    }
+
+    .game-three .tutorial-notifications {
+        top: 0.7rem;
+        left: calc(50% + var(--nav-logo-size) / 2 + var(--tutorial-notice-gap));
+        width: min(300px, calc(50vw - var(--nav-logo-size) / 2 - var(--tutorial-notice-gap) - 0.75rem));
+    }
+
+    .game-three .navbar {
+        width: 100%;
+        flex: 0 0 100%;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin: 0;
+        padding: 0;
+    }
+
+    .game-three .reset-nav-item {
+        position: static;
+        display: flex;
+        flex: 0 0 100%;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .game-three .adventure-layout {
+        width: calc(100% - 1rem);
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "main"
+            "side"
+            "loot";
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+    }
+
+    .game-three .side-panel-stack {
+        display: flex;
+    }
+
+    .game-three .experience-strip {
+        width: calc(100% - 1rem);
+    }
+
+    .game-three .adventure-page {
+        padding: 0.75rem;
+        border-radius: 16px;
+    }
+
+    .game-three .game-panel {
+        padding: 0.85rem;
+    }
+
+    .game-three .map-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .game-three .player-health-row {
+        flex-wrap: wrap;
+    }
+
+    .game-three .player-health-row .player-health {
+        flex: 1 0 100%;
+    }
+
+    .game-three .player-health-row .combat-status {
+        width: auto;
+        margin-top: 0.2rem;
+        flex: 1 1 auto;
+    }
+
+    .game-three .town-columns {
+        grid-template-columns: 1fr;
+    }
+
+    .game-three .gear-workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .game-three .crafting-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.55rem;
+    }
+
+    .game-three .crafting-summary {
+        flex: 1 0 100%;
+        margin-left: 0;
+    }
+
+    .game-three .crafting-category-heading {
+        align-items: flex-start;
+    }
+
+    .game-three .inventory-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .game-three .section-heading,
+    .game-three .combat-heading {
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 420px) {
+    .game-three .nav-header {
+        --nav-logo-left: 0.75rem;
+        --nav-logo-size: 52px;
+        --tutorial-notice-gap: 0.5rem;
+        padding-inline: 0.75rem;
+    }
+
+    .game-three .logo {
+        width: 52px;
+        height: 52px;
+    }
+
+    .game-three .nav-button {
+        padding-inline: 0.6rem;
+        font-size: 0.82rem;
+    }
+
+    .game-three .navbar {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}

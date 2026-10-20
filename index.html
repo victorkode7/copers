@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/_root.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/nav.css">
+    <title>clueless</title>
+</head>
+<body>
+    <script src="js/script.js"></script>
+    <header>
+        <div class="top-nav" style="background:#000;color:#fff;padding:0.25rem 0;display:flex;gap:1rem;width:100%;justify-content:center;">
+            <a href="index.html" style="color:#fff;text-decoration:none;">Home</a>
+            <a href="1.html" style="color:#fff;text-decoration:none;">Game 1</a>
+            <a href="2.html" style="color:#fff;text-decoration:none;">Game 2</a>
+            <a href="3.html" style="color:#fff;text-decoration:none;">Game 3</a>
+        </div>
+        <div class="container">
+            <nav class="nav-header">
+                <div class="logo">
+                    <a href="/index.html">
+                    <img src="https://picfiles.alphacoders.com/498/thumb-1920-498797.png" alt="">
+                    </a>
+                </div>
+                <ul class="navbar">
+                    <li class="dropdown">
+                            <span>Items</span>
+                        <ul class="dropdown-menu">
+                            <li><a class=dropdown-item href="/1.html">Item1</a></li>
+                            <li><a class=dropdown-item href="#2">Item2222</a></li>
+                            <li><a class=dropdown-item href="#3">Item3</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <span>Armour</span>
+                        <ul class="dropdown-menu">
+                            <li><a class=dropdown-item href="#1">Item1</a></li>
+                            <li><a class=dropdown-item href="#2">Item2222</a></li>
+                            <li><a class=dropdown-item href="#3">Item3</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="page flex items-center">
+        <div class="flex flex-col gap">
+            <section class="about w-1000">
+                <header class="header bg-a">
+                    About the Game
+                </header>
+                <div class="pad bg-c">
+                    <p>This is an idle resource-gathering game. Chop trees, transport your logs to market, sell them for money, and use the earnings to buy better axes and automation.</p>
+                    <p>Goal: Build up your woodcutting and mining operations from manual chopping to fully automated production.</p>
+                </div>
+            </section>
+            <section class="how-to-play w-1000">
+                <header class="header bg-a">
+                    How to Play
+                </header>
+                <div class="pad bg-c flex gap flex-col">
+                    <ul>
+                        <li>Chop: Click "Chop oak!" to gather oak logs manually. Each click gives you logs based on your equipped axe speed.</li>
+                        <li>Transport: Logs move automatically from your inventory to the market at a rate set by your Caravan upgrade.</li>
+                        <li>Sell: Click "Sell" to sell resources from the market for money. Oak = $1, Willow = $2, Stone = $1 each.</li>
+                        <li>Upgrade: Spend money on better axes and automation to chop and mine faster.</li>
+                    </ul> 
+                </div>
+            </section>
+            <section class="progression w-1000">
+                <header class="header bg-a">
+                    Progression Milestones
+                </header>
+                <div class="pad bg-c">
+                    <ul>
+                        <li>$100 earned: Unlocks the Caravan (faster transport) and the Stone Axe (2x chopping speed).</li>
+                        <li>500 oak logs sold: Unlocks the Auto Chopper (passive log production).</li>
+                        <li>Stone Axe purchased: Unlocks the Iron Axe (5x chopping speed).</li>
+                        <li>Mineshaft ($1,000 + 1,000 oak): Unlocks stone mining and the Auto Miner.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="resources w-1000">
+                <header class="header bg-a">
+                    Resources & Equipment
+                </header>
+                <div class="pad bg-c">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <th style="text-align: left; border-bottom: 1px solid var(--border-color);">Resource</th>
+                            <th style="text-align: left; border-bottom: 1px solid var(--border-color);">Sell Price</th>
+                        </tr>
+                        <tr>
+                            <td style="border-bottom: 1px solid var(--border-color);">Oak Logs</td>
+                            <td style="border-bottom: 1px solid var(--border-color);">$1</td>
+                        </tr>
+                        <tr>
+                            <td style="border-bottom: 1px solid var(--border-color);">Willow Logs</td>
+                            <td style="border-bottom: 1px solid var(--border-color);">$2</td>
+                        </tr>
+                        <tr>
+                            <td style="border-bottom: 1px solid var(--border-color);">Stone Ore</td>
+                            <td style="border-bottom: 1px solid var(--border-color);">$1</td>
+                        </tr>
+                    </table>
+                    <br>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <th style="text-align: left; border-bottom: 1px solid var(--border-color);">Axe</th>
+                            <th style="text-align: left; border-bottom: 1px solid var(--border-color);">Cost</th>
+                            <th style="text-align: left; border-bottom: 1px solid var(--border-color);">Speed</th>
+                        </tr>
+                        <tr>
+                            <td style="border-bottom: 1px solid var(--border-color);">None (default)</td>
+                            <td style="border-bottom: 1px solid var(--border-color);">—</td>
+                            <td style="border-bottom: 1px solid var(--border-color);">1x</td>
+                        </tr>
+                        <tr>
+                            <td style="border-bottom: 1px solid var(--border-color);">Stone Axe</td>
+                            <td style="border-bottom: 1px solid var(--border-color);">$100 + 100 oak</td>
+                            <td style="border-bottom: 1px solid var(--border-color);">2x</td>
+                        </tr>
+                        <tr>
+                            <td style="border-bottom: 1px solid var(--border-color);">Iron Axe</td>
+                            <td style="border-bottom: 1px solid var(--border-color);">$500 + 500 oak</td>
+                            <td style="border-bottom: 1px solid var(--border-color);">5x</td>
+                        </tr>
+                    </table>
+                </div>
+            </section>
+
+            
+            
+        </div>
+    </div>
+    <footer></footer>
+</body>
+</html>

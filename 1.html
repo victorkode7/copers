@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/_root.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/nav.css">
+    <link rel="stylesheet" href="css/milestones.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <title>clueless</title>
+</head>
+<body>
+    <header>
+        <div class="top-nav" style="background:#000;color:#fff;padding:0.25rem 0;display:flex;gap:1rem;width:100%;justify-content:center;">
+            <a href="index.html" style="color:#fff;text-decoration:none;">Home</a>
+            <a href="1.html" style="color:#fff;text-decoration:none;">Game 1</a>
+            <a href="2.html" style="color:#fff;text-decoration:none;">Game 2</a>
+            <a href="3.html" style="color:#fff;text-decoration:none;">Game 3</a>
+        </div>
+        <div class="container flex gap">
+            <div class="slot1">Axe slot: <span id="slotaxe"></span></div>
+            <nav class="nav-header">
+                <div class="logo">
+                    <a href="./1.html">
+                    <img src="https://picfiles.alphacoders.com/498/thumb-1920-498797.png" alt="">
+                    </a>
+                </div>
+                <ul class="navbar">
+                    <li class="dropdown">
+                            <span>Axes</span>
+                        <ul class="dropdown-menu">
+                            <li><a class=dropdown-item href="#1" id="equipstoneAxe"></a></li>
+                            <li><a class=dropdown-item href="#2" id="equipironAxe"></a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <span>Armour</span>
+                        <ul class="dropdown-menu">
+                            <li><a class=dropdown-item href="#1">Item1</a></li>
+                            <li><a class=dropdown-item href="#2">Item2222</a></li>
+                            <li><a class=dropdown-item href="#3">Item3</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="page flex flex-col">
+        <div class="ConsoleDiv flex flex-col">
+        <p class="ConsoleOld" id="consoleOld">
+            <span>.</span>
+            <span id="readout5"></span>
+            <br>
+            <span>.</span>
+            <span id="readout4"></span>
+            <br>
+            <span>.</span>
+            <span id="readout3"></span>
+            <br>
+            <span>.</span>
+            <span id="readout2"></span>
+            <br></p>
+        <p id="console">
+            <span> > </span>
+            <span id="readout1"></span>
+            <span id="" class="pulsate">|</span>
+        </p>
+    </div>
+    <div class="Top">
+            <h3 id="money">Money</h3>
+    </div>
+    <div class="Middle flex flex-row">
+        <div class="Resources">            
+            <div class="Inventory">
+                <h4>Inventory</h4>
+                <div class="InventoryHeader">
+                    <span>Resource</span>
+                    <span>Amount</span>
+                    <span></span>
+                </div>
+                <div class="Oak">
+                    <div id="resourceLogsOak"></div>
+                    <div id="resourceAmountLogsOak"></div>
+                    <button id="chopoak">Chop oak!</button>
+                </div>
+                <div class="Stone">
+                    <div id="resourceOresStone"></div>
+                    <div id="resourceAmountOresStone"></div>
+                    <button id="mineStone" disabled>Mine stone</button>
+                </div>
+            </div>
+            <span id="logproduction"></span><br>
+            <span id="oreproduction"></span><br>
+            <button id="transportLogs">Transport Logs </button>
+            <button id="transportOres">Transport Ores</button>
+            <button id="transport">Toggle Transport</button><span id="TransportToggleAll"></span>
+            
+        </div>
+        <div class="Market">
+            <h4>Market</h4>
+            <button id="sellAll">Sell all</button>
+                <div class="MarketInventory">
+                    <div class="oak">
+                        <span id="TransportToggleLogs"></span>
+                        <span id="marketNameLogsOak">Name</span>
+                        <span id="marketAmountLogsOak">Amount</span>
+                        <button id ="sellLogsOak">Sell Oak</button>
+                    </div>
+                    <div class="stone">
+                        <span id="TransportToggleOres"></span>
+                        <span id="marketNameOresStone">Logs in market</span>
+                        <span id="marketAmountOresStone">Amount</span>
+                        <button id ="sellOresStone">Sell Stone</button>
+                    </div>
+                </div>
+        </div>
+        <div id="Upgrades"class="Upgrades">
+            <h3>Upgrades</h3>
+            <div id="caravan" class="Upgrade milestone">
+                <div>
+                    <span id="Name">Caravan</span>
+                    <span id="Mult"></span>
+                    <div id="Tier"></div>
+                    <span id="Price"></span>
+                    <span id="ResourceCost"></span>
+                    <button id="buyCaravan1" data-buy-name="caravan" data-buy-type="upgrade" class="buy-button"disabled>Purchase</button>
+                </div>
+            </div>
+            <div id="autoChopper" class="Upgrade milestone Woodcutting">
+                <div>
+                    <span id="Name">AutoChopper</span>
+                    <span id="Mult"></span>
+                    <div id="Tier"></div>
+                    <span id="Price"></span>
+                    <span id="ResourceCost"></span>
+                    <button id="buyAutoChopper" data-buy-name="autoChopper" data-buy-type="upgrade" class="buy-button"disabled>Purchase</button><br>
+                </div>
+            </div>
+            <div id="autoChopperMult" class="Upgrade milestone Woodcutting">
+                <div>
+                    <span id="Name">AutoChopperMult</span>
+                    <span id="Mult"></span>
+                    <div id="Tier"></div>
+                    <span id="Price"></span>
+                    <span id="ResourceCost"></span>
+                    <button id="buyAutoChopperMult" data-buy-name="autoChopperMult" data-buy-type="upgrade" class="buy-button"disabled>Purchase</button><br>
+                </div>
+            </div>
+            <div id="autoMiner" class="Upgrade milestone Mining">
+                <div>
+                    <span id="Name">AutoMiner</span>
+                    <span id="Mult"></span>
+                    <div id="Tier"></div>
+                    <span id="Price"></span>
+                    <span id="ResourceCost"></span>
+                    <button id="buyAutoMiner" data-buy-name="autoMiner" data-buy-type="upgrade" class="buy-button"disabled>Purchase</button>
+                </div>
+            </div>
+            <div id="autoMinerMult" class="Upgrade milestone Mining">
+                <div>
+                    <span id="Name">AutoMinerMult</span>
+                    <span id="Mult"></span>
+                    <div id="Tier"></div>
+                    <span id="Price"></span>
+                    <span id="ResourceCost"></span>
+                    <button id="buyAutoMinerMult" data-buy-name="autoMinerMult" data-buy-type="upgrade" class="buy-button"disabled>Purchase</button>
+                </div>
+            </div>
+            <div id="mineshaft" class="Unlock milestone Mining">
+                <div>
+                    <span id="Name">Mineshaft</span>
+                    <span class="description">Unlock to mine ore</p>
+                    <div id="Unlocked"></div>
+                    <span id="Price"></span>
+                    <span id="ResourceCost"></span>
+                    <button id="buyMineshaft" data-buy-name="mineshaft" data-buy-type="unlock" class="buy-button"disabled>Purchase</button>
+                </div>
+            </div>
+            <div id="stoneAxe" class="Unlock milestone Woodcutting">
+                <div>
+                    <span id="Name">Stone Axe</span>
+                    <span class="description">Upgrade your axe</span>
+                    <span id="Price"></span>
+                    <span id="ResourceCost"></span>
+                    <button id="buyStoneAxe" data-buy-name="stoneAxe" data-buy-type="unlock" class="buy-button"disabled>Purchase</button>
+                </div>
+            </div>
+            <div id="ironAxe" class="Unlock milestone Woodcutting">
+                <div>
+                    <span id="Name">Iron Axe</span>
+                    <span class="description">Upgrade your axe</span>
+                    <div id="Unlocked"></div>
+                    <span id="Price"></span>
+                    <span id="ResourceCost"></span>
+                    <button id="buyIronAxe" data-buy-name="ironAxe" data-buy-type="unlock"class="buy-button"disabled>Purchase</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    
+    <footer></footer>
+    <!-- Order of scripts matter! -->
+    <script src="./js/playerData.js"></script>
+    <script src="./js/gameData.js"></script>
+    <script src="./js/functions.js"></script>
+    <script src="./js/inventory.js"></script>
+    <script src="./js/unlocks.js"></script>
+    <script src="./js/main.js"></script>
+    <script src="./js/milestones.js"></script>
+</body>
+</html>

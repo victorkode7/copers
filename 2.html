@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/_root.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/nav.css">
+    <link rel="stylesheet" href="css/2.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <title>Idle Game 2</title>
+</head>
+<body class="game-two" data-theme="dark">
+    <header>
+        <div class="top-nav game-links">
+            <a href="index.html">Home</a>
+            <a href="1.html">Game 1</a>
+            <a href="2.html">Game 2</a>
+            <a href="3.html">Game 3</a>
+        </div>
+        <div class="container">
+            <nav class="nav-header">
+                <div class="logo">
+                    <a href="index.html">
+                    <img src="https://picfiles.alphacoders.com/498/thumb-1920-498797.png" alt="">
+                    </a>
+                </div>
+                <ul class="navbar">
+                    <li class="dropdown">
+                        <span>Upgrades</span>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Upgrade 1</a></li>
+                            <li><a class="dropdown-item" href="#">Upgrade 2</a></li>
+                            <li><a class="dropdown-item" href="#">Upgrade 3</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <button id="themeToggle" type="button" aria-label="Switch to light mode">Light mode</button>
+                    </li>
+                    <li style="display:flex;align-items:center;gap:0.5rem;">
+                        <button id="resetGame">Reset Game</button>
+                        <input type="text" id="moneyInput" placeholder="Add money" inputmode="decimal" autocomplete="off" aria-label="Amount of money to add">
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="page flex items-center">
+        <div class="flex flex-col gap w-1000">
+            <section class="console-section w-1000">
+                <div class="ConsoleDiv flex flex-col pad bg-c">
+                    <p class="ConsoleOld" id="consoleOld">
+                        <span>.</span><span id="readout5"></span><br>
+                        <span>.</span><span id="readout4"></span><br>
+                        <span>.</span><span id="readout3"></span><br>
+                        <span>.</span><span id="readout2"></span><br>
+                    </p>
+                    <p id="console">
+                        <span> > </span><span id="readout1"></span><span id="" class="pulsate">|</span>
+                    </p>
+                </div>
+            </section>
+
+            <section class="money-section w-1000">
+                <div class="money-panel pad bg-c">
+                    <div class="money-summary">
+                        <div id="moneyDisplay">$1</div>
+                        <div id="incomeDisplay">Income: $0 / sec</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="upgrades-section w-1000">
+                <header class="header bg-a">Upgrades</header>
+                <div class="upgrades-grid pad bg-c" id="upgradesContainer">
+                    <div class="Upgrade" id="clickUpgrade">
+                        <div>
+                            <span class="upgrade-name">Click Bot</span>
+                            <span class="upgrade-effect" id="clickEffect"><span id="Mult">Adds +$0/sec passive income</span></span>
+                            <div class="upgrade-level" id="clickLevel"><span>LEVEL</span><strong>0</strong></div>
+                            <button id="buyClickUpgrade" class="buy-button">Purchase</button>
+                        </div>
+                    </div>
+                    <div class="Upgrade" id="autoUpgrade">
+                        <div>
+                            <span class="upgrade-name">Moar gains!</span>
+                            <span class="upgrade-effect" id="autoEffect"><span id="Mult">1.00x money multiplier</span></span>
+                            <div class="upgrade-level" id="autoLevel"><span>LEVEL</span><strong>0</strong></div>
+                            <button id="buyAutoUpgrade" class="buy-button">Purchase</button>
+                        </div>
+                    </div>
+                    <div class="Upgrade" id="factoryUpgrade">
+                        <div>
+                            <span class="upgrade-name">Factory</span>
+                            <span class="upgrade-effect" id="factoryEffect"><span id="Mult">Adds +$0/sec passive income</span></span>
+                            <div class="upgrade-level" id="factoryLevel"><span>LEVEL</span><strong>0</strong></div>
+                            <button id="buyFactoryUpgrade" class="buy-button">Purchase</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    <footer></footer>
+    <script src="js/2.js"></script>
+</body>
+</html>

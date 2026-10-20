@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Game 3 Skill Tree Editor</title>
+    <link rel="stylesheet" href="css/3-skill-tree-editor.css?v=20261019-3">
+</head>
+<body>
+    <header class="topbar">
+        <a class="back-link" href="3.html">← Game 3</a>
+        <div class="brand">
+            <span class="brand-mark">✦</span>
+            <div>
+                <p class="eyebrow">DEVELOPER TOOL</p>
+                <h1>Skill Tree Editor</h1>
+            </div>
+        </div>
+        <div class="toolbar">
+            <label class="zoom-control" for="zoomRange">
+                <span>Canvas zoom</span>
+                <input id="zoomRange" type="range" min="10" max="200" value="85">
+                <output id="zoomValue" for="zoomRange">85%</output>
+            </label>
+            <button id="undoEdit" class="button secondary" type="button" title="Undo last tree edit (Ctrl+Z)" disabled>Undo</button>
+            <button id="fitTree" class="button secondary" type="button" title="Fit tree to viewport">Fit</button>
+            <label class="button secondary import-button" for="importFile">Import JSON</label>
+            <input id="importFile" type="file" accept=".json,application/json" hidden>
+            <button id="exportJson" class="button secondary" type="button">Export JSON</button>
+            <button id="exportJs" class="button primary" type="button">Download game data</button>
+        </div>
+        <p id="connectHint" class="connect-hint" hidden>Connect mode: click a node to set it as a prerequisite, then click another node to connect them. Press Esc to cancel.</p>
+    </header>
+
+    <main class="workspace">
+        <aside class="node-sidebar panel">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">TREE OVERVIEW</p>
+                    <h2>Nodes <span id="nodeCount" class="count-badge">0</span></h2>
+                </div>
+                <button id="addNode" class="icon-button" type="button" aria-label="Add node" title="Add node">+</button>
+            </div>
+            <label class="search-field">
+                <span class="sr-only">Search nodes</span>
+                <span aria-hidden="true">⌕</span>
+                <input id="nodeSearch" type="search" placeholder="Find a node">
+            </label>
+            <div class="base-node-actions" aria-label="Quick-add base nodes">
+                <p class="eyebrow">BASE NODE TEMPLATES</p>
+                <div>
+                    <button type="button" data-base-node="health"><span aria-hidden="true">♥</span> Health</button>
+                    <button type="button" data-base-node="attackSpeed"><span aria-hidden="true">⚡</span> Attack speed</button>
+                    <button type="button" data-base-node="accuracy"><span aria-hidden="true">◎</span> Accuracy</button>
+                    <button type="button" data-base-node="damage"><span aria-hidden="true">⚔</span> Damage</button>
+                </div>
+            </div>
+            <div id="nodeList" class="node-list" role="listbox" aria-label="Skill tree nodes"></div>
+            <div class="sidebar-footer">
+                <span class="status-dot"></span>
+                <span id="saveStatus">Changes are local until exported</span>
+            </div>
+        </aside>
+
+        <section class="graph-column">
+            <section class="graph-panel panel" aria-labelledby="graphHeading">
+                <div class="panel-heading graph-heading">
+                    <div>
+                        <p class="eyebrow">PATHWAYS</p>
+                        <h2 id="graphHeading">Tree map</h2>
+                        <p class="muted">Drag nodes to arrange them. Scroll to explore larger trees.</p>
+                    </div>
+                    <div class="legend">
+                        <button id="connectToggle" class="button secondary" type="button" aria-pressed="false" title="Click nodes to connect them as prerequisites">Connect nodes</button>
+                        <button id="insertBetween" class="button secondary" type="button" disabled>Insert node between</button>
+                        <div id="graphViewToggle" class="view-toggle" role="group" aria-label="Skill tree preview mode">
+                            <button type="button" data-view-mode="player" aria-pressed="false">Player view</button>
+                            <button type="button" data-view-mode="detailed" aria-pressed="true">Detailed view</button>
+                        </div>
+                        <span><i class="legend-node"></i> Skill</span>
+                        <span><i class="legend-node legend-start"></i> Starting node</span>
+                        <span><i class="legend-line"></i> Requirement</span>
+                    </div>
+                </div>
+                <div id="graphViewport" class="graph-viewport" tabindex="-1" aria-label="Interactive skill tree canvas">
+                    <div id="graphStage" class="graph-stage">
+                        <svg id="graphEdges" class="graph-edges" aria-hidden="true"></svg>
+                        <div id="graphNodes" class="graph-nodes"></div>
+                    </div>
+                </div>
+                <div class="graph-footer">
+                    <span id="graphHint">Select a connection, choose Insert node between, then pick a preset or an existing node. Drag nodes to reposition them.</span>
+                    <button id="fitTree" class="text-button" type="button">Fit tree</button>
+                </div>
+            </section>
+            <section class="validation-panel panel" aria-labelledby="validationHeading">
+                <div class="panel-heading validation-heading">
+                    <div>
+                        <p class="eyebrow">STRUCTURE CHECK</p>
+                        <h2 id="validationHeading">Validation <span id="validationCount" class="count-badge">0</span></h2>
+                    </div>
+                    <span id="validationStatus" class="validation-status">Checking</span>
+                </div>
+                <ul id="validationList" class="validation-list"></ul>
+            </section>
+        </section>
+
+        <aside class="inspector panel" aria-labelledby="inspectorHeading">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">NODE DETAILS</p>
+                    <h2 id="inspectorHeading">Inspector</h2>
+                </div>
+                <button id="deleteNode" class="icon-button danger-button" type="button" aria-label="Delete selected node" title="Delete selected node">×</button>
+            </div>
+            <p id="emptyInspector" class="empty-inspector">Select a node on the map or from the list to edit its properties.</p>
+            <form id="nodeForm" class="node-form" hidden>
+                <label>
+                    <span>Identifier</span>
+                    <input id="nodeId" name="id" type="text" spellcheck="false" required>
+                    <small>Stable save key. Changing an existing ID can orphan ranks in saved games.</small>
+                </label>
+                <div class="form-row">
+                    <label>
+                        <span>Display name</span>
+                        <input id="nodeName" name="name" type="text" required>
+                    </label>
+                    <label class="icon-field">
+                        <span>Icon</span>
+                        <input id="nodeIcon" name="icon" type="text" maxlength="4">
+                    </label>
+                </div>
+                <div class="form-row node-appearance-row">
+                    <label>
+                        <span>Node size</span>
+                        <select id="nodeSize" name="size">
+                            <option value="1">Regular</option>
+                            <option value="1.25">Large (1.25x)</option>
+                            <option value="1.5">Extra large (1.5x)</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Base node color</span>
+                        <select id="nodeType" name="type">
+                            <option value="">None</option>
+                            <option value="health">Health · red</option>
+                            <option value="attackSpeed">Attack speed · green</option>
+                            <option value="accuracy">Accuracy · blue</option>
+                            <option value="damage">Damage · yellow</option>
+                        </select>
+                    </label>
+                </div>
+                <label>
+                    <span>Effect text</span>
+                    <input id="nodeEffect" name="effect" type="text" required>
+                </label>
+                <div class="form-row three-columns">
+                    <label>
+                        <span>Maximum selections</span>
+                        <input id="nodeMaxRank" name="maxRank" type="number" min="0" max="1" step="1" required disabled>
+                    </label>
+                    <label>
+                        <span>Column</span>
+                        <input id="nodeColumn" name="column" type="number" step="1" title="Grid coordinates can be zero or negative" required>
+                    </label>
+                    <label>
+                        <span>Row</span>
+                        <input id="nodeRow" name="row" type="number" step="1" title="Grid coordinates can be zero or negative" required>
+                    </label>
+                </div>
+                <label class="check-row">
+                    <input id="nodeStart" name="start" type="checkbox">
+                    <span>This is the starting node</span>
+                </label>
+                <fieldset class="requirements-field">
+                    <legend>Prerequisites</legend>
+                    <p class="field-help">Select the nodes that connect into this node.</p>
+                    <select id="nodeRequires" name="requires" multiple size="6" aria-label="Prerequisite nodes"></select>
+                    <label class="mode-field">
+                        <span>When multiple are selected</span>
+                        <select id="nodeRequiresMode" name="requiresMode">
+                            <option value="all">Require all selected</option>
+                            <option value="any">Require any one selected</option>
+                        </select>
+                    </label>
+                </fieldset>
+                <fieldset class="bonus-editor">
+                    <legend>Stat bonuses</legend>
+                    <p class="field-help">Add a flat amount or scale the final stat with a multiplier (1.10 is +10%). For attack speed, a multiplier above 1 is faster; an additive value of 0.1 is +10%.</p>
+                    <div class="stat-bonus-heading" aria-hidden="true"><span>Stat</span><span>Type</span><span>Value</span><span></span></div>
+                    <div id="statBonusRows" class="stat-bonus-rows"></div>
+                    <button id="addStatBonus" class="button secondary" type="button">Add stat bonus</button>
+                </fieldset>
+                <details class="advanced-stats">
+                    <summary>Advanced stats (JSON)</summary>
+                    <label>
+                        <span>Custom or per-level bonuses</span>
+                        <textarea id="nodeStats" name="stats" rows="4" spellcheck="false"></textarea>
+                        <small>For special effects such as attackSpeedPerLevel.</small>
+                    </label>
+                </details>
+                <div id="statsError" class="field-error" role="status" hidden></div>
+                <div class="node-actions">
+                    <button id="duplicateNode" class="button secondary" type="button">Duplicate</button>
+                    <button id="applyNode" class="button primary" type="submit">Apply changes</button>
+                </div>
+                <p id="nodeDepth" class="depth-note"></p>
+            </form>
+        </aside>
+    </main>
+    <dialog id="insertNodeDialog" class="insert-dialog" aria-labelledby="insertNodeTitle">
+        <form id="insertNodeForm" method="dialog">
+            <h2 id="insertNodeTitle">Choose a node to insert</h2>
+            <p id="insertNodePath" class="field-help"></p>
+            <label for="insertNodeChoice">Select an existing node or preset</label>
+            <select id="insertNodeChoice" required></select>
+            <div class="insert-dialog-actions">
+                <button class="button secondary" type="button" id="cancelInsert">Cancel</button>
+                <button class="button primary" type="submit">Insert into path</button>
+            </div>
+        </form>
+    </dialog>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    <script src="js/3-skill-tree.js"></script>
+    <script src="js/3-skill-tree-editor.js?v=20261020-9"></script>
+</body>
+</html>

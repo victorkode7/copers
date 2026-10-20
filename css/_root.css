@@ -1,0 +1,20 @@
+:root {
+    --font-default: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --color-abyss: #1e1e1e; /*background color that is shown when no others colors specified*/
+    --color-abyss-95:rgba(30, 30, 30, 0.95);
+    --color-abyss-90:rgba(30, 30, 30, 0.90);
+    --color-abyss-80:rgba(30, 30, 30, 0.80);
+    --color-abyss-70:rgba(30, 30, 30, 0.70);
+    --color-debug: #ff0000;
+    --color-text: #ffffff; /*default text color*/
+    --color-ocean: #1c2017;
+    --color-calm: #151811;
+    --color-border: hsla(0, 0%, 100%, 0.75);
+    --font-default-size:1rem;
+    --font-big:3rem;
+    --font-medium:1.5rem;
+    --font-small:1rem;
+    --border-radius: 2px;
+    --border-color: hsla(0, 0%, 100%, 0.5);
+    --color-highlight:rgba(255, 255, 0, 0.8);
+}
