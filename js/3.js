@@ -102,7 +102,7 @@ const mapData = [
         attackInterval: 2.2,
         gold: [45, 65],
         experience: 30,
-        goal: 1000,
+        goal: 100,
         drops: [{ id: 'pearl', amount: [1, 2], chance: 1 }]
     },
     {
