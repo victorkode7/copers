@@ -92,7 +92,7 @@ const mapData = [
         id: 'salmen',
         name: 'Salmen village',
         enemy: 'Salmen',
-        monsterCount: 4,
+        monsterCount: 9,
         description: 'A bright shoreline patrolled by salmon-folk and rich with hidden pearls.',
         health: 300,
         respawnSeconds: 4,
@@ -651,11 +651,13 @@ function getPlayerAccuracy() {
         getSkillMultiplier('accuracyMultiplier') * getGearStat('accuracyMultiplier'));
 }
 
+function getAttackSpeedMultiplier() {
+    return getSkillMultiplier('attackSpeedMultiplier') * getGearStat('attackSpeedMultiplier') *
+        Math.max(0.01, 1 + getSkillStat('attackSpeedBonus')) / Math.pow(0.92, state.upgrades.haste);
+}
+
 function getAttackSpeed() {
-    const speedMultiplier = getSkillMultiplier('attackSpeedMultiplier') * getGearStat('attackSpeedMultiplier') *
-        Math.max(0.01, 1 + getSkillStat('attackSpeedBonus'));
-    return Math.max(getGearStat('minimumAttackInterval'), 1.2 * Math.pow(0.92, state.upgrades.haste) *
-        1 / speedMultiplier);
+    return Math.max(getGearStat('minimumAttackInterval'), 1.2 / getAttackSpeedMultiplier());
 }
 
 function getPlayerEvasion() {
@@ -1452,15 +1454,13 @@ function renderCrafting() {
         section.dataset.craftingCategory = categoryGroup.id;
         const heading = document.createElement('div');
         heading.className = 'crafting-category-heading';
-        const categoryCopy = document.createElement('div');
         const title = document.createElement('h3');
         title.textContent = categoryGroup.title;
-        categoryCopy.append(title);
         const ready = categoryRecipes.filter(recipe => !state.crafted.includes(recipe.id) && canCraftRecipe(recipe)).length;
         const progress = document.createElement('span');
         progress.className = 'crafting-category-progress';
         progress.textContent = ready + ' ready · ' + categoryRecipes.length + ' shown';
-        heading.append(categoryCopy, progress);
+        heading.append(title, progress);
         const cards = document.createElement('div');
         cards.className = 'crafting-category-cards';
 
@@ -1471,18 +1471,17 @@ function renderCrafting() {
             const item = document.createElement('article');
             item.className = 'craft-card' + (crafted ? ' is-crafted' : '') + (canCraft && !crafted ? ' is-craftable' : '');
             item.dataset.category = category;
+            item.dataset.rarity = recipe.rarity || 'common';
 
             const cardHeading = document.createElement('div');
             cardHeading.className = 'craft-card-heading';
-            const itemCopy = document.createElement('div');
-            itemCopy.className = 'craft-card-copy';
             const name = document.createElement('h4');
+            name.className = 'craft-card-copy';
             name.textContent = recipe.name;
-            itemCopy.append(name);
             const slotTag = document.createElement('span');
             slotTag.className = 'craft-slot-tag';
             slotTag.textContent = recipe.slot;
-            cardHeading.append(Equipment.createIcon(recipe, equipmentSlots.find(slot => slot.id === recipe.slot)?.icon), itemCopy, slotTag);
+            cardHeading.append(Equipment.createIcon(recipe, equipmentSlots.find(slot => slot.id === recipe.slot)?.icon), name, slotTag);
 
             const effect = document.createElement('p');
             effect.className = 'craft-card-effect';
@@ -1497,8 +1496,6 @@ function renderCrafting() {
                 const owned = state.materials[id];
                 const requirement = document.createElement('li');
                 requirement.className = owned >= amount ? 'has-enough' : 'needs-more';
-                const materialCopy = document.createElement('span');
-                materialCopy.className = 'craft-material-copy';
                 const materialLabel = document.createElement('span');
                 materialLabel.className = 'craft-material-label';
                 const materialName = document.createElement('span');
@@ -1533,10 +1530,9 @@ function renderCrafting() {
                 });
                 sourceWrap.append(sourceInfo, tooltip);
                 materialLabel.append(materialName, sourceWrap);
-                materialCopy.appendChild(materialLabel);
                 const quantity = document.createElement('strong');
                 quantity.textContent = formatAmount(owned) + ' / ' + formatAmount(amount);
-                requirement.append(materialCopy, quantity);
+                requirement.append(materialLabel, quantity);
                 materials.appendChild(requirement);
             });
 
@@ -1578,7 +1574,26 @@ function renderItemComparison(container, item) {
         entry.className = 'item-stat-line stat-' + line.status;
         entry.dataset.stat = line.key;
         entry.dataset.comparison = line.status;
-        entry.textContent = line.text + (line.delta ? ' (' + line.delta + ')' : '');
+        const label = Equipment.stats[line.key].display.label;
+        const value = document.createElement('span');
+        value.className = 'item-stat-value';
+        const caption = document.createElement('span');
+        caption.className = 'item-stat-label';
+        if (Equipment.stats[line.key].mode === 'min') {
+            caption.textContent = label + ': ';
+            value.textContent = line.text.slice(label.length + 2);
+            entry.append(caption, value);
+        } else {
+            value.textContent = line.text.slice(0, -(label.length + 1));
+            caption.textContent = label;
+            entry.append(value, document.createTextNode(' '), caption);
+        }
+        if (line.delta) {
+            const delta = document.createElement('span');
+            delta.className = 'item-stat-delta';
+            delta.textContent = ' (' + line.delta + ')';
+            entry.append(delta);
+        }
         entry.title = labels[line.status] + ' compared with ' + (equipped ? equipped.name : 'an empty slot') + '. ' + line.deltaDescription;
         entry.setAttribute('aria-label', entry.textContent + '. ' + entry.title);
         container.append(entry);
@@ -1613,6 +1628,7 @@ function renderInventory() {
                 !state.tutorials.firstGearSlotSelected &&
                 state.tutorials.firstGearSlot === slot.id ? ' tutorial-highlight' : '');
         entry.dataset.gearSlot = slot.id;
+        if (equippedItem) entry.dataset.rarity = equippedItem.rarity || 'common';
         entry.setAttribute('aria-label', slot.name + ': ' + (equippedItem ? equippedItem.name : 'Empty slot') +
             (state.tutorials.firstGearPending && !state.tutorials.firstGearSlotSelected &&
                 state.tutorials.firstGearSlot === slot.id ? '. Select this slot to view your new gear.' : ''));
@@ -1626,6 +1642,7 @@ function renderInventory() {
         const name = document.createElement('strong');
         name.className = 'equipment-slot-name';
         name.textContent = equippedItem ? equippedItem.name : 'Empty slot';
+        name.title = name.textContent;
         entry.append(label, icon, name);
         const wrapper = document.createElement('div');
         wrapper.className = 'equipment-slot-wrap';
@@ -1681,14 +1698,23 @@ function renderInventory() {
                 state.tutorials.firstGearItemId === recipe.id
                 ? ' tutorial-highlight-item'
                 : '');
+        item.dataset.rarity = recipe.rarity || 'common';
         const copy = document.createElement('div');
         copy.className = 'game-item-copy inventory-item-identity';
+        const spriteFrame = Equipment.createIcon(recipe, selectedSlot.icon);
+        spriteFrame.classList.add('inventory-sprite-frame');
+        const identity = document.createElement('div');
+        identity.className = 'inventory-item-meta';
         const name = document.createElement('strong');
         name.textContent = recipe.name;
+        const rarity = document.createElement('span');
+        rarity.className = 'inventory-item-rarity';
+        rarity.textContent = item.dataset.rarity.charAt(0).toUpperCase() + item.dataset.rarity.slice(1);
+        identity.append(name, rarity);
         const effect = document.createElement('span');
         renderItemComparison(effect, recipe);
         effect.classList.add('game-item-copy', 'inventory-item-stats');
-        copy.append(Equipment.createIcon(recipe, selectedSlot.icon), name);
+        copy.append(spriteFrame, identity);
         const button = document.createElement('button');
         button.className = 'action-button gear-equip-button';
         if (state.tutorials.firstGearPending &&
@@ -2034,7 +2060,7 @@ function renderCombat() {
 }
 
 function render() {
-    const speed = getAttackSpeed();
+    const speedBonus = Math.round((getAttackSpeedMultiplier() - 1) * 10000) / 100;
     const experienceRequired = experienceForNextLevel(state.level);
     const experiencePercent = Math.min(100, state.experience / experienceRequired * 100);
     elements.gold.textContent = formatAmount(state.gold);
@@ -2049,7 +2075,7 @@ function render() {
     elements.damage.textContent = formatAmount(getDamage());
     elements.multiHit.textContent = String(getMultiHit());
     elements.poisonChance.textContent = (getPoisonChance() * 100).toFixed(1).replace(/\.0$/, '') + '%';
-    elements.speed.textContent = speed.toFixed(2) + 's';
+    elements.speed.textContent = (speedBonus >= 0 ? '+' : '') + speedBonus + '%';
     elements.accuracy.textContent = formatAmount(getPlayerAccuracy());
     elements.evasion.textContent = String(getPlayerEvasion());
     elements.townView.hidden = state.currentView !== 'town';

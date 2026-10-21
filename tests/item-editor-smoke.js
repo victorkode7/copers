@@ -22,7 +22,7 @@
     try {
         const initialCount = count();
         check('drop controls reserved for future map editor', !$('addDrop') && !$('dropRows'));
-        check('editor loads catalogue', initialCount === 11 && !$('exportGame').disabled);
+        check('editor loads catalogue', initialCount === window.adventureItems.items.length && !$('exportGame').disabled);
         $('addItem').click();
         change($('itemName'), 'Test Necklace'); change($('itemId'), 'testNecklace'); change($('itemSlot'), 'necklace');
         check('create and edit item', count() === initialCount + 1 && $('preview').textContent.includes('Test Necklace'));

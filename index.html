@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/nav.css">
     <link rel="stylesheet" href="css/app-nav.css">
-    <link rel="stylesheet" href="css/game.css?v=20261021-21">
+    <link rel="stylesheet" href="css/game.css?v=20261021-34">
     <link rel="stylesheet" href="css/skill-tree-background.css?v=20261021-18">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <title>Idle Adventure</title>
@@ -19,24 +19,20 @@
             <a href="skill-tree-editor.html">Skill Tree Editor</a>
             <a href="item-editor.html">Item Editor</a>
         </nav>
-        <div class="container">
-            <nav class="nav-header">
-                <div class="logo">
-                    <a href="index.html">
-                        <img src="https://picfiles.alphacoders.com/498/thumb-1920-498797.png" alt="Idle Adventure">
-                    </a>
-                </div>
-                <section id="tutorialNotifications" class="tutorial-notifications" aria-label="Progress tips" hidden></section>
-                <ul class="navbar">
-                    <li><button id="mapButton" class="nav-button" type="button" aria-pressed="false">Map</button></li>
-                    <li><button id="townButton" class="nav-button" type="button" aria-pressed="true">Crafting</button></li>
-                    <li><button id="upgradesButton" class="nav-button" type="button" aria-pressed="false">Skill Tree</button></li>
-                    <li><button id="inventoryButton" class="nav-button" type="button" aria-pressed="false">Inventory</button></li>
-                    <li class="gold-display"><span>Gold</span><strong id="goldDisplay">0</strong></li>
-                    <li class="reset-nav-item"><button id="resetGame" class="nav-button reset-button" type="button">Reset Game</button></li>
-                </ul>
-            </nav>
-        </div>
+        <nav class="nav-header">
+            <a class="logo" href="index.html">
+                <img src="https://picfiles.alphacoders.com/498/thumb-1920-498797.png" alt="Idle Adventure">
+            </a>
+            <section id="tutorialNotifications" class="tutorial-notifications" aria-label="Progress tips" hidden></section>
+            <ul class="navbar">
+                <li><button id="mapButton" class="nav-button" type="button" aria-pressed="false">Map</button></li>
+                <li><button id="townButton" class="nav-button" type="button" aria-pressed="true">Crafting</button></li>
+                <li><button id="upgradesButton" class="nav-button" type="button" aria-pressed="false">Skill Tree</button></li>
+                <li><button id="inventoryButton" class="nav-button" type="button" aria-pressed="false">Inventory</button></li>
+                <li class="gold-display"><span>Gold</span><strong id="goldDisplay">0</strong></li>
+                <li class="reset-nav-item"><button id="resetGame" class="nav-button reset-button" type="button">Reset Game</button></li>
+            </ul>
+        </nav>
     </header>
 
     <section class="experience-strip" aria-label="Character experience">
@@ -54,9 +50,7 @@
     <main class="adventure-layout">
       <div class="side-panel-stack">
           <aside class="side-panel world-panel" aria-label="World selector" hidden>
-              <div class="side-panel-heading">
-                  <span class="eyebrow">World selector</span>
-              </div>
+              <span class="eyebrow side-panel-heading">World selector</span>
               <div id="worldList" class="world-list"></div>
           </aside>
           <aside class="side-panel stats-panel" aria-labelledby="statsHeading">
@@ -70,21 +64,17 @@
                       <div class="stat-list">
                           <div class="combat-stat"><span>Damage</span><strong id="damageDisplay">2</strong></div>
                           <div class="combat-stat"><span title="Number of monsters hit with each attack">Multi-hit</span><strong id="multiHitDisplay">1</strong></div>
-                          <div class="combat-stat"><span>Attack interval</span><strong id="speedDisplay">1.20s</strong></div>
+                          <div class="combat-stat"><span title="Combined attack speed bonus from equipment, skills, and upgrades. Bonuses multiply together, before the attack-speed limit.">Attack speed</span><strong id="speedDisplay">+0%</strong></div>
                           <div class="combat-stat"><span>Accuracy</span><strong id="accuracyDisplay">100</strong></div>
                       </div>
                   </section>
                   <section class="combat-stat-group" aria-labelledby="defensiveStatsHeading">
                       <h3 id="defensiveStatsHeading">Defensive stats</h3>
-                      <div class="stat-list">
-                          <div class="combat-stat"><span>Evasion</span><strong id="evasionDisplay">25</strong></div>
-                      </div>
+                      <div class="combat-stat"><span>Evasion</span><strong id="evasionDisplay">25</strong></div>
                   </section>
                   <section class="combat-stat-group" aria-labelledby="miscStatsHeading">
                       <h3 id="miscStatsHeading">Misc stats</h3>
-                      <div class="stat-list">
-                          <div class="combat-stat"><span title="Chance to apply a poison stack on each successful hit">Poison chance</span><strong id="poisonChanceDisplay">0%</strong></div>
-                      </div>
+                      <div class="combat-stat"><span title="Chance to apply a poison stack on each successful hit">Poison chance</span><strong id="poisonChanceDisplay">0%</strong></div>
                   </section>
               </div>
           </aside>
@@ -147,10 +137,8 @@
                 <p class="subtle">Turn materials from your journeys into gear for your next expedition.</p>
             </div>
             <div class="crafting-heading">
-                <div>
-                    <h2>Gear recipes</h2>
-                    <p class="subtle">Crafted items go to your inventory. Equip them when you are ready.</p>
-                </div>
+                <h2>Gear recipes</h2>
+                <p class="subtle">Crafted items go to your inventory. Equip them when you are ready.</p>
             </div>
             <div id="craftingTools" class="crafting-tools">
                 <div class="craft-category-filters" role="group" aria-label="Filter recipes by gear category">
@@ -205,9 +193,7 @@
           <summary class="loot-panel-toggle" aria-label="Toggle loot drops">
               <span class="eyebrow">LOOT DROPS</span>
           </summary>
-          <div class="loot-panel-content">
-              <ol id="lootLog" class="loot-list" aria-live="polite"></ol>
-          </div>
+          <ol id="lootLog" class="loot-list loot-panel-content" aria-live="polite"></ol>
       </details>
     </main>
     <footer class="developer-options"><details><summary>Developer options</summary><label><input id="developerItems" type="checkbox"> Enable developer equipment</label></details></footer>
@@ -216,6 +202,6 @@
     <script src="js/skill-tree.js?v=20261021-2"></script>
     <script src="js/skill-stat-compat.js?v=20261021-2"></script>
     <script src="js/skill-sprites.js?v=20261021-13"></script>
-    <script src="js/game.js?v=20261021-21"></script>
+    <script src="js/game.js?v=20261021-28"></script>
 </body>
 </html>

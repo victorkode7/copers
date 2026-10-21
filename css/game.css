@@ -1,3 +1,19 @@
+@font-face {
+    font-family: "Pixeloid Sans";
+    src: url("../assets/fonts/pixeloid-sans.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Pixeloid Sans";
+    src: url("../assets/fonts/pixeloid-sans-bold.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+}
+
 html {
     scrollbar-gutter: stable;
 }
@@ -8,6 +24,11 @@ html {
 }
 
 .idle-adventure {
+    font-family: "Pixeloid Sans", var(--font-default);
+    font-weight: 400;
+    line-height: 1.4;
+    --game-text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+    text-shadow: var(--game-text-shadow);
     --adventure-bg: #0c151d;
     --adventure-panel: #172632;
     --adventure-raised: #243949;
@@ -31,17 +52,24 @@ html {
     color: var(--adventure-text);
 }
 
+.idle-adventure .app-nav,
+.idle-adventure button,
+.idle-adventure input,
+.idle-adventure select,
+.idle-adventure textarea {
+    font-family: inherit;
+    font-weight: 700;
+    text-shadow: var(--game-text-shadow);
+}
+
 .idle-adventure > header {
     width: 100%;
     background: var(--adventure-panel);
 }
 
-.idle-adventure .container {
-    width: 100%;
-    max-width: none;
-    height: auto;
-    margin: 0 auto;
-    background: transparent;
+/* Fallback symbols stay clear of text effects intended for labels. */
+.idle-adventure :is(.item-sprite, .skill-node-icon, .equipment-slot-icon) {
+    text-shadow: none;
 }
 
 .idle-adventure .nav-header {
@@ -49,6 +77,9 @@ html {
     --nav-logo-size: 66px;
     --tutorial-notice-gap: 0.75rem;
     position: relative;
+    display: flex;
+    column-gap: 2rem;
+    align-items: center;
     justify-content: center;
     min-height: 88px;
     margin: 0;
@@ -414,11 +445,6 @@ html {
     flex-direction: column;
     gap: 1rem;
     margin: 0;
-    padding: clamp(1rem, 3vw, 2rem);
-    border: 1px solid var(--adventure-border);
-    border-radius: 22px;
-    background: var(--adventure-panel);
-    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.22);
 }
 
 .idle-adventure .side-panel {
@@ -512,6 +538,7 @@ html {
 }
 
 .idle-adventure .side-panel-heading {
+    display: block;
     margin-bottom: 0.75rem;
 }
 
@@ -542,6 +569,19 @@ html {
     border: 1px solid var(--adventure-border);
     border-radius: 16px;
     background: var(--adventure-card);
+}
+
+/* Display the 128px brick tile at 2x size with crisp pixel scaling. */
+.idle-adventure #townView,
+.idle-adventure #inventoryView .town-section {
+    background-color: #071624;
+    background-image:
+        linear-gradient(rgba(7, 22, 36, 0.68), rgba(7, 22, 36, 0.68)),
+        url("../assets/ui/brick128.png");
+    background-size: auto, 256px 256px;
+    background-repeat: no-repeat, repeat;
+    image-rendering: pixelated;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), inset 0 0 40px rgba(0, 0, 0, 0.16);
 }
 
 .idle-adventure .map-panel {
@@ -845,7 +885,7 @@ html {
 
 .idle-adventure .map-button.selected strong {
     color: #fff0c4;
-    text-shadow: 0 0 8px rgba(255, 224, 154, 0.35);
+    text-shadow: var(--game-text-shadow);
 }
 
 .idle-adventure .map-button.selected > span {
@@ -1529,7 +1569,7 @@ html {
     letter-spacing: 0.045em;
     line-height: 1rem;
     text-overflow: ellipsis;
-    text-shadow: 0 0 8px rgba(241, 189, 102, 0.4);
+    text-shadow: var(--game-text-shadow);
     text-transform: uppercase;
     white-space: nowrap;
     opacity: 0;
@@ -1626,7 +1666,7 @@ html {
 
 .idle-adventure .gear-workspace {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.7fr);
     gap: 1rem;
 }
 
@@ -1703,10 +1743,8 @@ html {
 }
 
 .idle-adventure .crafting-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+    display: grid;
+    grid-template-columns: minmax(0, max-content);
     margin: 0.2rem 0 0.15rem;
 }
 
@@ -1857,11 +1895,8 @@ html {
 
 .idle-adventure .craft-card-copy {
     min-width: 0;
-}
-
-.idle-adventure .craft-card-copy h4 {
     margin: 0;
-    color: var(--adventure-text);
+    color: var(--item-rarity);
     font-size: 0.92rem;
     line-height: 1.25;
 }
@@ -1872,7 +1907,7 @@ html {
     border: 1px solid rgba(99, 223, 197, 0.24);
     border-radius: 999px;
     color: var(--adventure-green);
-    font-size: 0.62rem;
+    font-size: 0.75rem;
     font-weight: 750;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -1890,7 +1925,7 @@ html {
     min-height: 2.5em;
     margin: 0;
     color: var(--adventure-muted);
-    font-size: 0.74rem;
+    font-size: 0.875rem;
     line-height: 1.4;
 }
 
@@ -1910,12 +1945,7 @@ html {
     justify-content: space-between;
     gap: 0.5rem;
     color: var(--adventure-muted);
-    font-size: 0.72rem;
-}
-
-.idle-adventure .craft-material-copy {
-    display: grid;
-    gap: 0.08rem;
+    font-size: 0.8125rem;
 }
 
 .idle-adventure .craft-material-label {
@@ -1981,7 +2011,7 @@ html {
 
 .idle-adventure .craft-material-tooltip > strong {
     color: var(--adventure-green);
-    font-size: 0.68rem;
+    font-size: 0.8125rem;
 }
 
 .idle-adventure .craft-material-tooltip-source {
@@ -1991,7 +2021,7 @@ html {
 
 .idle-adventure .craft-material-tooltip-source small {
     color: var(--adventure-muted);
-    font-size: 0.65rem;
+    font-size: 0.75rem;
 }
 
 .idle-adventure .craft-material-info:hover,
@@ -2114,7 +2144,9 @@ html {
 .idle-adventure .equipment-slot {
     display: flex;
     min-width: 0;
-    min-height: 112px;
+    height: 10rem;
+    min-height: 10rem;
+    max-height: 10rem;
     flex-direction: column;
     align-items: center;
     gap: 0.4rem;
@@ -2152,8 +2184,12 @@ html {
 }
 
 .idle-adventure .equipment-slot-label {
+    flex-shrink: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     color: var(--adventure-muted);
-    font-size: 0.66rem;
+    font-size: 0.75rem;
     font-weight: 750;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -2166,13 +2202,13 @@ html {
     height: 68px;
     flex: 0 0 68px;
     place-items: center;
-    border: 2px solid rgba(241, 189, 102, 0.62);
+    border: 2px solid var(--item-rarity, var(--adventure-border));
     border-radius: 10px;
     background: radial-gradient(circle at 35% 25%, #49636a, #17272b 72%);
     color: var(--adventure-amber);
     font-size: 1.65rem;
     line-height: 1;
-    text-shadow: 0 2px 7px rgba(0, 0, 0, 0.65);
+    text-shadow: none;
 }
 
 .idle-adventure .equipment-slot-icon img {
@@ -2191,8 +2227,14 @@ html {
 }
 
 .idle-adventure .equipment-slot-name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    height: 2.5em;
+    flex-shrink: 0;
+    overflow: hidden;
     max-width: 100%;
-    color: var(--adventure-amber);
+    color: var(--item-rarity, var(--adventure-text));
     font-size: 0.78rem;
     line-height: 1.25;
     overflow-wrap: anywhere;
@@ -2200,7 +2242,7 @@ html {
 
 .idle-adventure .equipment-slot.is-empty .equipment-slot-name {
     color: var(--adventure-muted);
-    font-weight: 500;
+    font-weight: 700;
 }
 
 .idle-adventure .equipment-slot-bonus {
@@ -2232,11 +2274,6 @@ html {
 .idle-adventure .equipment-slot.unique-drop {
     border-color: rgba(209, 154, 255, 0.65);
     background: linear-gradient(160deg, rgba(151, 83, 204, 0.2), rgba(20, 37, 40, 0.84) 58%);
-}
-
-.idle-adventure .equipment-slot.unique-drop .equipment-slot-icon {
-    border-color: rgba(209, 154, 255, 0.72);
-    color: #d19aff;
 }
 
 .idle-adventure .equipment-status {
@@ -2278,7 +2315,7 @@ html {
 .idle-adventure .combat-stat-group > h3 {
     margin: 0 0 0.45rem;
     color: var(--adventure-green);
-    font-size: 0.72rem;
+    font-size: 0.8125rem;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -2334,14 +2371,6 @@ html {
     margin: 0;
     color: var(--adventure-muted);
     font-size: 0.82rem;
-}
-
-.idle-adventure .adventure-page:has(#upgradesView:not([hidden])) {
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
 }
 
 .idle-adventure #upgradesView {
@@ -2799,11 +2828,6 @@ html {
         width: calc(100% - 1rem);
     }
 
-    .idle-adventure .adventure-page {
-        padding: 0.75rem;
-        border-radius: 16px;
-    }
-
     .idle-adventure .game-panel {
         padding: 0.85rem;
     }
@@ -2832,12 +2856,6 @@ html {
 
     .idle-adventure .gear-workspace {
         grid-template-columns: 1fr;
-    }
-
-    .idle-adventure .crafting-heading {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 0.55rem;
     }
 
     .idle-adventure .crafting-summary {
@@ -2896,12 +2914,23 @@ html {
 .idle-adventure .equipment-unequip { position: absolute; top: 4px; right: 4px; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 1px solid var(--adventure-border); border-radius: 4px; background: var(--adventure-card); color: var(--adventure-text); font: inherit; font-size: 1.15rem; line-height: 1; cursor: pointer; }
 .idle-adventure .equipment-unequip:hover { color: #ff8d87; border-color: #ff8d87; }
 .idle-adventure .equipment-unequip:focus-visible { outline: 2px solid var(--adventure-green); outline-offset: 2px; }
-.idle-adventure #gearInventory .gear-equip-button { display: grid; place-items: center; width: 72px; height: 72px; min-width: 72px; flex: 0 0 72px; padding: 0; border-radius: 6px; }
-.idle-adventure #gearInventory .game-item { display: grid; grid-template-columns: minmax(64px, 1fr) minmax(0, 1.4fr) 72px; align-items: center; }
-.idle-adventure #gearInventory .inventory-item-identity { display: flex; flex-wrap: wrap; align-items: center; gap: 0.65rem; }
-.idle-adventure #gearInventory .inventory-item-identity strong { flex: 1 1 6rem; min-width: 0; overflow-wrap: anywhere; }
+.idle-adventure #gearInventory { container-type: inline-size; gap: 0.8rem; }
+.idle-adventure #gearInventory .gear-equip-button { display: grid; place-items: center; width: 72px; height: 72px; min-width: 72px; flex: 0 0 72px; padding: 0; border: 1px solid #438477; border-radius: 6px; background: #193c37; color: #c0f2df; font-weight: 750; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease; }
+.idle-adventure #gearInventory .gear-equip-button:hover { background: #24564a; border-color: #8ce0bd; box-shadow: 0 0 12px rgba(99, 223, 197, 0.16); }
+.idle-adventure #gearInventory .gear-equip-button:focus-visible { outline: 2px solid #8ce0bd; outline-offset: 3px; }
+.idle-adventure #gearInventory .game-item { display: grid; grid-template-columns: minmax(160px, 1.05fr) minmax(120px, 1.3fr) 72px; align-items: center; gap: 1rem; padding: 1rem; border-left: 3px solid var(--item-rarity); background: rgba(17, 32, 39, 0.97); box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12); }
+.idle-adventure [data-rarity] { --item-rarity: #9bafb8; }
+.idle-adventure [data-rarity="uncommon"] { --item-rarity: #8ce0bd; }
+.idle-adventure [data-rarity="rare"] { --item-rarity: #83bfff; }
+.idle-adventure [data-rarity="epic"] { --item-rarity: #c596ff; }
+.idle-adventure [data-rarity="unique"] { --item-rarity: #e8bd7a; }
+.idle-adventure #gearInventory .inventory-item-identity { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 0.8rem; }
+.idle-adventure #gearInventory .inventory-item-identity strong { min-width: 0; color: var(--item-rarity); line-height: 1.4; overflow-wrap: anywhere; }
+.idle-adventure #gearInventory .inventory-item-meta { display: flex; min-width: 0; flex-direction: column; gap: 0.35rem; }
+.idle-adventure #gearInventory .inventory-item-rarity { margin: 0; color: var(--item-rarity) !important; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.07em; }
+.idle-adventure #gearInventory .inventory-sprite-frame { display: grid; place-items: center; width: 72px; height: 72px; margin: 0; padding: 3px; border: 1px solid var(--item-rarity); border-radius: 7px; background: #0a1821; box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.4); }
 .idle-adventure #gearInventory .inventory-item-identity .item-sprite { display: grid; margin-top: 0; font-size: 1.5rem; }
-.idle-adventure #gearInventory .inventory-item-stats { min-width: 0; margin: 0; font-size: 0.78rem; white-space: normal; overflow-wrap: anywhere; }
+.idle-adventure #gearInventory .inventory-item-stats { min-width: 0; margin: 0; font-size: 0.875rem; white-space: normal; overflow-wrap: anywhere; }
 .idle-adventure .stat-comparison-legend { display: block; margin-top: 0.45rem; color: var(--adventure-muted); font-size: 0.75rem; line-height: 1.5; }
 .idle-adventure .game-item-copy .item-stat-comparison { white-space: normal; }
 .idle-adventure .game-item-copy .item-stat-line { display: block; line-height: 1.5; }
@@ -2910,3 +2939,14 @@ html {
 .idle-adventure .game-item-copy .item-stat-line.stat-equal { color: #ffffff !important; }
 .idle-adventure .game-item-copy .item-stat-line.stat-worse { color: #ff8d87 !important; }
 .idle-adventure .game-item-copy .item-stat-line.stat-missing { color: rgba(190, 198, 208, 0.55) !important; }
+.idle-adventure #gearInventory .item-stat-line { margin-top: 0.35rem; line-height: 1.65; }
+.idle-adventure #gearInventory .item-stat-line:first-child { margin-top: 0; }
+.idle-adventure #gearInventory .item-stat-line > span { display: inline; margin: 0; font-size: inherit; white-space: normal; }
+.idle-adventure #gearInventory .item-stat-value { color: inherit !important; font-weight: 750; font-variant-numeric: tabular-nums; }
+.idle-adventure #gearInventory .item-stat-label { color: #a8b9bf !important; }
+.idle-adventure #gearInventory .item-stat-delta { color: inherit !important; font-size: 0.75rem !important; font-weight: 700; opacity: 0.85; }
+.idle-adventure #gearInventory .stat-missing .item-stat-label { color: inherit !important; }
+@container (max-width: 440px) {
+    .idle-adventure #gearInventory .game-item { grid-template-columns: minmax(72px, 0.9fr) minmax(0, 1.2fr) 72px; gap: 0.65rem; padding: 0.75rem; }
+    .idle-adventure #gearInventory .inventory-item-identity { grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
+}

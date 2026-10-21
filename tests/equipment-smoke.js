@@ -63,8 +63,12 @@
         const legacyEvasion = Equipment.normalizeData({schemaVersion: 2, items: [{stats: {baseEvasionBonusPercent: 50}}]});
         check('old evasion bonus converts to normal multiplier', legacyEvasion.items[0].stats.evasionMultiplier === 1.5 && !Object.hasOwn(legacyEvasion.items[0].stats, 'baseEvasionBonusPercent'));
         check('base stats preserved', getDamage() === 2 && near(getAttackSpeed(), 1.2) && getPlayerEvasion() === 25);
+        render();
+        check('base attack speed displays zero bonus', elements.speed.textContent === '+0%');
         state.skillRanks = {quickHands: 1, fleetFooted: 1}; state.level = 5;
         check('existing skill attack timing preserved', near(getAttackSpeed(), 1.2 * 0.99 / Math.pow(1.005, 5)));
+        render();
+        check('skill attack speed displays combined percentage bonus', elements.speed.textContent === '+3.56%');
         state.skillRanks = {}; state.level = 0;
         const oldItems = {schemaVersion: 1, items: [{stats: {attackSpeedMultiplier: 0.9}}, {stats: {attackSpeedRateMultiplier: 1.1}}]};
         Equipment.normalizeData(oldItems);
@@ -79,6 +83,11 @@
         state.gear.necklace = 'slimyNecklace';
         state.gear.weapon = 'trailblazerBlade';
         check('crafted and dropped items use same stats', getDamage() === 17 && near(getAttackSpeed(), 1.2 * 0.9 * 0.98));
+        state.skillRanks = {quickHands: 1, fleetFooted: 1}; state.level = 5; state.upgrades.haste = 1;
+        const combinedSpeed = Math.pow(1.005, 5) / (0.99 * 0.9 * 0.98 * 0.92);
+        render();
+        check('attack speed includes equipment, skills, level scaling and haste', near(getAttackSpeedMultiplier(), combinedSpeed) && elements.speed.textContent === '+' + Math.round((combinedSpeed - 1) * 10000) / 100 + '%');
+        state.skillRanks = {}; state.level = 0; state.upgrades.haste = 0;
         // New content must work without adding an item-specific runtime branch.
         const extra = itemById.testAmulet;
         check('new necklace recipe appears automatically', recipes.some(recipe => recipe.id === extra.id) && craftingCategories.some(category => category.recipes.includes(extra.id)));
@@ -96,6 +105,14 @@
         check('equipped sprite scales to crisp 64px artwork', equippedSprite.getBoundingClientRect().width === 64 && equippedSprite.getBoundingClientRect().height === 64 && getComputedStyle(equippedSprite).imageRendering === 'pixelated');
         const slotTooltip = document.getElementById(equippedSlot.getAttribute('aria-describedby'));
         check('equipped slot initially shows only category, sprite and name', equippedSlot.children.length === 3 && !equippedSlot.querySelector('.equipment-slot-bonus'));
+        const slotName = equippedSlot.querySelector('.equipment-slot-name');
+        const originalSlotName = slotName.textContent;
+        const originalSlotRect = equippedSlot.getBoundingClientRect();
+        slotName.textContent = 'An exceptionally long equipment name '.repeat(12) + 'UnbrokenName'.repeat(30);
+        const longNameSlotRect = equippedSlot.getBoundingClientRect();
+        check('long equipment names cannot resize slots', longNameSlotRect.width === originalSlotRect.width && longNameSlotRect.height === originalSlotRect.height);
+        check('long equipment names preserve 64px sprite dimensions', equippedSlot.querySelector('img').getBoundingClientRect().width === 64 && equippedSlot.querySelector('img').getBoundingClientRect().height === 64);
+        slotName.textContent = originalSlotName;
         check('equipped stats are hidden by default', slotTooltip && slotTooltip.getAttribute('role') === 'tooltip' && getComputedStyle(slotTooltip).visibility === 'hidden');
         const cardHeight = equippedSlot.getBoundingClientRect().height;
         equippedSlot.focus();

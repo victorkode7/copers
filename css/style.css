@@ -46,20 +46,6 @@ header{
     background-color: var(--color-ocean);
     width: auto;
 }
-header > .container{
-    background-color: var(--color-calm);
-    height: 100px;
-    width: fit-content;
-    margin: auto;
-}
-.container > .nav-header{
-    display: flex;
-    column-gap: 2rem;
-    align-items: center;
-    margin: 0 2rem;
-    height: 100%;
-}
-
 .nav-header > .logo{
     border: 1px solid var(--color-debug);
     height: 90%;

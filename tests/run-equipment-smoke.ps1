@@ -1,7 +1,9 @@
 param(
     [string]$Browser = 'C:\Program Files\Google\Chrome\Application\chrome.exe',
     [string]$Page = 'index.html',
-    [string]$TestScript = 'tests/equipment-smoke.js'
+    [string]$TestScript = 'tests/equipment-smoke.js',
+    [string]$ReportPath,
+    [string]$WindowSize = '1440,1000'
 )
 $ErrorActionPreference = 'Stop'
 $workspacePath = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -28,11 +30,12 @@ try {
     $processInfo = [Diagnostics.ProcessStartInfo]::new()
     $processInfo.FileName = $Browser
     $processInfo.Arguments = '--headless --disable-gpu --no-first-run --allow-file-access-from-files --dump-dom --virtual-time-budget=5000 --user-data-dir="' + $profilePath + '" "' + ([uri]$fixturePath).AbsoluteUri + '"'
-    $realtime = $TestScript -in @('tests/editor-persistence-smoke.js', 'tests/skill-sprites-smoke.js')
+    $realtime = $TestScript -in @('tests/editor-persistence-smoke.js', 'tests/skill-sprites-smoke.js', 'tests/item-editor-smoke.js')
     if ($realtime) {
         $processInfo.Arguments = '--headless --disable-gpu --no-first-run --allow-file-access-from-files --remote-debugging-port=0 --user-data-dir="' + $profilePath + '" "' + ([uri]$fixturePath).AbsoluteUri + '"'
     }
     $processInfo.UseShellExecute = $false
+    $processInfo.Arguments += ' --window-size=' + $WindowSize
     $processInfo.CreateNoWindow = $true
     $processInfo.RedirectStandardOutput = $true
     $processInfo.RedirectStandardError = $true
@@ -40,7 +43,7 @@ try {
     $outputTask = $process.StandardOutput.ReadToEndAsync()
     $errorTask = $process.StandardError.ReadToEndAsync()
     if ($realtime) {
-        # Real time allows IndexedDB writes to finish across actual page navigation.
+        # Real time allows IndexedDB draft/sprite operations to finish, including across navigation.
         $deadline = [DateTime]::UtcNow.AddSeconds(20)
         $portFile = Join-Path $profilePath 'DevToolsActivePort'
         while (!(Test-Path -LiteralPath $portFile) -and [DateTime]::UtcNow -lt $deadline) { Start-Sleep -Milliseconds 100 }
@@ -86,6 +89,7 @@ try {
         throw 'No smoke results found in browser output.'
     }
     $report = [Net.WebUtility]::HtmlDecode($result.Groups[1].Value)
+    if ($ReportPath) { [IO.File]::WriteAllText($ReportPath, $report) }
     Write-Output $report
     if (!$report.Contains('SMOKE PASSED')) { throw 'Equipment smoke checks failed.' }
     $archive = [regex]::Match($outputText, '<pre id="archive-results" hidden="">([A-Za-z0-9+/=]+)</pre>')
