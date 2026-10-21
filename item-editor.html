@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Item Editor | Idle Adventure</title>
+    <link rel="stylesheet" href="css/item-editor.css?v=20261021-5">
+    <link rel="stylesheet" href="css/app-nav.css">
+</head>
+<body>
+    <nav class="app-nav" aria-label="Main navigation">
+        <a href="index.html">Game</a><a href="skill-tree-editor.html">Skill Tree Editor</a>
+        <a href="item-editor.html" aria-current="page">Item Editor</a>
+    </nav>
+    <header class="editor-header">
+        <div><p class="eyebrow">DEVELOPER TOOL</p><h1>Item Editor</h1></div>
+        <div class="toolbar">
+            <button id="undo" type="button" disabled>Undo</button>
+            <button id="restoreDraft" type="button" disabled>Restore local draft</button>
+            <button id="chooseJson" type="button">Import JSON</button>
+            <input id="importJson" type="file" accept=".json,application/json" hidden>
+            <button id="exportJson" type="button">Export JSON</button>
+            <button id="exportGame" class="primary" type="button">Download game package</button>
+        </div>
+    </header>
+    <p id="status" class="status" role="status">Edit items, then download the game package and extract it into the project folder.</p>
+    <main class="workspace">
+        <aside class="panel catalogue">
+            <div class="section-heading"><h2>Equipment <span id="itemCount"></span></h2><button id="addItem" type="button">+ Add</button></div>
+            <label>Search<input id="search" type="search" placeholder="Name, ID, or slot"></label>
+            <label>Slot<select id="filterSlot"><option value="">All slots</option></select></label>
+            <div id="itemList" class="item-list" aria-label="Equipment catalogue"></div>
+        </aside>
+        <section class="panel inspector">
+            <p id="emptyEditor" hidden>Add an item to begin.</p>
+            <form id="itemForm">
+                <div class="section-heading"><h2>Item details</h2><div><button id="duplicateItem" type="button">Duplicate</button> <button id="deleteItem" class="danger" type="button">Delete</button></div></div>
+                <div class="field-grid">
+                    <label>Name<input id="itemName" required></label>
+                    <label>ID<input id="itemId" required pattern="[A-Za-z_][A-Za-z0-9_]*" aria-describedby="idHint"></label>
+                    <label>Slot<select id="itemSlot"></select></label>
+                    <label>Rarity<select id="itemRarity"><option>common</option><option>uncommon</option><option>rare</option><option>epic</option><option>unique</option></select></label>
+                </div>
+                <p id="idHint" class="hint">Keep existing IDs stable: saves use them to identify owned equipment.</p>
+                <label>Description<textarea id="itemDescription" rows="3"></textarea></label>
+                <label>Sprite image path<input id="itemSprite" placeholder="assets/items/helmet.png" aria-describedby="spriteHint"></label>
+                <label>Import sprite<input id="importSprite" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>
+                <p id="spriteHint" class="hint">Choose an image or enter a path relative to the game folder. Imported images are included in the ZIP. Existing path images stay in your project. Empty or missing images use the slot icon.</p>
+                <label class="check"><input id="itemDeveloper" type="checkbox"> Developer only</label>
+                <p class="hint">Developer items are available only when Developer options → Enable developer equipment is checked in the game.</p>
+                <section class="form-section">
+                    <div class="section-heading"><h2>Stat bonuses</h2><button id="addStat" type="button">+ Bonus</button></div>
+                    <p class="hint">Flat bonuses add together; multipliers multiply. Gold bonus and poison chance use fractions: 0.2 means 20%.</p>
+                    <div id="statRows" class="rows"></div>
+                </section>
+                <section class="form-section">
+                    <h2>Crafting recipe</h2>
+                    <label class="check"><input id="craftable" type="checkbox"> Can be crafted once</label>
+                    <div id="recipeFields"><div id="materialRows" class="rows"></div><button id="addMaterial" type="button">+ Material</button></div>
+                </section>
+            </form>
+        </section>
+        <aside class="preview-column">
+            <section class="panel"><p class="eyebrow">LIVE PREVIEW</p><h2>Equipment card</h2><div id="preview"></div></section>
+            <section class="panel"><h2>Validation</h2><p id="validationSummary"></p><ul id="validation"></ul></section>
+            <section class="panel"><h2>Apply to the game</h2><p>Download the game package and extract it into your project folder. It contains <code>js/items.js</code> and imported sprites under <code>assets/items/</code>. Reload the game after replacing the files.</p><p>JSON contains item definitions and image paths for editor import. Keep the ZIP too: JSON does not contain image files. Drafts and imported images are stored in this browser.</p></section>
+        </aside>
+    </main>
+    <script src="js/items.js?v=20261021-2"></script>
+    <script src="js/item-system.js?v=20261021-7"></script>
+    <script src="js/item-package.js?v=20261021-2"></script>
+    <script src="js/item-stat-guides.js?v=20261021-5"></script>
+    <script src="js/item-editor.js?v=20261021-11"></script>
+</body>
+</html>

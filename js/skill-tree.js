@@ -66,7 +66,7 @@ window.adventureSkillTree = {
             "row": 1,
             "maxRank": 1,
             "stats": {
-                "attackSpeedMultiplier": 0.99
+                "attackSpeedMultiplier": 1.0101010101010102
             }
         },
         {
@@ -270,7 +270,7 @@ window.adventureSkillTree = {
             "effect": "+5% Attack speed",
             "type": "attackSpeed",
             "stats": {
-                "attackSpeedRateMultiplier": 1.05
+                "attackSpeedMultiplier": 1.05
             },
             "column": 4,
             "row": 2,
@@ -289,7 +289,7 @@ window.adventureSkillTree = {
             "effect": "+5% Attack speed",
             "type": "attackSpeed",
             "stats": {
-                "attackSpeedRateMultiplier": 1.05
+                "attackSpeedMultiplier": 1.05
             },
             "size": 1,
             "column": 5,
@@ -346,7 +346,7 @@ window.adventureSkillTree = {
             "effect": "+10% Attack speed",
             "type": "attackSpeed",
             "stats": {
-                "attackSpeedRateMultiplier": 1.1
+                "attackSpeedMultiplier": 1.1
             },
             "size": 1.25,
             "column": 7,
@@ -365,7 +365,7 @@ window.adventureSkillTree = {
             "effect": "+10% Attack speed",
             "type": "attackSpeed",
             "stats": {
-                "attackSpeedRateMultiplier": 1.1
+                "attackSpeedMultiplier": 1.1
             },
             "size": 1.25,
             "column": 8,
@@ -384,7 +384,7 @@ window.adventureSkillTree = {
             "effect": "+30% Attack speed",
             "type": "attackSpeed",
             "stats": {
-                "attackSpeedRateMultiplier": 1.3
+                "attackSpeedMultiplier": 1.3
             },
             "size": 1.25,
             "column": 8,
@@ -403,7 +403,7 @@ window.adventureSkillTree = {
             "effect": "+50% Attack speed",
             "type": "attackSpeed",
             "stats": {
-                "attackSpeedRateMultiplier": 1.5
+                "attackSpeedMultiplier": 1.5
             },
             "size": 1.25,
             "column": 7,
@@ -472,7 +472,8 @@ window.adventureSkillTree = {
             },
             "size": 1.25,
             "start": false,
-            "type": "attackSpeed"
+            "type": "attackSpeed",
+            "sprite": "assets/skills/basicallySnake-22cb942c.png"
         },
         {
             "id": "multiHit1_copy",
@@ -548,7 +549,9 @@ window.adventureSkillTree = {
             },
             "size": 1,
             "start": false,
-            "type": "attackSpeed"
+            "type": "attackSpeed",
+            "sprite": "assets/skills/snakeBite_2-c37d999a.png"
         }
-    ]
+    ],
+    "statSchemaVersion": 2
 };

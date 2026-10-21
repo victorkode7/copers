@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/nav.css">
     <link rel="stylesheet" href="css/app-nav.css">
-    <link rel="stylesheet" href="css/game.css?v=20261020-37">
+    <link rel="stylesheet" href="css/game.css?v=20261021-21">
+    <link rel="stylesheet" href="css/skill-tree-background.css?v=20261021-18">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <title>Idle Adventure</title>
 </head>
@@ -16,7 +17,7 @@
         <nav class="app-nav" aria-label="Main navigation">
             <a href="index.html" aria-current="page">Game</a>
             <a href="skill-tree-editor.html">Skill Tree Editor</a>
-            <span class="app-nav-unavailable" role="link" aria-disabled="true">Item Editor <small>Coming soon</small></span>
+            <a href="item-editor.html">Item Editor</a>
         </nav>
         <div class="container">
             <nav class="nav-header">
@@ -209,8 +210,12 @@
           </div>
       </details>
     </main>
-    <footer></footer>
-    <script src="js/skill-tree.js?v=20261020-2"></script>
-    <script src="js/game.js?v=20261020-44"></script>
+    <footer class="developer-options"><details><summary>Developer options</summary><label><input id="developerItems" type="checkbox"> Enable developer equipment</label></details></footer>
+    <script src="js/items.js?v=20261021-2"></script>
+    <script src="js/item-system.js?v=20261021-7"></script>
+    <script src="js/skill-tree.js?v=20261021-2"></script>
+    <script src="js/skill-stat-compat.js?v=20261021-2"></script>
+    <script src="js/skill-sprites.js?v=20261021-13"></script>
+    <script src="js/game.js?v=20261021-21"></script>
 </body>
 </html>

@@ -15,7 +15,7 @@ const mapData = [
         experience: 10,
         goal: 10,
         drops: [{ id: 'gel', amount: [1, 2], chance: 1 }],
-        uniqueDrops: [{ id: 'slimyNecklace', chance: 1 / 1000 }]
+        itemDrops: [{ id: 'slimyNecklace', chance: 1 / 1000 }]
     },
     {
         id: 'whisperingWoods',
@@ -136,56 +136,33 @@ const worldData = [
     }
 ];
 
-const materialNames = {
-    hide: 'Wolf Fur',
-    fang: 'Sharp Fang',
-    gel: 'Slime',
-    ore: 'Ember Ore',
-    crystal: 'Glow Crystal',
-    cinderHoof: 'Cinder Hoof',
-    singedMane: 'Singed Mane',
-    pearl: 'Sea Pearl'
-};
-
-const uniqueItemData = {
-    slimyNecklace: { name: 'Slimy Necklace', damage: 10, attackSpeedMultiplier: 0.9 }
-};
-
-const adminRingData = {
-    name: 'Admin Ring',
-    damage: 999999,
-    accuracy: 9999999,
-    attackSpeedBonusPercent: 9999,
-    evasionBonusPercent: 9999999
-};
-
-const recipes = [
-    { id: 'trailblazerBlade', name: 'Sticky Sword', slot: 'weapon', damage: 5, attackSpeedMultiplier: 0.98, materials: { gel: 12 }, effect: '+5 damage\n2% Attack speed', description: 'A sticky blade molded from gathered slime.' },
-    { id: 'emberforgedBlade', name: 'Emberforged Blade', slot: 'weapon', damage: 10, attackSpeedMultiplier: 0.90, materials: { ore: 14, crystal: 4 }, effect: '+10 damage\n10% Attack speed', description: 'Forged from cavern finds.' },
-    { id: 'wolfFangHelm', name: 'Wolf-Fang Helm', slot: 'helmet', evasion: 4, materials: { hide: 8 }, effect: '+4 evasion', description: 'A rugged helm fitted with a polished wolf fang.' },
-    { id: 'slimeboundCoat', name: "John's Coat", slot: 'chest', goldBonus: 0.2, evasion: 10, materials: { hide: 12 }, effect: '+20% gold from battles\n+10 evasion', description: 'A sturdy coat stitched from Wolf Fur.' },
-    { id: 'woodlandGreaves', name: 'Woodland Greaves', slot: 'legs', evasion: 5, materials: { hide: 10 }, effect: '+5 evasion', description: 'Light leg armor made for moving through the forest.' },
-    { id: 'blobhopperBoots', name: 'Blobhopper Boots', slot: 'boots', attackSpeedMultiplier: 0.95, evasion: 3, materials: { gel: 20 }, effect: '5% Attack speed\n+3 evasion', description: 'Springy boots shaped from resilient slime.' },
-    { id: 'cinderstepBoots', name: 'Cinderstep Boots', slot: 'boots', attackSpeedMultiplier: 0.92, evasion: 5, materials: { cinderHoof: 16, singedMane: 8 }, effect: '8% Attack speed\n+5 evasion', description: 'Lightweight boots trimmed with fireproof mane and a sturdy hoof sole.' },
-    { id: 'wardensCape', name: "Warden's Cape", slot: 'cape', goldBonus: 0.1, evasion: 5, materials: { ore: 8, crystal: 4 }, effect: '+10% gold from battles\n+5 evasion', description: 'A bright cape woven with cavern crystals.' },
-    { id: 'pearlSignet', name: 'Pearl Signet', slot: 'ring', damage: 4, materials: { pearl: 8, fang: 6 }, effect: '+4 damage', description: 'A sea-polished ring set with a luminous pearl.' }
-];
-
-const craftingCategories = [
-    { id: 'weapons', title: 'Weapons', recipes: ['trailblazerBlade', 'emberforgedBlade'] },
-    { id: 'armor', title: 'Armor', recipes: ['blobhopperBoots', 'slimeboundCoat', 'wolfFangHelm', 'woodlandGreaves', 'cinderstepBoots', 'trimmedLegs'] },
-    { id: 'accessories', title: 'Accessories', recipes: ['wardensCape', 'pearlSignet'] }
-];
+const itemData = Equipment.normalizeData(window.adventureItems);
+const itemErrors = Equipment.validate(itemData);
+if (itemErrors.length) throw new Error('Equipment data could not be loaded: ' + itemErrors.join(' '));
+const materialNames = itemData.materials;
+const itemById = Object.fromEntries(itemData.items.map(item => [item.id, item]));
+// Recipes are a view of the catalogue, never a second set of item definitions.
+const recipes = itemData.items.filter(item => item.recipe).map(item => ({
+    ...item, materials: item.recipe.materials, effect: Equipment.describe(item)
+}));
 const recipeCategories = {
-    weapon: 'weapons',
-    helmet: 'armor',
-    chest: 'armor',
-    legs: 'armor',
-    boots: 'armor',
-    cape: 'accessories',
-    ring: 'accessories',
-    necklace: 'accessories'
+    weapon: 'weapons', helmet: 'armor', chest: 'armor', legs: 'armor',
+    boots: 'armor', cape: 'accessories', ring: 'accessories', necklace: 'accessories'
 };
+const craftingCategories = [
+    { id: 'weapons', title: 'Weapons' },
+    { id: 'armor', title: 'Armor' },
+    { id: 'accessories', title: 'Accessories' }
+].map(category => ({
+    ...category,
+    recipes: recipes.filter(item => (recipeCategories[item.slot] || 'accessories') === category.id).map(item => item.id)
+}));
+// Acquisition belongs to map content; ignore missing references after catalogue edits.
+mapData.forEach(map => {
+    map.itemDrops = (map.itemDrops || []).filter(drop =>
+        Object.hasOwn(itemById, drop.id) && !itemById[drop.id].developerOnly);
+});
+
 const materialSources = {
     hide: [{ enemy: 'Wolves', location: 'Whispering Woods' }],
     fang: [{ enemy: 'Wolves', location: 'Whispering Woods' }],
@@ -203,16 +180,7 @@ const materialSources = {
     ]
 };
 
-const equipmentSlots = [
-    { id: 'weapon', name: 'Weapon', icon: '⚔' },
-    { id: 'helmet', name: 'Helmet', icon: '⛑' },
-    { id: 'chest', name: 'Chest', icon: '⛨' },
-    { id: 'legs', name: 'Legs', icon: '▥' },
-    { id: 'boots', name: 'Boots', icon: '◒' },
-    { id: 'cape', name: 'Cape', icon: '▱' },
-    { id: 'ring', name: 'Ring', icon: '◌' },
-    { id: 'necklace', name: 'Necklace', icon: '◈' }
-];
+const equipmentSlots = itemData.slots;
 
 const gearSlots = equipmentSlots.map(slot => slot.id);
 const createEmptyGear = () => Object.fromEntries(gearSlots.map(slot => [slot, null]));
@@ -232,7 +200,7 @@ const createTutorialState = () => ({
 });
 
 const legacyUpgradeIds = ['strength', 'haste', 'evasion'];
-const skillTreeData = window.adventureSkillTree;
+const skillTreeData = SkillStatCompat.normalize(window.adventureSkillTree);
 if (!skillTreeData || !Array.isArray(skillTreeData.nodes)) {
     throw new Error('Idle Adventure skill tree data could not be loaded.');
 }
@@ -263,14 +231,15 @@ let skillTreePanStartY = 0;
 const state = {
     gold: 0,
     kills: Object.fromEntries(mapData.map(map => [map.id, 0])),
-    materials: { hide: 0, fang: 0, gel: 0, ore: 0, crystal: 0, pearl: 0, cinderHoof: 0, singedMane: 0 },
+    materials: Object.fromEntries(Object.keys(materialNames).map(id => [id, 0])),
     upgrades: { strength: 0, haste: 0, evasion: 0 },
     level: 0,
     experience: 0,
     skillPoints: 0,
     skillRanks: {},
     gear: createEmptyGear(),
-    uniqueItems: { slimyNecklace: false },
+    ownedItemIds: [],
+    developerItemsEnabled: false,
     crafted: [],
     tutorials: createTutorialState(),
     selectedWorld: worldData[0].id,
@@ -635,8 +604,24 @@ function getSkillStat(stat) {
     return getSkillStatFromRanks(stat, state.skillRanks);
 }
 
+function ownsItem(id, source = state) {
+    const item = Object.hasOwn(itemById, id) ? itemById[id] : null;
+    return Boolean(item && (item.developerOnly
+        ? source.developerItemsEnabled === true
+        : source.ownedItemIds.includes(id)));
+}
+
+function getEquippedItems() {
+    return Object.values(state.gear).filter(id => ownsItem(id)).map(id => itemById[id]);
+}
+
+function getGearStat(stat) {
+    return Equipment.aggregate(getEquippedItems(), stat);
+}
+
 function getPlayerMaxHealth() {
-    return Math.max(1, Math.round((basePlayerMaxHealth + getSkillStat('health')) * getSkillMultiplier('healthMultiplier')));
+    return Math.max(1, Math.round((basePlayerMaxHealth + getSkillStat('health') + getGearStat('health')) *
+        getSkillMultiplier('healthMultiplier') * getGearStat('healthMultiplier')));
 }
 
 function getSkillMultiplier(stat) {
@@ -644,75 +629,38 @@ function getSkillMultiplier(stat) {
         const node = skillNodeById[id];
         if (!node || !rank) return total;
         if (stat === 'attackSpeedMultiplier' && node.stats.attackSpeedPerLevel) {
-            return total * Math.pow(1 + node.stats.attackSpeedPerLevel, -state.level * rank);
+            total *= Math.pow(1 + node.stats.attackSpeedPerLevel, state.level * rank);
         }
         return total * Math.pow(node.stats[stat] || 1, rank);
     }, 1);
 }
 
 function getDamage() {
-    const gearDamage = Object.values(state.gear).reduce((total, id) => {
-        const recipe = recipes.find(entry => entry.id === id);
-        return total + (recipe ? recipe.damage || 0 : 0);
-    }, 0);
-    const passiveDamage = getSkillStat('damage');
-    const necklaceBonus = state.gear.necklace === 'slimyNecklace'
-        ? uniqueItemData.slimyNecklace.damage
-        : 0;
-    const adminRingDamage = state.gear.ring === 'adminRing' ? adminRingData.damage : 0;
-    return Math.max(1, Math.round((2 + state.upgrades.strength * 2 + gearDamage + passiveDamage +
-        necklaceBonus + adminRingDamage) * getSkillMultiplier('damageMultiplier')));
+    return Math.max(1, Math.round((2 + state.upgrades.strength * 2 + getGearStat('damage') +
+        getSkillStat('damage')) * getSkillMultiplier('damageMultiplier') * getGearStat('damageMultiplier')));
 }
 
 function getMultiHit() {
-    const gearStats = Object.values(state.gear).reduce((totals, id) => {
-        const recipe = recipes.find(entry => entry.id === id);
-        if (recipe) {
-            totals.additive += recipe.multiHit || 0;
-            totals.multiplier *= recipe.multiHitMultiplier || 1;
-        }
-        return totals;
-    }, { additive: 0, multiplier: 1 });
-    const value = (baseMultiHit + getSkillStat('multiHit') + gearStats.additive) *
-        getSkillMultiplier('multiHitMultiplier') * gearStats.multiplier;
+    const value = (baseMultiHit + getSkillStat('multiHit') + getGearStat('multiHit')) *
+        getSkillMultiplier('multiHitMultiplier') * getGearStat('multiHitMultiplier');
     return Math.max(1, Math.round(value * 100) / 100);
 }
 
 function getPlayerAccuracy() {
-    const adminRingAccuracy = state.gear.ring === 'adminRing'
-        ? adminRingData.accuracy
-        : 0;
-    return (playerAccuracy + getSkillStat('accuracy') + adminRingAccuracy) * getSkillMultiplier('accuracyMultiplier');
+    return Math.max(0, (playerAccuracy + getSkillStat('accuracy') + getGearStat('accuracy')) *
+        getSkillMultiplier('accuracyMultiplier') * getGearStat('accuracyMultiplier'));
 }
 
 function getAttackSpeed() {
-    const gearMultiplier = Object.values(state.gear).reduce((total, id) => {
-        const recipe = recipes.find(entry => entry.id === id);
-        return total * (recipe ? recipe.attackSpeedMultiplier || 1 : 1);
-    }, 1);
-    const passiveMultiplier = getSkillMultiplier('attackSpeedMultiplier') / getSkillMultiplier('attackSpeedRateMultiplier') / (1 + getSkillStat('attackSpeedBonus'));
-    const necklaceMultiplier = state.gear.necklace === 'slimyNecklace'
-        ? uniqueItemData.slimyNecklace.attackSpeedMultiplier
-        : 1;
-    const adminRingMultiplier = state.gear.ring === 'adminRing'
-        ? 1 + adminRingData.attackSpeedBonusPercent / 100
-        : 1;
-    const minimumAttackInterval = state.gear.ring === 'adminRing' ? 0.001 : 0.25;
-    return Math.max(minimumAttackInterval, 1.2 * Math.pow(0.92, state.upgrades.haste) *
-        gearMultiplier * passiveMultiplier * necklaceMultiplier / adminRingMultiplier);
+    const speedMultiplier = getSkillMultiplier('attackSpeedMultiplier') * getGearStat('attackSpeedMultiplier') *
+        Math.max(0.01, 1 + getSkillStat('attackSpeedBonus'));
+    return Math.max(getGearStat('minimumAttackInterval'), 1.2 * Math.pow(0.92, state.upgrades.haste) *
+        1 / speedMultiplier);
 }
 
 function getPlayerEvasion() {
-    const gearEvasion = Object.values(state.gear).reduce((total, id) => {
-        const recipe = recipes.find(entry => entry.id === id);
-        return total + (recipe ? recipe.evasion || 0 : 0);
-    }, 0);
-    const passiveEvasion = getSkillStat('evasion');
-    const adminRingEvasion = state.gear.ring === 'adminRing'
-        ? Math.round(basePlayerEvasion * adminRingData.evasionBonusPercent / 100)
-        : 0;
-    return Math.round((basePlayerEvasion + state.upgrades.evasion * 5 + gearEvasion +
-        passiveEvasion + adminRingEvasion) * getSkillMultiplier('evasionMultiplier'));
+    return Math.max(0, Math.round((basePlayerEvasion + state.upgrades.evasion * 5 + getGearStat('evasion') +
+        getSkillStat('evasion')) * getSkillMultiplier('evasionMultiplier') * getGearStat('evasionMultiplier')));
 }
 
 function getHitChance(accuracy, evasion) {
@@ -720,8 +668,7 @@ function getHitChance(accuracy, evasion) {
 }
 
 function getEnemyHitChance() {
-    const minimumHitChance = state.gear.ring === 'adminRing' ? 0 : 5;
-    return Math.max(minimumHitChance, Math.min(95, currentMap().accuracy - getPlayerEvasion()));
+    return Math.max(getGearStat('minimumEnemyHitChance'), Math.min(95, currentMap().accuracy - getPlayerEvasion()));
 }
 
 function setAccuracyClass(element, hitChance, isPlayerAttack) {
@@ -738,12 +685,8 @@ function setAccuracyClass(element, hitChance, isPlayerAttack) {
 }
 
 function getGoldMultiplier() {
-    const gearBonus = Object.values(state.gear).reduce((total, id) => {
-        const recipe = recipes.find(entry => entry.id === id);
-        return total + (recipe ? recipe.goldBonus || 0 : 0);
-    }, 0);
-    const passiveBonus = getSkillStat('goldBonus');
-    return (1 + gearBonus + passiveBonus) * getSkillMultiplier('goldBonusMultiplier');
+    return Math.max(0, (1 + getGearStat('goldBonus') + getSkillStat('goldBonus')) *
+        getSkillMultiplier('goldBonusMultiplier') * getGearStat('goldBonusMultiplier'));
 }
 
 function skillNodeIsAllocated(id) {
@@ -805,7 +748,7 @@ function formatAmount(amount) {
 function saveGame() {
     try {
         localStorage.setItem(saveKey, JSON.stringify({
-            version: 2,
+            version: 3,
             gold: state.gold,
             kills: state.kills,
             materials: state.materials,
@@ -815,7 +758,8 @@ function saveGame() {
             skillPoints: state.skillPoints,
             skillRanks: state.skillRanks,
             gear: state.gear,
-            uniqueItems: state.uniqueItems,
+            ownedItemIds: state.ownedItemIds,
+            developerItemsEnabled: state.developerItemsEnabled,
             crafted: state.crafted,
             tutorials: state.tutorials,
             selectedWorld: state.selectedWorld,
@@ -856,14 +800,38 @@ function loadGame() {
                 if (saved.gear[slot] === undefined) saved.gear[slot] = null;
             });
         }
-        if (saved && saved.uniqueItems === undefined) {
-            saved.uniqueItems = { slimyNecklace: false };
+        if (saved && saved.version === 2 && Array.isArray(saved.crafted)) {
+            saved.ownedItemIds = [...new Set([
+                ...saved.crafted,
+                ...Object.keys(saved.uniqueItems || {}).filter(id => saved.uniqueItems[id] === true)
+            ])];
+            saved.developerItemsEnabled = false;
+            saved.version = 3;
+        }
+        // Content edits can remove items or change their slots without invalidating all progress.
+        if (saved && saved.version === 3 && Array.isArray(saved.ownedItemIds) && Array.isArray(saved.crafted)) {
+            saved.ownedItemIds = [...new Set(saved.ownedItemIds.filter(id => typeof id === 'string' && Object.hasOwn(itemById, id)))];
+            saved.crafted = [...new Set(saved.crafted.filter(id => saved.ownedItemIds.includes(id) && itemById[id].recipe))];
+            if (saved.gear && typeof saved.gear === 'object' && !Array.isArray(saved.gear)) {
+                gearSlots.forEach(slot => {
+                    const item = itemById[saved.gear[slot]];
+                    if (!item || item.slot !== slot || !ownsItem(item.id, saved)) saved.gear[slot] = null;
+                });
+            }
+            if (saved.tutorials && saved.tutorials.firstGearItemId &&
+                (!ownsItem(saved.tutorials.firstGearItemId, saved) ||
+                itemById[saved.tutorials.firstGearItemId].slot !== saved.tutorials.firstGearSlot)) {
+                Object.assign(saved.tutorials, {
+                    firstGearPending: false, firstGearItemId: null, firstGearSlot: null,
+                    firstGearSlotSelected: false
+                });
+            }
         }
         if (saved && saved.tutorials === undefined) {
             saved.tutorials = createTutorialState();
             saved.tutorials.firstGearPrompted =
                 (Array.isArray(saved.crafted) && saved.crafted.length > 0) ||
-                (saved.uniqueItems && saved.uniqueItems.slimyNecklace === true) ||
+                (Array.isArray(saved.ownedItemIds) && saved.ownedItemIds.length > 0) ||
                 (saved.gear && Object.values(saved.gear).some(itemId => itemId !== null));
         }
         if (saved && saved.tutorials && saved.tutorials.firstNextMapPending === undefined) {
@@ -967,7 +935,7 @@ function loadGame() {
         }
         if (
             saved === null ||
-            saved.version !== 2 ||
+            saved.version !== 3 ||
             !Number.isFinite(saved.gold) || saved.gold < 0 ||
             !saved.kills || !saved.materials || !saved.upgrades ||
             !saved.gear || typeof saved.gear !== 'object' || Array.isArray(saved.gear) ||
@@ -977,9 +945,9 @@ function loadGame() {
             saved.experience >= experienceForNextLevel(saved.level) ||
             !Number.isInteger(saved.skillPoints) || saved.skillPoints < 0 ||
             !saved.skillRanks || typeof saved.skillRanks !== 'object' || Array.isArray(saved.skillRanks) ||
-            !saved.uniqueItems || typeof saved.uniqueItems !== 'object' ||
-            Array.isArray(saved.uniqueItems) ||
-            typeof saved.uniqueItems.slimyNecklace !== 'boolean' ||
+            !Array.isArray(saved.ownedItemIds) ||
+            !saved.ownedItemIds.every(id => typeof id === 'string' && Object.hasOwn(itemById, id)) ||
+            typeof saved.developerItemsEnabled !== 'boolean' ||
             !saved.tutorials || typeof saved.tutorials !== 'object' ||
             Array.isArray(saved.tutorials) ||
             typeof saved.tutorials.firstSkillPointPending !== 'boolean' ||
@@ -1002,15 +970,8 @@ function loadGame() {
             (saved.tutorials.firstGearPending && (
                 !saved.tutorials.firstGearPrompted ||
                 saved.tutorials.firstGearSlot === null ||
-                !(
-                    saved.tutorials.firstGearItemId === 'slimyNecklace' &&
-                    saved.tutorials.firstGearSlot === 'necklace' &&
-                    saved.uniqueItems.slimyNecklace
-                ) &&
-                !recipes.some(recipe =>
-                    recipe.id === saved.tutorials.firstGearItemId &&
-                    recipe.slot === saved.tutorials.firstGearSlot &&
-                    saved.crafted.includes(recipe.id))
+                !(ownsItem(saved.tutorials.firstGearItemId, saved) &&
+                    itemById[saved.tutorials.firstGearItemId].slot === saved.tutorials.firstGearSlot)
             )) ||
             !mapData.some(map => map.id === saved.selectedMap) ||
             (saved.selectedWorld !== undefined && typeof saved.selectedWorld !== 'string') ||
@@ -1063,12 +1024,7 @@ function loadGame() {
             saved.skillPoints + Object.values(saved.skillRanks).reduce((total, rank) => total + rank, 0) !==
                 saved.level ||
             !gearSlots.every(slot => saved.gear[slot] === null || (
-                slot === 'necklace'
-                    ? saved.gear[slot] === 'slimyNecklace' && saved.uniqueItems.slimyNecklace
-                    : slot === 'ring' && saved.gear[slot] === 'adminRing'
-                        ? true
-                    : saved.crafted.includes(saved.gear[slot]) &&
-                        recipes.some(recipe => recipe.id === saved.gear[slot] && recipe.slot === slot)
+                ownsItem(saved.gear[slot], saved) && itemById[saved.gear[slot]].slot === slot
             ))
         ) {
             throw new Error('Save data has an invalid format.');
@@ -1083,7 +1039,8 @@ function loadGame() {
         state.skillPoints = saved.skillPoints;
         state.skillRanks = saved.skillRanks;
         state.gear = saved.gear;
-        state.uniqueItems = saved.uniqueItems;
+        state.ownedItemIds = saved.ownedItemIds;
+        state.developerItemsEnabled = saved.developerItemsEnabled;
         state.crafted = saved.crafted;
         state.tutorials = saved.tutorials;
         state.selectedMap = saved.selectedMap;
@@ -1266,6 +1223,11 @@ function renderUpgrades() {
         board.style.height = Math.max(800, gridRowCount * 160) + 'px';
         board.style.gridTemplateColumns = 'repeat(' + gridColumnCount + ', minmax(0, 1fr))';
         board.style.gridTemplateRows = 'repeat(' + gridRowCount + ', 160px)';
+        const startingNode = skillNodes.find(node => node.start);
+        if (startingNode) {
+            board.style.setProperty('--skill-tree-background-x', ((gridColumn(startingNode) - 0.5) * 160) + 'px');
+            board.style.setProperty('--skill-tree-background-y', ((gridRow(startingNode) - 0.5) * 160) + 'px');
+        }
         // Keep the existing nodes in place when the coordinates need a positive CSS grid offset.
         skillTreePanX -= columnOffset * 160 * skillTreeZoom;
         skillTreePanY -= rowOffset * 160 * skillTreeZoom;
@@ -1321,10 +1283,7 @@ function renderUpgrades() {
             button.style.height = 78 * size + 'px';
             button.dataset.skillNode = node.id;
 
-            const icon = document.createElement('span');
-            icon.className = 'skill-node-icon';
-            icon.setAttribute('aria-hidden', 'true');
-            icon.textContent = node.icon || '✦';
+            const icon = SkillSprites.icon(node, 'skill-node-icon');
             button.appendChild(icon);
             if (!node.start) {
                 const name = document.createElement('strong');
@@ -1460,7 +1419,7 @@ function renderUpgrades() {
 
 function renderCrafting() {
     elements.crafts.innerHTML = '';
-    const canCraftRecipe = recipe => Object.entries(recipe.materials)
+    const canCraftRecipe = recipe => !ownsItem(recipe.id) && (!recipe.developerOnly || state.developerItemsEnabled) && Object.entries(recipe.materials)
         .every(([id, amount]) => state.materials[id] >= amount);
     const craftedCount = recipes.filter(recipe => state.crafted.includes(recipe.id)).length;
     const craftableCount = recipes.filter(recipe => !state.crafted.includes(recipe.id) && canCraftRecipe(recipe)).length;
@@ -1481,8 +1440,8 @@ function renderCrafting() {
     craftingCategories.forEach(categoryGroup => {
         const categoryRecipes = categoryGroup.recipes
             .map(id => recipes.find(recipe => recipe.id === id))
-            .filter(Boolean)
-            .filter(recipe => selectedCraftCategory === 'all' || recipeCategories[recipe.slot] === selectedCraftCategory)
+            .filter(recipe => recipe && (!recipe.developerOnly || state.developerItemsEnabled))
+            .filter(recipe => selectedCraftCategory === 'all' || (recipeCategories[recipe.slot] || 'accessories') === selectedCraftCategory)
             .filter(recipe => showCraftedRecipes || !state.crafted.includes(recipe.id))
             .filter(recipe => !showCraftableRecipesOnly || (!state.crafted.includes(recipe.id) && canCraftRecipe(recipe)));
         if (!categoryRecipes.length) return;
@@ -1523,7 +1482,7 @@ function renderCrafting() {
             const slotTag = document.createElement('span');
             slotTag.className = 'craft-slot-tag';
             slotTag.textContent = recipe.slot;
-            cardHeading.append(itemCopy, slotTag);
+            cardHeading.append(Equipment.createIcon(recipe, equipmentSlots.find(slot => slot.id === recipe.slot)?.icon), itemCopy, slotTag);
 
             const effect = document.createElement('p');
             effect.className = 'craft-card-effect';
@@ -1586,7 +1545,7 @@ function renderCrafting() {
             button.type = 'button';
             button.dataset.craft = recipe.id;
             button.disabled = !canCraft || crafted;
-            button.textContent = crafted ? 'Already crafted' : canCraft ? 'Craft item' : 'Missing materials';
+            button.textContent = crafted ? 'Already crafted' : ownsItem(recipe.id) ? 'Already owned' : canCraft ? 'Craft item' : 'Missing materials';
 
             item.append(cardHeading, effect, description, materials, button);
             cards.appendChild(item);
@@ -1608,12 +1567,32 @@ function renderCrafting() {
     }
 }
 
+function renderItemComparison(container, item) {
+    const equipped = itemById[state.gear[item.slot]];
+    const labels = {new: 'New bonus', better: 'Improvement', equal: 'Equal value', worse: 'Worse value', missing: 'Missing bonus'};
+    const lines = Equipment.compare(item, equipped);
+    container.classList.add('item-stat-comparison');
+    container.replaceChildren();
+    lines.forEach(line => {
+        const entry = document.createElement('span');
+        entry.className = 'item-stat-line stat-' + line.status;
+        entry.dataset.stat = line.key;
+        entry.dataset.comparison = line.status;
+        entry.textContent = line.text + (line.delta ? ' (' + line.delta + ')' : '');
+        entry.title = labels[line.status] + ' compared with ' + (equipped ? equipped.name : 'an empty slot') + '. ' + line.deltaDescription;
+        entry.setAttribute('aria-label', entry.textContent + '. ' + entry.title);
+        container.append(entry);
+    });
+    if (!lines.length) container.textContent = 'No stat bonuses';
+}
+
 function renderInventory() {
     const gearSignature = JSON.stringify({
         selectedGearSlot,
         gear: state.gear,
         crafted: state.crafted,
-        uniqueItems: state.uniqueItems,
+        ownedItemIds: state.ownedItemIds,
+        developerItemsEnabled: state.developerItemsEnabled,
         tutorials: {
             firstGearPending: state.tutorials.firstGearPending,
             firstGearSlot: state.tutorials.firstGearSlot,
@@ -1624,18 +1603,11 @@ function renderInventory() {
     if (gearSignature !== lastRenderedGearSignature) {
     elements.gear.innerHTML = '';
     equipmentSlots.forEach(slot => {
-        const recipe = recipes.find(item => item.id === state.gear[slot.id]);
-        const equippedAdminRing = slot.id === 'ring' && state.gear.ring === 'adminRing';
-        const uniqueItem = slot.id === 'necklace' &&
-            state.gear.necklace === 'slimyNecklace' &&
-            state.uniqueItems.slimyNecklace
-            ? uniqueItemData.slimyNecklace
-            : null;
-        const equippedItem = recipe || uniqueItem || (equippedAdminRing ? adminRingData : null);
+        const equippedItem = itemById[state.gear[slot.id]];
         const entry = document.createElement('button');
         entry.type = 'button';
         entry.className = 'equipment-slot' + (equippedItem ? '' : ' is-empty') +
-            (uniqueItem || equippedAdminRing ? ' unique-drop' : '') +
+            (equippedItem && equippedItem.rarity === 'unique' ? ' unique-drop' : '') +
             (selectedGearSlot === slot.id ? ' is-selected' : '') +
             (state.tutorials.firstGearPending &&
                 !state.tutorials.firstGearSlotSelected &&
@@ -1649,31 +1621,36 @@ function renderInventory() {
         const label = document.createElement('span');
         label.className = 'equipment-slot-label';
         label.textContent = slot.name;
-        const icon = document.createElement('span');
-        icon.className = 'equipment-slot-icon';
-        icon.setAttribute('aria-hidden', 'true');
-        icon.textContent = slot.icon;
+        const icon = Equipment.createIcon(equippedItem, slot.icon);
+        icon.classList.add('equipment-slot-icon');
         const name = document.createElement('strong');
         name.className = 'equipment-slot-name';
         name.textContent = equippedItem ? equippedItem.name : 'Empty slot';
-        const bonus = document.createElement('span');
-        bonus.className = 'equipment-slot-bonus';
-        bonus.textContent = recipe
-            ? recipe.effect
-            : uniqueItem
-                ? '+10 damage\n10% shorter attack interval'
-                : equippedAdminRing
-                    ? '+999999 damage\n+9999999 accuracy\n+9999% attack speed\n+9999999% evasion'
-                    : 'No item equipped';
-
-        entry.append(label, icon, name, bonus);
-        elements.gear.appendChild(entry);
+        entry.append(label, icon, name);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'equipment-slot-wrap';
+        wrapper.append(entry);
+        if (equippedItem) {
+            const bonus = document.createElement('span');
+            bonus.className = 'equipment-slot-bonus';
+            bonus.id = 'equipped-stats-' + slot.id;
+            bonus.setAttribute('role', 'tooltip');
+            bonus.textContent = Equipment.describe(equippedItem);
+            entry.setAttribute('aria-describedby', bonus.id);
+            wrapper.append(bonus);
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'equipment-unequip';
+            remove.dataset.unequipSlot = slot.id;
+            remove.textContent = '−';
+            remove.title = 'Unequip ' + equippedItem.name;
+            remove.setAttribute('aria-label', 'Unequip ' + equippedItem.name + ' from ' + slot.name.toLowerCase() + ' slot');
+            wrapper.append(remove);
+        }
+        elements.gear.append(wrapper);
     });
 
     const selectedSlot = equipmentSlots.find(slot => slot.id === selectedGearSlot) || equipmentSlots[0];
-    const ownedNecklace = selectedSlot.id === 'necklace' && state.uniqueItems.slimyNecklace
-        ? uniqueItemData.slimyNecklace
-        : null;
     elements.gearSelectionHeading.textContent = selectedSlot.name + ' selection';
     const matchingTutorialSlot = state.tutorials.firstGearPending &&
         state.tutorials.firstGearSlot === selectedSlot.id;
@@ -1682,68 +1659,21 @@ function renderInventory() {
             ? 'Now click Equip on the highlighted item.'
             : 'Click the highlighted ' + selectedSlot.name.toLowerCase() + ' slot on the left to view your new item.'
         : 'Choose an owned ' + selectedSlot.name.toLowerCase() + ' to equip.';
+    const legend = document.createElement('span');
+    legend.className = 'stat-comparison-legend';
+    legend.textContent = 'Compared with your equipped ' + selectedSlot.name.toLowerCase() + ': blue = new · green = better · white = equal · red = worse · faded gray = missing.';
+    elements.gearSelectionHint.append(legend);
     elements.gearInventory.innerHTML = '';
-    const ownedGear = state.crafted.map(id => recipes.find(recipe => recipe.id === id)).filter(Boolean);
-    const slotGear = ownedGear.filter(recipe => recipe.slot === selectedSlot.id);
-    if (selectedSlot.id === 'ring') {
-        const item = document.createElement('div');
-        item.className = 'game-item unique-drop';
-        const copy = document.createElement('div');
-        copy.className = 'game-item-copy';
-        const name = document.createElement('strong');
-        const equipped = state.gear.ring === 'adminRing';
-        name.textContent = adminRingData.name + (equipped ? ' · Equipped' : '');
-        const effect = document.createElement('span');
-        effect.textContent = 'Always owned\n+999999 damage\n+9999999 accuracy\n+9999% attack speed\n+9999999% evasion';
-        copy.append(name, effect);
-        const button = document.createElement('button');
-        button.className = 'action-button';
-        button.type = 'button';
-        button.dataset.equip = 'adminRing';
-        button.textContent = equipped ? 'Unequip' : 'Equip';
-        item.append(copy, button);
-        elements.gearInventory.appendChild(item);
-    }
-    if (selectedSlot.id === 'necklace' && ownedNecklace) {
-        const item = document.createElement('div');
-        item.className = 'game-item unique-drop' +
-            (state.tutorials.firstGearPending &&
-                state.tutorials.firstGearSlotSelected &&
-                state.tutorials.firstGearItemId === 'slimyNecklace'
-                ? ' tutorial-highlight-item'
-                : '');
-        const copy = document.createElement('div');
-        copy.className = 'game-item-copy';
-        const name = document.createElement('strong');
-        const equipped = state.gear.necklace === 'slimyNecklace';
-        name.textContent = ownedNecklace.name + (equipped ? ' · Equipped' : '');
-        const effect = document.createElement('span');
-        effect.textContent = 'Unique necklace\n+10 damage\n10% shorter attack interval';
-        copy.append(name, effect);
-        const button = document.createElement('button');
-        button.className = 'action-button';
-        if (state.tutorials.firstGearPending &&
-            state.tutorials.firstGearSlotSelected &&
-            state.tutorials.firstGearItemId === 'slimyNecklace') {
-            button.classList.add('tutorial-highlight');
-        }
-        button.type = 'button';
-        button.dataset.equip = 'slimyNecklace';
-        button.textContent = equipped ? 'Unequip' : 'Equip';
-        item.append(copy, button);
-        elements.gearInventory.appendChild(item);
-    }
-    if (slotGear.length === 0 && !ownedNecklace && selectedSlot.id !== 'ring') {
+    const slotGear = itemData.items.filter(item => item.slot === selectedSlot.id && ownsItem(item.id) && state.gear[item.slot] !== item.id);
+    if (slotGear.length === 0) {
         const empty = document.createElement('p');
         empty.className = 'inventory-empty subtle';
-        empty.textContent = selectedSlot.id === 'necklace'
-            ? 'No necklace found yet. Keep exploring to discover one.'
-            : 'No ' + selectedSlot.name.toLowerCase() +
-                ' pieces in your gear bag yet. Craft one in Crafting.';
+        empty.textContent = state.gear[selectedSlot.id]
+            ? 'No spare items for this slot. Use the minus button on the equipped slot to return its item to your bag.'
+            : 'No ' + selectedSlot.name.toLowerCase() + ' owned yet. Craft equipment or explore for drops.';
         elements.gearInventory.appendChild(empty);
     }
     slotGear.forEach(recipe => {
-        const equipped = state.gear[recipe.slot] === recipe.id;
         const item = document.createElement('div');
         item.className = 'game-item' +
             (state.tutorials.firstGearPending &&
@@ -1752,14 +1682,15 @@ function renderInventory() {
                 ? ' tutorial-highlight-item'
                 : '');
         const copy = document.createElement('div');
-        copy.className = 'game-item-copy';
+        copy.className = 'game-item-copy inventory-item-identity';
         const name = document.createElement('strong');
-        name.textContent = recipe.name + (equipped ? ' · Equipped' : '');
+        name.textContent = recipe.name;
         const effect = document.createElement('span');
-        effect.textContent = recipe.effect;
-        copy.append(name, effect);
+        renderItemComparison(effect, recipe);
+        effect.classList.add('game-item-copy', 'inventory-item-stats');
+        copy.append(Equipment.createIcon(recipe, selectedSlot.icon), name);
         const button = document.createElement('button');
-        button.className = 'action-button';
+        button.className = 'action-button gear-equip-button';
         if (state.tutorials.firstGearPending &&
             state.tutorials.firstGearSlotSelected &&
             state.tutorials.firstGearItemId === recipe.id) {
@@ -1767,8 +1698,9 @@ function renderInventory() {
         }
         button.type = 'button';
         button.dataset.equip = recipe.id;
-        button.textContent = equipped ? 'Unequip' : 'Equip';
-        item.append(copy, button);
+        button.textContent = 'Equip';
+        button.setAttribute('aria-label', 'Equip ' + recipe.name);
+        item.append(copy, effect, button);
         elements.gearInventory.appendChild(item);
     });
         lastRenderedGearSignature = gearSignature;
@@ -1817,10 +1749,7 @@ function renderTutorialNotifications() {
         });
     }
     if (state.tutorials.firstGearPending && !state.tutorials.firstGearDismissed) {
-        const recipe = recipes.find(item => item.id === state.tutorials.firstGearItemId);
-        const itemName = recipe
-            ? recipe.name
-            : uniqueItemData[state.tutorials.firstGearItemId].name;
+        const itemName = itemById[state.tutorials.firstGearItemId]?.name || 'Equipment';
         notifications.push({
             id: 'firstGear',
             message: state.tutorials.firstGearSlotSelected
@@ -2021,11 +1950,11 @@ function renderCombat() {
     const lootEntries = [
         { name: 'Gold', amount: map.gold, chance: 1 },
         ...map.drops.map(drop => ({ name: materialNames[drop.id], amount: drop.amount, chance: drop.chance })),
-        ...(map.uniqueDrops || []).map(drop => ({
-            name: uniqueItemData[drop.id].name,
+        ...(map.itemDrops || []).map(drop => ({
+            name: itemById[drop.id].name,
             amount: [1, 1],
-            chanceText: '1 / 1,000',
-            unique: true
+            chanceText: (drop.chance * 100).toLocaleString('en-US', { maximumFractionDigits: 6 }) + '%',
+            unique: itemById[drop.id].rarity === 'unique'
         }))
     ];
     lootEntries.forEach(drop => {
@@ -2100,7 +2029,7 @@ function renderCombat() {
     elements.lastDrop.textContent = state.lastDrop;
     elements.lastDrop.classList.toggle(
         'unique-drop',
-        Object.values(uniqueItemData).some(item => state.lastDrop.includes(item.name))
+        itemData.items.some(item => item.rarity === 'unique' && state.lastDrop.includes(item.name))
     );
 }
 
@@ -2163,7 +2092,7 @@ function render() {
     }
     state.lootLog.forEach(message => {
         const entry = document.createElement('li');
-        if (Object.values(uniqueItemData).some(item => message.includes(item.name))) {
+        if (itemData.items.some(item => item.rarity === 'unique' && message.includes(item.name))) {
             entry.className = 'unique-drop';
         }
         entry.textContent = message;
@@ -2207,11 +2136,12 @@ function defeatEnemy(monster) {
             found.push(amount + ' ' + materialNames[drop.id]);
         }
     });
-    (map.uniqueDrops || []).forEach(drop => {
-        if (!state.uniqueItems[drop.id] && Math.random() < drop.chance) {
-            state.uniqueItems[drop.id] = true;
-            promptForFirstGear(drop.id, 'necklace');
-            found.push(uniqueItemData[drop.id].name);
+    (map.itemDrops || []).forEach(drop => {
+        const item = itemById[drop.id];
+        if (!item.developerOnly && !ownsItem(item.id) && Math.random() < drop.chance) {
+            state.ownedItemIds.push(item.id);
+            promptForFirstGear(item.id, item.slot);
+            found.push(item.name);
         }
     });
     state.lastDrop = found.length
@@ -2273,18 +2203,20 @@ function applyDamageToMonster(monster, damage, damageType = 'physical') {
 }
 
 function getPoisonTickInterval() {
-    const rate = (1 + getSkillStat('poisonTickRate')) * getSkillMultiplier('poisonTickRateMultiplier');
+    const rate = (1 + getSkillStat('poisonTickRate') + getGearStat('poisonTickRate')) *
+        getSkillMultiplier('poisonTickRateMultiplier') * getGearStat('poisonTickRateMultiplier');
     return poisonDamageType.tickIntervalSeconds / Math.max(0.1, rate);
 }
 
 function getPoisonDamage() {
-    return Math.max(1, Math.round((poisonDamageType.baseDamage + getSkillStat('poisonDamage')) *
-        getSkillMultiplier('poisonDamageMultiplier')));
+    return Math.max(1, Math.round((poisonDamageType.baseDamage + getSkillStat('poisonDamage') + getGearStat('poisonDamage')) *
+        getSkillMultiplier('poisonDamageMultiplier') * getGearStat('poisonDamageMultiplier')));
 }
 
 function getPoisonChance() {
     return Math.max(0, Math.min(1,
-        getSkillStat('poisonChance') * getSkillMultiplier('poisonChanceMultiplier')));
+        (getSkillStat('poisonChance') + getGearStat('poisonChance')) *
+        getSkillMultiplier('poisonChanceMultiplier') * getGearStat('poisonChanceMultiplier')));
 }
 
 function getRemainingPoisonDamage(monster) {
@@ -2353,13 +2285,14 @@ function triggerShockwaveSlash(hitMonster, hitDamage) {
 
 function craftGear(id) {
     const recipe = recipes.find(entry => entry.id === id);
-    if (!recipe || state.crafted.includes(id)) return;
+    if (!recipe || ownsItem(id) || state.crafted.includes(id) || (recipe.developerOnly && !state.developerItemsEnabled)) return;
     if (!Object.entries(recipe.materials).every(([material, amount]) => state.materials[material] >= amount)) return;
 
     Object.entries(recipe.materials).forEach(([material, amount]) => {
         state.materials[material] -= amount;
     });
     state.crafted.push(id);
+    if (!state.ownedItemIds.includes(id)) state.ownedItemIds.push(id);
     promptForFirstGear(recipe.id, recipe.slot);
     render();
     saveGame();
@@ -2411,14 +2344,16 @@ document.querySelector('#resetGame').addEventListener('click', function() {
     if (!window.confirm('Reset all Idle Adventure progress? This cannot be undone.')) return;
     state.gold = 0;
     state.kills = Object.fromEntries(mapData.map(map => [map.id, 0]));
-    state.materials = { hide: 0, fang: 0, gel: 0, ore: 0, crystal: 0, pearl: 0, cinderHoof: 0, singedMane: 0 };
+    state.materials = Object.fromEntries(Object.keys(materialNames).map(id => [id, 0]));
     state.upgrades = { strength: 0, haste: 0, evasion: 0 };
     state.level = 0;
     state.experience = 0;
     state.skillPoints = 0;
     state.skillRanks = {};
     state.gear = createEmptyGear();
-    state.uniqueItems = { slimyNecklace: false };
+    state.ownedItemIds = [];
+    state.developerItemsEnabled = false;
+    document.querySelector('#developerItems').checked = false;
     state.crafted = [];
     state.tutorials = createTutorialState();
     state.selectedWorld = worldData[0].id;
@@ -2626,6 +2561,17 @@ elements.craftingTools.addEventListener('click', function(event) {
 });
 
 elements.gear.addEventListener('click', function(event) {
+    const remove = event.target.closest('[data-unequip-slot]');
+    if (remove) {
+        const slot = remove.dataset.unequipSlot;
+        if (!gearSlots.includes(slot) || !state.gear[slot]) return;
+        state.gear[slot] = null;
+        state.playerHp = Math.min(state.playerHp, getPlayerMaxHealth());
+        render();
+        saveGame();
+        elements.gear.querySelector('[data-gear-slot="' + slot + '"]')?.focus();
+        return;
+    }
     const button = event.target.closest('[data-gear-slot]');
     if (!button) return;
     selectedGearSlot = button.dataset.gearSlot;
@@ -2642,17 +2588,10 @@ elements.gear.addEventListener('click', function(event) {
 elements.gearInventory.addEventListener('click', function(event) {
     const button = event.target.closest('[data-equip]');
     if (!button) return;
-    if (button.dataset.equip === 'slimyNecklace') {
-        if (selectedGearSlot !== 'necklace' || !state.uniqueItems.slimyNecklace) return;
-        state.gear.necklace = state.gear.necklace === 'slimyNecklace' ? null : 'slimyNecklace';
-    } else if (button.dataset.equip === 'adminRing') {
-        if (selectedGearSlot !== 'ring') return;
-        state.gear.ring = state.gear.ring === 'adminRing' ? null : 'adminRing';
-    } else {
-        const recipe = recipes.find(entry => entry.id === button.dataset.equip);
-        if (!recipe || recipe.slot !== selectedGearSlot || !state.crafted.includes(recipe.id)) return;
-        state.gear[recipe.slot] = state.gear[recipe.slot] === recipe.id ? null : recipe.id;
-    }
+    const item = itemById[button.dataset.equip];
+    if (!item || item.slot !== selectedGearSlot || !ownsItem(item.id)) return;
+    state.gear[item.slot] = item.id;
+    state.playerHp = Math.min(state.playerHp, getPlayerMaxHealth());
     if (state.tutorials.firstGearPending &&
         selectedGearSlot === state.tutorials.firstGearSlot &&
         state.gear[selectedGearSlot] === state.tutorials.firstGearItemId) {
@@ -2685,7 +2624,20 @@ elements.resumeCombat.addEventListener('click', function() {
     saveGame();
 });
 
+document.querySelector('#developerItems').addEventListener('change', function(event) {
+    state.developerItemsEnabled = event.target.checked;
+    if (!state.developerItemsEnabled) {
+        gearSlots.forEach(slot => {
+            if (itemById[state.gear[slot]]?.developerOnly) state.gear[slot] = null;
+        });
+        state.playerHp = Math.min(state.playerHp, getPlayerMaxHealth());
+    }
+    render();
+    saveGame();
+});
+
 const hasSavedGame = loadGame();
+document.querySelector('#developerItems').checked = state.developerItemsEnabled;
 if (!state.monsterStates.length) resetMonsterStates(currentMap());
 state.monsterStates.forEach(monster => {
     monster.hp = Math.min(monster.hp, currentMap().health);

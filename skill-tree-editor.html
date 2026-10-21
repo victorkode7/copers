@@ -4,14 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Skill Tree Editor | Idle Adventure</title>
-    <link rel="stylesheet" href="css/skill-tree-editor.css?v=20261019-3">
+    <link rel="stylesheet" href="css/skill-tree-editor.css?v=20261021-14">
+    <link rel="stylesheet" href="css/skill-tree-background.css?v=20261021-18">
     <link rel="stylesheet" href="css/app-nav.css">
 </head>
 <body>
     <nav class="app-nav" aria-label="Main navigation">
         <a href="index.html">Game</a>
         <a href="skill-tree-editor.html" aria-current="page">Skill Tree Editor</a>
-        <span class="app-nav-unavailable" role="link" aria-disabled="true">Item Editor <small>Coming soon</small></span>
+        <a href="item-editor.html">Item Editor</a>
     </nav>
     <header class="topbar">
         <a class="back-link" href="index.html">← Game</a>
@@ -33,7 +34,7 @@
             <label class="button secondary import-button" for="importFile">Import JSON</label>
             <input id="importFile" type="file" accept=".json,application/json" hidden>
             <button id="exportJson" class="button secondary" type="button">Export JSON</button>
-            <button id="exportJs" class="button primary" type="button">Download game data</button>
+            <button id="exportJs" class="button primary" type="button">Download game package</button>
         </div>
         <p id="connectHint" class="connect-hint" hidden>Connect mode: click a node to set it as a prerequisite, then click another node to connect them. Press Esc to cancel.</p>
     </header>
@@ -132,10 +133,21 @@
                         <input id="nodeName" name="name" type="text" required>
                     </label>
                     <label class="icon-field">
-                        <span>Icon</span>
+                        <span>Fallback symbol</span>
                         <input id="nodeIcon" name="icon" type="text" maxlength="4">
                     </label>
                 </div>
+                <label class="skill-sprite-field">
+                    <span>Sprite image path</span>
+                    <input id="nodeSprite" type="text" placeholder="assets/skills/skill.png">
+                    <small>Use a project image path or import a sprite. The symbol is used when no image is assigned or the file cannot load.</small>
+                </label>
+                <label class="skill-sprite-field">
+                    <span>Import sprite</span>
+                    <input id="nodeSpriteFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+                    <small>The ZIP includes imported sprites under assets/skills/ and the full js/skill-tree.js file. Extract it into the project folder. JSON contains paths only.</small>
+                </label>
+                <div id="nodeSpritePreview" class="skill-sprite-preview" aria-label="Skill sprite preview"></div>
                 <div class="form-row node-appearance-row">
                     <label>
                         <span>Node size</span>
@@ -227,7 +239,10 @@
         </form>
     </dialog>
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-    <script src="js/skill-tree.js"></script>
-    <script src="js/skill-tree-editor.js?v=20261020-9"></script>
+    <script src="js/skill-tree.js?v=20261021-2"></script>
+    <script src="js/skill-stat-compat.js?v=20261021-2"></script>
+    <script src="js/item-package.js?v=20261021-2"></script>
+    <script src="js/skill-sprites.js?v=20261021-13"></script>
+    <script src="js/skill-tree-editor.js?v=20261021-17"></script>
 </body>
 </html>

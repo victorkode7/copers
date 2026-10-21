@@ -1,10 +1,11 @@
 (function() {
     'use strict';
+    const draftKey = 'idleAdventureSkillEditorDraft';
 
     const statNames = [
         'damage',
         'evasion',
-        'goldBonus', 'goldBonusMultiplier', 'attackSpeedMultiplier', 'attackSpeedRateMultiplier', 'attackSpeedBonus', 'attackSpeedPerLevel', 'health', 'healthMultiplier', 'accuracy', 'accuracyMultiplier', 'damageMultiplier', 'evasionMultiplier', 'multiHit', 'multiHitMultiplier',
+        'goldBonus', 'goldBonusMultiplier', 'attackSpeedMultiplier', 'attackSpeedBonus', 'attackSpeedPerLevel', 'health', 'healthMultiplier', 'accuracy', 'accuracyMultiplier', 'damageMultiplier', 'evasionMultiplier', 'multiHit', 'multiHitMultiplier',
         'poisonChance', 'poisonChanceMultiplier', 'poisonDamage', 'poisonDamageMultiplier',
         'poisonTickRate', 'poisonTickRateMultiplier'
     ];
@@ -23,7 +24,7 @@
             icon: '⚡',
             effect: 'Attack 1% faster',
             type: 'attackSpeed',
-            stats: { attackSpeedMultiplier: 0.99 }
+            stats: { attackSpeedMultiplier: 1 / 0.99 }
         },
         accuracy: {
             id: 'accuracyNode',
@@ -53,12 +54,12 @@
         { id: 'poisonDamage', label: 'Poison damage', additive: 'poisonDamage', multiplier: 'poisonDamageMultiplier' },
         { id: 'poisonTickRate', label: 'Poison tick rate', additive: 'poisonTickRate', multiplier: 'poisonTickRateMultiplier' },
         { id: 'goldBonus', label: 'Gold from battles', additive: 'goldBonus', multiplier: 'goldBonusMultiplier' },
-        { id: 'attackSpeed', label: 'Attack speed', additive: 'attackSpeedBonus', multiplier: 'attackSpeedRateMultiplier' }
+        { id: 'attackSpeed', label: 'Attack speed', additive: 'attackSpeedBonus', multiplier: 'attackSpeedMultiplier' }
     ];
     const structuredStatKeys = new Set(bonusStats.flatMap(stat => [stat.additive, stat.multiplier]));
     structuredStatKeys.add('attackSpeedMultiplier');
     const nodeSizes = [1, 1.25, 1.5];
-    const originalTree = JSON.parse(JSON.stringify(window.adventureSkillTree));
+    const originalTree = SkillStatCompat.normalize(JSON.parse(JSON.stringify(window.adventureSkillTree)));
     let tree = JSON.parse(JSON.stringify(originalTree));
     let selectedId = tree.nodes[0] ? tree.nodes[0].id : null;
     let zoom = 0.85;
@@ -95,6 +96,9 @@
         nodeId: document.querySelector('#nodeId'),
         nodeName: document.querySelector('#nodeName'),
         nodeIcon: document.querySelector('#nodeIcon'),
+        nodeSprite: document.querySelector('#nodeSprite'),
+        nodeSpriteFile: document.querySelector('#nodeSpriteFile'),
+        nodeSpritePreview: document.querySelector('#nodeSpritePreview'),
         nodeEffect: document.querySelector('#nodeEffect'),
         nodeSize: document.querySelector('#nodeSize'),
         nodeType: document.querySelector('#nodeType'),
@@ -159,6 +163,42 @@
         elements.undoButton.disabled = undoHistory.length === 0;
     }
 
+    function inspectorDraft() {
+        return {
+            fields: Object.fromEntries([...elements.nodeForm.querySelectorAll('input[id]:not([type=file]), select[id], textarea[id]')].map(control => [control.id,
+                control.type === 'checkbox' ? control.checked : control.multiple ? [...control.selectedOptions].map(option => option.value) : control.value])),
+            bonuses: [...elements.statBonusRows.children].map(row => {
+                const [stat, mode, value] = row.querySelectorAll('select, input');
+                return {stat: stat.value, mode: mode.value, value: value.value};
+            })
+        };
+    }
+
+    function saveDraft() {
+        try {
+            localStorage.setItem(draftKey, JSON.stringify({version: 1, tree, selectedId, zoom, graphViewMode, panX, panY,
+                search: elements.nodeSearch.value, budget: elements.skillPointBudget?.value,
+                inspector: inspectorDraft()}));
+        } catch {
+            elements.saveStatus.textContent = 'Browser draft storage is unavailable or full - export to keep changes';
+        }
+    }
+
+    function restoreInspector(draft) {
+        if (!draft || !draft.fields || !Array.isArray(draft.bonuses) || !selectedNode()) return;
+        for (const [id, value] of Object.entries(draft.fields)) {
+            const control = document.getElementById(id);
+            if (!control || control.type === 'file' || !elements.nodeForm.contains(control)) continue;
+            if (control.type === 'checkbox') control.checked = value === true;
+            else if (control.multiple && Array.isArray(value)) [...control.options].forEach(option => { option.selected = value.includes(option.value); });
+            else if (typeof value === 'string') control.value = value;
+        }
+        elements.statBonusRows.replaceChildren();
+        draft.bonuses.forEach(bonus => {
+            if (bonusStats.some(stat => stat.id === bonus.stat) && ['additive', 'multiplier'].includes(bonus.mode)) addStatBonusRow(bonus);
+        });
+    }
+
     function markChanged() {
         const snapshot = JSON.stringify(tree);
         if (snapshot !== historySnapshot) {
@@ -167,8 +207,9 @@
             historySnapshot = snapshot;
         }
         updateUndoButton();
-        elements.saveStatus.textContent = 'Unsaved editor changes - export to update the game';
+        elements.saveStatus.textContent = 'Draft saved in this browser - export to update the game';
         elements.saveStatus.previousElementSibling.style.background = '#f2c77b';
+        queueMicrotask(saveDraft);
     }
 
     function undoTreeEdit() {
@@ -180,6 +221,7 @@
         connectSourceId = null;
         updateUndoButton();
         render();
+        saveDraft();
     }
     function setZoom(value, anchorX, anchorY) {
         const nextZoom = Math.max(0.1, Math.min(2, value));
@@ -261,9 +303,7 @@
             card.style.height = dimensions.height + 'px';
             card.style.minHeight = dimensions.height + 'px';
 
-            const icon = document.createElement('span');
-            icon.className = 'graph-node-icon';
-            icon.textContent = node.icon || '✦';
+            const icon = SkillSprites.icon(node, 'graph-node-icon', true);
             const name = document.createElement('strong');
             name.textContent = node.name || node.id || '(unnamed)';
             const effect = document.createElement('span');
@@ -279,6 +319,16 @@
             elements.graphNodes.appendChild(card);
             nodeElements.set(node.id, card);
         });
+
+        const startingNode = tree.nodes.find(node => node.start);
+        if (startingNode) {
+            const dimensions = graphNodeDimensions(startingNode);
+            elements.graphStage.style.setProperty('--skill-tree-background-x', ((Number(startingNode.column) - minColumn + 1) * 190 + dimensions.width / 2) + 'px');
+            elements.graphStage.style.setProperty('--skill-tree-background-y', ((Number(startingNode.row) - minRow + 1) * 160 + dimensions.height / 2) + 'px');
+        } else {
+            elements.graphStage.style.removeProperty('--skill-tree-background-x');
+            elements.graphStage.style.removeProperty('--skill-tree-background-y');
+        }
 
         tree.nodes.forEach(node => {
             const target = nodeElements.get(node.id);
@@ -347,9 +397,7 @@
             button.setAttribute('role', 'option');
             button.setAttribute('aria-selected', String(node.id === selectedId));
             button.dataset.nodeId = node.id;
-            const icon = document.createElement('span');
-            icon.className = 'list-icon';
-            icon.textContent = node.icon || '✦';
+            const icon = SkillSprites.icon(node, 'list-icon', true);
             const copy = document.createElement('span');
             copy.className = 'node-list-copy';
             const name = document.createElement('span');
@@ -373,7 +421,6 @@
             const additiveValue = source[stat.additive];
             if (Number.isFinite(additiveValue)) rows.push({ stat: stat.id, mode: 'additive', value: additiveValue });
             let multiplierValue = stat.multiplier ? source[stat.multiplier] : undefined;
-            if (stat.id === 'attackSpeed' && !Number.isFinite(multiplierValue) && Number.isFinite(source.attackSpeedMultiplier)) multiplierValue = 1 / source.attackSpeedMultiplier;
             if (stat.multiplier && Number.isFinite(multiplierValue) && multiplierValue !== 1) rows.push({ stat: stat.id, mode: 'multiplier', value: multiplierValue });
         });
         const advanced = Object.fromEntries(Object.entries(source).filter(([key]) => !structuredStatKeys.has(key)));
@@ -440,6 +487,16 @@
         });
         return stats;
     }
+    function renderSpritePreview(node) {
+        elements.nodeSpritePreview.replaceChildren(SkillSprites.icon(node, 'skill-sprite-icon', true));
+    }
+
+    function repaintSprites() {
+        renderNodeList();
+        renderGraph();
+        if (selectedNode()) renderSpritePreview(selectedNode());
+    }
+
     function renderInspector() {
         const node = selectedNode();
         elements.emptyInspector.hidden = Boolean(node);
@@ -450,6 +507,9 @@
         elements.nodeId.value = node.id || '';
         elements.nodeName.value = node.name || '';
         elements.nodeIcon.value = node.icon || '';
+        elements.nodeSprite.value = node.sprite || '';
+        elements.nodeSpriteFile.value = '';
+        renderSpritePreview(node);
         elements.nodeEffect.value = node.effect || '';
         elements.nodeSize.value = String(nodeSize(node));
         elements.nodeType.value = nodeTypes.includes(node.type) ? node.type : '';
@@ -523,6 +583,9 @@
                 issues.push({ type: 'error', message: label + ': duplicate identifier "' + node.id + '".' });
             }
             if (!String(node.name || '').trim()) issues.push({ type: 'error', message: label + ': display name is required.' });
+            if (node.sprite !== undefined && (typeof node.sprite !== 'string' || node.sprite && !SkillSprites.safePath(node.sprite))) {
+                issues.push({ type: 'error', message: label + ': sprite must be a local image path.' });
+            }
             if (!String(node.effect || '').trim()) issues.push({ type: 'warning', message: label + ': add effect text so players understand the benefit.' });
             if (!Number.isInteger(node.column) || !Number.isInteger(node.row)) {
                 issues.push({ type: 'error', message: label + ': row and column must be whole numbers.' });
@@ -673,6 +736,7 @@
         renderNodeList();
         renderGraph();
         renderValidation();
+        if (selectedNode()) renderSpritePreview(selectedNode());
         const node = selectedNode();
         if (node) {
             const depth = nodeDepth(node.id, new Map(), new Set());
@@ -716,6 +780,7 @@
         node.id = newId;
         node.name = elements.nodeName.value.trim();
         node.icon = elements.nodeIcon.value.trim();
+        node.sprite = elements.nodeSprite.value.trim();
         node.effect = elements.nodeEffect.value.trim();
         node.size = Number(elements.nodeSize.value);
         if (elements.nodeType.value) node.type = elements.nodeType.value;
@@ -800,7 +865,7 @@
     }
 
     function download(filename, content, mimeType) {
-        const blob = new Blob([content], { type: mimeType });
+        const blob = content instanceof Blob ? content : new Blob([content], { type: mimeType });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -818,28 +883,34 @@
         showToast('Skill tree JSON exported.');
     }
 
-    function exportJs() {
+    async function exportJs() {
         const issues = validateTree();
         const errors = issues.filter(issue => issue.type === 'error');
         if (errors.length && !window.confirm(
             'The tree has ' + errors.length + ' validation error' +
             (errors.length === 1 ? '' : 's') + '. Export anyway?'
         )) return;
-        const source = 'window.adventureSkillTree = ' + JSON.stringify(tree, null, 4) + ';\n';
-        download('skill-tree.js', source, 'text/javascript');
-        elements.saveStatus.textContent = 'Exported · replace js/skill-tree.js with the downloaded file';
-        elements.saveStatus.previousElementSibling.style.background = 'var(--green)';
-        showToast('Downloaded skill-tree.js. Replace the existing file in the js folder.');
+        try {
+            const exportedTree = JSON.parse(JSON.stringify(tree));
+            const source = 'window.adventureSkillTree = ' + JSON.stringify(exportedTree, null, 4) + ';\n';
+            const filename = (selectedNode()?.id || 'skill-tree') + '.zip';
+            const entries = [{name: 'js/skill-tree.js', bytes: new TextEncoder().encode(source)}, ...await SkillSprites.packageEntries(exportedTree.nodes)];
+            download(filename, ItemPackage.zip(entries), 'application/zip');
+            elements.saveStatus.textContent = 'Exported ZIP · extract into the project folder and reload the game';
+            elements.saveStatus.previousElementSibling.style.background = 'var(--green)';
+            showToast('Downloaded ' + filename + ' with skill data and imported sprites.');
+        } catch (error) { showToast('Could not export game package: ' + error.message); }
     }
 
     async function importJson(file) {
         if (!file) return;
         try {
-            const imported = JSON.parse(await file.text());
+            const imported = SkillStatCompat.normalize(JSON.parse(await file.text()));
             if (!imported || typeof imported !== 'object' || !Array.isArray(imported.nodes)) {
                 throw new Error('The JSON must contain a nodes array.');
             }
             tree = {
+                statSchemaVersion: 2,
                 experienceBase: imported.experienceBase,
                 experiencePerLevel: imported.experiencePerLevel,
                 nodes: imported.nodes.map(node => ({
@@ -853,6 +924,7 @@
             if (elements.experiencePerLevel) elements.experiencePerLevel.value = String(tree.experiencePerLevel ?? '');
             markChanged();
             render();
+            SkillSprites.restore(tree.nodes).then(repaintSprites);
             showToast('Imported tree. Check validation before exporting.');
         } catch (error) {
             showToast('Could not import JSON: ' + error.message);
@@ -870,6 +942,8 @@
         elements.saveStatus.previousElementSibling.style.background = 'var(--amber)';
         render();
         showToast('Default tree restored in the editor.');
+        historySnapshot = JSON.stringify(tree);
+        saveDraft();
     }
 
     function openInsertNodeDialog() {
@@ -1012,10 +1086,24 @@
     elements.nodeSearch.addEventListener('input', renderNodeList);
     elements.nodeForm.addEventListener('submit', applyInspector);
     elements.nodeForm.addEventListener('input', event => {
-        if (event.target.matches('input, select, textarea')) applyInspector(null, true);
+        if (event.target.matches('input:not([type=file]), select, textarea')) applyInspector(null, true);
     });
     elements.nodeForm.addEventListener('change', event => {
-        if (event.target.matches('input, select, textarea')) applyInspector(null, true);
+        if (event.target.matches('input:not([type=file]), select, textarea')) applyInspector(null, true);
+    });
+    elements.nodeSpriteFile.addEventListener('change', async event => {
+        const file = event.target.files[0];
+        const node = selectedNode();
+        if (!file || !node) return;
+        try {
+            const result = await SkillSprites.importImage(file, node.id);
+            node.sprite = result.path;
+            if (selectedNode() === node) elements.nodeSprite.value = result.path;
+            markChanged();
+            repaintSprites();
+            showToast(result.persisted ? 'Sprite imported. It will be included in the game package.' : 'Sprite imported for this session. Export the ZIP before closing; browser image storage is unavailable.');
+        } catch (error) { showToast('Could not import sprite: ' + error.message); }
+        event.target.value = '';
     });
     elements.addStatBonus.addEventListener('click', () => addStatBonusRow());
     elements.deleteNode.addEventListener('click', removeNode);
@@ -1128,19 +1216,48 @@
         }
     });
 
+    let restoredDraft = null;
+    try {
+        const draft = JSON.parse(localStorage.getItem(draftKey) || 'null');
+        if (draft) {
+            if (draft.version !== 1 || !draft.tree || !Array.isArray(draft.tree.nodes) ||
+                !draft.tree.nodes.every(node => node && typeof node.id === 'string' && Array.isArray(node.requires) && node.stats && typeof node.stats === 'object')) {
+                throw new Error('Invalid saved skill draft');
+            }
+            tree = SkillStatCompat.normalize(draft.tree);
+            historySnapshot = JSON.stringify(tree);
+            selectedId = tree.nodes.some(node => node.id === draft.selectedId) ? draft.selectedId : tree.nodes[0]?.id || null;
+            if (Number.isFinite(draft.zoom)) zoom = Math.max(0.1, Math.min(2, draft.zoom));
+            if (Number.isFinite(draft.panX)) panX = draft.panX;
+            if (Number.isFinite(draft.panY)) panY = draft.panY;
+            if (['player', 'detailed'].includes(draft.graphViewMode)) graphViewMode = draft.graphViewMode;
+            if (typeof draft.search === 'string') elements.nodeSearch.value = draft.search;
+            if (elements.skillPointBudget && typeof draft.budget === 'string') elements.skillPointBudget.value = draft.budget;
+            restoredDraft = draft;
+            elements.saveStatus.textContent = 'Resumed your local draft - export to update the game';
+        }
+    } catch (error) { elements.saveStatus.textContent = 'Could not resume saved draft: ' + error.message; }
+
+    ['input', 'change', 'click', 'pointerup'].forEach(type => document.addEventListener(type, () => queueMicrotask(saveDraft)));
+    elements.graphViewport.addEventListener('wheel', () => queueMicrotask(saveDraft), {passive: true});
+    window.addEventListener('pagehide', saveDraft);
     if (elements.experienceBase) elements.experienceBase.value = String(tree.experienceBase);
     if (elements.experiencePerLevel) elements.experiencePerLevel.value = String(tree.experiencePerLevel);
     render();
     setZoom(zoom);
+    if (restoredDraft) restoreInspector(restoredDraft.inspector);
+    SkillSprites.restore(tree.nodes).then(repaintSprites);
 
     // The editor can be opened in a background tab or a file preview that
     // delays its first paint. Repaint when that page becomes visible.
-    window.addEventListener('pageshow', render);
-    window.addEventListener('focus', render);
+    const repaint = () => { renderNodeList(); renderGraph(); renderValidation(); };
+    window.addEventListener('pageshow', repaint);
+    window.addEventListener('focus', repaint);
     document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) render();
+        if (document.hidden) saveDraft();
+        else repaint();
     });
-    window.setTimeout(render, 100);
+    window.setTimeout(repaint, 100);
 
     // Some embedded/file previews lay out the canvas after scripts run. Redraw
     // once the viewport has a real size so the initial node layer is painted.
@@ -1152,7 +1269,7 @@
             if (!rect || rect.width === 0 || rect.height === 0) return;
             initialViewportPainted = true;
             viewportObserver.disconnect();
-            render();
+            repaint();
             setZoom(zoom);
         });
         viewportObserver.observe(elements.graphViewport);

@@ -1,0 +1,37 @@
+:root {
+    /* Match this to the color at the outer edge of skilltree-background.png. */
+    --skill-tree-background-color: #071624;
+    --skill-tree-background-image: url("../assets/skilltree-background.png");
+    --skill-tree-background-size: 4096px;
+}
+
+.idle-adventure .skill-tree-viewport {
+    background: var(--skill-tree-background-color);
+}
+
+.graph-viewport {
+    background-color: var(--skill-tree-background-color);
+}
+
+.graph-stage {
+    isolation: isolate;
+}
+
+/* Place the artwork in the transformed canvas so it follows both pan and zoom.
+   Only the viewport clips it; the square may extend beyond the node layout. */
+.idle-adventure .skill-tree-board::before,
+.graph-stage::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: var(--skill-tree-background-y, 50%);
+    left: var(--skill-tree-background-x, 50%);
+    width: var(--skill-tree-background-size);
+    height: var(--skill-tree-background-size);
+    transform: translate(-50%, -50%);
+    background-image: var(--skill-tree-background-image);
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    pointer-events: none;
+}
