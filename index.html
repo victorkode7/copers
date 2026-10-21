@@ -6,136 +6,211 @@
     <link rel="stylesheet" href="css/_root.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/nav.css">
-    <title>clueless</title>
+    <link rel="stylesheet" href="css/app-nav.css">
+    <link rel="stylesheet" href="css/game.css?v=20261020-37">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <title>Idle Adventure</title>
 </head>
-<body>
-    <script src="js/script.js"></script>
+<body class="idle-adventure">
     <header>
-        <div class="top-nav" style="background:#000;color:#fff;padding:0.25rem 0;display:flex;gap:1rem;width:100%;justify-content:center;">
-            <a href="index.html" style="color:#fff;text-decoration:none;">Home</a>
-            <a href="1.html" style="color:#fff;text-decoration:none;">Game 1</a>
-            <a href="2.html" style="color:#fff;text-decoration:none;">Game 2</a>
-            <a href="3.html" style="color:#fff;text-decoration:none;">Game 3</a>
-        </div>
+        <nav class="app-nav" aria-label="Main navigation">
+            <a href="index.html" aria-current="page">Game</a>
+            <a href="skill-tree-editor.html">Skill Tree Editor</a>
+            <span class="app-nav-unavailable" role="link" aria-disabled="true">Item Editor <small>Coming soon</small></span>
+        </nav>
         <div class="container">
             <nav class="nav-header">
                 <div class="logo">
-                    <a href="/index.html">
-                    <img src="https://picfiles.alphacoders.com/498/thumb-1920-498797.png" alt="">
+                    <a href="index.html">
+                        <img src="https://picfiles.alphacoders.com/498/thumb-1920-498797.png" alt="Idle Adventure">
                     </a>
                 </div>
+                <section id="tutorialNotifications" class="tutorial-notifications" aria-label="Progress tips" hidden></section>
                 <ul class="navbar">
-                    <li class="dropdown">
-                            <span>Items</span>
-                        <ul class="dropdown-menu">
-                            <li><a class=dropdown-item href="/1.html">Item1</a></li>
-                            <li><a class=dropdown-item href="#2">Item2222</a></li>
-                            <li><a class=dropdown-item href="#3">Item3</a></li>
-                        </ul>
-                    </li>
-                    <li class="dropdown">
-                        <span>Armour</span>
-                        <ul class="dropdown-menu">
-                            <li><a class=dropdown-item href="#1">Item1</a></li>
-                            <li><a class=dropdown-item href="#2">Item2222</a></li>
-                            <li><a class=dropdown-item href="#3">Item3</a></li>
-                        </ul>
-                    </li>
+                    <li><button id="mapButton" class="nav-button" type="button" aria-pressed="false">Map</button></li>
+                    <li><button id="townButton" class="nav-button" type="button" aria-pressed="true">Crafting</button></li>
+                    <li><button id="upgradesButton" class="nav-button" type="button" aria-pressed="false">Skill Tree</button></li>
+                    <li><button id="inventoryButton" class="nav-button" type="button" aria-pressed="false">Inventory</button></li>
+                    <li class="gold-display"><span>Gold</span><strong id="goldDisplay">0</strong></li>
+                    <li class="reset-nav-item"><button id="resetGame" class="nav-button reset-button" type="button">Reset Game</button></li>
                 </ul>
             </nav>
         </div>
     </header>
-    <div class="page flex items-center">
-        <div class="flex flex-col gap">
-            <section class="about w-1000">
-                <header class="header bg-a">
-                    About the Game
-                </header>
-                <div class="pad bg-c">
-                    <p>This is an idle resource-gathering game. Chop trees, transport your logs to market, sell them for money, and use the earnings to buy better axes and automation.</p>
-                    <p>Goal: Build up your woodcutting and mining operations from manual chopping to fully automated production.</p>
-                </div>
-            </section>
-            <section class="how-to-play w-1000">
-                <header class="header bg-a">
-                    How to Play
-                </header>
-                <div class="pad bg-c flex gap flex-col">
-                    <ul>
-                        <li>Chop: Click "Chop oak!" to gather oak logs manually. Each click gives you logs based on your equipped axe speed.</li>
-                        <li>Transport: Logs move automatically from your inventory to the market at a rate set by your Caravan upgrade.</li>
-                        <li>Sell: Click "Sell" to sell resources from the market for money. Oak = $1, Willow = $2, Stone = $1 each.</li>
-                        <li>Upgrade: Spend money on better axes and automation to chop and mine faster.</li>
-                    </ul> 
-                </div>
-            </section>
-            <section class="progression w-1000">
-                <header class="header bg-a">
-                    Progression Milestones
-                </header>
-                <div class="pad bg-c">
-                    <ul>
-                        <li>$100 earned: Unlocks the Caravan (faster transport) and the Stone Axe (2x chopping speed).</li>
-                        <li>500 oak logs sold: Unlocks the Auto Chopper (passive log production).</li>
-                        <li>Stone Axe purchased: Unlocks the Iron Axe (5x chopping speed).</li>
-                        <li>Mineshaft ($1,000 + 1,000 oak): Unlocks stone mining and the Auto Miner.</li>
-                    </ul>
-                </div>
-            </section>
 
-            <section class="resources w-1000">
-                <header class="header bg-a">
-                    Resources & Equipment
-                </header>
-                <div class="pad bg-c">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr>
-                            <th style="text-align: left; border-bottom: 1px solid var(--border-color);">Resource</th>
-                            <th style="text-align: left; border-bottom: 1px solid var(--border-color);">Sell Price</th>
-                        </tr>
-                        <tr>
-                            <td style="border-bottom: 1px solid var(--border-color);">Oak Logs</td>
-                            <td style="border-bottom: 1px solid var(--border-color);">$1</td>
-                        </tr>
-                        <tr>
-                            <td style="border-bottom: 1px solid var(--border-color);">Willow Logs</td>
-                            <td style="border-bottom: 1px solid var(--border-color);">$2</td>
-                        </tr>
-                        <tr>
-                            <td style="border-bottom: 1px solid var(--border-color);">Stone Ore</td>
-                            <td style="border-bottom: 1px solid var(--border-color);">$1</td>
-                        </tr>
-                    </table>
-                    <br>
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr>
-                            <th style="text-align: left; border-bottom: 1px solid var(--border-color);">Axe</th>
-                            <th style="text-align: left; border-bottom: 1px solid var(--border-color);">Cost</th>
-                            <th style="text-align: left; border-bottom: 1px solid var(--border-color);">Speed</th>
-                        </tr>
-                        <tr>
-                            <td style="border-bottom: 1px solid var(--border-color);">None (default)</td>
-                            <td style="border-bottom: 1px solid var(--border-color);">—</td>
-                            <td style="border-bottom: 1px solid var(--border-color);">1x</td>
-                        </tr>
-                        <tr>
-                            <td style="border-bottom: 1px solid var(--border-color);">Stone Axe</td>
-                            <td style="border-bottom: 1px solid var(--border-color);">$100 + 100 oak</td>
-                            <td style="border-bottom: 1px solid var(--border-color);">2x</td>
-                        </tr>
-                        <tr>
-                            <td style="border-bottom: 1px solid var(--border-color);">Iron Axe</td>
-                            <td style="border-bottom: 1px solid var(--border-color);">$500 + 500 oak</td>
-                            <td style="border-bottom: 1px solid var(--border-color);">5x</td>
-                        </tr>
-                    </table>
-                </div>
-            </section>
-
-            
-            
+    <section class="experience-strip" aria-label="Character experience">
+        <div class="experience-meta">
+            <strong id="levelDisplay">Level 0</strong>
+            <span id="experienceText">0 / 50 XP</span>
+            <button id="increaseLevelButton" class="dev-level-button" type="button" title="Temporary testing control: gain one level and one skill point">Increase Level by 1</button>
+            <strong id="skillPointDisplay">0 SP</strong>
         </div>
-    </div>
+        <div id="experienceTrack" class="experience-track" role="progressbar" aria-label="Experience to next level" aria-valuemin="0" aria-valuemax="50" aria-valuenow="0" aria-valuetext="0 of 50 XP to level 1">
+            <div id="experienceBar" class="experience-bar"></div>
+        </div>
+    </section>
+
+    <main class="adventure-layout">
+      <div class="side-panel-stack">
+          <aside class="side-panel world-panel" aria-label="World selector" hidden>
+              <div class="side-panel-heading">
+                  <span class="eyebrow">World selector</span>
+              </div>
+              <div id="worldList" class="world-list"></div>
+          </aside>
+          <aside class="side-panel stats-panel" aria-labelledby="statsHeading">
+              <div class="side-panel-heading">
+                  <span class="eyebrow">YOUR BUILD</span>
+                  <h2 id="statsHeading">Combat stats</h2>
+              </div>
+              <div class="combat-stat-groups">
+                  <section class="combat-stat-group" aria-labelledby="damageStatsHeading">
+                      <h3 id="damageStatsHeading">Damage stats</h3>
+                      <div class="stat-list">
+                          <div class="combat-stat"><span>Damage</span><strong id="damageDisplay">2</strong></div>
+                          <div class="combat-stat"><span title="Number of monsters hit with each attack">Multi-hit</span><strong id="multiHitDisplay">1</strong></div>
+                          <div class="combat-stat"><span>Attack interval</span><strong id="speedDisplay">1.20s</strong></div>
+                          <div class="combat-stat"><span>Accuracy</span><strong id="accuracyDisplay">100</strong></div>
+                      </div>
+                  </section>
+                  <section class="combat-stat-group" aria-labelledby="defensiveStatsHeading">
+                      <h3 id="defensiveStatsHeading">Defensive stats</h3>
+                      <div class="stat-list">
+                          <div class="combat-stat"><span>Evasion</span><strong id="evasionDisplay">25</strong></div>
+                      </div>
+                  </section>
+                  <section class="combat-stat-group" aria-labelledby="miscStatsHeading">
+                      <h3 id="miscStatsHeading">Misc stats</h3>
+                      <div class="stat-list">
+                          <div class="combat-stat"><span title="Chance to apply a poison stack on each successful hit">Poison chance</span><strong id="poisonChanceDisplay">0%</strong></div>
+                      </div>
+                  </section>
+              </div>
+          </aside>
+      </div>
+      <div class="adventure-page">
+        <div id="mapView" class="page-view">
+            <section class="game-panel map-panel">
+                <div class="section-heading">
+                    <h1 id="worldMapsHeading">Maps</h1>
+                    <span id="mapProgressSummary" class="subtle" aria-label="Maps reached"></span>
+                </div>
+                <p class="map-selection-hint subtle">Click the current map to browse destinations.</p>
+                <div id="mapList" class="map-list" aria-labelledby="worldMapsHeading" aria-expanded="true"></div>
+            </section>
+
+            <section class="game-panel combat-panel">
+                <div class="combat-heading">
+                    <div>
+                        <h2 id="currentMapName">Greenfields</h2>
+                        <p id="mapDescription" class="subtle"></p>
+                        <div class="player-health-row">
+                            <div class="player-health">
+                                <div class="health-heading">
+                                    <strong>Your health</strong>
+                                    <span id="playerHealthText">100 / 100 HP</span>
+                                </div>
+                                <div class="health-track player-health-track" role="progressbar" aria-label="Player health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                                    <div id="playerHealthBar" class="health-fill player-health-fill"></div>
+                                    <div id="playerHealthDamage" class="player-health-damage" aria-hidden="true"></div>
+                                </div>
+                            </div>
+                            <div id="combatStatus" class="combat-status is-fighting" role="status">
+                                <span id="combatStatusLabel">Auto-battling</span>
+                                <button id="resumeCombat" class="action-button resume-button" type="button" hidden>Revive</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kill-goal">
+                        <strong id="killProgress">0 / 10</strong>
+                        <span id="killProgressLabel">kills to clear map</span>
+                    </div>
+                </div>
+                <div id="enemyRoster" class="enemy-roster" aria-live="off"></div>
+                <p id="lastDrop" class="drop-message">Defeat enemies to find loot.</p>
+                <details class="loot-table-panel">
+                    <summary class="loot-table-heading">
+                        <h3 id="lootTableHeading">Loot table</h3>
+                    </summary>
+                    <ul id="mapLootTable" class="map-loot-table"></ul>
+                </details>
+            </section>
+        </div>
+
+        <section id="townView" class="game-panel crafting-view page-view" hidden>
+            <div class="section-heading">
+                <div>
+                    <span class="eyebrow">THE WORKSHOP</span>
+                    <h1>Crafting</h1>
+                </div>
+                <p class="subtle">Turn materials from your journeys into gear for your next expedition.</p>
+            </div>
+            <div class="crafting-heading">
+                <div>
+                    <h2>Gear recipes</h2>
+                    <p class="subtle">Crafted items go to your inventory. Equip them when you are ready.</p>
+                </div>
+            </div>
+            <div id="craftingTools" class="crafting-tools">
+                <div class="craft-category-filters" role="group" aria-label="Filter recipes by gear category">
+                    <button type="button" class="craft-filter is-selected" data-craft-category="all" aria-pressed="true">All gear</button>
+                    <button type="button" class="craft-filter" data-craft-category="weapons" aria-pressed="false">Weapons</button>
+                    <button type="button" class="craft-filter" data-craft-category="armor" aria-pressed="false">Armor</button>
+                    <button type="button" class="craft-filter" data-craft-category="accessories" aria-pressed="false">Accessories</button>
+                </div>
+                <button id="craftableOnly" class="craft-filter craftable-filter" type="button" aria-pressed="false">Craftable now</button>
+                <button id="showHiddenRecipes" class="craft-filter" type="button" aria-pressed="false">Show hidden</button>
+                <p id="craftingSummary" class="crafting-summary" aria-live="polite"></p>
+            </div>
+            <div id="craftList" class="crafting-grid"></div>
+        </section>
+
+        <section id="upgradesView" class="game-panel page-view" hidden>
+            <div class="skill-points-bar">
+                <span id="skillPointsDisplay">Skill points: 0</span>
+            </div>
+            <div id="upgradeList" class="item-list"></div>
+        </section>
+
+        <section id="inventoryView" class="game-panel inventory-view page-view" hidden>
+            <div class="section-heading">
+                <div>
+                    <span class="eyebrow">YOUR ADVENTURER</span>
+                    <h1>Inventory</h1>
+                </div>
+                <p class="subtle">Choose what to equip and watch your combat stats improve.</p>
+            </div>
+            <div class="gear-workspace">
+                <section class="town-section equipment-panel" aria-labelledby="equippedGearHeading">
+                    <h2 id="equippedGearHeading">Equipped gear</h2>
+                    <p class="subtle">Select a slot to browse gear for that piece.</p>
+                    <div id="gearSummary" class="gear-summary" aria-label="Equipped gear slots"></div>
+                </section>
+                <section class="town-section gear-picker" aria-labelledby="gearSelectionHeading">
+                    <h2 id="gearSelectionHeading">Weapon selection</h2>
+                    <p id="gearSelectionHint" class="subtle">Choose an owned weapon to equip.</p>
+                    <div id="gearInventory" class="item-list"></div>
+                </section>
+            </div>
+            <section class="town-section materials-panel" aria-labelledby="materialsHeading">
+                <h2 id="materialsHeading">Materials</h2>
+                <p class="subtle">Only materials you currently own are shown.</p>
+                <div id="inventoryList" class="inventory-list"></div>
+            </div>
+        </section>
+
+      </div>
+      <details class="side-panel loot-panel">
+          <summary class="loot-panel-toggle" aria-label="Toggle loot drops">
+              <span class="eyebrow">LOOT DROPS</span>
+          </summary>
+          <div class="loot-panel-content">
+              <ol id="lootLog" class="loot-list" aria-live="polite"></ol>
+          </div>
+      </details>
+    </main>
     <footer></footer>
+    <script src="js/skill-tree.js?v=20261020-2"></script>
+    <script src="js/game.js?v=20261020-44"></script>
 </body>
 </html>

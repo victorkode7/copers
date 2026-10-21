@@ -1,0 +1,46 @@
+.app-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid #2b3c4e;
+    background: #09121a;
+    font-family: "Segoe UI", sans-serif;
+}
+
+.app-nav a,
+.app-nav-unavailable {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    color: #a8b9c9;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.app-nav a:hover,
+.app-nav a[aria-current="page"] {
+    background: rgba(115, 186, 255, 0.14);
+    color: #73baff;
+}
+
+.app-nav a:focus-visible {
+    outline: 2px solid #73baff;
+    outline-offset: 2px;
+}
+
+.app-nav-unavailable {
+    color: #8c9dac;
+    cursor: default;
+}
+
+.app-nav-unavailable small {
+    padding: 0.15rem 0.4rem;
+    border: 1px solid #2b3c4e;
+    border-radius: 999px;
+    font-size: 0.65rem;
+}

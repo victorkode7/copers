@@ -58,7 +58,7 @@
     const structuredStatKeys = new Set(bonusStats.flatMap(stat => [stat.additive, stat.multiplier]));
     structuredStatKeys.add('attackSpeedMultiplier');
     const nodeSizes = [1, 1.25, 1.5];
-    const originalTree = JSON.parse(JSON.stringify(window.gameThreeSkillTree));
+    const originalTree = JSON.parse(JSON.stringify(window.adventureSkillTree));
     let tree = JSON.parse(JSON.stringify(originalTree));
     let selectedId = tree.nodes[0] ? tree.nodes[0].id : null;
     let zoom = 0.85;
@@ -814,7 +814,7 @@
     }
 
     function exportJson() {
-        download('3-skill-tree.json', JSON.stringify(tree, null, 4) + '\n', 'application/json');
+        download('skill-tree.json', JSON.stringify(tree, null, 4) + '\n', 'application/json');
         showToast('Skill tree JSON exported.');
     }
 
@@ -825,11 +825,11 @@
             'The tree has ' + errors.length + ' validation error' +
             (errors.length === 1 ? '' : 's') + '. Export anyway?'
         )) return;
-        const source = 'window.gameThreeSkillTree = ' + JSON.stringify(tree, null, 4) + ';\n';
-        download('3-skill-tree.js', source, 'text/javascript');
-        elements.saveStatus.textContent = 'Exported · replace js/3-skill-tree.js with the downloaded file';
+        const source = 'window.adventureSkillTree = ' + JSON.stringify(tree, null, 4) + ';\n';
+        download('skill-tree.js', source, 'text/javascript');
+        elements.saveStatus.textContent = 'Exported · replace js/skill-tree.js with the downloaded file';
         elements.saveStatus.previousElementSibling.style.background = 'var(--green)';
-        showToast('Downloaded 3-skill-tree.js. Replace the existing file in the js folder.');
+        showToast('Downloaded skill-tree.js. Replace the existing file in the js folder.');
     }
 
     async function importJson(file) {

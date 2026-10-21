@@ -1,4 +1,4 @@
-window.gameThreeSkillTree = {
+window.adventureSkillTree = {
     "experienceBase": 100,
     "experiencePerLevel": 100,
     "nodes": [

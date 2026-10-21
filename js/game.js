@@ -161,11 +161,11 @@ const adminRingData = {
 
 const recipes = [
     { id: 'trailblazerBlade', name: 'Sticky Sword', slot: 'weapon', damage: 5, attackSpeedMultiplier: 0.98, materials: { gel: 12 }, effect: '+5 damage\n2% Attack speed', description: 'A sticky blade molded from gathered slime.' },
-    { id: 'slimeboundCoat', name: "John's Coat", slot: 'chest', goldBonus: 0.2, evasion: 10, materials: { hide: 12 }, effect: '+20% gold from battles\n+10 evasion', description: 'A sturdy coat stitched from Wolf Fur.' },
     { id: 'emberforgedBlade', name: 'Emberforged Blade', slot: 'weapon', damage: 10, attackSpeedMultiplier: 0.90, materials: { ore: 14, crystal: 4 }, effect: '+10 damage\n10% Attack speed', description: 'Forged from cavern finds.' },
     { id: 'wolfFangHelm', name: 'Wolf-Fang Helm', slot: 'helmet', evasion: 4, materials: { hide: 8 }, effect: '+4 evasion', description: 'A rugged helm fitted with a polished wolf fang.' },
+    { id: 'slimeboundCoat', name: "John's Coat", slot: 'chest', goldBonus: 0.2, evasion: 10, materials: { hide: 12 }, effect: '+20% gold from battles\n+10 evasion', description: 'A sturdy coat stitched from Wolf Fur.' },
     { id: 'woodlandGreaves', name: 'Woodland Greaves', slot: 'legs', evasion: 5, materials: { hide: 10 }, effect: '+5 evasion', description: 'Light leg armor made for moving through the forest.' },
-    { id: 'blobhopperBoots', name: 'Blobhopper Boots', slot: 'boots', attackSpeedMultiplier: 0.95, evasion: 3, materials: { gel: 20 }, effect: '5% shorter attack interval\n+3 evasion', description: 'Springy boots shaped from resilient slime.' },
+    { id: 'blobhopperBoots', name: 'Blobhopper Boots', slot: 'boots', attackSpeedMultiplier: 0.95, evasion: 3, materials: { gel: 20 }, effect: '5% Attack speed\n+3 evasion', description: 'Springy boots shaped from resilient slime.' },
     { id: 'cinderstepBoots', name: 'Cinderstep Boots', slot: 'boots', attackSpeedMultiplier: 0.92, evasion: 5, materials: { cinderHoof: 16, singedMane: 8 }, effect: '8% Attack speed\n+5 evasion', description: 'Lightweight boots trimmed with fireproof mane and a sturdy hoof sole.' },
     { id: 'wardensCape', name: "Warden's Cape", slot: 'cape', goldBonus: 0.1, evasion: 5, materials: { ore: 8, crystal: 4 }, effect: '+10% gold from battles\n+5 evasion', description: 'A bright cape woven with cavern crystals.' },
     { id: 'pearlSignet', name: 'Pearl Signet', slot: 'ring', damage: 4, materials: { pearl: 8, fang: 6 }, effect: '+4 damage', description: 'A sea-polished ring set with a luminous pearl.' }
@@ -173,7 +173,7 @@ const recipes = [
 
 const craftingCategories = [
     { id: 'weapons', title: 'Weapons', recipes: ['trailblazerBlade', 'emberforgedBlade'] },
-    { id: 'armor', title: 'Armor', recipes: ['blobhopperBoots', 'slimeboundCoat', 'wolfFangHelm', 'woodlandGreaves', 'cinderstepBoots'] },
+    { id: 'armor', title: 'Armor', recipes: ['blobhopperBoots', 'slimeboundCoat', 'wolfFangHelm', 'woodlandGreaves', 'cinderstepBoots', 'trimmedLegs'] },
     { id: 'accessories', title: 'Accessories', recipes: ['wardensCape', 'pearlSignet'] }
 ];
 const recipeCategories = {
@@ -232,9 +232,9 @@ const createTutorialState = () => ({
 });
 
 const legacyUpgradeIds = ['strength', 'haste', 'evasion'];
-const skillTreeData = window.gameThreeSkillTree;
+const skillTreeData = window.adventureSkillTree;
 if (!skillTreeData || !Array.isArray(skillTreeData.nodes)) {
-    throw new Error('Game 3 skill tree data could not be loaded.');
+    throw new Error('Idle Adventure skill tree data could not be loaded.');
 }
 const skillNodes = skillTreeData.nodes;
 const skillNodeById = Object.fromEntries(skillNodes.map(node => [node.id, node]));
@@ -833,7 +833,7 @@ function saveGame() {
         }));
         lastSave = Date.now();
     } catch (error) {
-        console.error('Could not save Game 3 progress.', error);
+        console.error('Could not save Idle Adventure progress.', error);
     }
 }
 
@@ -1138,7 +1138,7 @@ function loadGame() {
         state.lastDrop = typeof saved.lastDrop === 'string' ? saved.lastDrop : 'Defeat enemies to find loot.';
         return true;
     } catch (error) {
-        console.error('Could not load Game 3 progress.', error);
+        console.error('Could not load Idle Adventure progress.', error);
         state.lootLog = [];
         return false;
     }
@@ -2408,7 +2408,7 @@ elements.tutorialNotifications.addEventListener('click', function(event) {
 });
 
 document.querySelector('#resetGame').addEventListener('click', function() {
-    if (!window.confirm('Reset all Game 3 progress? This cannot be undone.')) return;
+    if (!window.confirm('Reset all Idle Adventure progress? This cannot be undone.')) return;
     state.gold = 0;
     state.kills = Object.fromEntries(mapData.map(map => [map.id, 0]));
     state.materials = { hide: 0, fang: 0, gel: 0, ore: 0, crystal: 0, pearl: 0, cinderHoof: 0, singedMane: 0 };

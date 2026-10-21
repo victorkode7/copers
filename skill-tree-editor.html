@@ -3,12 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Game 3 Skill Tree Editor</title>
-    <link rel="stylesheet" href="css/3-skill-tree-editor.css?v=20261019-3">
+    <title>Skill Tree Editor | Idle Adventure</title>
+    <link rel="stylesheet" href="css/skill-tree-editor.css?v=20261019-3">
+    <link rel="stylesheet" href="css/app-nav.css">
 </head>
 <body>
+    <nav class="app-nav" aria-label="Main navigation">
+        <a href="index.html">Game</a>
+        <a href="skill-tree-editor.html" aria-current="page">Skill Tree Editor</a>
+        <span class="app-nav-unavailable" role="link" aria-disabled="true">Item Editor <small>Coming soon</small></span>
+    </nav>
     <header class="topbar">
-        <a class="back-link" href="3.html">← Game 3</a>
+        <a class="back-link" href="index.html">← Game</a>
         <div class="brand">
             <span class="brand-mark">✦</span>
             <div>
@@ -221,7 +227,7 @@
         </form>
     </dialog>
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-    <script src="js/3-skill-tree.js"></script>
-    <script src="js/3-skill-tree-editor.js?v=20261020-9"></script>
+    <script src="js/skill-tree.js"></script>
+    <script src="js/skill-tree-editor.js?v=20261020-9"></script>
 </body>
 </html>
