@@ -11,7 +11,7 @@ $fixturePath = Join-Path $workspacePath '.equipment-smoke.html'
 $skillFixturePath = Join-Path $workspacePath '.skill-editor-smoke.html'
 $profilePath = Join-Path ([IO.Path]::GetTempPath()) ('copers-browser-' + [guid]::NewGuid().ToString('N'))
 $html = [IO.File]::ReadAllText((Join-Path $workspacePath $Page))
-$prelude = '<script>window.smokeErrors=[];window.addEventListener("error",e=>smokeErrors.push(e.message));window.setInterval=()=>0;</script>'
+$prelude = '<script>window.smokeErrors=[];window.smokeIntervals=[];window.addEventListener("error",e=>smokeErrors.push(e.message));window.setInterval=callback=>{smokeIntervals.push(callback);return 0;};</script>'
 $html = $html.Replace('<head>', '<head>' + $prelude)
 $html = [regex]::Replace($html, '<script src="https://ajax.googleapis.com[^>]+></script>', '')
 if ($Page -eq 'index.html') {
@@ -30,7 +30,7 @@ try {
     $processInfo = [Diagnostics.ProcessStartInfo]::new()
     $processInfo.FileName = $Browser
     $processInfo.Arguments = '--headless --disable-gpu --no-first-run --allow-file-access-from-files --dump-dom --virtual-time-budget=5000 --user-data-dir="' + $profilePath + '" "' + ([uri]$fixturePath).AbsoluteUri + '"'
-    $realtime = $TestScript -in @('tests/editor-persistence-smoke.js', 'tests/skill-sprites-smoke.js', 'tests/item-editor-smoke.js')
+    $realtime = $TestScript -in @('tests/editor-persistence-smoke.js', 'tests/skill-sprites-smoke.js', 'tests/item-editor-smoke.js', 'tests/world-editor-smoke.js', 'tests/world-quick-save-smoke.js', 'tests/editor-quick-save-smoke.js')
     if ($realtime) {
         $processInfo.Arguments = '--headless --disable-gpu --no-first-run --allow-file-access-from-files --remote-debugging-port=0 --user-data-dir="' + $profilePath + '" "' + ([uri]$fixturePath).AbsoluteUri + '"'
     }
@@ -99,8 +99,9 @@ try {
         $stream = [IO.MemoryStream]::new($bytes, $false)
         $zip = [IO.Compression.ZipArchive]::new($stream, [IO.Compression.ZipArchiveMode]::Read)
         try {
-            $expectedDataFile = if ($Page -eq 'skill-tree-editor.html') { 'js/skill-tree.js' } else { 'js/items.js' }
-            if ($zip.Entries.Count -ne 2 -or !$zip.GetEntry($expectedDataFile)) { throw 'Package did not contain expected data and sprite.' }
+            $expectedDataFile = if ($Page -eq 'world-editor.html') { 'js/world-content.js' } elseif ($Page -eq 'skill-tree-editor.html') { 'js/skill-tree.js' } else { 'js/items.js' }
+            $expectedEntries = if ($Page -eq 'world-editor.html') { 3 } else { 2 }
+            if ($zip.Entries.Count -ne $expectedEntries -or !$zip.GetEntry($expectedDataFile)) { throw 'Package did not contain expected data and sprite.' }
             foreach ($entry in $zip.Entries) {
                 $reader = $entry.Open()
                 $copy = [IO.MemoryStream]::new()

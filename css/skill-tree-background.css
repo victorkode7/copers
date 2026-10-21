@@ -34,4 +34,6 @@
     background-size: contain;
     background-repeat: no-repeat;
     pointer-events: none;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
 }

@@ -76,7 +76,7 @@ window.adventureItems = {
             "name": "Emberforged Blade",
             "slot": "weapon",
             "description": "Forged from cavern finds.",
-            "rarity": "common",
+            "rarity": "rare",
             "sprite": "assets/items/emberforgedBlade-50944b24.png",
             "stats": {
                 "damage": 10,
@@ -91,13 +91,13 @@ window.adventureItems = {
         },
         {
             "id": "wolfFangHelm",
-            "name": "Wolf-Fang Helm",
+            "name": "Wolf Helmet",
             "slot": "helmet",
-            "description": "A rugged helm fitted with a polished wolf fang.",
+            "description": "A wolf died for your fashion.. How do you feel?",
             "rarity": "common",
-            "sprite": "",
+            "sprite": "assets/items/Wolf-Fang-Helm-7b1d28ad.png",
             "stats": {
-                "evasion": 4
+                "evasion": 10
             },
             "recipe": {
                 "materials": {
@@ -111,7 +111,7 @@ window.adventureItems = {
             "slot": "chest",
             "description": "A sturdy coat stitched from Wolf Fur.",
             "rarity": "common",
-            "sprite": "",
+            "sprite": "assets/items/slimeboundCoat-b5f6ea93.png",
             "stats": {
                 "evasion": 10,
                 "goldBonus": 0.2
@@ -128,7 +128,7 @@ window.adventureItems = {
             "slot": "legs",
             "description": "Light leg armor made for moving through the forest.",
             "rarity": "common",
-            "sprite": "",
+            "sprite": "assets/items/woodlandGreaves-ddaf5be3.png",
             "stats": {
                 "evasion": 5
             },
@@ -144,10 +144,10 @@ window.adventureItems = {
             "slot": "boots",
             "description": "Springy boots shaped from resilient slime.",
             "rarity": "common",
-            "sprite": "",
+            "sprite": "assets/items/blobhopperBoots-ed0b213e.png",
             "stats": {
                 "evasion": 3,
-                "attackSpeedMultiplier": 1.0526315789473684
+                "attackSpeedMultiplier": 1.05
             },
             "recipe": {
                 "materials": {
@@ -175,19 +175,18 @@ window.adventureItems = {
         },
         {
             "id": "wardensCape",
-            "name": "Warden's Cape",
+            "name": "Forest cape",
             "slot": "cape",
             "description": "A bright cape woven with cavern crystals.",
             "rarity": "common",
-            "sprite": "",
+            "sprite": "assets/items/Forest-cape-de523e7a.png",
             "stats": {
-                "evasion": 5,
+                "evasion": 15,
                 "goldBonus": 0.1
             },
             "recipe": {
                 "materials": {
-                    "ore": 8,
-                    "crystal": 4
+                    "hide": 30
                 }
             }
         },
@@ -248,11 +247,61 @@ window.adventureItems = {
             "sprite": "assets/items/voidSword-0b77f697.png",
             "stats": {
                 "damage": 20,
-                "attackSpeedMultiplier": 1.2
+                "attackSpeedMultiplier": 1.1,
+                "multiHit": 0.25
             },
             "recipe": {
                 "materials": {
                     "pearl": 50
+                }
+            }
+        },
+        {
+            "id": "item_32f8d6243a56da0629cfe58751247a8e",
+            "name": "Warden's cape",
+            "slot": "cape",
+            "rarity": "rare",
+            "description": "A cape once worn by a long forgotten warden.",
+            "sprite": "assets/items/Warden-s-cape-a21b83ca.png",
+            "stats": {
+                "healthMultiplier": 1.25,
+                "damageMultiplier": 1.1,
+                "evasionMultiplier": 1.15
+            },
+            "recipe": null
+        },
+        {
+            "id": "item_7de91942c4c910a1b4d94c688aad4235",
+            "name": "Long spear",
+            "slot": "weapon",
+            "rarity": "common",
+            "description": "Greatest invention since... fire?",
+            "sprite": "assets/items/Long-spear-b79182a1.png",
+            "stats": {
+                "damage": 3,
+                "attackSpeedMultiplier": 1.05
+            },
+            "recipe": {
+                "materials": {
+                    "fang": 15
+                }
+            }
+        },
+        {
+            "id": "item_770c1a31a80d92a991e2655fb5a8a2e5",
+            "name": "Wolf necklace",
+            "slot": "necklace",
+            "rarity": "common",
+            "description": "Arent you missing a few teeth?",
+            "sprite": "assets/items/Wolf-necklace-283fc294.png",
+            "stats": {
+                "evasionMultiplier": 1.2,
+                "evasion": 10
+            },
+            "recipe": {
+                "materials": {
+                    "fang": 7,
+                    "hide": 1
                 }
             }
         }

@@ -4,15 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Skill Tree Editor | Idle Adventure</title>
-    <link rel="stylesheet" href="css/skill-tree-editor.css?v=20261021-14">
+    <link rel="stylesheet" href="css/skill-tree-editor.css?v=20261021-15">
     <link rel="stylesheet" href="css/skill-tree-background.css?v=20261021-18">
     <link rel="stylesheet" href="css/app-nav.css">
+    <link rel="stylesheet" href="css/editor-quick-save.css?v=1">
 </head>
 <body>
     <nav class="app-nav" aria-label="Main navigation">
         <a href="index.html">Game</a>
         <a href="skill-tree-editor.html" aria-current="page">Skill Tree Editor</a>
         <a href="item-editor.html">Item Editor</a>
+        <a href="world-editor.html">World &amp; Monster Editor</a>
     </nav>
     <header class="topbar">
         <a class="back-link" href="index.html">← Game</a>
@@ -34,6 +36,10 @@
             <label class="button secondary import-button" for="importFile">Import JSON</label>
             <input id="importFile" type="file" accept=".json,application/json" hidden>
             <button id="exportJson" class="button secondary" type="button">Export JSON</button>
+            <span class="quick-save-control">
+                <button id="quickSave" class="button secondary" type="button" aria-disabled="true" aria-describedby="quickSaveTip">Quick save</button>
+                <span id="quickSaveTip" class="quick-save-tooltip" role="tooltip">Save data only. For new sprites, download the game package.</span>
+            </span>
             <button id="exportJs" class="button primary" type="button">Download game package</button>
         </div>
         <p id="connectHint" class="connect-hint" hidden>Connect mode: click a node to set it as a prerequisite, then click another node to connect them. Press Esc to cancel.</p>
@@ -65,7 +71,7 @@
             <div id="nodeList" class="node-list" role="listbox" aria-label="Skill tree nodes"></div>
             <div class="sidebar-footer">
                 <span class="status-dot"></span>
-                <span id="saveStatus">Changes are local until exported</span>
+                <span id="saveStatus">Changes are local until quick-saved or exported</span>
             </div>
         </aside>
 
@@ -121,6 +127,11 @@
                 <button id="deleteNode" class="icon-button danger-button" type="button" aria-label="Delete selected node" title="Delete selected node">×</button>
             </div>
             <p id="emptyInspector" class="empty-inspector">Select a node on the map or from the list to edit its properties.</p>
+            <details class="quick-save-settings">
+                <summary>Quick-save file</summary>
+                <p id="quickSaveTarget" class="quick-save-help">Checking quick-save availability…</p>
+                <button id="chooseQuickSaveFile" class="button secondary" type="button" hidden>Choose project file</button>
+            </details>
             <form id="nodeForm" class="node-form" hidden>
                 <label>
                     <span>Identifier</span>
@@ -243,6 +254,8 @@
     <script src="js/skill-stat-compat.js?v=20261021-2"></script>
     <script src="js/item-package.js?v=20261021-2"></script>
     <script src="js/skill-sprites.js?v=20261021-13"></script>
-    <script src="js/skill-tree-editor.js?v=20261021-17"></script>
+    <script src="js/editor-file-save.js?v=2"></script>
+    <script src="js/editor-quick-save.js?v=2"></script>
+    <script src="js/skill-tree-editor.js?v=20261021-18"></script>
 </body>
 </html>

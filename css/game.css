@@ -934,11 +934,13 @@ html {
 }
 
 .idle-adventure .enemy-card {
+    --enemy-sprite-size: 128px;
     position: relative;
     z-index: 1;
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
+    display: grid;
+    grid-template-columns: calc(var(--enemy-sprite-size) + 2px) minmax(0, 1fr);
+    align-items: center;
+    gap: 0.65rem 1rem;
     margin-top: 0;
     padding: 1rem;
     border: 1px solid var(--adventure-border);
@@ -998,19 +1000,18 @@ html {
 }
 
 .idle-adventure .enemy-roster.has-multiple .enemy-card {
+    --enemy-sprite-size: 96px;
     gap: 0.65rem;
     padding: 0.7rem;
 }
 
 .idle-adventure .enemy-roster.has-multiple .enemy-mark {
-    width: 42px;
-    height: 42px;
-    flex-basis: 42px;
     border-radius: 13px;
-    font-size: 1.35rem;
+    font-size: 2.5rem;
 }
 
 .idle-adventure .enemy-roster.is-crowded .enemy-card {
+    --enemy-sprite-size: 64px;
     gap: 0.45rem;
     padding: 0.55rem;
 }
@@ -1021,11 +1022,8 @@ html {
 }
 
 .idle-adventure .enemy-roster.is-crowded .enemy-mark {
-    width: 34px;
-    height: 34px;
-    flex-basis: 34px;
     border-radius: 10px;
-    font-size: 1.1rem;
+    font-size: 2rem;
 }
 
 .idle-adventure .enemy-roster.is-crowded .hit-chance {
@@ -1071,6 +1069,8 @@ html {
 
 .idle-adventure .enemy-title {
     display: flex;
+    grid-column: 1 / -1;
+    min-width: 0;
     min-height: 2.5rem;
     align-items: center;
     justify-content: space-between;
@@ -1106,20 +1106,29 @@ html {
 
 .idle-adventure .enemy-mark {
     display: grid;
-    width: 64px;
-    height: 64px;
-    flex: 0 0 64px;
+    width: calc(var(--enemy-sprite-size) + 2px);
+    height: calc(var(--enemy-sprite-size) + 2px);
     place-items: center;
     border: 1px solid rgba(255, 144, 123, 0.35);
     border-radius: 18px;
     background: rgba(255, 144, 123, 0.1);
     color: var(--adventure-coral);
-    font-size: 2rem;
+    font-size: 3rem;
 }
 
 .idle-adventure .enemy-details {
     min-width: 0;
-    flex: 1;
+}
+
+.idle-adventure .enemy-details .hit-chance {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin: 0.35rem 0;
+}
+
+.idle-adventure .enemy-details .hit-chance strong {
+    flex: 0 0 auto;
 }
 
 .idle-adventure .enemy-title h3 {
@@ -1134,6 +1143,8 @@ html {
 
 .idle-adventure .combat-status {
     display: inline-flex;
+    min-width: 0;
+    max-width: 100%;
     min-height: 32px;
     flex: 0 0 auto;
     align-items: center;
@@ -1146,12 +1157,18 @@ html {
     font-size: 0.9rem;
     font-weight: 800;
     letter-spacing: 0.025em;
-    white-space: nowrap;
+    white-space: normal;
+}
+
+.idle-adventure #combatStatusLabel {
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .idle-adventure .combat-status::before {
     width: 9px;
     height: 9px;
+    flex: 0 0 9px;
     border-radius: 50%;
     background: currentColor;
     box-shadow: 0 0 9px currentColor;
@@ -1304,8 +1321,8 @@ html {
 
 .idle-adventure .player-health-row .combat-status {
     margin-top: 0.75rem;
-    flex: 0 0 190px;
-    width: 190px;
+    flex: 0 1 15rem;
+    width: 15rem;
     box-sizing: border-box;
     justify-content: flex-start;
 }
@@ -1334,7 +1351,7 @@ html {
 }
 
 .idle-adventure .loot-table-panel {
-    margin-top: 1rem;
+    margin: 0;
     padding: 1rem;
     border: 1px solid var(--adventure-border);
     border-radius: 14px;
@@ -1490,7 +1507,8 @@ html {
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+    row-gap: 0.2rem;
 }
 
 .idle-adventure .enemy-health-value {
@@ -1498,7 +1516,14 @@ html {
     align-items: center;
     gap: 0.35rem;
     min-width: 0;
+    max-width: 100%;
     white-space: nowrap;
+}
+
+.idle-adventure .enemy-health-value .subtle {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .idle-adventure .enemy-health-value > span:first-child {
@@ -1645,11 +1670,122 @@ html {
     white-space: nowrap;
 }
 
-.idle-adventure .drop-message {
-    min-height: 1.2em;
-    margin: 0.55rem 0 0;
+.idle-adventure .loot-notice {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.7rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(255, 197, 111, 0.3);
+    border-radius: 12px;
+    background: #13232e;
+}
+
+.idle-adventure .loot-notice-title {
+    margin: 0;
     color: var(--adventure-amber);
-    font-size: 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.idle-adventure .loot-empty {
+    margin: 0;
+    color: var(--adventure-muted);
+    font-size: 0.9rem;
+}
+
+.idle-adventure .loot-equipment {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: 0.65rem;
+}
+
+.idle-adventure .loot-equipment-drop {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.75rem;
+    border: 1px solid var(--item-rarity);
+    border-left-width: 3px;
+    border-radius: 8px;
+    background: #0c1a24;
+}
+
+.idle-adventure .loot-equipment-drop:is([data-rarity="rare"], [data-rarity="epic"], [data-rarity="unique"]) {
+    box-shadow: inset 0 0 20px color-mix(in srgb, var(--item-rarity) 10%, transparent), 0 0 12px color-mix(in srgb, var(--item-rarity) 12%, transparent);
+}
+
+.idle-adventure .loot-equipment-drop .item-sprite {
+    width: 68px;
+    height: 68px;
+    flex: 0 0 68px;
+    border: 2px solid var(--item-rarity);
+    border-radius: 6px;
+    background: #071624;
+    color: var(--item-rarity);
+}
+
+.idle-adventure .loot-equipment-drop .item-sprite img {
+    width: 100%;
+    height: 100%;
+}
+
+.idle-adventure .loot-equipment-copy {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.idle-adventure .loot-equipment-copy strong {
+    display: block;
+    color: var(--item-rarity);
+    font-size: 1.05rem;
+}
+
+.idle-adventure .loot-equipment-copy > span {
+    display: block;
+    margin-top: 0.3rem;
+    color: var(--adventure-muted);
+    font-size: 0.75rem;
+}
+
+.idle-adventure .loot-rewards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.idle-adventure .loot-reward {
+    display: inline-flex;
+    max-width: 100%;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid var(--adventure-border);
+    border-radius: 6px;
+    background: #1b303d;
+    font-size: 0.9rem;
+}
+
+.idle-adventure .loot-reward > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.idle-adventure .loot-reward strong {
+    flex: 0 0 auto;
+    color: var(--adventure-green);
+    font-size: 1rem;
+}
+
+.idle-adventure .loot-reward--gold {
+    border-color: rgba(255, 197, 111, 0.3);
+}
+
+.idle-adventure .loot-reward--gold strong {
+    color: var(--adventure-amber);
 }
 
 .idle-adventure .combat-note {
@@ -2878,6 +3014,10 @@ html {
 }
 
 @media (max-width: 420px) {
+    .idle-adventure .enemy-roster:not(.has-multiple) .enemy-card {
+        --enemy-sprite-size: 96px;
+    }
+
     .idle-adventure .nav-header {
         --nav-logo-left: 0.75rem;
         --nav-logo-size: 52px;
@@ -2931,7 +3071,7 @@ html {
 .idle-adventure #gearInventory .inventory-sprite-frame { display: grid; place-items: center; width: 72px; height: 72px; margin: 0; padding: 3px; border: 1px solid var(--item-rarity); border-radius: 7px; background: #0a1821; box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.4); }
 .idle-adventure #gearInventory .inventory-item-identity .item-sprite { display: grid; margin-top: 0; font-size: 1.5rem; }
 .idle-adventure #gearInventory .inventory-item-stats { min-width: 0; margin: 0; font-size: 0.875rem; white-space: normal; overflow-wrap: anywhere; }
-.idle-adventure .stat-comparison-legend { display: block; margin-top: 0.45rem; color: var(--adventure-muted); font-size: 0.75rem; line-height: 1.5; }
+.idle-adventure #gearInventory .inventory-empty { font-size: 1rem; line-height: 1.5; }
 .idle-adventure .game-item-copy .item-stat-comparison { white-space: normal; }
 .idle-adventure .game-item-copy .item-stat-line { display: block; line-height: 1.5; }
 .idle-adventure .game-item-copy .item-stat-line.stat-new { color: #83bfff !important; }

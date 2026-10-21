@@ -1,0 +1,58 @@
+(async function () {
+    const checks = [];
+    function check(label, condition) { checks.push((condition ? 'PASS ' : 'FAIL ') + label); if (!condition) throw new Error(label); }
+    const priorRandom = Math.random;
+    try {
+        check('seed data validates and keeps existing map identities', WorldContent.validate(worldContent, itemData).length === 0 && mapData[0].id === 'greenfields' && worldData[0].id === 'verdantReach');
+        const wolves = monsterDefinitions(mapData.find(map => map.id === 'whisperingWoods'));
+        check('existing monster counts and respawn overrides survive migration', wolves.length === 2 && wolves[0].id === 'whisperingWoods-copy-1' && wolves[0].respawnSeconds === 5 && wolves[1].respawnSeconds === 8);
+        const map = currentMap();
+        const archer = {...WorldContent.clone(WorldContent.defaults), id: 'smokeArcher', name: 'Smoke Archer', health: 83, accuracy: 100, evasion: 40, attackDamage: 7, attackInterval: 0.5, respawnSeconds: 2, experience: 3, gold: [2, 2], sprite: 'tests/fixtures/equipment-sprite.svg', drops: [{id: 'gel', amount: [3, 3], chance: 1}], itemDrops: [{id: 'testDropHelm', chance: 1}]};
+        worldContent.monsters.push(archer);
+        map.spawns.push({id: 'smokeArcherSpawn', monsterId: archer.id, count: 1, overrides: {}});
+        worldData[0].background = {sprite: 'assets/ui/brick128.png', color: '#071624', fit: 'tile', tileSize: 128, dim: 0.5};
+        state.currentView = 'map'; resetMonsterStates(map); render();
+        const enemy = state.monsterStates.find(monster => monster.id === 'smokeArcherSpawn');
+        const card = document.querySelector('[data-monster-id="smokeArcherSpawn"]');
+        check('mixed enemies use their own maximum health', enemy.hp === 83 && card.querySelector('[data-enemy-hp]').textContent === '83 / 83 HP' && state.monsterStates[0].hp === 12);
+        check('mixed enemies display their own damage and interval', card.querySelector('[data-enemy-damage]').textContent === '7' && card.querySelector('[data-enemy-attack-interval]').textContent === '0.5s');
+        check('enemy accuracy and evasion are specific to the monster', card.querySelector('[data-player-accuracy]').textContent === '60%' && getEnemyHitChance(enemy) === 75);
+        const sprite = card.querySelector('.enemy-mark img');
+        check('monsters use assigned sprites with pixel rendering', sprite?.getAttribute('src') === archer.sprite && getComputedStyle(sprite).imageRendering === 'pixelated');
+        check('world backgrounds apply to combat and map selectors', elements.combatPanel.style.backgroundImage.includes('brick128.png') && elements.mapList.children[0].style.backgroundImage.includes('brick128.png'));
+        map.background = {sprite: 'assets/skilltree-background.png', color: '#071624', fit: 'cover', tileSize: 256, dim: 0.6}; renderCombat();
+        check('map-specific backgrounds override the world', elements.combatPanel.style.backgroundImage.includes('skilltree-background.png'));
+        state.targetMonsterId = enemy.id; renderCombat();
+        check('loot table follows the selected monster', elements.lootTableHeading.textContent.includes('Smoke Archer') && elements.mapLootTable.textContent.includes('Test Drop Helm'));
+        check('large scene sprite follows the selected monster', !elements.combatArt.hidden && elements.combatArt.getAttribute('src') === archer.sprite && elements.combatPanel.classList.contains('has-monster-art'));
+        check('scene sprite stays crisp and does not intercept controls', getComputedStyle(elements.combatArt).imageRendering === 'pixelated' && getComputedStyle(elements.combatArt).pointerEvents === 'none' && elements.combatArt.getAttribute('aria-hidden') === 'true');
+        const artChanges = new MutationObserver(() => {});
+        artChanges.observe(elements.combatArt, {attributes: true}); renderCombat(); renderCombat();
+        check('combat ticks do not reload unchanged scene sprites', artChanges.takeRecords().length === 0); artChanges.disconnect();
+        const hp = state.playerHp;
+        enemy.attackTimer = archer.attackInterval; state.attackTimer = 0;
+        Math.random = () => 0;
+        smokeIntervals.at(-1)();
+        check('combat applies the attacking monster’s damage and timing', state.playerHp === hp - 7 && enemy.attackTimer < archer.attackInterval);
+        const gold = state.gold, gel = state.materials.gel, xp = state.experience;
+        defeatEnemy(enemy);
+        check('monster rewards and drops use its own definition', state.gold === gold + 2 && state.materials.gel === gel + 3 && state.experience === xp + 3 && ownsItem('testDropHelm'));
+        check('defeated monsters use their own respawn time', enemy.respawnRemaining === 2);
+        const sources = WorldContent.sources(worldContent);
+        check('crafting material sources derive from edited monster tables', sources.gel.some(source => source.enemy === 'Smoke Archer' && source.location === map.name));
+        saveGame();
+        const saved = JSON.parse(localStorage.getItem(saveKey)); saved.selectedMap = 'removedMap'; localStorage.setItem(saveKey, JSON.stringify(saved));
+        check('removed maps do not erase existing progress', loadGame() && state.selectedMap === worldData[0].mapIds[0] && ownsItem('testDropHelm') && state.gold === gold + 2);
+        check('invalid intervals and missing references are rejected', (() => { const invalid = WorldContent.clone(worldContent); invalid.monsters[0].attackInterval = 0; invalid.maps[0].spawns[0].monsterId = 'missing'; return WorldContent.validate(invalid, itemData).length >= 2; })());
+        const failedArt = {sprite: 'assets/monsters/missing-smoke-image.png'};
+        renderMonsterArt(failedArt); elements.combatArt.dispatchEvent(new Event('error')); renderMonsterArt(failedArt);
+        check('unavailable scene sprites hide without retrying every combat tick', elements.combatArt.hidden && !elements.combatPanel.classList.contains('has-monster-art'));
+        renderMonsterArt({sprite: ''});
+        check('monsters without sprites restore the full plate area', elements.combatArt.hidden && !elements.combatArt.hasAttribute('src') && !elements.combatPanel.classList.contains('has-monster-art'));
+        renderMonsterArt(archer);
+        check('scene sprite recovers when switching to valid artwork', !elements.combatArt.hidden && elements.combatArt.getAttribute('src') === archer.sprite);
+        check('no runtime errors', !window.smokeErrors.length); checks.push('SMOKE PASSED');
+    } catch (error) { checks.push('ERROR ' + error.stack); }
+    Math.random = priorRandom;
+    const report = document.createElement('pre'); report.id = 'smoke-results'; report.textContent = checks.join('\n'); document.body.append(report);
+}());

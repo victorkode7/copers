@@ -62,6 +62,7 @@
     const originalTree = SkillStatCompat.normalize(JSON.parse(JSON.stringify(window.adventureSkillTree)));
     let tree = JSON.parse(JSON.stringify(originalTree));
     let selectedId = tree.nodes[0] ? tree.nodes[0].id : null;
+    let quickSave = null;
     let zoom = 0.85;
     let graphViewMode = 'detailed';
     let toastTimer = 0;
@@ -207,9 +208,10 @@
             historySnapshot = snapshot;
         }
         updateUndoButton();
-        elements.saveStatus.textContent = 'Draft saved in this browser - export to update the game';
+        elements.saveStatus.textContent = 'Draft saved in this browser - quick save or export to update the game';
         elements.saveStatus.previousElementSibling.style.background = '#f2c77b';
         queueMicrotask(saveDraft);
+        quickSave?.refresh();
     }
 
     function undoTreeEdit() {
@@ -698,6 +700,7 @@
 
     function renderValidation() {
         const issues = validateTree();
+        quickSave?.refresh();
         elements.validationList.innerHTML = '';
         elements.validationCount.textContent = String(issues.length);
         const errors = issues.filter(issue => issue.type === 'error').length;
@@ -881,6 +884,28 @@
     function exportJson() {
         download('skill-tree.json', JSON.stringify(tree, null, 4) + '\n', 'application/json');
         showToast('Skill tree JSON exported.');
+    }
+
+    function quickSaveIssues() {
+        const issues = validateTree().filter(issue => issue.type === 'error').map(issue => issue.message);
+        if (selectedNode() && !elements.nodeForm.hidden) {
+            const id = elements.nodeId.value.trim();
+            if (!id || tree.nodes.some(node => node !== selectedNode() && node.id === id)) issues.push('Finish the node identifier before saving.');
+            try { readNodeStats(); } catch (error) { issues.push(error.message); }
+            if ([...elements.nodeForm.querySelectorAll('input[type=number]')].some(input => input.value === '' || input.validity.badInput)) issues.push('Finish the numerical node values before saving.');
+        }
+        [elements.experienceBase, elements.experiencePerLevel].forEach((input, index) => {
+            if (input && (!Number.isSafeInteger(input.valueAsNumber) || input.valueAsNumber < (index ? 0 : 1))) issues.push('Finish the experience settings before saving.');
+        });
+        return issues;
+    }
+
+    function prepareQuickSave() {
+        if (elements.experienceBase) tree.experienceBase = elements.experienceBase.valueAsNumber;
+        if (elements.experiencePerLevel) tree.experiencePerLevel = elements.experiencePerLevel.valueAsNumber;
+        if (selectedNode() && !elements.nodeForm.hidden) applyInspector(null, true);
+        markChanged();
+        renderValidation();
     }
 
     async function exportJs() {
@@ -1209,13 +1234,6 @@
             }
         }
     });
-    window.addEventListener('keydown', event => {
-        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
-            event.preventDefault();
-            exportJs();
-        }
-    });
-
     let restoredDraft = null;
     try {
         const draft = JSON.parse(localStorage.getItem(draftKey) || 'null');
@@ -1234,7 +1252,7 @@
             if (typeof draft.search === 'string') elements.nodeSearch.value = draft.search;
             if (elements.skillPointBudget && typeof draft.budget === 'string') elements.skillPointBudget.value = draft.budget;
             restoredDraft = draft;
-            elements.saveStatus.textContent = 'Resumed your local draft - export to update the game';
+            elements.saveStatus.textContent = 'Resumed your local draft - quick save or export to update the game';
         }
     } catch (error) { elements.saveStatus.textContent = 'Could not resume saved draft: ' + error.message; }
 
@@ -1246,6 +1264,14 @@
     render();
     setZoom(zoom);
     if (restoredDraft) restoreInspector(restoredDraft.inspector);
+    quickSave = EditorQuickSave.create({
+        key: 'skill-tree', filename: 'skill-tree.js',
+        getPaths: () => tree.nodes.map(node => node.sprite).filter(SkillSprites.safePath),
+        getSource: () => 'window.adventureSkillTree = ' + JSON.stringify(tree, null, 4) + ';\n',
+        validate: quickSaveIssues, beforeSave: prepareQuickSave,
+        status: message => { elements.saveStatus.textContent = message; showToast(message); },
+        download: (name, source) => download(name, source, 'text/javascript')
+    });
     SkillSprites.restore(tree.nodes).then(repaintSprites);
 
     // The editor can be opened in a background tab or a file preview that

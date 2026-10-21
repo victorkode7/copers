@@ -12,6 +12,7 @@
     const current = () => data.items[selectedIndex];
     const assets = new Map();
     let imageDatabase;
+    let quickSave = null;
 
     function openImageDatabase() {
         if (!imageDatabase) imageDatabase = new Promise((resolve, reject) => {
@@ -68,11 +69,18 @@
         node.textContent = label;
         return node;
     }
-    function uniqueId(base) {
-        let result = base;
-        let suffix = 2;
-        while (data.items.some(item => item.id === result)) result = base + suffix++;
+    function newItemId() {
+        let result;
+        do {
+            const bytes = crypto.getRandomValues(new Uint8Array(16));
+            result = 'item_' + Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+        } while (data.items.some(item => item.id === result));
         return result;
+    }
+    function filenameStem(name) {
+        const stem = name.normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^A-Za-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'item';
+        return /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(stem) ? 'item-' + stem : stem;
     }
     function draftAvailable() {
         try { return Boolean(localStorage.getItem(draftKey)); } catch { return false; }
@@ -86,7 +94,7 @@
             snapshotSelection = selectedIndex;
             try {
                 localStorage.setItem(draftKey, next);
-                status('Draft saved in this browser. Export the game package to apply changes to the game.');
+                status('Draft saved in this browser. Quick save to test changes, or use the game package for new images.');
             } catch {
                 status('Browser draft storage is unavailable or full. Export JSON to keep your changes.');
             }
@@ -258,6 +266,7 @@
             const entry = document.createElement('li'); entry.textContent = message; return entry;
         }));
         $('exportGame').disabled = errors.length > 0;
+        quickSave?.refresh(errors);
         return errors;
     }
     function render() { renderList(); renderForm(); renderPreview(); renderValidation(); }
@@ -268,7 +277,7 @@
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
     $('itemForm').addEventListener('submit', event => event.preventDefault());
-    for (const [field, key] of Object.entries({itemName: 'name', itemId: 'id', itemSlot: 'slot', itemRarity: 'rarity', itemDescription: 'description', itemSprite: 'sprite'})) {
+    for (const [field, key] of Object.entries({itemName: 'name', itemSlot: 'slot', itemRarity: 'rarity', itemDescription: 'description', itemSprite: 'sprite'})) {
         $(field).addEventListener('change', () => { if (current()) { current()[key] = $(field).value.trim(); changed(); } });
     }
     $('itemDeveloper').addEventListener('change', () => { current().developerOnly = $('itemDeveloper').checked; changed(); renderRows(); });
@@ -285,7 +294,7 @@
             } finally { URL.revokeObjectURL(previewUrl); }
             const bytes = new Uint8Array(await file.arrayBuffer());
             const hash = ItemPackage.crc32(bytes).toString(16).padStart(8, '0');
-            const stem = /^[A-Za-z_][A-Za-z0-9_]*$/.test(item.id) ? item.id : 'sprite';
+            const stem = filenameStem(item.name);
             const path = 'assets/items/' + stem + '-' + hash + '.' + extension;
             rememberAsset(path, file);
             item.sprite = path;
@@ -306,13 +315,13 @@
     $('search').addEventListener('input', renderList);
     $('filterSlot').addEventListener('change', renderList);
     $('addItem').addEventListener('click', () => {
-        data.items.push({ id: uniqueId('newItem'), name: 'New Item', slot: data.slots[0].id, rarity: 'common', description: '', sprite: '', stats: {}, recipe: null });
+        data.items.push({ id: newItemId(), name: 'New Item', slot: data.slots[0].id, rarity: 'common', description: '', sprite: '', stats: {}, recipe: null });
         selectedIndex = data.items.length - 1;
         $('search').value = ''; $('filterSlot').value = '';
         changed(); renderForm();
     });
     $('duplicateItem').addEventListener('click', () => {
-        const item = clone(current()); item.id = uniqueId(item.id + 'Copy'); item.name += ' Copy';
+        const item = clone(current()); item.id = newItemId(); item.name += ' Copy';
         data.items.push(item); selectedIndex = data.items.length - 1;
         $('search').value = ''; $('filterSlot').value = '';
         changed(); renderForm();
@@ -381,7 +390,7 @@
     });
     $('exportGame').addEventListener('click', async () => {
         if (renderValidation().length) return;
-        const filename = (current()?.id || 'items') + '.zip';
+        const filename = (current() ? filenameStem(current().name) : 'items') + '.zip';
         try {
             const source = 'window.adventureItems = ' + JSON.stringify(data, null, 4) + ';\n';
             const entries = [{name: 'js/items.js', bytes: new TextEncoder().encode(source)}];
@@ -400,7 +409,7 @@
             replaceData(JSON.parse(draft), true);
             history = [];
             $('undo').disabled = true;
-            status('Resumed your local draft. Export the game package to apply changes to the game.');
+            status('Resumed your local draft. Quick save or apply the game package to test changes.');
         }
         if (view) {
             if (Number.isInteger(view.selectedIndex) && data.items[view.selectedIndex]) selectedIndex = view.selectedIndex;
@@ -412,5 +421,12 @@
     } catch (error) { status('Could not resume the saved draft: ' + error.message); }
     $('restoreDraft').disabled = !draftAvailable();
     populateSlots(); render();
+    quickSave = EditorQuickSave.create({
+        key: 'items', filename: 'items.js',
+        getPaths: () => data.items.map(item => item.sprite).filter(Equipment.safeSprite),
+        getSource: () => 'window.adventureItems = ' + JSON.stringify(data, null, 4) + ';\n',
+        validate: () => Equipment.validate(data), status,
+        download: (name, source) => download(name, source, 'text/javascript')
+    });
     loadDraftSprites();
 })();

@@ -7,7 +7,9 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/nav.css">
     <link rel="stylesheet" href="css/app-nav.css">
-    <link rel="stylesheet" href="css/game.css?v=20261021-34">
+    <link rel="stylesheet" href="css/game.css?v=20261021-39">
+    <link rel="stylesheet" href="css/equipment-effects.css?v=1">
+    <link rel="stylesheet" href="css/world-game.css?v=4">
     <link rel="stylesheet" href="css/skill-tree-background.css?v=20261021-18">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <title>Idle Adventure</title>
@@ -18,6 +20,7 @@
             <a href="index.html" aria-current="page">Game</a>
             <a href="skill-tree-editor.html">Skill Tree Editor</a>
             <a href="item-editor.html">Item Editor</a>
+            <a href="world-editor.html">World &amp; Monster Editor</a>
         </nav>
         <nav class="nav-header">
             <a class="logo" href="index.html">
@@ -91,6 +94,7 @@
             </section>
 
             <section class="game-panel combat-panel">
+                <img id="combatMonsterArt" class="combat-monster-art" alt="" aria-hidden="true" draggable="false" hidden>
                 <div class="combat-heading">
                     <div>
                         <h2 id="currentMapName">Greenfields</h2>
@@ -118,14 +122,18 @@
                     </div>
                 </div>
                 <div id="enemyRoster" class="enemy-roster" aria-live="off"></div>
-                <p id="lastDrop" class="drop-message">Defeat enemies to find loot.</p>
-                <details class="loot-table-panel">
-                    <summary class="loot-table-heading">
-                        <h3 id="lootTableHeading">Loot table</h3>
-                    </summary>
-                    <ul id="mapLootTable" class="map-loot-table"></ul>
-                </details>
             </section>
+
+            <section id="lastDrop" class="loot-notice" aria-label="Latest loot" aria-live="polite" aria-atomic="true">
+                <p class="loot-empty">Defeat enemies to find loot.</p>
+            </section>
+
+            <details class="loot-table-panel">
+                <summary class="loot-table-heading">
+                    <h3 id="lootTableHeading">Loot table</h3>
+                </summary>
+                <ul id="mapLootTable" class="map-loot-table"></ul>
+            </details>
         </div>
 
         <section id="townView" class="game-panel crafting-view page-view" hidden>
@@ -198,10 +206,13 @@
     </main>
     <footer class="developer-options"><details><summary>Developer options</summary><label><input id="developerItems" type="checkbox"> Enable developer equipment</label></details></footer>
     <script src="js/items.js?v=20261021-2"></script>
-    <script src="js/item-system.js?v=20261021-7"></script>
+    <script src="js/item-system.js?v=20261021-8"></script>
     <script src="js/skill-tree.js?v=20261021-2"></script>
     <script src="js/skill-stat-compat.js?v=20261021-2"></script>
     <script src="js/skill-sprites.js?v=20261021-13"></script>
-    <script src="js/game.js?v=20261021-28"></script>
+    <script src="js/equipment-effects.js?v=1"></script>
+    <script src="js/world-content.js?v=1"></script>
+    <script src="js/world-system.js?v=1"></script>
+    <script src="js/game.js?v=20261021-35"></script>
 </body>
 </html>

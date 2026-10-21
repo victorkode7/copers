@@ -25,6 +25,8 @@ input[type=checkbox] { accent-color: var(--green); }
 .hint { margin: -.3rem 0 1rem; }
 .form-section { border-top: 1px solid var(--border); padding-top: 1.2rem; margin-top: 1.2rem; }
 .form-section h2 { margin-bottom: .75rem; }
+details.form-section summary { margin-bottom: 1rem; color: var(--green); cursor: pointer; }
+input[readonly] { color: var(--muted); }
 .item-list { display: grid; gap: .5rem; max-height: 65vh; overflow: auto; }
 .item-entry { width: 100%; text-align: left; display: flex; gap: .65rem; align-items: center; }
 .item-entry[aria-pressed=true] { border-color: var(--green); background: #19382e; }

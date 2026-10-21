@@ -138,7 +138,7 @@
         if (!data.slots.length) errors.push('At least one equipment slot is required.');
         const seen = new Set();
         data.items.forEach((item, index) => {
-            const label = item && item.id || 'Item ' + (index + 1);
+            const label = item && (item.name || item.id) || 'Item ' + (index + 1);
             if (!object(item)) { errors.push(label + ': invalid item.'); return; }
             if (!idPattern.test(item.id) || ['__proto__', 'constructor', 'prototype'].includes(item.id) || seen.has(item.id)) errors.push(label + ': invalid or duplicate ID.');
             seen.add(item.id);

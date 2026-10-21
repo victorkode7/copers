@@ -164,7 +164,7 @@
         state.gear.weapon = null; state.gear.necklace = null;
         check('admin evasion calculation preserved', getPlayerEvasion() === 2500025);
         state.ownedItemIds.push('wolfFangHelm'); state.gear.helmet = 'wolfFangHelm';
-        check('admin evasion multiplier scales other equipment too', getPlayerEvasion() === Math.round(29 * 100000.99));
+        check('admin evasion multiplier scales other equipment too', getPlayerEvasion() === Math.round((25 + itemById.wolfFangHelm.stats.evasion) * 100000.99));
         state.gear.helmet = null;
         toggle.checked = false; toggle.dispatchEvent(new Event('change'));
         check('disabling developer option removes ring', state.gear.ring === null && !ownsItem('adminRing'));

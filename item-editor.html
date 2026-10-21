@@ -4,13 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Item Editor | Idle Adventure</title>
-    <link rel="stylesheet" href="css/item-editor.css?v=20261021-5">
+    <link rel="stylesheet" href="css/item-editor.css?v=20261021-6">
     <link rel="stylesheet" href="css/app-nav.css">
+    <link rel="stylesheet" href="css/editor-quick-save.css?v=1">
 </head>
 <body>
     <nav class="app-nav" aria-label="Main navigation">
         <a href="index.html">Game</a><a href="skill-tree-editor.html">Skill Tree Editor</a>
         <a href="item-editor.html" aria-current="page">Item Editor</a>
+        <a href="world-editor.html">World &amp; Monster Editor</a>
     </nav>
     <header class="editor-header">
         <div><p class="eyebrow">DEVELOPER TOOL</p><h1>Item Editor</h1></div>
@@ -20,14 +22,18 @@
             <button id="chooseJson" type="button">Import JSON</button>
             <input id="importJson" type="file" accept=".json,application/json" hidden>
             <button id="exportJson" type="button">Export JSON</button>
+            <span class="quick-save-control">
+                <button id="quickSave" type="button" aria-disabled="true" aria-describedby="quickSaveTip">Quick save</button>
+                <span id="quickSaveTip" class="quick-save-tooltip" role="tooltip">Save data only. For new sprites, download the game package.</span>
+            </span>
             <button id="exportGame" class="primary" type="button">Download game package</button>
         </div>
     </header>
-    <p id="status" class="status" role="status">Edit items, then download the game package and extract it into the project folder.</p>
+    <p id="status" class="status" role="status">Edit items, then quick-save or apply a game package to test changes.</p>
     <main class="workspace">
         <aside class="panel catalogue">
             <div class="section-heading"><h2>Equipment <span id="itemCount"></span></h2><button id="addItem" type="button">+ Add</button></div>
-            <label>Search<input id="search" type="search" placeholder="Name, ID, or slot"></label>
+            <label>Search<input id="search" type="search" placeholder="Name or slot"></label>
             <label>Slot<select id="filterSlot"><option value="">All slots</option></select></label>
             <div id="itemList" class="item-list" aria-label="Equipment catalogue"></div>
         </aside>
@@ -37,11 +43,9 @@
                 <div class="section-heading"><h2>Item details</h2><div><button id="duplicateItem" type="button">Duplicate</button> <button id="deleteItem" class="danger" type="button">Delete</button></div></div>
                 <div class="field-grid">
                     <label>Name<input id="itemName" required></label>
-                    <label>ID<input id="itemId" required pattern="[A-Za-z_][A-Za-z0-9_]*" aria-describedby="idHint"></label>
                     <label>Slot<select id="itemSlot"></select></label>
                     <label>Rarity<select id="itemRarity"><option>common</option><option>uncommon</option><option>rare</option><option>epic</option><option>unique</option></select></label>
                 </div>
-                <p id="idHint" class="hint">Keep existing IDs stable: saves use them to identify owned equipment.</p>
                 <label>Description<textarea id="itemDescription" rows="3"></textarea></label>
                 <label>Sprite image path<input id="itemSprite" placeholder="assets/items/helmet.png" aria-describedby="spriteHint"></label>
                 <label>Import sprite<input id="importSprite" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>
@@ -58,18 +62,25 @@
                     <label class="check"><input id="craftable" type="checkbox"> Can be crafted once</label>
                     <div id="recipeFields"><div id="materialRows" class="rows"></div><button id="addMaterial" type="button">+ Material</button></div>
                 </section>
+                <details class="form-section">
+                    <summary>Advanced settings</summary>
+                    <label>Permanent internal ID<input id="itemId" readonly aria-describedby="idHint"></label>
+                    <p id="idHint" class="hint">Generated automatically for new items and kept unchanged when you rename them. Saves, crafting history, and drops use this key. Existing keys stay the same, even if they no longer match the item name.</p>
+                </details>
             </form>
         </section>
         <aside class="preview-column">
             <section class="panel"><p class="eyebrow">LIVE PREVIEW</p><h2>Equipment card</h2><div id="preview"></div></section>
             <section class="panel"><h2>Validation</h2><p id="validationSummary"></p><ul id="validation"></ul></section>
-            <section class="panel"><h2>Apply to the game</h2><p>Download the game package and extract it into your project folder. It contains <code>js/items.js</code> and imported sprites under <code>assets/items/</code>. Reload the game after replacing the files.</p><p>JSON contains item definitions and image paths for editor import. Keep the ZIP too: JSON does not contain image files. Drafts and imported images are stored in this browser.</p></section>
+            <section class="panel"><h2>Apply to the game</h2><p>Choose the existing <code>js/items.js</code> file inside your game project. Quick save then overwrites that file directly. Reload the game to test changes.</p><p id="quickSaveTarget" class="quick-save-help">Checking quick-save availability…</p><button id="chooseQuickSaveFile" type="button" hidden>Choose project file</button><p>For new sprites, download the game package and extract it into your project folder. It contains <code>js/items.js</code> and imported sprites under <code>assets/items/</code>.</p><p>JSON contains item definitions and image paths for editor import. Keep the ZIP too: JSON does not contain image files. Drafts and imported images are stored in this browser.</p></section>
         </aside>
     </main>
     <script src="js/items.js?v=20261021-2"></script>
-    <script src="js/item-system.js?v=20261021-7"></script>
+    <script src="js/item-system.js?v=20261021-8"></script>
     <script src="js/item-package.js?v=20261021-2"></script>
     <script src="js/item-stat-guides.js?v=20261021-5"></script>
-    <script src="js/item-editor.js?v=20261021-11"></script>
+    <script src="js/editor-file-save.js?v=2"></script>
+    <script src="js/editor-quick-save.js?v=2"></script>
+    <script src="js/item-editor.js?v=20261021-13"></script>
 </body>
 </html>

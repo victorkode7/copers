@@ -1,0 +1,40 @@
+/* Isolated equipment-slot experiment; removing this stylesheet restores the frames. */
+.idle-adventure .equipment-slot-icon.has-equipment-aura {
+    --aura-primary: var(--sprite-aura-primary, var(--item-rarity));
+    --aura-secondary: var(--sprite-aura-secondary, var(--item-rarity));
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: #0b1721;
+    box-shadow: inset 0 0 12px color-mix(in srgb, var(--item-rarity) 25%, transparent),
+        0 0 9px color-mix(in srgb, var(--item-rarity) 18%, transparent);
+}
+
+.idle-adventure .equipment-slot-icon.has-equipment-aura::before {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    background:
+        radial-gradient(ellipse at 28% 30%, color-mix(in srgb, var(--aura-primary) 50%, transparent), transparent 70%),
+        radial-gradient(ellipse at 78% 80%, color-mix(in srgb, var(--aura-secondary) 38%, transparent), transparent 65%);
+    content: "";
+    pointer-events: none;
+    animation: equipment-aura-breathe 5s ease-in-out infinite alternate;
+}
+
+.idle-adventure .equipment-slot-icon.has-equipment-aura img {
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 0 2px var(--item-rarity))
+        drop-shadow(0 0 5px color-mix(in srgb, var(--aura-primary) 65%, transparent));
+}
+
+@keyframes equipment-aura-breathe {
+    from { opacity: 0.55; }
+    to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .idle-adventure .equipment-slot-icon.has-equipment-aura::before { animation: none; }
+}

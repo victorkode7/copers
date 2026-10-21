@@ -1,0 +1,29 @@
+.idle-adventure .has-area-background { image-rendering: pixelated; }
+.idle-adventure .world-button.has-area-background,
+.idle-adventure .map-button.has-area-background { text-shadow: 1px 1px 0 #000, 0 1px 4px #000; }
+.idle-adventure .enemy-mark.has-monster-sprite { overflow: hidden; background: rgba(7, 22, 36, .5); }
+.idle-adventure .enemy-mark img { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.idle-adventure .combat-panel.has-area-background .enemy-card { background: rgba(18, 32, 43, .9); }
+
+.idle-adventure .combat-panel { position: relative; isolation: isolate; }
+.idle-adventure .combat-panel > .combat-heading,
+.idle-adventure .combat-panel > .enemy-roster { position: relative; z-index: 1; }
+.idle-adventure .combat-monster-art {
+    position: absolute;
+    z-index: 0;
+    right: .75rem;
+    top: .75rem;
+    width: min(48%, 384px);
+    height: calc(100% - 1.5rem);
+    object-fit: contain;
+    object-position: right top;
+    image-rendering: pixelated;
+    opacity: .8;
+    filter: drop-shadow(0 8px 0 rgba(0, 0, 0, .3));
+    pointer-events: none;
+    user-select: none;
+}
+.idle-adventure .combat-monster-art[hidden] { display: none; }
+@media (max-width: 899px) {
+    .idle-adventure .combat-monster-art { opacity: .2; }
+}

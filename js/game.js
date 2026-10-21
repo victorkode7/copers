@@ -1,141 +1,13 @@
 const saveKey = 'idleAdventureSave';
-const mapData = [
-    {
-        id: 'greenfields',
-        name: 'Greenfields',
-        enemy: 'Blob',
-        description: 'A quiet stretch of grassland where playful blobs are easy to find.',
-        health: 12,
-        respawnSeconds: 4,
-        accuracy: 55,
-        evasion: 10,
-        attackDamage: 5,
-        attackInterval: 2.5,
-        gold: [4, 7],
-        experience: 10,
-        goal: 10,
-        drops: [{ id: 'gel', amount: [1, 2], chance: 1 }],
-        itemDrops: [{ id: 'slimyNecklace', chance: 1 / 1000 }]
-    },
-    {
-        id: 'whisperingWoods',
-        name: 'Whispering Woods',
-        enemy: 'Wolf',
-        monsterCount: 2,
-        respawnSeconds: 5,
-        monsterOverrides: [{}, { respawnSeconds: 8 }],
-        description: 'A shadowy forest where wolves roam beneath the whispering branches.',
-        health: 42,
-        accuracy: 65,
-        evasion: 15,
-        attackDamage: 8,
-        attackInterval: 2.3,
-        gold: [12, 18],
-        experience: 10,
-        goal: 10,
-        drops: [{ id: 'hide', amount: [1, 2], chance: 1 }, { id: 'fang', amount: [1, 1], chance: 0.35 }]
-    },
-    {
-        id: 'emberCaverns',
-        name: 'Ember Caverns',
-        enemy: 'Cave Stalker',
-        monsterCount: 3,
-        description: 'A hot cavern where rare ore and glowing crystals can be found.',
-        health: 80,
-        respawnSeconds: 5,
-        accuracy: 75,
-        evasion: 20,
-        attackDamage: 4,
-        attackInterval: 1.5,
-        gold: [30, 45],
-        experience: 12,
-        goal: 10,
-        drops: [{ id: 'ore', amount: [1, 2], chance: 1 }, { id: 'crystal', amount: [1, 1], chance: 0.35 }]
-    },
-    {
-        id: 'cinderPaddock',
-        name: 'Cinder Paddock',
-        enemy: 'Cindercorn',
-        monsterCount: 4,
-        description: 'A soot-covered pasture where fiery horned beasts leave a trail of sparks.',
-        health: 100,
-        respawnSeconds: 5,
-        accuracy: 50,
-        evasion: 35,
-        attackDamage: 4,
-        attackInterval: 1.0,
-        gold: [42, 58],
-        experience: 20,
-        goal: 10,
-        drops: [
-            { id: 'cinderHoof', amount: [1, 2], chance: 1 },
-            { id: 'singedMane', amount: [1, 1], chance: 0.35 }
-        ]
-    },
-    {
-        id: 'verdantWarden',
-        name: 'Verdant Warden',
-        enemy: 'Grove Guardian',
-        description: 'A towering guardian watches the edge of the forest. Defeat it to open the way onward.',
-        health: 5000,
-        respawnSeconds: 15,
-        accuracy: 100,
-        evasion: 50,
-        attackDamage: 10,
-        attackInterval: 2.5,
-        gold: [75, 100],
-        experience: 100,
-        goal: 1,
-        drops: [{ id: 'crystal', amount: [2, 3], chance: 1 }, { id: 'fang', amount: [1, 2], chance: 0.5 }]
-    },
-    {
-        id: 'salmen',
-        name: 'Salmen village',
-        enemy: 'Salmen',
-        monsterCount: 9,
-        description: 'A bright shoreline patrolled by salmon-folk and rich with hidden pearls.',
-        health: 300,
-        respawnSeconds: 4,
-        accuracy: 78,
-        evasion: 20,
-        attackDamage: 14,
-        attackInterval: 2.2,
-        gold: [45, 65],
-        experience: 30,
-        goal: 100,
-        drops: [{ id: 'pearl', amount: [1, 2], chance: 1 }]
-    },
-    {
-        id: 'brineAndPunishment',
-        name: 'Brine & Punishment',
-        enemy: 'The Plaice-holder',
-        description: 'A stormy reef where a flatfish champion guards the deeper coast.',
-        health: 750,
-        respawnSeconds: 9,
-        accuracy: 82,
-        evasion: 25,
-        attackDamage: 18,
-        attackInterval: 2,
-        gold: [75, 100],
-        experience: 40,
-        goal: 1250,
-        drops: [{ id: 'pearl', amount: [2, 3], chance: 1 }]
-    }
-];
-
-const worldData = [
-    {
-        id: 'verdantReach',
-        name: 'Verdant Reach',
-        mapIds: ['greenfields', 'whisperingWoods', 'emberCaverns', 'cinderPaddock', 'verdantWarden']
-    },
-    {
-        id: 'tideglassCoast',
-        name: 'Tideglass Coast',
-        mapIds: ['salmen', 'brineAndPunishment']
-    }
-];
-
+const worldContent = WorldContent.clone(window.adventureWorld);
+const worldContentErrors = WorldContent.validate(worldContent);
+if (worldContentErrors.length) throw new Error('World content could not be loaded: ' + worldContentErrors.join(' '));
+const worldData = worldContent.worlds;
+const mapData = worldContent.maps.map(map => {
+    const first = WorldContent.definitions(worldContent, map)[0];
+    // First-monster fields retain compatibility with legacy save migration.
+    return {...WorldContent.defaults, ...first, ...map, enemy: first.name, drops: map.drops || [], itemDrops: map.itemDrops || []};
+});
 const itemData = Equipment.normalizeData(window.adventureItems);
 const itemErrors = Equipment.validate(itemData);
 if (itemErrors.length) throw new Error('Equipment data could not be loaded: ' + itemErrors.join(' '));
@@ -159,26 +31,12 @@ const craftingCategories = [
 }));
 // Acquisition belongs to map content; ignore missing references after catalogue edits.
 mapData.forEach(map => {
+    map.drops = (map.drops || []).filter(drop => Object.hasOwn(materialNames, drop.id));
     map.itemDrops = (map.itemDrops || []).filter(drop =>
         Object.hasOwn(itemById, drop.id) && !itemById[drop.id].developerOnly);
 });
 
-const materialSources = {
-    hide: [{ enemy: 'Wolves', location: 'Whispering Woods' }],
-    fang: [{ enemy: 'Wolves', location: 'Whispering Woods' }],
-    gel: [{ enemy: 'Blobs', location: 'Greenfields' }],
-    ore: [{ enemy: 'Cave Stalkers', location: 'Ember Caverns' }],
-    crystal: [
-        { enemy: 'Cave Stalkers', location: 'Ember Caverns' },
-        { enemy: 'Grove Guardians', location: 'Verdant Warden' }
-    ],
-    cinderHoof: [{ enemy: 'Cindercorns', location: 'Cinder Paddock' }],
-    singedMane: [{ enemy: 'Cindercorns', location: 'Cinder Paddock' }],
-    pearl: [
-        { enemy: 'Salmen', location: 'Salmen village' },
-        { enemy: 'The Plaice-holder', location: 'Brine & Punishment' }
-    ]
-};
+const materialSources = WorldContent.sources(worldContent);
 
 const equipmentSlots = itemData.slots;
 
@@ -227,6 +85,8 @@ let pendingSkillRanks = {};
 let skillTreePanning = false;
 let skillTreePanStartX = 0;
 let skillTreePanStartY = 0;
+let renderedLoot;
+let renderedLootMessage;
 
 const state = {
     gold: 0,
@@ -244,11 +104,11 @@ const state = {
     tutorials: createTutorialState(),
     selectedWorld: worldData[0].id,
     lastMapByWorld: Object.fromEntries(worldData.map(world => [world.id, world.mapIds[0]])),
-    selectedMap: 'greenfields',
+    selectedMap: worldData[0].mapIds[0],
     mapListExpanded: true,
     isInTown: true,
     currentView: 'town',
-    enemyHp: 12,
+    enemyHp: mapData.find(map => map.id === worldData[0].mapIds[0]).health,
     enemyRespawnRemaining: 0,
     monsterStates: [],
     targetMonsterId: null,
@@ -256,7 +116,8 @@ const state = {
     combatPaused: false,
     attackTimer: 0,
     lootLog: [],
-    lastDrop: 'Defeat enemies to find loot.'
+    lastDrop: 'Defeat enemies to find loot.',
+    lastLoot: null
 };
 
 const elements = {
@@ -279,12 +140,14 @@ const elements = {
     mapPanel: document.querySelector('.map-panel'),
     mapSelectionHint: document.querySelector('.map-selection-hint'),
     combatPanel: document.querySelector('.combat-panel'),
+    combatArt: document.querySelector('#combatMonsterArt'),
     mapName: document.querySelector('#currentMapName'),
     mapDescription: document.querySelector('#mapDescription'),
     killProgress: document.querySelector('#killProgress'),
     killProgressLabel: document.querySelector('#killProgressLabel'),
     enemyRoster: document.querySelector('#enemyRoster'),
     mapLootTable: document.querySelector('#mapLootTable'),
+    lootTableHeading: document.querySelector('#lootTableHeading'),
     playerHealthBar: document.querySelector('#playerHealthBar'),
     playerHealthDamage: document.querySelector('#playerHealthDamage'),
     playerHealthTrack: document.querySelector('.player-health-track'),
@@ -327,6 +190,10 @@ const monsterProcTimers = new WeakMap();
 const shockwaveHitTimers = new WeakMap();
 const shownTutorialNotifications = new Set();
 const enemyDamageIndicatorTimers = new WeakMap();
+elements.combatArt.addEventListener('error', () => {
+    elements.combatArt.hidden = true;
+    elements.combatPanel.classList.remove('has-monster-art');
+});
 const poisonDamageType = {
     baseDamage: 1,
     durationSeconds: 5,
@@ -334,18 +201,24 @@ const poisonDamageType = {
 };
 
 function currentMap() {
-    return mapData.find(map => map.id === state.selectedMap) || mapData[0];
+    return mapData.find(map => map.id === state.selectedMap) || mapData.find(map => map.id === worldData[0].mapIds[0]);
 }
 
+const monsterDefinitionCache = new WeakMap();
 function monsterDefinitions(map = currentMap()) {
-    if (Array.isArray(map.monsters)) return map.monsters;
-    const count = Math.max(1, Math.floor(map.monsterCount || 1));
-    return Array.from({ length: count }, (_, index) => ({
-        id: count === 1 ? 'main' : map.id + '-copy-' + (index + 1),
-        name: map.enemy,
-        respawnSeconds: map.respawnSeconds || 5,
-        ...(map.monsterOverrides && map.monsterOverrides[index])
+    if (monsterDefinitionCache.has(map)) return monsterDefinitionCache.get(map);
+    const definitions = WorldContent.definitions(worldContent, map).map(monster => ({
+        ...monster,
+        drops: monster.drops.filter(drop => Object.hasOwn(materialNames, drop.id)),
+        itemDrops: monster.itemDrops.filter(drop => Object.hasOwn(itemById, drop.id) && !itemById[drop.id].developerOnly)
     }));
+    monsterDefinitionCache.set(map, definitions);
+    return definitions;
+}
+
+function monsterDefinition(monster, map = currentMap()) {
+    const definitions = monsterDefinitions(map);
+    return definitions.find(definition => definition.id === monster?.id) || definitions[0];
 }
 
 function createMonsterStates(map, savedStates, legacyHp, legacyRespawn) {
@@ -354,14 +227,14 @@ function createMonsterStates(map, savedStates, legacyHp, legacyRespawn) {
             ? savedStates.find(monster => monster.id === definition.id) || savedStates[index]
             : null;
         const hp = saved
-            ? Math.max(0, Math.min(map.health, saved.hp))
-            : index === 0 && Number.isFinite(legacyHp) ? Math.max(0, Math.min(map.health, legacyHp)) : map.health;
+            ? Math.max(0, Math.min(definition.health, saved.hp))
+            : index === 0 && Number.isFinite(legacyHp) ? Math.max(0, Math.min(definition.health, legacyHp)) : definition.health;
         const respawnRemaining = saved
             ? Math.max(0, Math.min(definition.respawnSeconds, saved.respawnRemaining))
             : index === 0 && hp === 0 ? Math.max(0, Math.min(definition.respawnSeconds, legacyRespawn || 0)) : 0;
         return {
             id: definition.id,
-            hp: hp === 0 && respawnRemaining === 0 ? map.health : hp,
+            hp: hp === 0 && respawnRemaining === 0 ? definition.health : hp,
             respawnRemaining,
             attackTimer: saved && Number.isFinite(saved.attackTimer) ? Math.max(0, saved.attackTimer) : 0,
             poisonStacks: saved && Array.isArray(saved.poisonStacks)
@@ -378,6 +251,7 @@ function createMonsterStates(map, savedStates, legacyHp, legacyRespawn) {
 }
 
 function resetMonsterStates(map = currentMap()) {
+    monsterDefinitionCache.delete(map);
     state.monsterStates = createMonsterStates(map);
     state.targetMonsterId = monsterDefinitions(map)[0].id;
     syncLegacyEnemyState();
@@ -669,8 +543,8 @@ function getHitChance(accuracy, evasion) {
     return Math.max(5, Math.min(95, accuracy - evasion));
 }
 
-function getEnemyHitChance() {
-    return Math.max(getGearStat('minimumEnemyHitChance'), Math.min(95, currentMap().accuracy - getPlayerEvasion()));
+function getEnemyHitChance(monster = activeMonster()) {
+    return Math.max(getGearStat('minimumEnemyHitChance'), Math.min(95, monsterDefinition(monster).accuracy - getPlayerEvasion()));
 }
 
 function setAccuracyClass(element, hitChance, isPlayerAttack) {
@@ -775,7 +649,8 @@ function saveGame() {
             playerHp: state.playerHp,
             combatPaused: state.combatPaused,
             lootLog: state.lootLog.slice(0, 12),
-            lastDrop: state.lastDrop
+            lastDrop: state.lastDrop,
+            lastLoot: state.lastLoot
         }));
         lastSave = Date.now();
     } catch (error) {
@@ -789,6 +664,12 @@ function loadGame() {
         if (!rawSave) return false;
 
         const saved = JSON.parse(rawSave);
+        if (saved && typeof saved.selectedMap === 'string' && !mapData.some(map => map.id === saved.selectedMap)) {
+            saved.selectedMap = worldData[0].mapIds[0];
+            saved.enemyHp = mapData.find(map => map.id === saved.selectedMap).health;
+            saved.enemyRespawnRemaining = 0;
+            saved.monsterStates = [];
+        }
         if (saved && saved.version === 1) {
             if (Number.isInteger(saved.level) && saved.level >= 1) saved.level--;
             saved.version = 2;
@@ -987,13 +868,11 @@ function loadGame() {
             (saved.enemyHp === 0 && !(Number.isFinite(saved.enemyRespawnRemaining) &&
                 saved.enemyRespawnRemaining > 0)) ||
             (saved.enemyRespawnRemaining !== undefined &&
-                (!Number.isFinite(saved.enemyRespawnRemaining) || saved.enemyRespawnRemaining < 0 ||
-                    saved.enemyRespawnRemaining > 60)) ||
+                (!Number.isFinite(saved.enemyRespawnRemaining) || saved.enemyRespawnRemaining < 0)) ||
             (saved.monsterStates !== undefined && (!Array.isArray(saved.monsterStates) ||
                 !saved.monsterStates.every(monster => monster && typeof monster.id === 'string' &&
                     Number.isFinite(monster.hp) && monster.hp >= 0 &&
                     Number.isFinite(monster.respawnRemaining) && monster.respawnRemaining >= 0 &&
-                    monster.respawnRemaining <= 60 &&
                     (monster.attackTimer === undefined ||
                         Number.isFinite(monster.attackTimer) && monster.attackTimer >= 0) &&
                     (monster.poisonStacks === undefined || Array.isArray(monster.poisonStacks) &&
@@ -1095,6 +974,7 @@ function loadGame() {
             ? saved.lootLog.filter(entry => typeof entry === 'string').slice(0, 12)
             : [];
         state.lastDrop = typeof saved.lastDrop === 'string' ? saved.lastDrop : 'Defeat enemies to find loot.';
+        state.lastLoot = normalizeLootNotice(saved.lastLoot);
         return true;
     } catch (error) {
         console.error('Could not load Idle Adventure progress.', error);
@@ -1132,6 +1012,7 @@ function renderWorlds() {
         const completed = maps.filter(map => state.kills[map.id] >= map.goal).length;
         const button = elements.worldList.children[index];
         button.className = 'world-button' + (state.selectedWorld === world.id ? ' selected' : '');
+        WorldContent.applyBackground(button, world.background);
         button.disabled = !unlocked;
 
         button.querySelector('strong').textContent = world.name;
@@ -1178,13 +1059,14 @@ function renderMaps() {
         const button = elements.mapList.children[index];
         const progress = state.kills[map.id];
         const completed = progress >= map.goal;
-        const progressPercent = Math.min(100, progress / map.goal * 100);
+        const progressPercent = map.goal === 0 ? 100 : Math.min(100, progress / map.goal * 100);
         const tutorialNextMap = nextUnlockedMap();
         button.className = 'map-button ' + (unlocked ? (completed ? 'completed' : 'incomplete') : 'locked') +
             (state.selectedMap === map.id ? ' selected' : '') +
             ((state.tutorials.firstNextMapPending || state.tutorials.firstMapGoalPending) &&
                 tutorialNextMap === map ? ' tutorial-highlight' : '');
         button.querySelector('.map-progress-fill').style.width = progressPercent + '%';
+        WorldContent.applyBackground(button, WorldContent.background(worldContent, map));
         button.disabled = !unlocked;
         button.setAttribute('aria-pressed', String(state.selectedMap === map.id));
         button.setAttribute('aria-label', map.name + '. ' +
@@ -1639,6 +1521,7 @@ function renderInventory() {
         label.textContent = slot.name;
         const icon = Equipment.createIcon(equippedItem, slot.icon);
         icon.classList.add('equipment-slot-icon');
+        window.EquipmentEffects?.apply(icon);
         const name = document.createElement('strong');
         name.className = 'equipment-slot-name';
         name.textContent = equippedItem ? equippedItem.name : 'Empty slot';
@@ -1676,10 +1559,6 @@ function renderInventory() {
             ? 'Now click Equip on the highlighted item.'
             : 'Click the highlighted ' + selectedSlot.name.toLowerCase() + ' slot on the left to view your new item.'
         : 'Choose an owned ' + selectedSlot.name.toLowerCase() + ' to equip.';
-    const legend = document.createElement('span');
-    legend.className = 'stat-comparison-legend';
-    legend.textContent = 'Compared with your equipped ' + selectedSlot.name.toLowerCase() + ': blue = new · green = better · white = equal · red = worse · faded gray = missing.';
-    elements.gearSelectionHint.append(legend);
     elements.gearInventory.innerHTML = '';
     const slotGear = itemData.items.filter(item => item.slot === selectedSlot.id && ownsItem(item.id) && state.gear[item.slot] !== item.id);
     if (slotGear.length === 0) {
@@ -1838,6 +1717,15 @@ function createEnemyCard(definition) {
     mark.className = 'enemy-mark';
     mark.setAttribute('aria-hidden', 'true');
     mark.textContent = '✦';
+    const spritePath = WorldContent.safePath(definition.sprite);
+    if (spritePath) {
+        const image = document.createElement('img');
+        image.alt = '';
+        image.src = spritePath;
+        image.addEventListener('error', () => { mark.textContent = '✦'; });
+        mark.replaceChildren(image);
+        mark.classList.add('has-monster-sprite');
+    }
     const details = document.createElement('div');
     details.className = 'enemy-details';
     const title = document.createElement('div');
@@ -1852,13 +1740,13 @@ function createEnemyCard(definition) {
     status.appendChild(targetLabel);
     const playerAccuracy = document.createElement('p');
     playerAccuracy.className = 'hit-chance';
-    playerAccuracy.append('Your accuracy against this enemy: ');
+    playerAccuracy.append('Your hit chance: ');
     const playerAccuracyValue = document.createElement('strong');
     playerAccuracyValue.dataset.playerAccuracy = '';
     playerAccuracy.appendChild(playerAccuracyValue);
     const enemyAccuracy = document.createElement('p');
     enemyAccuracy.className = 'hit-chance';
-    enemyAccuracy.append('Enemy accuracy against you: ');
+    enemyAccuracy.append('Enemy hit chance: ');
     const enemyAccuracyValue = document.createElement('strong');
     enemyAccuracyValue.dataset.enemyAccuracy = '';
     enemyAccuracy.appendChild(enemyAccuracyValue);
@@ -1938,8 +1826,8 @@ function createEnemyCard(definition) {
     respawn.setAttribute('aria-live', 'off');
     status.appendChild(respawn);
     title.append(name, status);
-    details.append(title, playerAccuracy, enemyAccuracy, effectRow, healthTrack, summary);
-    card.append(mark, details, shockwaveNotice);
+    details.append(playerAccuracy, enemyAccuracy, effectRow, healthTrack, summary);
+    card.append(title, mark, details, shockwaveNotice);
     card.addEventListener('animationend', event => {
         if (event.animationName === 'enemy-death-shake') card.classList.remove('is-defeating');
         if (event.animationName === 'poison-stack-proc') event.target.classList.remove('is-applying');
@@ -1949,6 +1837,94 @@ function createEnemyCard(definition) {
         }
     });
     return card;
+}
+
+function normalizeLootNotice(value) {
+    if (!value || !Number.isFinite(value.gold) || value.gold < 0 || !Array.isArray(value.materials) || !Array.isArray(value.equipment)) return null;
+    return {
+        gold: Math.floor(value.gold),
+        materials: value.materials.filter(entry => entry && typeof entry.id === 'string' && Object.hasOwn(materialNames, entry.id) && Number.isFinite(entry.amount) && entry.amount >= 1)
+            .map(entry => ({id: entry.id, amount: Math.floor(entry.amount)})),
+        equipment: [...new Set(value.equipment.filter(id => typeof id === 'string' && Object.hasOwn(itemById, id) && !itemById[id].developerOnly))]
+    };
+}
+
+function renderLootNotice() {
+    const loot = state.lastLoot;
+    if (renderedLoot === loot && renderedLootMessage === state.lastDrop) return;
+    const animate = renderedLoot !== undefined && loot !== null;
+    renderedLoot = loot;
+    renderedLootMessage = state.lastDrop;
+    const heading = document.createElement('p');
+    heading.className = 'loot-notice-title';
+    heading.textContent = 'Latest loot';
+    if (!loot) {
+        const empty = document.createElement('p');
+        empty.className = 'loot-empty';
+        empty.textContent = state.lastDrop;
+        elements.lastDrop.replaceChildren(heading, empty);
+        return;
+    }
+    const equipmentKey = JSON.stringify(loot.equipment);
+    let equipment = elements.lastDrop.querySelector('.loot-equipment');
+    const newEquipment = equipment?.dataset.items !== equipmentKey;
+    if (newEquipment) {
+        equipment = document.createElement('div');
+        equipment.className = 'loot-equipment';
+        equipment.dataset.items = equipmentKey;
+        loot.equipment.forEach(id => {
+            const item = itemById[id];
+            if (!item) return;
+            const card = document.createElement('div');
+            card.className = 'loot-equipment-drop';
+            card.dataset.rarity = item.rarity || 'common';
+            const copy = document.createElement('div');
+            copy.className = 'loot-equipment-copy';
+            const name = document.createElement('strong');
+            name.textContent = item.name;
+            const caption = document.createElement('span');
+            caption.textContent = 'Latest equipment · ' + item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1);
+            copy.append(name, caption);
+            card.append(Equipment.createIcon(item), copy);
+            equipment.append(card);
+        });
+    }
+    const rewards = document.createElement('div');
+    rewards.className = 'loot-rewards';
+    const reward = (name, amount, gold = false) => {
+        const chip = document.createElement('span');
+        chip.className = 'loot-reward' + (gold ? ' loot-reward--gold' : '');
+        const label = document.createElement('span');
+        label.textContent = name;
+        const quantity = document.createElement('strong');
+        quantity.textContent = (gold ? '+' : '×') + formatAmount(amount);
+        chip.append(label, quantity);
+        rewards.append(chip);
+    };
+    if (loot.gold > 0) reward('Gold', loot.gold, true);
+    loot.materials.forEach(entry => reward(materialNames[entry.id], entry.amount));
+    if (!rewards.childElementCount) {
+        const empty = document.createElement('span');
+        empty.className = 'loot-empty';
+        empty.textContent = 'No gold or materials this time.';
+        rewards.append(empty);
+    }
+    elements.lastDrop.replaceChildren(heading, ...(loot.equipment.length ? [equipment] : []), rewards);
+    if (animate && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        rewards.animate([{opacity: 0.3, transform: 'translateY(5px)'}, {opacity: 1, transform: 'translateY(0)'}], {duration: 260, easing: 'ease-out'});
+        if (newEquipment && loot.equipment.length) equipment.animate([{opacity: 0.3, transform: 'scale(0.97)', filter: 'brightness(1.6)'}, {opacity: 1, transform: 'scale(1)', filter: 'brightness(1)'}], {duration: 650, easing: 'ease-out'});
+    }
+}
+
+function renderMonsterArt(definition) {
+    const path = WorldContent.safePath(definition.sprite);
+    const art = elements.combatArt;
+    if (art.dataset.sprite === path) return;
+    art.dataset.sprite = path;
+    art.hidden = !path;
+    elements.combatPanel.classList.toggle('has-monster-art', Boolean(path));
+    if (path) art.src = path;
+    else art.removeAttribute('src');
 }
 
 function renderCombat() {
@@ -1964,6 +1940,10 @@ function renderCombat() {
         elements.enemyRoster.replaceChildren(...definitions.map(createEnemyCard));
     }
     const target = activeMonster();
+    const lootMonster = monsterDefinition(target, map);
+    renderMonsterArt(lootMonster);
+    WorldContent.applyBackground(elements.combatPanel, WorldContent.background(worldContent, map));
+    elements.lootTableHeading.textContent = 'Loot table · ' + lootMonster.name;
     const progress = state.kills[map.id];
     const completed = progress >= map.goal;
     const maxHealth = getPlayerMaxHealth();
@@ -1974,12 +1954,12 @@ function renderCombat() {
     elements.killProgressLabel.hidden = completed;
     elements.mapLootTable.innerHTML = '';
     const lootEntries = [
-        { name: 'Gold', amount: map.gold, chance: 1 },
-        ...map.drops.map(drop => ({ name: materialNames[drop.id], amount: drop.amount, chance: drop.chance })),
-        ...(map.itemDrops || []).map(drop => ({
+        { name: 'Gold', amount: lootMonster.gold, chance: 1 },
+        ...[...map.drops, ...lootMonster.drops].map(drop => ({ name: materialNames[drop.id], amount: drop.amount, chance: drop.chance })),
+        ...[...map.itemDrops, ...lootMonster.itemDrops].map(drop => ({
             name: itemById[drop.id].name,
             amount: [1, 1],
-            chanceText: (drop.chance * 100).toLocaleString('en-US', { maximumFractionDigits: 6 }) + '%',
+            chanceText: WorldContent.chanceText(drop.chance),
             unique: itemById[drop.id].rarity === 'unique'
         }))
     ];
@@ -1991,22 +1971,23 @@ function renderCombat() {
         const details = document.createElement('strong');
         details.textContent = formatAmount(drop.amount[0]) +
             (drop.amount[0] === drop.amount[1] ? '' : '–' + formatAmount(drop.amount[1])) +
-            (drop.chanceText ? ' · ' + drop.chanceText : ' · ' + Math.round(drop.chance * 100) + '%');
+            (drop.chanceText ? ' · ' + drop.chanceText : ' · ' + WorldContent.chanceText(drop.chance));
         entry.append(amount, details);
         elements.mapLootTable.appendChild(entry);
     });
-    const playerHitChance = getHitChance(getPlayerAccuracy(), map.evasion);
-    const enemyHitChance = getEnemyHitChance();
     Array.from(elements.enemyRoster.children)
         .filter(card => card.classList.contains('enemy-card'))
         .forEach((card, index) => {
         const definition = definitions[index];
         const monster = state.monsterStates.find(entry => entry.id === definition.id);
         if (!monster) return;
-        const hpPercent = Math.max(0, Math.min(100, monster.hp / map.health * 100));
+        const playerHitChance = getHitChance(getPlayerAccuracy(), definition.evasion);
+        const enemyHitChance = getEnemyHitChance(monster);
+        const hpPercent = Math.max(0, Math.min(100, monster.hp / definition.health * 100));
         card.classList.toggle('is-target', Boolean(target && target.id === monster.id));
         card.classList.toggle('is-respawning', monster.hp <= 0);
         card.querySelector('[data-enemy-name]').textContent = definition.name;
+        card.querySelector('[data-enemy-name]').title = definition.name;
         card.querySelector('.enemy-target-label').hidden = !target || target.id !== monster.id;
         const playerAccuracyText = card.querySelector('[data-player-accuracy]');
         const enemyAccuracyText = card.querySelector('[data-enemy-accuracy]');
@@ -2019,16 +2000,16 @@ function renderCombat() {
         healthTrack.setAttribute('aria-valuenow', String(Math.round(hpPercent)));
         const poisonIndicator = card.querySelector('.enemy-health-poison-damage');
         const remainingPoisonDamage = Math.min(monster.hp, getRemainingPoisonDamage(monster));
-        const poisonPercent = remainingPoisonDamage / map.health * 100;
+        const poisonPercent = remainingPoisonDamage / definition.health * 100;
         poisonIndicator.style.left = Math.max(0, hpPercent - poisonPercent) + '%';
         poisonIndicator.style.width = poisonPercent + '%';
         poisonIndicator.classList.toggle('is-visible', monster.hp > 0 && remainingPoisonDamage > 0);
         poisonIndicator.title = remainingPoisonDamage > 0
             ? 'Poison will deal ' + remainingPoisonDamage + ' more damage'
             : '';
-        card.querySelector('[data-enemy-hp]').textContent = Math.ceil(monster.hp) + ' / ' + map.health + ' HP';
-        card.querySelector('[data-enemy-attack-interval]').textContent = map.attackInterval.toFixed(1) + 's';
-        card.querySelector('[data-enemy-damage]').textContent = String(map.attackDamage);
+        card.querySelector('[data-enemy-hp]').textContent = Math.ceil(monster.hp) + ' / ' + definition.health + ' HP';
+        card.querySelector('[data-enemy-attack-interval]').textContent = definition.attackInterval.toFixed(1) + 's';
+        card.querySelector('[data-enemy-damage]').textContent = String(definition.attackDamage);
         const dotStatus = card.querySelector('[data-enemy-dot-status]');
         const poisonStackCount = monster.poisonStacks ? monster.poisonStacks.length : 0;
         dotStatus.hidden = poisonStackCount === 0;
@@ -2052,11 +2033,7 @@ function renderCombat() {
     elements.combatStatus.classList.toggle('combat-dead', state.combatPaused);
     elements.combatStatus.classList.toggle('is-fighting', !state.combatPaused && Boolean(target));
     elements.resumeCombat.hidden = !state.combatPaused || state.currentView !== 'map';
-    elements.lastDrop.textContent = state.lastDrop;
-    elements.lastDrop.classList.toggle(
-        'unique-drop',
-        itemData.items.some(item => item.rarity === 'unique' && state.lastDrop.includes(item.name))
-    );
+    renderLootNotice();
 }
 
 function render() {
@@ -2145,34 +2122,44 @@ function awardExperience(amount) {
 
 function defeatEnemy(monster) {
     const map = currentMap();
-    const gold = Math.floor(rollRange(map.gold) * getGoldMultiplier());
+    const definition = monsterDefinition(monster, map);
+    const gold = Math.floor(rollRange(definition.gold) * getGoldMultiplier());
     state.gold += gold;
     state.kills[map.id]++;
-    if (map.id === mapData[0].id && state.kills[map.id] === map.goal) {
+    if (map.id === worldData[0].mapIds[0] && state.kills[map.id] === map.goal) {
         state.tutorials.firstMapGoalPending = true;
         state.tutorials.firstMapGoalDismissed = false;
     }
-    const experienceGained = map.experience;
+    const experienceGained = definition.experience;
     awardExperience(experienceGained);
     const found = [];
-    map.drops.forEach(drop => {
-        if (Math.random() <= drop.chance) {
+    const lootMaterials = new Map();
+    const equipment = [];
+    [...map.drops, ...definition.drops].forEach(drop => {
+        if (Object.hasOwn(materialNames, drop.id) && Math.random() < drop.chance) {
             const amount = rollRange(drop.amount);
             state.materials[drop.id] += amount;
             found.push(amount + ' ' + materialNames[drop.id]);
+            lootMaterials.set(drop.id, (lootMaterials.get(drop.id) || 0) + amount);
         }
     });
-    (map.itemDrops || []).forEach(drop => {
+    [...map.itemDrops, ...definition.itemDrops].forEach(drop => {
         const item = itemById[drop.id];
-        if (!item.developerOnly && !ownsItem(item.id) && Math.random() < drop.chance) {
+        if (item && !item.developerOnly && !ownsItem(item.id) && Math.random() < drop.chance) {
             state.ownedItemIds.push(item.id);
             promptForFirstGear(item.id, item.slot);
             found.push(item.name);
+            equipment.push(item.id);
         }
     });
     state.lastDrop = found.length
         ? 'Found ' + found.join(' and ') + '.'
         : 'No materials this time.';
+    state.lastLoot = {
+        gold,
+        materials: Array.from(lootMaterials, ([id, amount]) => ({id, amount})),
+        equipment: equipment.length ? equipment : state.lastLoot?.equipment || []
+    };
     addLootDrop(gold, found);
 
     const defeatedCard = Array.from(elements.enemyRoster.children)
@@ -2212,7 +2199,7 @@ function applyDamageToMonster(monster, damage, damageType = 'physical') {
         ? targetCard.querySelector('.enemy-health-damage')
         : null;
     if (damageIndicator) {
-        const maxHp = currentMap().health;
+        const maxHp = monsterDefinition(monster).health;
         const currentHpPercent = Math.max(0, Math.min(100, monster.hp / maxHp * 100));
         const damagePercent = Math.min(100 - currentHpPercent,
             Math.max(recentEnemyDamage / maxHp * 100, 1));
@@ -2389,12 +2376,13 @@ document.querySelector('#resetGame').addEventListener('click', function() {
     state.isInTown = true;
     state.currentView = 'town';
     skillTreeNeedsInitialFraming = true;
-    resetMonsterStates(mapData[0]);
+    resetMonsterStates(mapData.find(map => map.id === worldData[0].mapIds[0]));
     state.playerHp = getPlayerMaxHealth();
     state.combatPaused = false;
     state.attackTimer = 0;
     state.lootLog = [];
     state.lastDrop = 'Defeat enemies to find loot.';
+    state.lastLoot = null;
     render();
     saveGame();
 });
@@ -2422,6 +2410,7 @@ elements.worldList.addEventListener('click', function(event) {
     state.isInTown = false;
     state.currentView = 'map';
     state.lastDrop = 'Defeat enemies to find loot.';
+    state.lastLoot = null;
     render();
     saveGame();
 });
@@ -2456,6 +2445,7 @@ elements.mapList.addEventListener('click', function(event) {
     state.isInTown = false;
     state.currentView = 'map';
     state.lastDrop = 'Defeat enemies to find loot.';
+    state.lastLoot = null;
     render();
     window.scrollTo(0, 0);
     if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -2666,7 +2656,7 @@ const hasSavedGame = loadGame();
 document.querySelector('#developerItems').checked = state.developerItemsEnabled;
 if (!state.monsterStates.length) resetMonsterStates(currentMap());
 state.monsterStates.forEach(monster => {
-    monster.hp = Math.min(monster.hp, currentMap().health);
+    monster.hp = Math.min(monster.hp, monsterDefinition(monster).health);
 });
 syncLegacyEnemyState();
 ensureLiveMonsterTarget();
@@ -2678,24 +2668,24 @@ if (state.currentView === 'upgrades') {
 if (!hasSavedGame) saveGame();
 
 setInterval(function() {
+    const now = performance.now();
+    const elapsed = Math.min((now - lastTick) / 1000, gameTickSeconds);
+    lastTick = now;
+    const map = currentMap();
+    const killsBeforeTick = state.kills[map.id];
+    ensureLiveMonsterTarget();
+    const previousTarget = activeMonster();
+    let anyRespawned = false;
+    state.monsterStates.forEach(monster => {
+        if (monster.hp > 0 || monster.respawnRemaining <= 0) return;
+        monster.respawnRemaining = Math.max(0, monster.respawnRemaining - elapsed);
+        if (monster.respawnRemaining === 0) {
+            monster.hp = monsterDefinition(monster, map).health;
+            monster.attackTimer = 0;
+            anyRespawned = true;
+        }
+    });
     if (!state.combatPaused) {
-        const now = performance.now();
-        const elapsed = Math.min((now - lastTick) / 1000, gameTickSeconds);
-        lastTick = now;
-        const map = currentMap();
-        const killsBeforeTick = state.kills[map.id];
-        ensureLiveMonsterTarget();
-        const previousTarget = activeMonster();
-        let anyRespawned = false;
-        state.monsterStates.forEach(monster => {
-            if (monster.hp > 0 || monster.respawnRemaining <= 0) return;
-            monster.respawnRemaining = Math.max(0, monster.respawnRemaining - elapsed);
-            if (monster.respawnRemaining === 0) {
-                monster.hp = map.health;
-                monster.attackTimer = 0;
-                anyRespawned = true;
-            }
-        });
         state.monsterStates.forEach(monster => {
             if (monster.hp > 0) tickMonsterPoison(monster, elapsed);
         });
@@ -2704,12 +2694,13 @@ setInterval(function() {
         const target = activeMonster();
         state.monsterStates.forEach(monster => {
             if (monster.hp <= 0 || state.combatPaused) return;
+            const definition = monsterDefinition(monster, map);
             monster.attackTimer += elapsed;
-            while (monster.attackTimer >= map.attackInterval && !state.combatPaused) {
-                monster.attackTimer -= map.attackInterval;
-                if (Math.random() * 100 < getEnemyHitChance()) {
+            while (monster.attackTimer >= definition.attackInterval && !state.combatPaused) {
+                monster.attackTimer -= definition.attackInterval;
+                if (Math.random() * 100 < getEnemyHitChance(monster)) {
                     const previousPlayerHp = state.playerHp;
-                    state.playerHp = Math.max(0, state.playerHp - map.attackDamage);
+                    state.playerHp = Math.max(0, state.playerHp - definition.attackDamage);
                     recentPlayerDamage = previousPlayerHp - state.playerHp;
                     nudgePlayerHealthBar();
                     elements.playerHealthDamage.classList.remove('is-visible');
@@ -2746,7 +2737,7 @@ setInterval(function() {
                     if (attackTarget.hp <= 0) continue;
                     const targetCard = Array.from(elements.enemyRoster.children)
                         .find(card => card.dataset.monsterId === attackTarget.id);
-                    if (Math.random() * 100 < getHitChance(getPlayerAccuracy(), map.evasion)) {
+                    if (Math.random() * 100 < getHitChance(getPlayerAccuracy(), monsterDefinition(attackTarget, map).evasion)) {
                         const hitDamage = getDamage();
                         if (attackIndex > 0) showMonsterHitBadge(attackTarget.id, 'MULTI-HIT', true);
                         applyDamageToMonster(attackTarget, hitDamage, 'physical');
@@ -2765,16 +2756,12 @@ setInterval(function() {
             }
         }
     } else {
-        const now = performance.now();
-        const elapsed = Math.min((now - lastTick) / 1000, gameTickSeconds);
-        lastTick = now;
-        const map = currentMap();
-        const killsBefore = state.kills[map.id];
         state.monsterStates.forEach(monster => {
             if (monster.hp > 0) tickMonsterPoison(monster, elapsed);
         });
+        ensureLiveMonsterTarget();
         syncLegacyEnemyState();
-        if (state.kills[map.id] !== killsBefore) render();
+        if (state.kills[map.id] !== killsBeforeTick || anyRespawned) render();
         else renderCombat();
     }
 
