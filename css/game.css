@@ -2442,6 +2442,11 @@ html {
     list-style: none;
 }
 
+.idle-adventure .stats-panel {
+    width: 100%;
+    container-type: inline-size;
+}
+
 .idle-adventure .combat-stat-groups {
     display: flex;
     flex-direction: column;
@@ -2455,6 +2460,8 @@ html {
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
 }
 
 .idle-adventure .stat-list {
@@ -2464,10 +2471,12 @@ html {
 }
 
 .idle-adventure .combat-stat {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.7rem;
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.6rem;
     border: 1px solid var(--adventure-border);
     border-radius: 10px;
     background: var(--adventure-raised);
@@ -2475,9 +2484,24 @@ html {
     font-size: 0.85rem;
 }
 
+.idle-adventure .combat-stat > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
 .idle-adventure .combat-stat strong {
+    min-width: 0;
     color: var(--adventure-amber);
     font-variant-numeric: tabular-nums;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+@container (min-width: 260px) {
+    .idle-adventure .combat-stat {
+        grid-template-columns: minmax(0, 1fr) minmax(0, max-content);
+        column-gap: 0.75rem;
+    }
 }
 
 .idle-adventure .skill-tree-summary {

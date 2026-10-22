@@ -75,6 +75,7 @@ const basePlayerEvasion = 25;
 const baseMultiHit = 1;
 const gameTickMilliseconds = 100;
 const gameTickSeconds = gameTickMilliseconds / 1000;
+const combatStatFormatter = new Intl.NumberFormat('en-US', {maximumFractionDigits: 2});
 
 let skillTreeZoom = 1;
 let skillTreePanX = 0;
@@ -2050,11 +2051,11 @@ function render() {
     elements.experienceTrack.setAttribute('aria-valuetext', state.experience + ' of ' +
         experienceRequired + ' XP to level ' + (state.level + 1));
     elements.damage.textContent = formatAmount(getDamage());
-    elements.multiHit.textContent = String(getMultiHit());
-    elements.poisonChance.textContent = (getPoisonChance() * 100).toFixed(1).replace(/\.0$/, '') + '%';
-    elements.speed.textContent = (speedBonus >= 0 ? '+' : '') + speedBonus + '%';
+    elements.multiHit.textContent = combatStatFormatter.format(getMultiHit());
+    elements.poisonChance.textContent = combatStatFormatter.format(getPoisonChance() * 100) + '%';
+    elements.speed.textContent = (speedBonus >= 0 ? '+' : '') + combatStatFormatter.format(speedBonus) + '%';
     elements.accuracy.textContent = formatAmount(getPlayerAccuracy());
-    elements.evasion.textContent = String(getPlayerEvasion());
+    elements.evasion.textContent = formatAmount(getPlayerEvasion());
     elements.townView.hidden = state.currentView !== 'town';
     elements.upgradesView.hidden = state.currentView !== 'upgrades';
     elements.mapView.hidden = state.currentView !== 'map';
