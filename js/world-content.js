@@ -377,8 +377,8 @@ window.adventureWorld = {
         },
         {
             "id": "cinderPaddockMonster",
-            "name": "Cindercorn",
-            "sprite": "assets/monsters/sprite-fusion-pixel-art-generator-32x32-c37d999a.png",
+            "name": "Cindersnake",
+            "sprite": "assets/monsters/lavasnake_96px-a53213be.png",
             "health": 100,
             "respawnSeconds": 5,
             "accuracy": 50,
@@ -448,7 +448,7 @@ window.adventureWorld = {
         {
             "id": "salmenMonster",
             "name": "Salmen",
-            "sprite": "assets/monsters/big_whale-d850b321.png",
+            "sprite": "assets/monsters/seaman-7e70e357.png",
             "health": 300,
             "respawnSeconds": 4,
             "accuracy": 78,
@@ -475,7 +475,7 @@ window.adventureWorld = {
         {
             "id": "brineAndPunishmentMonster",
             "name": "The Plaice-holder",
-            "sprite": "",
+            "sprite": "assets/monsters/big_whale-d850b321.png",
             "health": 750,
             "respawnSeconds": 9,
             "accuracy": 82,
@@ -570,6 +570,16 @@ window.adventureWorld = {
             "name": "water",
             "path": "assets/backgrounds/water-7f1f6cde.png",
             "kind": "background"
+        },
+        {
+            "name": "seaman",
+            "path": "assets/monsters/seaman-7e70e357.png",
+            "kind": "monster"
+        },
+        {
+            "name": "lavasnake_96px",
+            "path": "assets/monsters/lavasnake_96px-a53213be.png",
+            "kind": "monster"
         }
     ]
 };
