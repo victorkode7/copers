@@ -26,7 +26,13 @@ window.adventureWorld = {
                 "salmen",
                 "brineAndPunishment"
             ],
-            "background": null
+            "background": {
+                "sprite": "assets/backgrounds/water-7f1f6cde.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.55,
+                "tileSize": 256
+            }
         }
     ],
     "maps": [
@@ -182,7 +188,13 @@ window.adventureWorld = {
             "name": "Salmen village",
             "description": "A bright shoreline patrolled by salmon-folk and rich with hidden pearls.",
             "goal": 100,
-            "background": null,
+            "background": {
+                "sprite": "assets/backgrounds/water_1-be737152.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.55,
+                "tileSize": 256
+            },
             "drops": [],
             "itemDrops": [],
             "spawns": [
@@ -548,6 +560,16 @@ window.adventureWorld = {
             "name": "big_whale",
             "path": "assets/monsters/big_whale-d850b321.png",
             "kind": "monster"
+        },
+        {
+            "name": "water_1",
+            "path": "assets/backgrounds/water_1-be737152.png",
+            "kind": "background"
+        },
+        {
+            "name": "water",
+            "path": "assets/backgrounds/water-7f1f6cde.png",
+            "kind": "background"
         }
     ]
 };

@@ -462,7 +462,7 @@ window.adventureSkillTree = {
                 "poisonDMG_2",
                 "snakeBite_2"
             ],
-            "requiresMode": "all",
+            "requiresMode": "any",
             "column": 8,
             "row": 1,
             "maxRank": 1,

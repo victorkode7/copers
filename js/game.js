@@ -1292,8 +1292,13 @@ function renderUpgrades() {
         }
     });
     board.querySelectorAll('[data-skill-node-link]').forEach(link => {
-        link.classList.toggle('is-active', skillNodeIsAllocated(link.dataset.skillNodeLink));
-        link.classList.toggle('is-pending', Boolean(pendingSkillRanks[link.dataset.skillNodeLink]));
+        const sourceId = link.dataset.skillNodeSource;
+        const targetId = link.dataset.skillNodeLink;
+        const isPlanned = id => Boolean(skillNodeById[id] && skillNodeById[id].start) ||
+            (plannedRanks[id] || 0) > 0;
+        link.classList.toggle('is-active', skillNodeIsAllocated(sourceId) && skillNodeIsAllocated(targetId));
+        link.classList.toggle('is-pending', isPlanned(sourceId) && isPlanned(targetId) &&
+            Boolean(pendingSkillRanks[sourceId] || pendingSkillRanks[targetId]));
         link.classList.toggle('tutorial-skill-link',
             state.tutorials.firstSkillPointPending &&
             state.skillPoints > 0 &&
