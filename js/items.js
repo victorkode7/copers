@@ -49,8 +49,10 @@ window.adventureItems = {
         "ore": "Ember Ore",
         "crystal": "Glow Crystal",
         "cinderHoof": "Cinder Hoof",
-        "singedMane": "Singed Mane",
-        "pearl": "Sea Pearl"
+        "singedMane": "Spicy snakeskin",
+        "pearl": "Sea Pearl",
+        "material_0e547cc411cb91fce7c30162": "Tusk",
+        "material_1b4e649727a05b3ad2ec7f8a": "Honeycomb"
     },
     "items": [
         {
@@ -159,17 +161,16 @@ window.adventureItems = {
             "id": "cinderstepBoots",
             "name": "Cinderstep Boots",
             "slot": "boots",
-            "description": "Lightweight boots trimmed with fireproof mane and a sturdy hoof sole.",
+            "description": "Guaranteed to set your carpet on fire.",
             "rarity": "common",
-            "sprite": "",
+            "sprite": "assets/items/Cinderstep-Boots-fd3af7bb.png",
             "stats": {
                 "evasion": 5,
-                "attackSpeedMultiplier": 1.0869565217391304
+                "attackSpeedMultiplier": 1.087
             },
             "recipe": {
                 "materials": {
-                    "cinderHoof": 16,
-                    "singedMane": 8
+                    "singedMane": 50
                 }
             }
         },
@@ -304,6 +305,46 @@ window.adventureItems = {
                     "hide": 1
                 }
             }
+        },
+        {
+            "id": "item_b40111dcd0f7ca8b7d155f7e43a3cdc3",
+            "name": "Geobreaker",
+            "slot": "weapon",
+            "rarity": "unique",
+            "description": "Great for slaying monsters, even better for tilling your garden. Warranty void if used on soft dirt.",
+            "sprite": "assets/items/Geobreaker-70b1ec4b.png",
+            "stats": {
+                "damage": 15,
+                "attackSpeedMultiplier": 1.1,
+                "accuracy": 10
+            },
+            "recipe": null
         }
-    ]
+    ],
+    "materialDetails": {
+        "fang": {
+            "description": "It served the spider well for biting heroes. Now you can attach it to a stick and bite the spider back! The circle of life is truly beautiful.",
+            "sprite": "assets/materials/fang-749dada7.png"
+        },
+        "gel": {
+            "description": "",
+            "sprite": "assets/materials/gel-96107919.png"
+        },
+        "material_0e547cc411cb91fce7c30162": {
+            "description": "Originally used for impaling adventuring parties and clearing stubborn acorns from between molars. Needs a good wash before crafting",
+            "sprite": "assets/materials/material_0e547cc411cb91fce7c30162-325c8098.png"
+        },
+        "hide": {
+            "description": "Thick, bristled pelt stripped from a forest predator",
+            "sprite": "assets/materials/hide-d8305144.png"
+        },
+        "singedMane": {
+            "description": "",
+            "sprite": "assets/materials/singedMane-aa007467.png"
+        },
+        "material_1b4e649727a05b3ad2ec7f8a": {
+            "description": "Worth every mile of running for your life.",
+            "sprite": "assets/materials/material_1b4e649727a05b3ad2ec7f8a-d2336d06.png"
+        }
+    }
 };

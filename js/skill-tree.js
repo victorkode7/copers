@@ -374,8 +374,9 @@ window.adventureSkillTree = {
             "requires": [
                 "bigAttackSpeed_1"
             ],
-            "requiresMode": "all",
-            "start": false
+            "requiresMode": "any",
+            "start": false,
+            "sprite": ""
         },
         {
             "id": "bigAttackSpeed_4",
@@ -393,8 +394,9 @@ window.adventureSkillTree = {
             "requires": [
                 "bigAttackSpeed_1"
             ],
-            "requiresMode": "all",
-            "start": false
+            "requiresMode": "any",
+            "start": false,
+            "sprite": ""
         },
         {
             "id": "bigAttackSpeed_2",
@@ -412,8 +414,9 @@ window.adventureSkillTree = {
             "requires": [
                 "bigAttackSpeed_1"
             ],
-            "requiresMode": "all",
-            "start": false
+            "requiresMode": "any",
+            "start": false,
+            "sprite": ""
         },
         {
             "id": "poisonDMG_2",
@@ -423,7 +426,7 @@ window.adventureSkillTree = {
             "requires": [
                 "poisonDMG_3"
             ],
-            "requiresMode": "all",
+            "requiresMode": "any",
             "column": 8,
             "row": 2,
             "maxRank": 1,
@@ -432,7 +435,8 @@ window.adventureSkillTree = {
             },
             "size": 1,
             "start": false,
-            "type": "attackSpeed"
+            "type": "attackSpeed",
+            "sprite": ""
         },
         {
             "id": "poisonDMG_3",
@@ -442,7 +446,7 @@ window.adventureSkillTree = {
             "requires": [
                 "snakeBite"
             ],
-            "requiresMode": "all",
+            "requiresMode": "any",
             "column": 7,
             "row": 2,
             "maxRank": 1,
@@ -451,7 +455,8 @@ window.adventureSkillTree = {
             },
             "size": 1,
             "start": false,
-            "type": "attackSpeed"
+            "type": "attackSpeed",
+            "sprite": ""
         },
         {
             "id": "basicallySnake",
@@ -540,7 +545,7 @@ window.adventureSkillTree = {
             "requires": [
                 "snakeBite"
             ],
-            "requiresMode": "all",
+            "requiresMode": "any",
             "column": 7,
             "row": 1,
             "maxRank": 1,
@@ -551,6 +556,44 @@ window.adventureSkillTree = {
             "start": false,
             "type": "attackSpeed",
             "sprite": "assets/skills/snakeBite_2-c37d999a.png"
+        },
+        {
+            "id": "poisonExecute",
+            "name": "poisonExecute",
+            "icon": "✦",
+            "effect": "Poison damage now executes!",
+            "requires": [
+                "bigAttackSpeed_4"
+            ],
+            "requiresMode": "all",
+            "column": 9,
+            "row": -1,
+            "maxRank": 1,
+            "stats": {
+                "poisonTickRateMultiplier": 1.1
+            },
+            "size": 1.5,
+            "start": false,
+            "sprite": "assets/skills/poisonExecute-9a38ed77.png",
+            "type": "attackSpeed"
+        },
+        {
+            "id": "bloomingFlower",
+            "name": "Blooming flower",
+            "icon": "✦",
+            "effect": "On death, enemies transfer all remaining poison stacks to a random living enemy, preserving their remaining duration.",
+            "requires": [
+                "bigAttackSpeed_3"
+            ],
+            "requiresMode": "all",
+            "column": 9,
+            "row": -2,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1.5,
+            "start": false,
+            "sprite": "assets/skills/bloomingFlower-a11a5059.png",
+            "type": "attackSpeed"
         }
     ],
     "statSchemaVersion": 2

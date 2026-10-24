@@ -6,6 +6,8 @@ window.adventureWorld = {
             "name": "Verdant Reach",
             "mapIds": [
                 "greenfields",
+                "map_378ad1dc8c08cecd68eb7eb4",
+                "map_fa478ae5886a14840b39eeb1",
                 "whisperingWoods",
                 "emberCaverns",
                 "cinderPaddock",
@@ -13,6 +15,29 @@ window.adventureWorld = {
             ],
             "background": {
                 "sprite": "assets/backgrounds/Forest_day-39193e46.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.55,
+                "tileSize": 256
+            }
+        },
+        {
+            "id": "world_c791ede123810fd894db2294",
+            "name": "Slippery Slopes",
+            "mapIds": [
+                "map_048c8ea9df2da62fe1bd3073",
+                "map_f68402eddd52365a5ddd71d0",
+                "map_05b027e04704b6f33d4da8ee",
+                "map_d36b331dd838d14d34bb0365",
+                "map_63d7d9b7d7889514e0171a58",
+                "map_d2d78cfa833108d1f3031f26",
+                "map_4c4be6ec759af00dc8f2ab5f",
+                "map_677bad2999da2215a99e5ef9",
+                "map_251364409b26827581f151b0",
+                "map_ec2f730a5baeceee738b2f15"
+            ],
+            "background": {
+                "sprite": "assets/backgrounds/ice1-e5dfc877.png",
                 "color": "#172632",
                 "fit": "cover",
                 "dim": 0.55,
@@ -39,9 +64,15 @@ window.adventureWorld = {
         {
             "id": "greenfields",
             "name": "Greenfields",
-            "description": "A quiet stretch of grassland where playful blobs are easy to find.",
+            "description": "The tutorial grass. Easy to walk on, even easier to bully the local wildlife.",
             "goal": 10,
-            "background": null,
+            "background": {
+                "sprite": "assets/backgrounds/grassfield-c5fdd1dc.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.55,
+                "tileSize": 256
+            },
             "drops": [],
             "itemDrops": [],
             "spawns": [
@@ -56,8 +87,8 @@ window.adventureWorld = {
         {
             "id": "whisperingWoods",
             "name": "Whispering Woods",
-            "description": "A shadowy forest where wolves roam beneath the whispering branches.",
-            "goal": 10,
+            "description": "A dark, moody forest where idle heroes come to leave their PCs running overnight.",
+            "goal": 60,
             "background": {
                 "sprite": "assets/backgrounds/Forest_cave-0929bfa4.png",
                 "color": "#172632",
@@ -86,9 +117,9 @@ window.adventureWorld = {
         },
         {
             "id": "emberCaverns",
-            "name": "Ember Caverns",
-            "description": "A hot cavern where rare ore and glowing crystals can be found.",
-            "goal": 10,
+            "name": "Gloom Caverns",
+            "description": "Echoes, shadows, and monsters who desperately need some Vitamin D.",
+            "goal": 125,
             "background": {
                 "sprite": "assets/backgrounds/cave-e39c203c.png",
                 "color": "#172632",
@@ -122,8 +153,8 @@ window.adventureWorld = {
         {
             "id": "cinderPaddock",
             "name": "Cinder Paddock",
-            "description": "A soot-covered covered cave deep underground. It's hot!",
-            "goal": 10,
+            "description": "A spicy petting zoo that completely ignores fire safety regulations.",
+            "goal": 250,
             "background": {
                 "sprite": "assets/backgrounds/cave_lava-f34c96d5.png",
                 "color": "#172632",
@@ -163,7 +194,7 @@ window.adventureWorld = {
         {
             "id": "verdantWarden",
             "name": "Verdant Warden",
-            "description": "The protector of the forests' home.",
+            "description": "Why do I hear Latin chanting and heavy electric guitars?",
             "goal": 1,
             "background": {
                 "sprite": "assets/backgrounds/grove-87cef883.png",
@@ -201,55 +232,7 @@ window.adventureWorld = {
                 {
                     "id": "salmen-copy-1",
                     "monsterId": "salmenMonster",
-                    "count": 1,
-                    "overrides": {}
-                },
-                {
-                    "id": "salmen-copy-2",
-                    "monsterId": "salmenMonster",
-                    "count": 1,
-                    "overrides": {}
-                },
-                {
-                    "id": "salmen-copy-3",
-                    "monsterId": "salmenMonster",
-                    "count": 1,
-                    "overrides": {}
-                },
-                {
-                    "id": "salmen-copy-4",
-                    "monsterId": "salmenMonster",
-                    "count": 1,
-                    "overrides": {}
-                },
-                {
-                    "id": "salmen-copy-5",
-                    "monsterId": "salmenMonster",
-                    "count": 1,
-                    "overrides": {}
-                },
-                {
-                    "id": "salmen-copy-6",
-                    "monsterId": "salmenMonster",
-                    "count": 1,
-                    "overrides": {}
-                },
-                {
-                    "id": "salmen-copy-7",
-                    "monsterId": "salmenMonster",
-                    "count": 1,
-                    "overrides": {}
-                },
-                {
-                    "id": "salmen-copy-8",
-                    "monsterId": "salmenMonster",
-                    "count": 1,
-                    "overrides": {}
-                },
-                {
-                    "id": "salmen-copy-9",
-                    "monsterId": "salmenMonster",
-                    "count": 1,
+                    "count": 7,
                     "overrides": {}
                 }
             ]
@@ -266,6 +249,282 @@ window.adventureWorld = {
                 {
                     "id": "main",
                     "monsterId": "brineAndPunishmentMonster",
+                    "count": 15,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_378ad1dc8c08cecd68eb7eb4",
+            "name": "Sunspire Meadow",
+            "description": "10/10 sunbeams, 0/10 sunscreen. Welcome to sunburn paradise.",
+            "goal": 30,
+            "background": {
+                "sprite": "assets/backgrounds/sunny-4a1f0145.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.55,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_6167104bee9eedcbe8531cc9",
+                    "monsterId": "monster_cd6e15f064cf236369f8c415",
+                    "count": 2,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_fa478ae5886a14840b39eeb1",
+            "name": "Oinkwood border",
+            "description": "Mind the mud, watch for tusks, and duck when you hear squealing.",
+            "goal": 50,
+            "background": {
+                "sprite": "assets/backgrounds/tallgrass-c587d4bc.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.55,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_b8da630f834af6945336478b",
+                    "monsterId": "monster_eafa130d278dd6781312c386",
+                    "count": 3,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_048c8ea9df2da62fe1bd3073",
+            "name": "1",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/ice1-e5dfc877.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.15,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_0700b0c1ab6c43b99edec605",
+                    "monsterId": "monster_2b106413992cce9313c20ce7",
+                    "count": 5,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_f68402eddd52365a5ddd71d0",
+            "name": "2",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/ice2-4e6817e5.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.2,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_c695523b0c625c03756c57a7",
+                    "monsterId": "monster_37c07d183899f5c7036ac09f",
+                    "count": 6,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_05b027e04704b6f33d4da8ee",
+            "name": "3",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/ice3-cb7470c1.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.15,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_d561c1318938c07fc85623dc",
+                    "monsterId": "monster_a4ff3e8e7127d10b1532501d",
+                    "count": 4,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_d36b331dd838d14d34bb0365",
+            "name": "4",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/ice4-ff191571.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.3,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_7a14b40663f82bb55c0d1a88",
+                    "monsterId": "monster_6352a14e888ed3fba2f151cd",
+                    "count": 6,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_63d7d9b7d7889514e0171a58",
+            "name": "5",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/ice5-d3a68e93.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.3,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_366c0556b8f4e2bd9d42ecd1",
+                    "monsterId": "monster_ed1a656d3be2e7df0597f4f8",
+                    "count": 8,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_d2d78cfa833108d1f3031f26",
+            "name": "6",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/ice6-a5ce48ae.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.3,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_3056373948be890872138d8d",
+                    "monsterId": "monster_2b10a0e61bd5ebd4e8050372",
+                    "count": 5,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_4c4be6ec759af00dc8f2ab5f",
+            "name": "7",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/ice7-8888abbc.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.2,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_8053408aa34409e7a609cc62",
+                    "monsterId": "monster_70bf3d6d118e73ac85dee0cd",
+                    "count": 10,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_677bad2999da2215a99e5ef9",
+            "name": "8",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/ice8-8ad248e0.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.2,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_c97a4676b344557385f4e97b",
+                    "monsterId": "monster_3092b7b9b1bd23e7e2ad2b39",
+                    "count": 5,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_251364409b26827581f151b0",
+            "name": "9",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/ice9-6473629d.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.1,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_7febce5ed2e4d886cc363ea2",
+                    "monsterId": "monster_365f8e73c6121c5189836468",
+                    "count": 21,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_ec2f730a5baeceee738b2f15",
+            "name": "10",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/ice10-01e88d4d.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.1,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_3fdc0876e947f24592e13104",
+                    "monsterId": "monster_f53770c6f3cb487158c3604f",
                     "count": 1,
                     "overrides": {}
                 }
@@ -277,7 +536,7 @@ window.adventureWorld = {
             "id": "greenfieldsMonster",
             "name": "Blob",
             "sprite": "assets/monsters/sprite-fusion-pixel-art-generator-32x32-c37d999a.png",
-            "health": 12,
+            "health": 20,
             "respawnSeconds": 4,
             "accuracy": 55,
             "evasion": 10,
@@ -306,6 +565,60 @@ window.adventureWorld = {
             ]
         },
         {
+            "health": 8,
+            "accuracy": 55,
+            "evasion": 0,
+            "attackDamage": 2,
+            "attackInterval": 1,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [
+                {
+                    "id": "material_1b4e649727a05b3ad2ec7f8a",
+                    "chance": 1,
+                    "amount": [
+                        1,
+                        1
+                    ]
+                }
+            ],
+            "itemDrops": [],
+            "sprite": "assets/monsters/bee-b2f684ce.png",
+            "id": "monster_cd6e15f064cf236369f8c415",
+            "name": "Bee"
+        },
+        {
+            "health": 30,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 10,
+            "attackInterval": 3,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [
+                {
+                    "id": "material_0e547cc411cb91fce7c30162",
+                    "chance": 1,
+                    "amount": [
+                        1,
+                        1
+                    ]
+                }
+            ],
+            "itemDrops": [],
+            "sprite": "assets/monsters/boar-1620e233.png",
+            "id": "monster_eafa130d278dd6781312c386",
+            "name": "Boar"
+        },
+        {
             "id": "whisperingWoodsMonster",
             "name": "Wolf",
             "sprite": "assets/monsters/gen-c1c4a79f-f5f2-49f1-989f-8bdc0d87d728-f2401c93.png",
@@ -328,14 +641,6 @@ window.adventureWorld = {
                         2
                     ],
                     "chance": 1
-                },
-                {
-                    "id": "fang",
-                    "amount": [
-                        1,
-                        1
-                    ],
-                    "chance": 0.35
                 }
             ],
             "itemDrops": []
@@ -357,20 +662,12 @@ window.adventureWorld = {
             "experience": 12,
             "drops": [
                 {
-                    "id": "ore",
+                    "id": "fang",
                     "amount": [
                         1,
                         2
                     ],
                     "chance": 1
-                },
-                {
-                    "id": "crystal",
-                    "amount": [
-                        1,
-                        1
-                    ],
-                    "chance": 0.35
                 }
             ],
             "itemDrops": []
@@ -392,14 +689,6 @@ window.adventureWorld = {
             "experience": 20,
             "drops": [
                 {
-                    "id": "cinderHoof",
-                    "amount": [
-                        1,
-                        2
-                    ],
-                    "chance": 1
-                },
-                {
                     "id": "singedMane",
                     "amount": [
                         1,
@@ -413,8 +702,8 @@ window.adventureWorld = {
         {
             "id": "verdantWardenMonster",
             "name": "Grove Guardian",
-            "sprite": "assets/monsters/pixel-art-forest-guardian-monster-cdef-4900b64e.png",
-            "health": 5000,
+            "sprite": "assets/monsters/grove_guardian-ae288fe1.png",
+            "health": 2000,
             "respawnSeconds": 15,
             "accuracy": 100,
             "evasion": 50,
@@ -433,17 +722,194 @@ window.adventureWorld = {
                         3
                     ],
                     "chance": 1
-                },
-                {
-                    "id": "fang",
-                    "amount": [
-                        1,
-                        2
-                    ],
-                    "chance": 0.5
                 }
             ],
-            "itemDrops": []
+            "itemDrops": [
+                {
+                    "id": "item_b40111dcd0f7ca8b7d155f7e43a3cdc3",
+                    "chance": 0.01
+                }
+            ]
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/shyshark-fe7ec85c.png",
+            "id": "monster_2b106413992cce9313c20ce7",
+            "name": "Shy shark"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/warturtle-53f1878e.png",
+            "id": "monster_37c07d183899f5c7036ac09f",
+            "name": "Warturtle"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/snowman-b8807e5c.png",
+            "id": "monster_a4ff3e8e7127d10b1532501d",
+            "name": "Snowman"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/big-penguin-3e7b66e8.png",
+            "id": "monster_6352a14e888ed3fba2f151cd",
+            "name": "Penguin"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/icecube-b46d62a8.png",
+            "id": "monster_ed1a656d3be2e7df0597f4f8",
+            "name": "Ice cube"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/polarbear-306b12ef.png",
+            "id": "monster_2b10a0e61bd5ebd4e8050372",
+            "name": "Polarbear"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/tricolorbat-32d6e920.png",
+            "id": "monster_70bf3d6d118e73ac85dee0cd",
+            "name": "Tri-color Bat"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/snowflake-bb1a2ed1.png",
+            "id": "monster_3092b7b9b1bd23e7e2ad2b39",
+            "name": "Snowflake"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/notapokemon-f90ba127.png",
+            "id": "monster_365f8e73c6121c5189836468",
+            "name": "Eyecicle"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/iceboss3-b95fcecc.png",
+            "id": "monster_f53770c6f3cb487158c3604f",
+            "name": "Kevin the Frost Lord"
         },
         {
             "id": "salmenMonster",
@@ -579,6 +1045,146 @@ window.adventureWorld = {
         {
             "name": "lavasnake_96px",
             "path": "assets/monsters/lavasnake_96px-a53213be.png",
+            "kind": "monster"
+        },
+        {
+            "name": "sunny",
+            "path": "assets/backgrounds/sunny-4a1f0145.png",
+            "kind": "background"
+        },
+        {
+            "name": "grassfield",
+            "path": "assets/backgrounds/grassfield-0f387cf2.png",
+            "kind": "background"
+        },
+        {
+            "name": "grassfield",
+            "path": "assets/backgrounds/grassfield-c5fdd1dc.png",
+            "kind": "background"
+        },
+        {
+            "name": "bee",
+            "path": "assets/monsters/bee-b2f684ce.png",
+            "kind": "monster"
+        },
+        {
+            "name": "boar",
+            "path": "assets/monsters/boar-1620e233.png",
+            "kind": "monster"
+        },
+        {
+            "name": "tallgrass",
+            "path": "assets/backgrounds/tallgrass-c587d4bc.png",
+            "kind": "background"
+        },
+        {
+            "name": "grove_guardian",
+            "path": "assets/monsters/grove_guardian-ae288fe1.png",
+            "kind": "monster"
+        },
+        {
+            "name": "ice1",
+            "path": "assets/backgrounds/ice1-e5dfc877.png",
+            "kind": "background"
+        },
+        {
+            "name": "ice2",
+            "path": "assets/backgrounds/ice2-4e6817e5.png",
+            "kind": "background"
+        },
+        {
+            "name": "ice3",
+            "path": "assets/backgrounds/ice3-cb7470c1.png",
+            "kind": "background"
+        },
+        {
+            "name": "ice4",
+            "path": "assets/backgrounds/ice4-ff191571.png",
+            "kind": "background"
+        },
+        {
+            "name": "ice5",
+            "path": "assets/backgrounds/ice5-d3a68e93.png",
+            "kind": "background"
+        },
+        {
+            "name": "ice6",
+            "path": "assets/backgrounds/ice6-a5ce48ae.png",
+            "kind": "background"
+        },
+        {
+            "name": "ice7",
+            "path": "assets/backgrounds/ice7-8888abbc.png",
+            "kind": "background"
+        },
+        {
+            "name": "ice8",
+            "path": "assets/backgrounds/ice8-8ad248e0.png",
+            "kind": "background"
+        },
+        {
+            "name": "ice9",
+            "path": "assets/backgrounds/ice9-6473629d.png",
+            "kind": "background"
+        },
+        {
+            "name": "ice10",
+            "path": "assets/backgrounds/ice10-01e88d4d.png",
+            "kind": "background"
+        },
+        {
+            "name": "shyshark",
+            "path": "assets/monsters/shyshark-fe7ec85c.png",
+            "kind": "monster"
+        },
+        {
+            "name": "warturtle",
+            "path": "assets/monsters/warturtle-53f1878e.png",
+            "kind": "monster"
+        },
+        {
+            "name": "snowman",
+            "path": "assets/monsters/snowman-b8807e5c.png",
+            "kind": "monster"
+        },
+        {
+            "name": "big penguin",
+            "path": "assets/monsters/big-penguin-3e7b66e8.png",
+            "kind": "monster"
+        },
+        {
+            "name": "icecube",
+            "path": "assets/monsters/icecube-b46d62a8.png",
+            "kind": "monster"
+        },
+        {
+            "name": "polarbear",
+            "path": "assets/monsters/polarbear-306b12ef.png",
+            "kind": "monster"
+        },
+        {
+            "name": "tricolorbat",
+            "path": "assets/monsters/tricolorbat-32d6e920.png",
+            "kind": "monster"
+        },
+        {
+            "name": "snowflake",
+            "path": "assets/monsters/snowflake-bb1a2ed1.png",
+            "kind": "monster"
+        },
+        {
+            "name": "notapokemon",
+            "path": "assets/monsters/notapokemon-f90ba127.png",
+            "kind": "monster"
+        },
+        {
+            "name": "iceboss1",
+            "path": "assets/monsters/iceboss1-df2aa816.png",
+            "kind": "monster"
+        },
+        {
+            "name": "iceboss3",
+            "path": "assets/monsters/iceboss3-b95fcecc.png",
             "kind": "monster"
         }
     ]

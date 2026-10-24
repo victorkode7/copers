@@ -5,7 +5,20 @@
 .idle-adventure .enemy-mark img { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
 .idle-adventure .combat-panel.has-area-background .enemy-card { background: rgba(18, 32, 43, .9); }
 
-.idle-adventure .combat-panel { position: relative; isolation: isolate; }
+.idle-adventure .combat-panel { position: relative; isolation: isolate; overflow: clip; }
+.idle-adventure .combat-background-art {
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    pointer-events: none;
+    user-select: none;
+    image-rendering: pixelated;
+    mask-image: linear-gradient(to bottom, #000 65%, transparent 100%);
+}
+.idle-adventure .combat-background-art[hidden] { display: none; }
 .idle-adventure .combat-panel > .combat-heading,
 .idle-adventure .combat-panel > .enemy-roster { position: relative; z-index: 1; }
 .idle-adventure .combat-monster-art {
@@ -14,7 +27,9 @@
     right: .75rem;
     top: .75rem;
     width: min(48%, 384px);
-    height: calc(100% - 1.5rem);
+    /* Size from the panel width, independently of respawn/status row height. */
+    height: auto;
+    aspect-ratio: 1;
     object-fit: contain;
     object-position: right top;
     image-rendering: pixelated;
@@ -24,6 +39,36 @@
     user-select: none;
 }
 .idle-adventure .combat-monster-art[hidden] { display: none; }
+.idle-adventure .poison-transfer {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    animation: poison-transfer-fade 700ms ease-out forwards;
+}
+.idle-adventure .poison-transfer line {
+    stroke: #76ff76;
+    stroke-width: 3;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 5px #39e85a);
+    stroke-dasharray: 1;
+    animation: poison-transfer-draw 180ms ease-out both;
+}
+@keyframes poison-transfer-draw {
+    from { stroke-dashoffset: 1; }
+    to { stroke-dashoffset: 0; }
+}
+@keyframes poison-transfer-fade {
+    0%, 45% { opacity: 1; }
+    100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .idle-adventure .poison-transfer { animation-duration: 250ms; }
+    .idle-adventure .poison-transfer line { animation: none; }
+}
 @media (max-width: 899px) {
     .idle-adventure .combat-monster-art { opacity: .2; }
 }

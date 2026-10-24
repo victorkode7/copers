@@ -172,8 +172,21 @@ h1, h2, h3, p { margin-top: 0; }
 .view-toggle { display: inline-flex; padding: 3px; border: 1px solid var(--border); border-radius: 9px; background: #0d1620; }
 .view-toggle button { padding: 0.35rem 0.5rem; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-size: 0.66rem; font-weight: 700; white-space: nowrap; }
 .view-toggle button[aria-pressed="true"] { background: #234034; color: var(--green); }
-.graph-viewport { position: relative; flex: 1; min-height: 290px; overflow: hidden; border-top: 1px solid #253544; border-bottom: 1px solid #253544; background-color: #0d151f; background-image: radial-gradient(circle at 0 0, #58738b 1.35px, transparent 1.35px); background-size: var(--grid-step-x, 190px) var(--grid-step-y, 160px); background-position: var(--grid-offset-x, 0px) var(--grid-offset-y, 0px); }
+.graph-viewport { position: relative; flex: 1; min-height: 290px; overflow: hidden; border-top: 1px solid #253544; border-bottom: 1px solid #253544; background-color: #0d151f; }
 .graph-stage { position: absolute; top: 0; left: 0; transform-origin: top left; }
+/* Draw dots over the artwork, below connections and nodes. The oversized
+   layer covers the viewport while panning and shares the canvas transform. */
+.graph-stage::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: -8192px;
+    pointer-events: none;
+    background-image: radial-gradient(circle, #9cb7cc 3px, transparent 3.5px);
+    background-size: 190px 160px;
+    /* Tile centers align with the fixed node centers at grid offset 36px. */
+    background-position: calc(8192px + 36px - 95px) calc(8192px + 36px - 80px);
+}
 .graph-viewport:active { cursor: grab; }
 .graph-viewport.is-panning { cursor: grabbing; }
 .graph-edges, .graph-nodes { position: absolute; inset: 0 auto auto 0; }

@@ -7,10 +7,11 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/nav.css">
     <link rel="stylesheet" href="css/app-nav.css">
-    <link rel="stylesheet" href="css/game.css?v=20261022-41">
+    <link rel="stylesheet" href="css/game.css?v=20261024-4">
     <link rel="stylesheet" href="css/equipment-effects.css?v=1">
-    <link rel="stylesheet" href="css/world-game.css?v=4">
+    <link rel="stylesheet" href="css/world-game.css?v=7">
     <link rel="stylesheet" href="css/skill-tree-background.css?v=20261021-18">
+    <link rel="stylesheet" href="css/inventory-categories.css?v=2">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <title>Idle Adventure</title>
 </head>
@@ -20,7 +21,7 @@
             <a href="index.html" aria-current="page">Game</a>
             <a href="skill-tree-editor.html">Skill Tree Editor</a>
             <a href="item-editor.html">Item Editor</a>
-            <a href="world-editor.html">World &amp; Monster Editor</a>
+            <a href="material-editor.html">Material Editor</a><a href="world-editor.html">World &amp; Monster Editor</a>
         </nav>
         <nav class="nav-header">
             <a class="logo" href="index.html">
@@ -177,6 +178,14 @@
                 </div>
                 <p class="subtle">Choose what to equip and watch your combat stats improve.</p>
             </div>
+            <div id="inventoryTools" class="inventory-tools">
+                <div class="inventory-tabs" role="group" aria-label="Inventory categories">
+                    <button type="button" class="inventory-tab" data-inventory-category="all" aria-pressed="true">Gear</button>
+                    <button type="button" class="inventory-tab" data-inventory-category="weapons" aria-pressed="false">Weapons</button>
+                    <button type="button" class="inventory-tab" data-inventory-category="armor" aria-pressed="false">Armor</button>
+                    <button type="button" class="inventory-tab" data-inventory-category="materials" aria-pressed="false">Materials</button>
+                </div>
+            </div>
             <div class="gear-workspace">
                 <section class="town-section equipment-panel" aria-labelledby="equippedGearHeading">
                     <h2 id="equippedGearHeading">Equipped gear</h2>
@@ -193,7 +202,7 @@
                 <h2 id="materialsHeading">Materials</h2>
                 <p class="subtle">Only materials you currently own are shown.</p>
                 <div id="inventoryList" class="inventory-list"></div>
-            </div>
+            </section>
         </section>
 
       </div>
@@ -204,15 +213,15 @@
           <ol id="lootLog" class="loot-list loot-panel-content" aria-live="polite"></ol>
       </details>
     </main>
-    <footer class="developer-options"><details><summary>Developer options</summary><label><input id="developerItems" type="checkbox"> Enable developer equipment</label></details></footer>
+    <footer class="developer-options"><details><summary>Developer options</summary><label><input id="developerItems" type="checkbox"> Enable developer equipment</label><label><input id="developerTravel" type="checkbox"> Skip kill requirements — unlock all maps and worlds</label></details></footer>
     <script src="js/items.js?v=20261021-2"></script>
-    <script src="js/item-system.js?v=20261021-8"></script>
-    <script src="js/skill-tree.js?v=20261021-2"></script>
+    <script src="js/item-system.js?v=20261023-1"></script>
+    <script src="js/skill-tree.js?v=20261023-2"></script>
     <script src="js/skill-stat-compat.js?v=20261021-2"></script>
     <script src="js/skill-sprites.js?v=20261021-13"></script>
     <script src="js/equipment-effects.js?v=1"></script>
     <script src="js/world-content.js?v=1"></script>
-    <script src="js/world-system.js?v=1"></script>
-    <script src="js/game.js?v=20261022-37"></script>
+    <script src="js/world-system.js?v=20261024-2"></script>
+    <script src="js/game.js?v=20261024-7"></script>
 </body>
 </html>

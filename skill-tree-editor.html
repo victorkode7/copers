@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Skill Tree Editor | Idle Adventure</title>
-    <link rel="stylesheet" href="css/skill-tree-editor.css?v=20261021-15">
-    <link rel="stylesheet" href="css/skill-tree-background.css?v=20261021-18">
+    <link rel="stylesheet" href="css/skill-tree-editor.css?v=20261023-1">
+    <link rel="stylesheet" href="css/skill-tree-background.css?v=20261023-1">
     <link rel="stylesheet" href="css/app-nav.css">
     <link rel="stylesheet" href="css/editor-quick-save.css?v=1">
 </head>
@@ -14,7 +14,7 @@
         <a href="index.html">Game</a>
         <a href="skill-tree-editor.html" aria-current="page">Skill Tree Editor</a>
         <a href="item-editor.html">Item Editor</a>
-        <a href="world-editor.html">World &amp; Monster Editor</a>
+        <a href="material-editor.html">Material Editor</a><a href="world-editor.html">World &amp; Monster Editor</a>
     </nav>
     <header class="topbar">
         <a class="back-link" href="index.html">← Game</a>
@@ -42,7 +42,7 @@
             </span>
             <button id="exportJs" class="button primary" type="button">Download game package</button>
         </div>
-        <p id="connectHint" class="connect-hint" hidden>Connect mode: click a node to set it as a prerequisite, then click another node to connect them. Press Esc to cancel.</p>
+        <p id="connectHint" class="connect-hint" hidden>Connect mode: click a node to set it as a connection endpoint, then click another node to connect them. Press Esc to cancel.</p>
     </header>
 
     <main class="workspace">
@@ -84,7 +84,7 @@
                         <p class="muted">Drag nodes to arrange them. Scroll to explore larger trees.</p>
                     </div>
                     <div class="legend">
-                        <button id="connectToggle" class="button secondary" type="button" aria-pressed="false" title="Click nodes to connect them as prerequisites">Connect nodes</button>
+                        <button id="connectToggle" class="button secondary" type="button" aria-pressed="false" title="Click nodes to connect them with bidirectional lines">Connect nodes</button>
                         <button id="insertBetween" class="button secondary" type="button" disabled>Insert node between</button>
                         <div id="graphViewToggle" class="view-toggle" role="group" aria-label="Skill tree preview mode">
                             <button type="button" data-view-mode="player" aria-pressed="false">Player view</button>
@@ -92,7 +92,7 @@
                         </div>
                         <span><i class="legend-node"></i> Skill</span>
                         <span><i class="legend-node legend-start"></i> Starting node</span>
-                        <span><i class="legend-line"></i> Requirement</span>
+                        <span><i class="legend-line"></i> Connection</span>
                     </div>
                 </div>
                 <div id="graphViewport" class="graph-viewport" tabindex="-1" aria-label="Interactive skill tree canvas">
@@ -202,12 +202,12 @@
                     <span>This is the starting node</span>
                 </label>
                 <fieldset class="requirements-field">
-                    <legend>Prerequisites</legend>
-                    <p class="field-help">Select the nodes that connect into this node.</p>
-                    <select id="nodeRequires" name="requires" multiple size="6" aria-label="Prerequisite nodes"></select>
-                    <label class="mode-field">
+                    <legend>Connections</legend>
+                    <p class="field-help">Lines work both ways. Unlock nodes through a selected path to the center. This list stores outgoing lines; incoming lines also connect.</p>
+                    <select id="nodeRequires" name="requires" multiple size="6" aria-label="Connection nodes"></select>
+                    <label class="mode-field" hidden>
                         <span>When multiple are selected</span>
-                        <select id="nodeRequiresMode" name="requiresMode">
+                        <select id="nodeRequiresMode" name="requiresMode" disabled>
                             <option value="all">Require all selected</option>
                             <option value="any">Require any one selected</option>
                         </select>
@@ -256,6 +256,6 @@
     <script src="js/skill-sprites.js?v=20261021-13"></script>
     <script src="js/editor-file-save.js?v=2"></script>
     <script src="js/editor-quick-save.js?v=2"></script>
-    <script src="js/skill-tree-editor.js?v=20261021-18"></script>
+    <script src="js/skill-tree-editor.js?v=20261023-2"></script>
 </body>
 </html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Material Editor | Idle Adventure</title>
+    <link rel="stylesheet" href="css/item-editor.css?v=20261021-6">
+    <link rel="stylesheet" href="css/app-nav.css">
+    <link rel="stylesheet" href="css/editor-quick-save.css?v=1">
+</head>
+<body>
+    <nav class="app-nav" aria-label="Main navigation">
+        <a href="index.html">Game</a><a href="skill-tree-editor.html">Skill Tree Editor</a>
+        <a href="item-editor.html">Item Editor</a><a href="material-editor.html" aria-current="page">Material Editor</a>
+        <a href="world-editor.html">World &amp; Monster Editor</a>
+    </nav>
+    <header class="editor-header">
+        <div><p class="eyebrow">DEVELOPER TOOL</p><h1>Material Editor</h1></div>
+        <div class="toolbar">
+            <button id="undo" type="button" disabled>Undo</button>
+            <button id="restoreDraft" type="button" disabled>Restore local draft</button>
+            <button id="chooseJson" type="button">Import JSON</button>
+            <input id="importJson" type="file" accept=".json,application/json" hidden>
+            <button id="exportJson" type="button">Export JSON</button>
+            <span class="quick-save-control">
+                <button id="quickSave" type="button" aria-disabled="true" aria-describedby="quickSaveTip">Quick save</button>
+                <span id="quickSaveTip" class="quick-save-tooltip" role="tooltip">Save data only. For new sprites, download the game package.</span>
+            </span>
+            <button id="exportGame" class="primary" type="button">Download game package</button>
+        </div>
+    </header>
+    <p id="status" class="status" role="status">Edit materials, then quick-save or apply a game package to test changes.</p>
+    <main class="workspace">
+        <aside class="panel catalogue">
+            <div class="section-heading"><h2>Materials <span id="materialCount"></span></h2><button id="addMaterial" type="button">+ Add</button></div>
+            <label>Search<input id="search" type="search" placeholder="Name or description"></label>
+            <div id="materialList" class="item-list" aria-label="Material catalogue"></div>
+        </aside>
+        <section class="panel inspector">
+            <p id="emptyEditor" hidden>Add a material to begin.</p>
+            <form id="materialForm">
+                <div class="section-heading"><h2>Material details</h2><div><button id="duplicateMaterial" type="button">Duplicate</button> <button id="deleteMaterial" class="danger" type="button">Delete</button></div></div>
+                <label>Name<input id="materialName" required></label>
+                <label>Description<textarea id="materialDescription" rows="3"></textarea></label>
+                <label>Sprite image path<input id="materialSprite" placeholder="assets/materials/crystal.png"></label>
+                <label>Import sprite<input id="importSprite" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>
+                <p class="hint">Imported images are included in the game package. Leave the path empty to use the default material icon.</p>
+                <details class="form-section"><summary>Advanced settings</summary>
+                    <label>Permanent internal ID<input id="materialId" readonly></label>
+                    <p class="hint">Renaming keeps this ID unchanged so saved quantities, recipes, and drops still work.</p>
+                </details>
+            </form>
+            <section class="form-section"><h2>Drop sources</h2><ul id="materialSources"></ul><p class="hint">Set material drops in the <a href="world-editor.html">World &amp; Monster Editor</a>.</p></section>
+            <section class="form-section"><h2>Crafting uses</h2><ul id="materialRecipes"></ul><p class="hint">Set recipe requirements in the <a href="item-editor.html">Item Editor</a>.</p></section>
+        </section>
+        <aside class="preview-column">
+            <section class="panel"><p class="eyebrow">LIVE PREVIEW</p><h2>Material card</h2><div id="preview"></div></section>
+            <section class="panel"><h2>Validation</h2><p id="validationSummary"></p><ul id="validation"></ul></section>
+            <section class="panel"><h2>Apply to the game</h2><p>Materials and equipment share <code>js/items.js</code> and a browser draft. Exports keep both catalogues.</p><p id="quickSaveTarget" class="quick-save-help">Checking quick-save availability…</p><button id="chooseQuickSaveFile" type="button" hidden>Choose project file</button><p>For imported sprites, download the game package and extract it into your project folder. Reload the game after saving.</p></section>
+        </aside>
+    </main>
+    <script src="js/items.js?v=20261021-2"></script>
+    <script src="js/item-system.js?v=20261023-1"></script>
+    <script src="js/item-package.js?v=20261021-2"></script>
+    <script src="js/world-content.js?v=1"></script>
+    <script src="js/world-system.js?v=20261024-2"></script>
+    <script src="js/editor-file-save.js?v=2"></script>
+    <script src="js/editor-quick-save.js?v=2"></script>
+    <script src="js/material-editor.js?v=1"></script>
+</body>
+</html>

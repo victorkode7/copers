@@ -32,6 +32,7 @@
         const signature = JSON.stringify([value, source]);
         if (appliedBackgrounds.get(element) === signature) return;
         appliedBackgrounds.set(element, signature);
+        element.querySelector(':scope > .combat-background-art')?.remove();
         element.style.removeProperty('background-image');
         element.style.removeProperty('background-size');
         element.style.removeProperty('background-repeat');
@@ -45,6 +46,20 @@
             element.style.backgroundSize = value.fit === 'tile' ? 'auto, ' + (value.tileSize || 256) + 'px' : 'auto, ' + (value.fit === 'contain' ? 'contain' : 'cover');
             element.style.backgroundRepeat = value.fit === 'tile' ? 'no-repeat, repeat' : 'no-repeat';
             element.style.backgroundPosition = 'center';
+            // A single width-sized image keeps its natural proportions even
+            // when a large encounter makes the combat panel much taller.
+            if (value.fit === 'cover' && element.classList.contains('combat-panel')) {
+                element.style.backgroundImage = 'none';
+                const image = document.createElement('img');
+                image.className = 'combat-background-art';
+                image.alt = '';
+                image.setAttribute('aria-hidden', 'true');
+                image.draggable = false;
+                image.style.opacity = String(1 - shade);
+                image.addEventListener('error', () => { image.hidden = true; });
+                image.src = source;
+                element.prepend(image);
+            }
         }
     }
     function sources(data) {

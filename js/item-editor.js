@@ -11,6 +11,7 @@
     const $ = id => document.getElementById(id);
     const current = () => data.items[selectedIndex];
     const assets = new Map();
+    const spritePaths = () => [...data.items.map(item => item.sprite), ...Object.values(data.materialDetails || {}).map(material => material.sprite)].filter(Equipment.safeSprite);
     let imageDatabase;
     let quickSave = null;
 
@@ -39,7 +40,7 @@
         assets.set(path, {blob, url: URL.createObjectURL(blob)});
     }
     async function loadDraftSprites() {
-        await Promise.all([...new Set(data.items.map(item => item.sprite).filter(Boolean))].map(async path => {
+        await Promise.all([...new Set(spritePaths())].map(async path => {
             if (assets.has(path)) return;
             try {
                 const blob = await spriteStorage('readonly', path);
@@ -394,7 +395,7 @@
         try {
             const source = 'window.adventureItems = ' + JSON.stringify(data, null, 4) + ';\n';
             const entries = [{name: 'js/items.js', bytes: new TextEncoder().encode(source)}];
-            for (const path of new Set(data.items.map(item => item.sprite).filter(Boolean))) {
+            for (const path of new Set(spritePaths())) {
                 const asset = assets.get(path);
                 if (asset) entries.push({name: path, bytes: new Uint8Array(await asset.blob.arrayBuffer())});
             }
@@ -423,7 +424,7 @@
     populateSlots(); render();
     quickSave = EditorQuickSave.create({
         key: 'items', filename: 'items.js',
-        getPaths: () => data.items.map(item => item.sprite).filter(Equipment.safeSprite),
+        getPaths: spritePaths,
         getSource: () => 'window.adventureItems = ' + JSON.stringify(data, null, 4) + ';\n',
         validate: () => Equipment.validate(data), status,
         download: (name, source) => download(name, source, 'text/javascript')

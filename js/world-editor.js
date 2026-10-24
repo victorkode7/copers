@@ -85,14 +85,28 @@
         $('catalogueTabs').querySelectorAll('button').forEach(node => node.setAttribute('aria-pressed', String(node.dataset.kind === selection.kind)));
         const query = $('search').value.toLowerCase().trim();
         $('entryList').replaceChildren();
-        ordered().filter(entry => entry.name.toLowerCase().includes(query)).forEach(entry => {
+        const appendEntry = (entry, parent = $('entryList')) => {
             const node = button('', () => { selection.id = entry.id; snapshotSelection = {...selection}; render(); saveView(); }, 'item-entry');
             node.dataset.entryId = entry.id;
             node.setAttribute('aria-pressed', String(selection.id === entry.id));
             const copy = element('span'); copy.append(element('strong', null, entry.name || 'Unnamed entry'));
             const detail = selection.kind === 'maps' ? worldFor(entry)?.name : selection.kind === 'worlds' ? entry.mapIds.length + ' maps' : data.maps.filter(map => map.spawns.some(spawn => spawn.monsterId === entry.id)).length + ' maps';
-            copy.append(element('small', null, detail || 'Unassigned')); node.append(copy); $('entryList').append(node);
-        });
+            copy.append(element('small', null, detail || 'Unassigned')); node.append(copy); parent.append(node);
+        };
+        $('mapWorldFilter').hidden = selection.kind !== 'maps';
+        const selectedWorld = selection.kind === 'maps' ? worldFor(current()) || data.worlds[0] : null;
+        const worldSelect = $('mapWorld');
+        worldSelect.replaceChildren(...data.worlds.map(world => {
+            const option = element('option', null, world.name);
+            option.value = world.id;
+            return option;
+        }));
+        if (selectedWorld) worldSelect.value = selectedWorld.id;
+        const entries = selection.kind === 'maps'
+            ? ordered().filter(entry => selectedWorld.mapIds.includes(entry.id))
+            : ordered();
+        $('catalogueHeading').textContent = labels[selection.kind] + ' (' + entries.length + ')';
+        entries.filter(entry => entry.name.toLowerCase().includes(query)).forEach(entry => appendEntry(entry));
         if (!$('entryList').children.length) $('entryList').append(element('p', null, 'No matches.'));
         const sequence = orderSequence(), index = sequence.indexOf(selection.id);
         $('moveUp').disabled = index <= 0; $('moveDown').disabled = index < 0 || index === sequence.length - 1;
@@ -328,6 +342,15 @@
         selection = {kind: tab.dataset.kind, id: data[tab.dataset.kind][0].id}; snapshotSelection = {...selection}; $('search').value = ''; render(); saveView();
     });
     $('search').addEventListener('input', () => { renderList(); saveView(); });
+    $('mapWorld').addEventListener('change', () => {
+        const world = data.worlds.find(entry => entry.id === $('mapWorld').value);
+        const mapId = world?.mapIds.find(id => data.maps.some(map => map.id === id));
+        if (!mapId) return;
+        selection = {kind: 'maps', id: mapId};
+        snapshotSelection = {...selection};
+        $('search').value = '';
+        render(); saveView();
+    });
     $('entryForm').addEventListener('submit', event => event.preventDefault());
     $('undo').addEventListener('click', () => {
         const previous = history.pop(); if (!previous) return;

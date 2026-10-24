@@ -64,6 +64,13 @@ if (!skillTreeData || !Array.isArray(skillTreeData.nodes)) {
 }
 const skillNodes = skillTreeData.nodes;
 const skillNodeById = Object.fromEntries(skillNodes.map(node => [node.id, node]));
+// Content stores each line once; gameplay can follow it in either direction.
+const skillNodeConnections = Object.fromEntries(skillNodes.map(node => [node.id, new Set()]));
+skillNodes.forEach(node => node.requires.forEach(id => {
+    if (!skillNodeConnections[id]) return;
+    skillNodeConnections[node.id].add(id);
+    skillNodeConnections[id].add(node.id);
+}));
 const experienceForNextLevel = level =>
     level === 0
         ? 50
@@ -101,6 +108,7 @@ const state = {
     gear: createEmptyGear(),
     ownedItemIds: [],
     developerItemsEnabled: false,
+    developerTravelEnabled: false,
     crafted: [],
     tutorials: createTutorialState(),
     selectedWorld: worldData[0].id,
@@ -178,6 +186,7 @@ const elements = {
 let lastTick = performance.now();
 let lastSave = Date.now();
 let selectedGearSlot = 'weapon';
+let inventoryCategory = 'slot';
 let selectedCraftCategory = 'all';
 let showCraftableRecipesOnly = false;
 let showCraftedRecipes = false;
@@ -576,10 +585,18 @@ function skillNodeIsAvailable(node) {
 }
 
 function skillNodeRequirementsMet(node, isAllocated) {
-    if (node.requires.length === 0) return true;
-    return node.requiresMode === 'any'
-        ? node.requires.some(isAllocated)
-        : node.requires.every(isAllocated);
+    const connected = new Set(skillNodes.filter(entry => entry.start).map(entry => entry.id));
+    const queue = [...connected];
+    for (let index = 0; index < queue.length; index++) {
+        skillNodeConnections[queue[index]].forEach(id => {
+            if (connected.has(id) || !isAllocated(id)) return;
+            connected.add(id);
+            queue.push(id);
+        });
+    }
+    // A selected node must reach the center. An unselected node must touch
+    // that connected selection; disconnected cycles cannot support themselves.
+    return connected.has(node.id) || [...skillNodeConnections[node.id]].some(id => connected.has(id));
 }
 
 function mapsForWorld(worldId) {
@@ -592,6 +609,8 @@ function worldForMap(mapId) {
 }
 
 function worldIsUnlocked(index) {
+    if (!worldData[index]) return false;
+    if (state.developerTravelEnabled) return true;
     if (index === 0) return true;
     const previousWorld = worldData[index - 1];
     const finalMapId = previousWorld.mapIds[previousWorld.mapIds.length - 1];
@@ -605,6 +624,8 @@ function worldSelectorIsUnlocked() {
 }
 
 function mapIsUnlocked(maps, index) {
+    if (!maps[index]) return false;
+    if (state.developerTravelEnabled) return true;
     if (index === 0) return true;
     return state.kills[maps[index - 1].id] >= maps[index - 1].goal;
 }
@@ -637,6 +658,7 @@ function saveGame() {
             gear: state.gear,
             ownedItemIds: state.ownedItemIds,
             developerItemsEnabled: state.developerItemsEnabled,
+            developerTravelEnabled: state.developerTravelEnabled,
             crafted: state.crafted,
             tutorials: state.tutorials,
             selectedWorld: state.selectedWorld,
@@ -665,6 +687,7 @@ function loadGame() {
         if (!rawSave) return false;
 
         const saved = JSON.parse(rawSave);
+        if (saved && saved.developerTravelEnabled === undefined) saved.developerTravelEnabled = false;
         if (saved && typeof saved.selectedMap === 'string' && !mapData.some(map => map.id === saved.selectedMap)) {
             saved.selectedMap = worldData[0].mapIds[0];
             saved.enemyHp = mapData.find(map => map.id === saved.selectedMap).health;
@@ -832,6 +855,7 @@ function loadGame() {
             !Array.isArray(saved.ownedItemIds) ||
             !saved.ownedItemIds.every(id => typeof id === 'string' && Object.hasOwn(itemById, id)) ||
             typeof saved.developerItemsEnabled !== 'boolean' ||
+            typeof saved.developerTravelEnabled !== 'boolean' ||
             !saved.tutorials || typeof saved.tutorials !== 'object' ||
             Array.isArray(saved.tutorials) ||
             typeof saved.tutorials.firstSkillPointPending !== 'boolean' ||
@@ -923,6 +947,7 @@ function loadGame() {
         state.gear = saved.gear;
         state.ownedItemIds = saved.ownedItemIds;
         state.developerItemsEnabled = saved.developerItemsEnabled;
+        state.developerTravelEnabled = saved.developerTravelEnabled;
         state.crafted = saved.crafted;
         state.tutorials = saved.tutorials;
         state.selectedMap = saved.selectedMap;
@@ -1138,7 +1163,7 @@ function renderUpgrades() {
         }
         const links = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         links.classList.add('skill-tree-links');
-        links.setAttribute('viewBox', '0 0 ' + (gridColumnCount * 200) + ' ' + (gridRowCount * 160));
+        links.setAttribute('viewBox', '0 0 ' + (gridColumnCount * 160) + ' ' + (gridRowCount * 160));
         links.setAttribute('preserveAspectRatio', 'none');
         links.setAttribute('aria-hidden', 'true');
 
@@ -1146,9 +1171,9 @@ function renderUpgrades() {
             node.requires.forEach(requiredId => {
                 const requiredNode = skillNodeById[requiredId];
                 const link = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                link.setAttribute('x1', String((gridColumn(requiredNode) - 0.5) * 200));
+                link.setAttribute('x1', String((gridColumn(requiredNode) - 0.5) * 160));
                 link.setAttribute('y1', String((gridRow(requiredNode) - 0.5) * 160));
-                link.setAttribute('x2', String((gridColumn(node) - 0.5) * 200));
+                link.setAttribute('x2', String((gridColumn(node) - 0.5) * 160));
                 link.setAttribute('y2', String((gridRow(node) - 0.5) * 160));
                 link.dataset.skillNodeSource = requiredId;
                 link.dataset.skillNodeLink = node.id;
@@ -1228,7 +1253,7 @@ function renderUpgrades() {
         refundButton.title = pendingPointCount > 0
             ? 'Confirm or clear pending points before refunding.'
             : refundMode
-                ? 'Click allocated nodes to refund points. Dependent nodes must be refunded first.'
+                ? 'Click allocated nodes to refund points. Remaining nodes must stay connected to the center.'
                 : 'Enter refund mode to refund individual skill points.';
     }
     if (resetTreeButton) resetTreeButton.disabled =
@@ -1274,7 +1299,7 @@ function renderUpgrades() {
             labelParts.push(committedRank > 0 ? (refundMode ? 'Click to refund one point' : 'Already selected') :
                 rank > 0 ? 'Selected, pending confirmation' : 'Not selected');
             labelParts.push(canDeselect ? 'Click to deselect' :
-                pendingSkillRanks[node.id] ? 'Required by another selected node' :
+                pendingSkillRanks[node.id] ? 'Keeps selected nodes connected to the center' :
                     available && pendingPointCount < state.skillPoints && rank < node.maxRank ? 'Click to select' :
                         available && rank < node.maxRank ? 'No unspent skill points available' :
                             rank >= node.maxRank ? 'Already selected' : 'Locked');
@@ -1388,6 +1413,9 @@ function renderCrafting() {
                 materialLabel.className = 'craft-material-label';
                 const materialName = document.createElement('span');
                 materialName.textContent = materialNames[id];
+                const materialDetail = itemData.materialDetails?.[id];
+                if (materialDetail?.sprite) materialLabel.appendChild(Equipment.createIcon(materialDetail));
+                if (materialDetail?.description) materialName.title = materialDetail.description;
                 const sourceWrap = document.createElement('span');
                 sourceWrap.className = 'craft-material-info-wrap';
                 const sourceInfo = document.createElement('button');
@@ -1490,8 +1518,14 @@ function renderItemComparison(container, item) {
 }
 
 function renderInventory() {
+    document.querySelectorAll('[data-inventory-category]').forEach(button => {
+        button.setAttribute('aria-pressed', String(button.dataset.inventoryCategory === (inventoryCategory === 'slot' ? 'all' : inventoryCategory)));
+    });
+    elements.inventoryView.querySelector('.gear-workspace').hidden = inventoryCategory === 'materials';
+    elements.inventoryView.querySelector('.materials-panel').hidden = ['weapons', 'armor'].includes(inventoryCategory);
     const gearSignature = JSON.stringify({
         selectedGearSlot,
+        inventoryCategory,
         gear: state.gear,
         crafted: state.crafted,
         ownedItemIds: state.ownedItemIds,
@@ -1557,20 +1591,26 @@ function renderInventory() {
     });
 
     const selectedSlot = equipmentSlots.find(slot => slot.id === selectedGearSlot) || equipmentSlots[0];
-    elements.gearSelectionHeading.textContent = selectedSlot.name + ' selection';
+    elements.gearSelectionHeading.textContent = inventoryCategory === 'slot' ? selectedSlot.name + ' selection'
+        : inventoryCategory === 'weapons' ? 'Weapons' : inventoryCategory === 'armor' ? 'Armor' : 'Your gear';
     const matchingTutorialSlot = state.tutorials.firstGearPending &&
         state.tutorials.firstGearSlot === selectedSlot.id;
     elements.gearSelectionHint.textContent = matchingTutorialSlot
         ? state.tutorials.firstGearSlotSelected
             ? 'Now click Equip on the highlighted item.'
             : 'Click the highlighted ' + selectedSlot.name.toLowerCase() + ' slot on the left to view your new item.'
-        : 'Choose an owned ' + selectedSlot.name.toLowerCase() + ' to equip.';
+        : inventoryCategory === 'slot' ? 'Choose an owned ' + selectedSlot.name.toLowerCase() + ' to equip.'
+            : 'Compare your owned gear and choose what to equip.';
     elements.gearInventory.innerHTML = '';
-    const slotGear = itemData.items.filter(item => item.slot === selectedSlot.id && ownsItem(item.id) && state.gear[item.slot] !== item.id);
+    const slotGear = itemData.items.filter(item => ownsItem(item.id) && state.gear[item.slot] !== item.id &&
+        (inventoryCategory !== 'slot' || item.slot === selectedSlot.id) &&
+        (inventoryCategory !== 'weapons' || item.slot === 'weapon') &&
+        (inventoryCategory !== 'armor' || recipeCategories[item.slot] === 'armor'));
     if (slotGear.length === 0) {
         const empty = document.createElement('p');
         empty.className = 'inventory-empty subtle';
-        empty.textContent = state.gear[selectedSlot.id]
+        empty.textContent = inventoryCategory !== 'slot'
+            ? 'No spare gear in this category. Craft equipment or explore for drops.' : state.gear[selectedSlot.id]
             ? 'No spare items for this slot. Use the minus button on the equipped slot to return its item to your bag.'
             : 'No ' + selectedSlot.name.toLowerCase() + ' owned yet. Craft equipment or explore for drops.';
         elements.gearInventory.appendChild(empty);
@@ -1628,7 +1668,18 @@ function renderInventory() {
     ownedMaterials.forEach(([id, name]) => {
         const entry = document.createElement('div');
         entry.className = 'material-entry';
-        entry.innerHTML = '<span>' + name + '</span><strong>' + formatAmount(state.materials[id]) + '</strong>';
+        const identity = document.createElement('span');
+        identity.className = 'material-identity';
+        const material = itemData.materialDetails?.[id];
+        identity.appendChild(Equipment.createIcon(material, '◇'));
+        const copy = document.createElement('span');
+        const label = document.createElement('span'); label.textContent = name; copy.appendChild(label);
+        if (material?.description) {
+            const description = document.createElement('small'); description.textContent = material.description; copy.appendChild(description);
+        }
+        identity.appendChild(copy);
+        const count = document.createElement('strong'); count.textContent = formatAmount(state.materials[id]);
+        entry.append(identity, count);
         elements.inventory.appendChild(entry);
     });
 }
@@ -1942,8 +1993,13 @@ function renderCombat() {
     const renderedCards = Array.from(elements.enemyRoster.children)
         .filter(card => card.classList.contains('enemy-card'));
     const renderedIds = renderedCards.map(card => card.dataset.monsterId);
-    if (ids.length !== renderedIds.length || ids.some((id, index) => id !== renderedIds[index])) {
+    // Spawn IDs are local to a map (several maps use "main"). Rebuild on
+    // map changes so creation-time sprites and health labels cannot carry over.
+    if (elements.enemyRoster.dataset.mapId !== map.id ||
+        ids.length !== renderedIds.length || ids.some((id, index) => id !== renderedIds[index])) {
+        elements.combatPanel.querySelectorAll('.poison-transfer').forEach(effect => effect.remove());
         elements.enemyRoster.replaceChildren(...definitions.map(createEnemyCard));
+        elements.enemyRoster.dataset.mapId = map.id;
     }
     const target = activeMonster();
     const lootMonster = monsterDefinition(target, map);
@@ -1961,7 +2017,7 @@ function renderCombat() {
     elements.mapLootTable.innerHTML = '';
     const lootEntries = [
         { name: 'Gold', amount: lootMonster.gold, chance: 1 },
-        ...[...map.drops, ...lootMonster.drops].map(drop => ({ name: materialNames[drop.id], amount: drop.amount, chance: drop.chance })),
+        ...[...map.drops, ...lootMonster.drops].map(drop => ({ name: materialNames[drop.id], materialId: drop.id, amount: drop.amount, chance: drop.chance })),
         ...[...map.itemDrops, ...lootMonster.itemDrops].map(drop => ({
             name: itemById[drop.id].name,
             amount: [1, 1],
@@ -1973,7 +2029,14 @@ function renderCombat() {
         const entry = document.createElement('li');
         if (drop.unique) entry.className = 'unique-drop';
         const amount = document.createElement('span');
-        amount.textContent = drop.name;
+        amount.className = 'loot-table-label';
+        if (drop.materialId) {
+            entry.dataset.materialId = drop.materialId;
+            amount.appendChild(Equipment.createIcon(itemData.materialDetails?.[drop.materialId]));
+        }
+        const name = document.createElement('span');
+        name.textContent = drop.name;
+        amount.appendChild(name);
         const details = document.createElement('strong');
         details.textContent = formatAmount(drop.amount[0]) +
             (drop.amount[0] === drop.amount[1] ? '' : '–' + formatAmount(drop.amount[1])) +
@@ -2128,6 +2191,9 @@ function awardExperience(amount) {
 
 function defeatEnemy(monster) {
     const map = currentMap();
+    const remainingPoison = (monster.poisonStacks || [])
+        .filter(stack => stack.remainingDuration > 0)
+        .map(stack => ({...stack}));
     const definition = monsterDefinition(monster, map);
     const gold = Math.floor(rollRange(definition.gold) * getGoldMultiplier());
     state.gold += gold;
@@ -2185,7 +2251,48 @@ function defeatEnemy(monster) {
     syncLegacyEnemyState();
     state.attackTimer = 0;
     clearEnemyDamageIndicator();
+    transferPoisonOnDeath(monster, remainingPoison);
     saveGame();
+}
+
+function transferPoisonOnDeath(monster, stacks) {
+    if (getSkillNodeRank('bloomingFlower') <= 0 || !stacks.length) return;
+    const targets = state.monsterStates.filter(target => target !== monster && target.hp > 0);
+    if (!targets.length) return;
+    const target = targets[Math.floor(Math.random() * targets.length)];
+    if (!Array.isArray(target.poisonStacks)) target.poisonStacks = [];
+    target.poisonStacks.push(...stacks);
+    showPoisonTransfer(monster.id, target.id);
+    showMonsterProc(target.id, 'BLOOMING FLOWER');
+    showPoisonStackProc(target);
+}
+
+function showPoisonTransfer(sourceId, targetId) {
+    const cards = [...elements.enemyRoster.querySelectorAll('.enemy-card')];
+    const source = cards.find(card => card.dataset.monsterId === sourceId)?.querySelector('.enemy-mark');
+    const target = cards.find(card => card.dataset.monsterId === targetId)?.querySelector('.enemy-mark');
+    if (!source || !target) return;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.classList.add('poison-transfer');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.dataset.sourceId = sourceId;
+    svg.dataset.targetId = targetId;
+    elements.combatPanel.appendChild(svg);
+    const frame = svg.getBoundingClientRect();
+    if (!frame.width || !frame.height) { svg.remove(); return; }
+    svg.setAttribute('viewBox', '0 0 ' + frame.width + ' ' + frame.height);
+    const from = source.getBoundingClientRect(), to = target.getBoundingClientRect();
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', String(from.left + from.width / 2 - frame.left));
+    line.setAttribute('y1', String(from.top + from.height / 2 - frame.top));
+    line.setAttribute('x2', String(to.left + to.width / 2 - frame.left));
+    line.setAttribute('y2', String(to.top + to.height / 2 - frame.top));
+    line.setAttribute('pathLength', '1');
+    svg.appendChild(line);
+    svg.addEventListener('animationend', event => {
+        if (event.target === svg) svg.remove();
+    });
+    window.setTimeout(() => svg.remove(), 800);
 }
 
 function applyDamageToMonster(monster, damage, damageType = 'physical') {
@@ -2197,6 +2304,9 @@ function applyDamageToMonster(monster, damage, damageType = 'physical') {
         defeatEnemy(monster);
         return true;
     }
+    // Physical hits can bring an already-poisoned enemy into execute range.
+    // Poison ticks check after updating every stack's remaining lifetime.
+    if (damageType !== 'poison' && tryExecutePoison(monster)) return true;
 
     recentEnemyDamage = previousHp - monster.hp;
     const targetCard = Array.from(elements.enemyRoster.children)
@@ -2252,6 +2362,13 @@ function getRemainingPoisonDamage(monster) {
     }, 0);
 }
 
+function tryExecutePoison(monster) {
+    if (getSkillNodeRank('poisonExecute') <= 0 || !monster || monster.hp <= 0 ||
+        getRemainingPoisonDamage(monster) < monster.hp) return false;
+    showMonsterProc(monster.id, 'POISON EXECUTE');
+    return applyDamageToMonster(monster, monster.hp, 'poison');
+}
+
 function tryApplyPoison(monster) {
     const poisonChance = getPoisonChance();
     if (!monster || monster.hp <= 0 || poisonChance <= 0 || Math.random() >= poisonChance) return false;
@@ -2261,26 +2378,30 @@ function tryApplyPoison(monster) {
         timeUntilTick: getPoisonTickInterval()
     });
     showPoisonStackProc(monster);
+    tryExecutePoison(monster);
     return true;
 }
 
 function tickMonsterPoison(monster, elapsed) {
     if (monster.hp <= 0 || !Array.isArray(monster.poisonStacks) || !monster.poisonStacks.length) return false;
+    if (tryExecutePoison(monster)) return true;
     const tickInterval = getPoisonTickInterval();
     const remainingStacks = [];
+    let damage = 0;
     for (const stack of monster.poisonStacks) {
         stack.remainingDuration -= elapsed;
         stack.timeUntilTick -= elapsed;
-        while (monster.hp > 0 && stack.timeUntilTick <= 0 && stack.remainingDuration >= -1e-6) {
-            const damage = getPoisonDamage();
-            applyDamageToMonster(monster, damage, 'poison');
+        while (stack.timeUntilTick <= 0 && stack.remainingDuration >= -1e-6) {
+            damage += getPoisonDamage();
             stack.timeUntilTick += tickInterval;
         }
-        if (monster.hp > 0 && stack.remainingDuration > 0) remainingStacks.push(stack);
-        if (monster.hp <= 0) break;
+        if (stack.remainingDuration > 0) remainingStacks.push(stack);
     }
-    monster.poisonStacks = monster.hp > 0 ? remainingStacks : [];
-    return monster.hp <= 0;
+    // Advance every stack before dealing damage so death transfers cannot
+    // repeat a tick or carry stacks with stale lifetimes to another enemy.
+    monster.poisonStacks = remainingStacks;
+    if (damage > 0) applyDamageToMonster(monster, damage, 'poison');
+    return monster.hp <= 0 || tryExecutePoison(monster);
 }
 
 function playerHasShockwaveSlash() {
@@ -2372,7 +2493,10 @@ document.querySelector('#resetGame').addEventListener('click', function() {
     state.gear = createEmptyGear();
     state.ownedItemIds = [];
     state.developerItemsEnabled = false;
+    state.developerTravelEnabled = false;
+    inventoryCategory = 'slot';
     document.querySelector('#developerItems').checked = false;
+    document.querySelector('#developerTravel').checked = false;
     state.crafted = [];
     state.tutorials = createTutorialState();
     state.selectedWorld = worldData[0].id;
@@ -2582,6 +2706,13 @@ elements.craftingTools.addEventListener('click', function(event) {
     }
 });
 
+document.querySelector('#inventoryTools').addEventListener('click', function(event) {
+    const button = event.target.closest('[data-inventory-category]');
+    if (!button) return;
+    inventoryCategory = button.dataset.inventoryCategory;
+    renderInventory();
+});
+
 elements.gear.addEventListener('click', function(event) {
     const remove = event.target.closest('[data-unequip-slot]');
     if (remove) {
@@ -2597,6 +2728,7 @@ elements.gear.addEventListener('click', function(event) {
     const button = event.target.closest('[data-gear-slot]');
     if (!button) return;
     selectedGearSlot = button.dataset.gearSlot;
+    inventoryCategory = 'slot';
     if (state.tutorials.firstGearPending &&
         selectedGearSlot === state.tutorials.firstGearSlot &&
         !state.tutorials.firstGearSlotSelected) {
@@ -2611,7 +2743,8 @@ elements.gearInventory.addEventListener('click', function(event) {
     const button = event.target.closest('[data-equip]');
     if (!button) return;
     const item = itemById[button.dataset.equip];
-    if (!item || item.slot !== selectedGearSlot || !ownsItem(item.id)) return;
+    if (!item || !ownsItem(item.id) || (inventoryCategory === 'slot' && item.slot !== selectedGearSlot)) return;
+    selectedGearSlot = item.slot;
     state.gear[item.slot] = item.id;
     state.playerHp = Math.min(state.playerHp, getPlayerMaxHealth());
     if (state.tutorials.firstGearPending &&
@@ -2658,8 +2791,34 @@ document.querySelector('#developerItems').addEventListener('change', function(ev
     saveGame();
 });
 
+document.querySelector('#developerTravel').addEventListener('change', function(event) {
+    state.developerTravelEnabled = event.target.checked;
+    state.mapListExpanded = true;
+    if (!state.developerTravelEnabled) {
+        const worldIndex = worldData.findIndex(world => world.id === state.selectedWorld);
+        const world = worldIsUnlocked(worldIndex) ? worldData[worldIndex] : worldData[0];
+        const maps = mapsForWorld(world.id);
+        const currentIndex = maps.findIndex(map => map.id === state.selectedMap);
+        const destination = mapIsUnlocked(maps, currentIndex) ? maps[currentIndex]
+            : maps.filter((map, index) => mapIsUnlocked(maps, index)).at(-1);
+        if (destination.id !== state.selectedMap) {
+            state.selectedWorld = world.id;
+            state.selectedMap = destination.id;
+            state.lastMapByWorld[world.id] = destination.id;
+            resetMonsterStates(destination);
+            clearEnemyDamageIndicator();
+            state.attackTimer = 0;
+            state.lastLoot = null;
+            state.lastDrop = 'Defeat enemies to find loot.';
+        }
+    }
+    render();
+    saveGame();
+});
+
 const hasSavedGame = loadGame();
 document.querySelector('#developerItems').checked = state.developerItemsEnabled;
+document.querySelector('#developerTravel').checked = state.developerTravelEnabled;
 if (!state.monsterStates.length) resetMonsterStates(currentMap());
 state.monsterStates.forEach(monster => {
     monster.hp = Math.min(monster.hp, monsterDefinition(monster).health);

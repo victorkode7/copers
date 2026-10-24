@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>World &amp; Monster Editor | Idle Adventure</title>
     <link rel="stylesheet" href="css/item-editor.css?v=20261021-6">
-    <link rel="stylesheet" href="css/world-editor.css?v=3">
+    <link rel="stylesheet" href="css/world-editor.css?v=5">
     <link rel="stylesheet" href="css/editor-quick-save.css?v=1">
     <link rel="stylesheet" href="css/app-nav.css">
 </head>
 <body>
     <nav class="app-nav" aria-label="Main navigation">
-        <a href="index.html">Game</a><a href="skill-tree-editor.html">Skill Tree Editor</a><a href="item-editor.html">Item Editor</a><a href="world-editor.html" aria-current="page">World &amp; Monster Editor</a>
+        <a href="index.html">Game</a><a href="skill-tree-editor.html">Skill Tree Editor</a><a href="item-editor.html">Item Editor</a><a href="material-editor.html">Material Editor</a><a href="world-editor.html" aria-current="page">World &amp; Monster Editor</a>
     </nav>
     <header class="editor-header">
         <div><p class="eyebrow">DEVELOPER TOOL</p><h1>World &amp; Monster Editor</h1></div>
@@ -35,6 +35,7 @@
                 <button type="button" data-kind="worlds">Worlds</button><button type="button" data-kind="maps">Maps</button><button type="button" data-kind="monsters">Monsters</button>
             </div>
             <div class="section-heading"><h2 id="catalogueHeading">Maps</h2><button id="addEntry" type="button">+ Add</button></div>
+            <label id="mapWorldFilter">World<select id="mapWorld" aria-label="Show maps in world"></select></label>
             <label>Search<input id="search" type="search" placeholder="Find by name"></label>
             <div id="entryList" class="item-list" aria-label="World content catalogue"></div>
             <p class="hint catalogue-help">World and map order determine progression. Monster definitions can be shared across maps.</p>
@@ -61,10 +62,10 @@
     <script src="js/items.js?v=20261021-2"></script>
     <script src="js/item-package.js?v=20261021-2"></script>
     <script src="js/world-content.js?v=1"></script>
-    <script src="js/world-system.js?v=1"></script>
+    <script src="js/world-system.js?v=20261024-2"></script>
     <script src="js/world-assets.js?v=1"></script>
     <script src="js/editor-file-save.js?v=2"></script>
     <script src="js/editor-quick-save.js?v=2"></script>
-    <script src="js/world-editor.js?v=5"></script>
+    <script src="js/world-editor.js?v=7"></script>
 </body>
 </html>

@@ -128,6 +128,16 @@
             return ['Invalid equipment file: expected schemaVersion 2, items, slots, and materials.'];
         }
         const idPattern = /^[A-Za-z_][A-Za-z0-9_]*$/;
+        Object.entries(data.materials).forEach(([id, name]) => {
+            if (!idPattern.test(id) || ['__proto__', 'constructor', 'prototype'].includes(id)) errors.push('Invalid material ID: ' + id + '.');
+            if (typeof name !== 'string' || !name.trim()) errors.push(id + ': a material name is required.');
+        });
+        if (data.materialDetails !== undefined && !object(data.materialDetails)) errors.push('Material details must be an object.');
+        else Object.entries(data.materialDetails || {}).forEach(([id, material]) => {
+            if (!Object.hasOwn(data.materials, id) || !object(material)) { errors.push(id + ': invalid material details.'); return; }
+            if (material.description !== undefined && typeof material.description !== 'string') errors.push(id + ': material description must be text.');
+            if (material.sprite !== undefined && (typeof material.sprite !== 'string' || (material.sprite && !safeSprite(material.sprite)))) errors.push(id + ': use a local material sprite path.');
+        });
         for (const [label, entries] of [['slot', data.slots]]) {
             const seen = new Set();
             for (const entry of entries) {

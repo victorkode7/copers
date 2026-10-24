@@ -21,7 +21,7 @@
         check('monsters use assigned sprites with pixel rendering', sprite?.getAttribute('src') === archer.sprite && getComputedStyle(sprite).imageRendering === 'pixelated');
         check('world backgrounds apply to combat and map selectors', elements.combatPanel.style.backgroundImage.includes('brick128.png') && elements.mapList.children[0].style.backgroundImage.includes('brick128.png'));
         map.background = {sprite: 'assets/skilltree-background.png', color: '#071624', fit: 'cover', tileSize: 256, dim: 0.6}; renderCombat();
-        check('map-specific backgrounds override the world', elements.combatPanel.style.backgroundImage.includes('skilltree-background.png'));
+        check('map-specific backgrounds override the world', elements.combatPanel.querySelector('.combat-background-art')?.getAttribute('src') === 'assets/skilltree-background.png');
         state.targetMonsterId = enemy.id; renderCombat();
         check('loot table follows the selected monster', elements.lootTableHeading.textContent.includes('Smoke Archer') && elements.mapLootTable.textContent.includes('Test Drop Helm'));
         check('large scene sprite follows the selected monster', !elements.combatArt.hidden && elements.combatArt.getAttribute('src') === archer.sprite && elements.combatPanel.classList.contains('has-monster-art'));

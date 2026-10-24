@@ -244,7 +244,7 @@
         elements.graphStage.style.height = graphSize().height + 'px';
         elements.insertBetween.disabled = !selectedConnection;
         elements.graphViewport.style.backgroundSize = (190 * zoom) + 'px ' + (160 * zoom) + 'px';
-        const dotOffset = graphViewMode === 'player' ? 36 * zoom : 0;
+        const dotOffset = 36 * zoom;
         elements.graphViewport.style.backgroundPosition = (panX + dotOffset) + 'px ' + (panY + dotOffset) + 'px';
     }
     function graphSize() {
@@ -265,6 +265,13 @@
         return graphViewMode === 'player'
             ? { width: 72 * scale, height: 72 * scale }
             : { width: 166 + (scale - 1) * 20, height: 88 + (scale - 1) * 16 };
+    }
+
+    function graphNodeCenter(node, minColumn, minRow) {
+        return {
+            x: (Number(node.column) - minColumn + 1) * 190 + 36,
+            y: (Number(node.row) - minRow + 1) * 160 + 36
+        };
     }
 
     function renderGraph() {
@@ -298,9 +305,10 @@
             card.setAttribute('aria-pressed', String(node.id === selectedId && !selectedConnection));
             card.setAttribute('aria-label',
                 (node.name || node.id || '(unnamed)') + '. ' + (node.effect || ''));
-            card.style.left = ((Number(node.column) - minColumn + 1) * 190) + 'px';
-            card.style.top = ((Number(node.row) - minRow + 1) * 160) + 'px';
             const dimensions = graphNodeDimensions(node);
+            const center = graphNodeCenter(node, minColumn, minRow);
+            card.style.left = (center.x - dimensions.width / 2) + 'px';
+            card.style.top = (center.y - dimensions.height / 2) + 'px';
             card.style.width = dimensions.width + 'px';
             card.style.height = dimensions.height + 'px';
             card.style.minHeight = dimensions.height + 'px';
@@ -324,9 +332,9 @@
 
         const startingNode = tree.nodes.find(node => node.start);
         if (startingNode) {
-            const dimensions = graphNodeDimensions(startingNode);
-            elements.graphStage.style.setProperty('--skill-tree-background-x', ((Number(startingNode.column) - minColumn + 1) * 190 + dimensions.width / 2) + 'px');
-            elements.graphStage.style.setProperty('--skill-tree-background-y', ((Number(startingNode.row) - minRow + 1) * 160 + dimensions.height / 2) + 'px');
+            const center = graphNodeCenter(startingNode, minColumn, minRow);
+            elements.graphStage.style.setProperty('--skill-tree-background-x', center.x + 'px');
+            elements.graphStage.style.setProperty('--skill-tree-background-y', center.y + 'px');
         } else {
             elements.graphStage.style.removeProperty('--skill-tree-background-x');
             elements.graphStage.style.removeProperty('--skill-tree-background-y');
@@ -340,7 +348,6 @@
                 if (!sourceNode) return;
                 const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 line.classList.add('graph-edge');
-                if (node.requiresMode === 'any') line.classList.add('edge-any');
                 if (node.id === selectedId || requiredId === selectedId) line.classList.add('edge-active');
                 if (selectedConnection && selectedConnection.from === requiredId && selectedConnection.to === node.id) line.classList.add('edge-selected');
                 line.dataset.sourceId = requiredId;
@@ -353,10 +360,8 @@
                 const sourceHeight = sourceDimensions.height;
                 const targetWidth = targetDimensions.width;
                 const targetHeight = targetDimensions.height;
-                const sourceX = (Number(sourceNode.column) - minColumn + 1) * 190 + sourceWidth / 2;
-                const sourceY = (Number(sourceNode.row) - minRow + 1) * 160 + sourceHeight / 2;
-                const targetX = (Number(node.column) - minColumn + 1) * 190 + targetWidth / 2;
-                const targetY = (Number(node.row) - minRow + 1) * 160 + targetHeight / 2;
+                const {x: sourceX, y: sourceY} = graphNodeCenter(sourceNode, minColumn, minRow);
+                const {x: targetX, y: targetY} = graphNodeCenter(node, minColumn, minRow);
                 const deltaX = targetX - sourceX;
                 const deltaY = targetY - sourceY;
                 const distance = Math.hypot(deltaX, deltaY);
@@ -381,7 +386,7 @@
         });
         elements.insertBetween.disabled = !selectedConnection;
         elements.graphViewport.style.backgroundSize = (190 * zoom) + 'px ' + (160 * zoom) + 'px';
-        const dotOffset = graphViewMode === 'player' ? 36 * zoom : 0;
+        const dotOffset = 36 * zoom;
         elements.graphViewport.style.backgroundPosition = (panX + dotOffset) + 'px ' + (panY + dotOffset) + 'px';
         setZoom(zoom);
     }
@@ -407,8 +412,12 @@
             name.textContent = node.name || node.id || '(unnamed)';
             const meta = document.createElement('span');
             meta.className = 'node-list-meta';
+            const connections = new Set(node.requires || []);
+            tree.nodes.forEach(other => {
+                if ((other.requires || []).includes(node.id)) connections.add(other.id);
+            });
             meta.textContent = node.start ? 'Starting point' :
-                (node.requires || []).length + ' prerequisite' + ((node.requires || []).length === 1 ? '' : 's');
+                connections.size + ' connection' + (connections.size === 1 ? '' : 's');
             copy.append(name, meta);
             button.append(icon, copy);
             elements.nodeList.appendChild(button);
@@ -535,36 +544,33 @@
             option.selected = Array.isArray(node.requires) && node.requires.includes(other.id);
             elements.nodeRequires.appendChild(option);
         });
-        const depth = nodeDepth(node.id, new Map(), new Set());
+        const depth = nodeDepth(node.id);
         const budget = Math.max(0, Number(elements.skillPointBudget ? elements.skillPointBudget.value : 10) || 0);
         elements.nodeDepth.textContent = depth === Infinity
-            ? 'Not reachable from the starting node. Add a valid prerequisite path.'
+            ? 'Not reachable from the center. Add a connection path.'
             : node.start
-                ? 'Starting point · 0 prerequisite points.'
-                : 'Prerequisite chain depth: ' + depth +
-                    ' · planning budget: ' + budget + ' points. Depth is not total cost; parallel required branches add investment.';
+                ? 'Starting point · 0 skill points.'
+                : 'Shortest path from center: ' + depth +
+                    ' · planning budget: ' + budget + ' points. Each line works in both directions.';
     }
 
-    function nodeDepth(id, memo, visiting) {
-        if (memo.has(id)) return memo.get(id);
-        const node = tree.nodes.find(entry => entry.id === id);
-        if (!node) return Infinity;
-        if (node.start) return 0;
-        if (visiting.has(id)) return Infinity;
-        visiting.add(id);
-        const depths = (Array.isArray(node.requires) ? node.requires : [])
-            .map(requiredId => nodeDepth(requiredId, memo, visiting));
-        visiting.delete(id);
-        if (depths.length === 0 || depths.every(depth => depth === Infinity)) return Infinity;
-        const finiteDepths = depths.filter(depth => depth !== Infinity);
-        const prerequisiteDepth = node.requiresMode === 'any'
-            ? Math.min(...finiteDepths)
-            : depths.length === finiteDepths.length
-                ? Math.max(...finiteDepths)
-                : Infinity;
-        const result = prerequisiteDepth === Infinity ? Infinity : prerequisiteDepth + 1;
-        memo.set(id, result);
-        return result;
+    function nodeDepth(id, memo = new Map()) {
+        const connections = new Map(tree.nodes.map(node => [node.id, new Set()]));
+        tree.nodes.forEach(node => (Array.isArray(node.requires) ? node.requires : []).forEach(otherId => {
+            if (!connections.has(otherId)) return;
+            connections.get(node.id).add(otherId);
+            connections.get(otherId).add(node.id);
+        }));
+        const queue = tree.nodes.filter(node => node.start).map(node => node.id);
+        queue.forEach(startId => memo.set(startId, 0));
+        for (let index = 0; index < queue.length; index++) {
+            connections.get(queue[index]).forEach(otherId => {
+                if (memo.has(otherId)) return;
+                memo.set(otherId, memo.get(queue[index]) + 1);
+                queue.push(otherId);
+            });
+        }
+        return memo.get(id) ?? Infinity;
     }
 
     function validateTree() {
@@ -596,7 +602,7 @@
                 issues.push({ type: 'error', message: label + ': starting nodes use rank 0 and other nodes can only be selected once.' });
             }
             if (node.requiresMode !== undefined && !['all', 'any'].includes(node.requiresMode)) {
-                issues.push({ type: 'error', message: label + ': prerequisite mode must be all or any.' });
+                issues.push({ type: 'error', message: label + ': connection mode must be all or any.' });
             }
             if (node.size !== undefined && !nodeSizes.includes(Number(node.size))) {
                 issues.push({ type: 'error', message: label + ': size must be 1, 1.25, or 1.5.' });
@@ -605,23 +611,17 @@
                 issues.push({ type: 'error', message: label + ': base node color must be health, attackSpeed, accuracy, or damage.' });
             }
             if (!Array.isArray(node.requires)) {
-                issues.push({ type: 'error', message: label + ': prerequisites must be a list.' });
+                issues.push({ type: 'error', message: label + ': connections must be a list.' });
             } else {
                 if (new Set(node.requires).size !== node.requires.length) {
-                    issues.push({ type: 'error', message: label + ': a prerequisite is selected more than once.' });
+                    issues.push({ type: 'error', message: label + ': a connection is selected more than once.' });
                 }
                 node.requires.forEach(requiredId => {
                     if (requiredId === node.id) issues.push({ type: 'error', message: label + ': a node cannot require itself.' });
                     else if (!tree.nodes.some(other => other.id === requiredId)) {
-                        issues.push({ type: 'error', message: label + ': missing prerequisite "' + requiredId + '".' });
+                        issues.push({ type: 'error', message: label + ': missing connection "' + requiredId + '".' });
                     }
                 });
-            }
-            if (node.start && Array.isArray(node.requires) && node.requires.length) {
-                issues.push({ type: 'error', message: label + ': the starting node cannot have prerequisites.' });
-            }
-            if (!node.start && Array.isArray(node.requires) && node.requires.length === 0) {
-                issues.push({ type: 'warning', message: label + ': no prerequisites makes this an independent root.' });
             }
             if (!node.stats || typeof node.stats !== 'object' || Array.isArray(node.stats)) {
                 issues.push({ type: 'error', message: label + ': stats must be an object.' });
@@ -643,39 +643,10 @@
             }
         });
 
-        const visiting = new Set();
-        const visited = new Set();
-        function visit(id) {
-            if (visiting.has(id)) {
-                issues.push({ type: 'error', message: 'Prerequisite cycle detected at "' + id + '".' });
-                return;
-            }
-            if (visited.has(id)) return;
-            visiting.add(id);
-            const node = tree.nodes.find(entry => entry.id === id);
-            if (node && Array.isArray(node.requires)) node.requires.forEach(visit);
-            visiting.delete(id);
-            visited.add(id);
-        }
-        tree.nodes.forEach(node => visit(node.id));
-
         if (starts.length === 1) {
-            const reachable = new Set(starts.map(node => node.id));
-            let changed = true;
-            while (changed) {
-                changed = false;
-                tree.nodes.forEach(node => {
-                    if (reachable.has(node.id) || !Array.isArray(node.requires) || !node.requires.length) return;
-                    const eligible = node.requiresMode === 'any'
-                        ? node.requires.some(id => reachable.has(id))
-                        : node.requires.every(id => reachable.has(id));
-                    if (eligible) {
-                        reachable.add(node.id);
-                        changed = true;
-                    }
-                });
-            }
-            tree.nodes.filter(node => !reachable.has(node.id)).forEach(node =>
+            const depths = new Map();
+            nodeDepth(starts[0].id, depths);
+            tree.nodes.filter(node => !depths.has(node.id)).forEach(node =>
                 issues.push({ type: 'warning', message: (node.name || node.id) + ': unreachable from the starting node.' }));
         }
 
@@ -742,12 +713,12 @@
         if (selectedNode()) renderSpritePreview(selectedNode());
         const node = selectedNode();
         if (node) {
-            const depth = nodeDepth(node.id, new Map(), new Set());
+            const depth = nodeDepth(node.id);
             const budget = Math.max(0, Number(elements.skillPointBudget ? elements.skillPointBudget.value : 10) || 0);
             elements.nodeDepth.textContent = depth === Infinity
-                ? 'Not reachable from the starting node. Add a valid prerequisite path.'
-                : node.start ? 'Starting point · 0 prerequisite points.'
-                    : 'Prerequisite chain depth: ' + depth + ' · planning budget: ' + budget + ' points. Depth is not total cost; parallel required branches add investment.';
+                ? 'Not reachable from the center. Add a connection path.'
+                : node.start ? 'Starting point · 0 skill points.'
+                    : 'Shortest path from center: ' + depth + ' · planning budget: ' + budget + ' points. Each line works in both directions.';
         }
     }
 
@@ -792,7 +763,7 @@
         node.column = Number(elements.nodeColumn.value);
         node.row = Number(elements.nodeRow.value);
         node.start = elements.nodeStart.checked;
-        node.requires = node.start ? [] : requires;
+        node.requires = requires;
         node.requiresMode = elements.nodeRequiresMode.value;
         node.stats = stats;
         if (oldId !== newId) {
@@ -857,7 +828,7 @@
     function removeNode(skipConfirm = false) {
         const node = selectedNode();
         if (!node) return;
-        if (!skipConfirm && !window.confirm('Delete "' + (node.name || node.id) + '"? Its prerequisite links will be removed from other nodes.')) return;
+        if (!skipConfirm && !window.confirm('Delete "' + (node.name || node.id) + '"? Its connection links will be removed from other nodes.')) return;
         tree.nodes = tree.nodes.filter(entry => entry !== node);
         tree.nodes.forEach(other => {
             other.requires = (other.requires || []).filter(id => id !== node.id);
@@ -1064,8 +1035,10 @@
         if (connectMode) { handleGraphNodeClick(node.id); return; }
         const minColumn = Math.min(1, ...tree.nodes.map(entry => Number(entry.column) || 0));
         const minRow = Math.min(1, ...tree.nodes.map(entry => Number(entry.row) || 0));
-        const originalLeft = (Number(node.column) - minColumn + 1) * 190;
-        const originalTop = (Number(node.row) - minRow + 1) * 160;
+        const center = graphNodeCenter(node, minColumn, minRow);
+        const dimensions = graphNodeDimensions(node);
+        const originalLeft = center.x - dimensions.width / 2;
+        const originalTop = center.y - dimensions.height / 2;
         let dragged = false;
         card.setPointerCapture(event.pointerId);
         function move(moveEvent) {
@@ -1084,9 +1057,9 @@
                 handleGraphNodeClick(node.id);
                 return;
             }
-            node.column = minColumn - 1 + Math.round((originalLeft +
+            node.column = minColumn - 1 + Math.round((center.x - 36 +
                 (endEvent.clientX - startX) / zoom) / 190);
-            node.row = minRow - 1 + Math.round((originalTop +
+            node.row = minRow - 1 + Math.round((center.y - 36 +
                 (endEvent.clientY - startY) / zoom) / 160);
             selectedId = node.id;
             markChanged();
