@@ -103,19 +103,45 @@ html {
 }
 
 .idle-adventure .navbar {
-    flex: 0 1 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    flex: 1;
     align-items: center;
-    justify-content: center;
     gap: 0.65rem;
     margin: 0 auto;
+    padding: 0;
+}
+
+.idle-adventure .primary-nav-item {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+}
+
+.idle-adventure .primary-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.65rem;
 }
 
 .idle-adventure .reset-nav-item {
-    position: absolute;
-    right: 1.25rem;
+    grid-column: 3;
+    grid-row: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    min-width: 0;
 }
 
 .idle-adventure .gold-display {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    margin-left: calc(var(--nav-logo-size) + 2rem);
     display: flex;
     align-items: baseline;
     gap: 0.45rem;
@@ -1556,7 +1582,8 @@ html {
 .idle-adventure .offline-recap-rewards [data-rarity="unique"] { color: var(--adventure-purple); border: 1px solid var(--adventure-purple); }
 .idle-adventure .offline-recap-footer { display: flex; justify-content: flex-end; flex-shrink: 0; }
 
-.idle-adventure .offline-play-status {
+.idle-adventure .offline-play-status,
+.idle-adventure .profile-status {
     position: fixed;
     right: 1rem;
     bottom: 1rem;
@@ -1570,6 +1597,15 @@ html {
     color: var(--adventure-muted);
     font-size: 0.75rem;
     pointer-events: none;
+}
+
+.idle-adventure .profile-status {
+    bottom: 4rem;
+    color: var(--adventure-green);
+}
+
+.idle-adventure .profile-status.is-error {
+    color: var(--adventure-coral);
 }
 
 .idle-adventure .combat-catchup-notice {
@@ -3131,6 +3167,17 @@ html {
     background: transparent;
 }
 
+@media (min-width: 701px) and (max-width: 1100px) {
+    .idle-adventure .gold-display {
+        grid-row: 2;
+    }
+
+    .idle-adventure .reset-nav-item {
+        grid-column: 2 / 4;
+        grid-row: 2;
+    }
+}
+
 @media (max-width: 1050px) {
     .idle-adventure .adventure-layout {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3184,13 +3231,25 @@ html {
     .idle-adventure .navbar {
         width: 100%;
         flex: 0 0 100%;
-        flex-wrap: wrap;
-        justify-content: center;
+        grid-template-columns: minmax(0, 1fr);
         margin: 0;
         padding: 0;
     }
 
+    .idle-adventure .primary-nav-item {
+        grid-column: 1;
+    }
+
+    .idle-adventure .gold-display {
+        grid-column: 1;
+        grid-row: 2;
+        justify-self: center;
+        margin-left: 0;
+    }
+
     .idle-adventure .reset-nav-item {
+        grid-column: 1;
+        grid-row: 3;
         position: static;
         display: flex;
         flex: 0 0 100%;

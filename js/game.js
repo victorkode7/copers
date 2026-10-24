@@ -892,373 +892,395 @@ function formatAmount(amount) {
     return Math.floor(amount).toLocaleString('en-US');
 }
 
+function createGameSave() {
+    return {
+        version: 3,
+        lastSimulatedAt,
+        offlineRecap: pendingOfflineRecap,
+        attackTimer: state.attackTimer,
+        gold: state.gold,
+        kills: state.kills,
+        materials: state.materials,
+        upgrades: state.upgrades,
+        level: state.level,
+        experience: state.experience,
+        skillPoints: state.skillPoints,
+        skillRanks: state.skillRanks,
+        gear: state.gear,
+        ownedItemIds: state.ownedItemIds,
+        developerItemsEnabled: state.developerItemsEnabled,
+        developerTravelEnabled: state.developerTravelEnabled,
+        crafted: state.crafted,
+        tutorials: state.tutorials,
+        selectedWorld: state.selectedWorld,
+        lastMapByWorld: state.lastMapByWorld,
+        selectedMap: state.selectedMap,
+        currentView: state.currentView,
+        enemyHp: state.enemyHp,
+        enemyRespawnRemaining: state.enemyRespawnRemaining,
+        monsterStates: state.monsterStates,
+        targetMonsterId: state.targetMonsterId,
+        playerHp: state.playerHp,
+        combatPaused: state.combatPaused,
+        lootLog: state.lootLog.slice(0, 12),
+        lastDrop: state.lastDrop,
+        lastLoot: state.lastLoot
+    };
+}
+
 function saveGame() {
     if (simulatingCombat) return;
     try {
-        localStorage.setItem(saveKey, JSON.stringify({
-            version: 3,
-            lastSimulatedAt,
-            offlineRecap: pendingOfflineRecap,
-            attackTimer: state.attackTimer,
-            gold: state.gold,
-            kills: state.kills,
-            materials: state.materials,
-            upgrades: state.upgrades,
-            level: state.level,
-            experience: state.experience,
-            skillPoints: state.skillPoints,
-            skillRanks: state.skillRanks,
-            gear: state.gear,
-            ownedItemIds: state.ownedItemIds,
-            developerItemsEnabled: state.developerItemsEnabled,
-            developerTravelEnabled: state.developerTravelEnabled,
-            crafted: state.crafted,
-            tutorials: state.tutorials,
-            selectedWorld: state.selectedWorld,
-            lastMapByWorld: state.lastMapByWorld,
-            selectedMap: state.selectedMap,
-            currentView: state.currentView,
-            enemyHp: state.enemyHp,
-            enemyRespawnRemaining: state.enemyRespawnRemaining,
-            monsterStates: state.monsterStates,
-            targetMonsterId: state.targetMonsterId,
-            playerHp: state.playerHp,
-            combatPaused: state.combatPaused,
-            lootLog: state.lootLog.slice(0, 12),
-            lastDrop: state.lastDrop,
-            lastLoot: state.lastLoot
-        }));
+        localStorage.setItem(saveKey, JSON.stringify(createGameSave()));
         lastSave = Date.now();
     } catch (error) {
         console.error('Could not save Idle Adventure progress.', error);
     }
 }
 
+// Parse and migrate without changing live progress or browser storage.
+function parseGameSave(rawSave) {
+    const saved = JSON.parse(rawSave);
+    if (!saved || typeof saved !== 'object' || Array.isArray(saved) ||
+        ![1, 2, 3].includes(saved.version)) {
+        throw new Error('Save data has an invalid or unsupported format.');
+    }
+    if (['level', 'experience', 'skillPoints'].some(key => saved[key] !== undefined &&
+        (!Number.isSafeInteger(saved[key]) || saved[key] < 0))) {
+        throw new Error('Save data has invalid experience or skill points.');
+    }
+    if (saved && saved.developerTravelEnabled === undefined) saved.developerTravelEnabled = false;
+    if (saved && typeof saved.selectedMap === 'string' && !mapData.some(map => map.id === saved.selectedMap)) {
+        saved.selectedMap = worldData[0].mapIds[0];
+        saved.enemyHp = mapData.find(map => map.id === saved.selectedMap).health;
+        saved.enemyRespawnRemaining = 0;
+        saved.monsterStates = [];
+    }
+    if (saved && saved.version === 1) {
+        if (Number.isInteger(saved.level) && saved.level >= 1) saved.level--;
+        saved.version = 2;
+    }
+    if (saved && saved.gear && typeof saved.gear === 'object' && !Array.isArray(saved.gear)) {
+        if (saved.gear.chest === undefined && saved.gear.armor !== undefined) {
+            saved.gear.chest = saved.gear.armor;
+        }
+        delete saved.gear.armor;
+        gearSlots.forEach(slot => {
+            if (saved.gear[slot] === undefined) saved.gear[slot] = null;
+        });
+    }
+    if (saved && saved.version === 2 && Array.isArray(saved.crafted)) {
+        saved.ownedItemIds = [...new Set([
+            ...saved.crafted,
+            ...Object.keys(saved.uniqueItems || {}).filter(id => saved.uniqueItems[id] === true)
+        ])];
+        saved.developerItemsEnabled = false;
+        saved.version = 3;
+    }
+    // Content edits can remove items or change their slots without invalidating all progress.
+    if (saved && saved.version === 3 && Array.isArray(saved.ownedItemIds) && Array.isArray(saved.crafted)) {
+        saved.ownedItemIds = [...new Set(saved.ownedItemIds.filter(id => typeof id === 'string' && Object.hasOwn(itemById, id)))];
+        saved.crafted = [...new Set(saved.crafted.filter(id => saved.ownedItemIds.includes(id) && itemById[id].recipe))];
+        if (saved.gear && typeof saved.gear === 'object' && !Array.isArray(saved.gear)) {
+            gearSlots.forEach(slot => {
+                const item = itemById[saved.gear[slot]];
+                if (!item || item.slot !== slot || !ownsItem(item.id, saved)) saved.gear[slot] = null;
+            });
+        }
+        if (saved.tutorials && saved.tutorials.firstGearItemId &&
+            (!ownsItem(saved.tutorials.firstGearItemId, saved) ||
+            itemById[saved.tutorials.firstGearItemId].slot !== saved.tutorials.firstGearSlot)) {
+            Object.assign(saved.tutorials, {
+                firstGearPending: false, firstGearItemId: null, firstGearSlot: null,
+                firstGearSlotSelected: false
+            });
+        }
+    }
+    if (saved && saved.tutorials === undefined) {
+        saved.tutorials = createTutorialState();
+        saved.tutorials.firstGearPrompted =
+            (Array.isArray(saved.crafted) && saved.crafted.length > 0) ||
+            (Array.isArray(saved.ownedItemIds) && saved.ownedItemIds.length > 0) ||
+            (saved.gear && Object.values(saved.gear).some(itemId => itemId !== null));
+    }
+    if (saved && saved.tutorials && saved.tutorials.firstNextMapPending === undefined) {
+        saved.tutorials.firstNextMapPending = false;
+    }
+    if (saved && saved.tutorials) {
+        [
+            'firstSkillPointDismissed',
+            'firstNextMapDismissed',
+            'firstMapGoalPending',
+            'firstMapGoalDismissed',
+            'firstGearDismissed'
+        ]
+            .forEach(key => {
+                if (saved.tutorials[key] === undefined) saved.tutorials[key] = false;
+            });
+    }
+    if (saved && saved.level === undefined) {
+        let migratedExperience = 0;
+        const hasValidKillHistory = saved.kills &&
+            mapData.every(map => saved.kills[map.id] === undefined ||
+                (Number.isSafeInteger(saved.kills[map.id]) && saved.kills[map.id] >= 0));
+        if (hasValidKillHistory) {
+            migratedExperience = mapData.reduce((total, map) =>
+                total + (saved.kills[map.id] || 0) * map.experience, 0);
+            if (!Number.isSafeInteger(migratedExperience)) migratedExperience = 0;
+        }
+        let migratedLevel = 0;
+        while (migratedExperience >= experienceForNextLevel(migratedLevel)) {
+            migratedExperience -= experienceForNextLevel(migratedLevel);
+            migratedLevel++;
+        }
+        saved.level = migratedLevel;
+        saved.experience = migratedExperience;
+        saved.skillPoints = migratedLevel;
+        saved.skillRanks = {};
+    }
+    if (saved && saved.experience === undefined) saved.experience = 0;
+    if (saved && saved.skillPoints === undefined) saved.skillPoints = 0;
+    if (saved && Number.isInteger(saved.level) && Number.isInteger(saved.experience) &&
+        Number.isInteger(saved.skillPoints)) {
+        const previousLevel = saved.level;
+        while (saved.experience >= experienceForNextLevel(saved.level)) {
+            saved.experience -= experienceForNextLevel(saved.level);
+            saved.level++;
+            saved.skillPoints++;
+        }
+        if (previousLevel < 1 && saved.level >= 1 && saved.tutorials) {
+            saved.tutorials.firstSkillPointPending = true;
+            saved.tutorials.firstSkillPointDismissed = false;
+        }
+    }
+    if (saved && saved.skillRanks === undefined) {
+        saved.skillRanks = Array.isArray(saved.skillNodes)
+            ? Object.fromEntries(saved.skillNodes.map(id => [id, 1]))
+            : {};
+    }
+    if (saved) delete saved.skillNodes;
+    if (saved && saved.skillRanks && typeof saved.skillRanks === 'object' && !Array.isArray(saved.skillRanks)) {
+        let refundedRanks = 0;
+        Object.entries(saved.skillRanks).forEach(([id, rank]) => {
+            if (!skillNodeById[id] || skillNodeById[id].start || !Number.isInteger(rank) || rank <= 1) return;
+            refundedRanks += rank - 1;
+            saved.skillRanks[id] = 1;
+        });
+        saved.skillPoints += refundedRanks;
+    }
+    if (
+        saved &&
+        saved.upgrades &&
+        typeof saved.upgrades === 'object' &&
+        !Array.isArray(saved.upgrades) &&
+        saved.upgrades.evasion === undefined
+    ) {
+        saved.upgrades.evasion = 0;
+    }
+    if (
+        saved &&
+        saved.kills &&
+        typeof saved.kills === 'object' &&
+        !Array.isArray(saved.kills)
+    ) {
+        mapData.forEach(map => {
+            if (saved.kills[map.id] === undefined) saved.kills[map.id] = 0;
+        });
+    }
+    if (
+        saved &&
+        saved.materials &&
+        typeof saved.materials === 'object' &&
+        !Array.isArray(saved.materials)
+    ) {
+        Object.keys(materialNames).forEach(id => {
+            if (saved.materials[id] === undefined) saved.materials[id] = 0;
+        });
+        ['cinderHoof', 'singedMane'].forEach(id => {
+            if (!Number.isInteger(saved.materials[id]) || saved.materials[id] < 0) {
+                saved.materials[id] = 0;
+            }
+        });
+    }
+    if (
+        saved === null ||
+        saved.version !== 3 ||
+        !Number.isFinite(saved.gold) || saved.gold < 0 ||
+        !saved.kills || typeof saved.kills !== 'object' || Array.isArray(saved.kills) ||
+        !saved.materials || typeof saved.materials !== 'object' || Array.isArray(saved.materials) ||
+        !saved.upgrades || typeof saved.upgrades !== 'object' || Array.isArray(saved.upgrades) ||
+        !saved.gear || typeof saved.gear !== 'object' || Array.isArray(saved.gear) ||
+        !Array.isArray(saved.crafted) ||
+        !Number.isInteger(saved.level) || saved.level < 0 ||
+        !Number.isInteger(saved.experience) || saved.experience < 0 ||
+        saved.experience >= experienceForNextLevel(saved.level) ||
+        !Number.isInteger(saved.skillPoints) || saved.skillPoints < 0 ||
+        !saved.skillRanks || typeof saved.skillRanks !== 'object' || Array.isArray(saved.skillRanks) ||
+        !Array.isArray(saved.ownedItemIds) ||
+        !saved.ownedItemIds.every(id => typeof id === 'string' && Object.hasOwn(itemById, id)) ||
+        typeof saved.developerItemsEnabled !== 'boolean' ||
+        typeof saved.developerTravelEnabled !== 'boolean' ||
+        !saved.tutorials || typeof saved.tutorials !== 'object' ||
+        Array.isArray(saved.tutorials) ||
+        typeof saved.tutorials.firstSkillPointPending !== 'boolean' ||
+        typeof saved.tutorials.firstSkillPointDismissed !== 'boolean' ||
+        typeof saved.tutorials.firstNextMapPending !== 'boolean' ||
+        typeof saved.tutorials.firstNextMapDismissed !== 'boolean' ||
+        typeof saved.tutorials.firstMapGoalPending !== 'boolean' ||
+        typeof saved.tutorials.firstMapGoalDismissed !== 'boolean' ||
+        typeof saved.tutorials.firstGearPrompted !== 'boolean' ||
+        typeof saved.tutorials.firstGearPending !== 'boolean' ||
+        typeof saved.tutorials.firstGearDismissed !== 'boolean' ||
+        typeof saved.tutorials.firstGearSlotSelected !== 'boolean' ||
+        (saved.tutorials.firstGearSlot !== null &&
+            !gearSlots.includes(saved.tutorials.firstGearSlot)) ||
+        (saved.tutorials.firstGearItemId !== null &&
+            typeof saved.tutorials.firstGearItemId !== 'string') ||
+        ((saved.tutorials.firstGearSlot === null) !==
+            (saved.tutorials.firstGearItemId === null)) ||
+        (!saved.tutorials.firstGearPrompted && saved.tutorials.firstGearSlot !== null) ||
+        (saved.tutorials.firstGearPending && (
+            !saved.tutorials.firstGearPrompted ||
+            saved.tutorials.firstGearSlot === null ||
+            !(ownsItem(saved.tutorials.firstGearItemId, saved) &&
+                itemById[saved.tutorials.firstGearItemId].slot === saved.tutorials.firstGearSlot)
+        )) ||
+        !mapData.some(map => map.id === saved.selectedMap) ||
+        (saved.selectedWorld !== undefined && typeof saved.selectedWorld !== 'string') ||
+        (saved.lastMapByWorld !== undefined && (
+            typeof saved.lastMapByWorld !== 'object' ||
+            saved.lastMapByWorld === null ||
+            Array.isArray(saved.lastMapByWorld)
+        )) ||
+        (saved.currentView !== undefined && !['map', 'town', 'upgrades', 'inventory'].includes(saved.currentView)) ||
+        !Number.isFinite(saved.enemyHp) || saved.enemyHp < 0 ||
+        (saved.enemyHp === 0 && !(Number.isFinite(saved.enemyRespawnRemaining) &&
+            saved.enemyRespawnRemaining > 0)) ||
+        (saved.enemyRespawnRemaining !== undefined &&
+            (!Number.isFinite(saved.enemyRespawnRemaining) || saved.enemyRespawnRemaining < 0)) ||
+        (saved.monsterStates !== undefined && (!Array.isArray(saved.monsterStates) ||
+            !saved.monsterStates.every(monster => monster && typeof monster.id === 'string' &&
+                Number.isFinite(monster.hp) && monster.hp >= 0 &&
+                Number.isFinite(monster.respawnRemaining) && monster.respawnRemaining >= 0 &&
+                (monster.attackTimer === undefined ||
+                    Number.isFinite(monster.attackTimer) && monster.attackTimer >= 0) &&
+                (monster.poisonStacks === undefined || Array.isArray(monster.poisonStacks) &&
+                    monster.poisonStacks.every(stack => stack &&
+                        Number.isFinite(stack.remainingDuration) && stack.remainingDuration > 0 &&
+                        stack.remainingDuration <= 60 && Number.isFinite(stack.timeUntilTick) &&
+                        stack.timeUntilTick > 0 && stack.timeUntilTick <= 10))))) ||
+        (saved.targetMonsterId !== undefined && saved.targetMonsterId !== null && typeof saved.targetMonsterId !== 'string') ||
+        (saved.playerHp !== undefined && (!Number.isFinite(saved.playerHp) || saved.playerHp < 0)) ||
+        (saved.combatPaused !== undefined && typeof saved.combatPaused !== 'boolean') ||
+        (saved.lootLog !== undefined && !Array.isArray(saved.lootLog))
+    ) {
+        throw new Error('Save data has an invalid format.');
+    }
+
+    const nonnegativeInteger = value => Number.isInteger(value) && value >= 0;
+    if (
+        !mapData.every(map => nonnegativeInteger(saved.kills[map.id])) ||
+        !Object.keys(materialNames).every(id => nonnegativeInteger(saved.materials[id])) ||
+        !legacyUpgradeIds.every(id => nonnegativeInteger(saved.upgrades[id])) ||
+        !saved.crafted.every(id => recipes.some(recipe => recipe.id === id)) ||
+        !Object.entries(saved.skillRanks).every(([id, rank]) => {
+            const node = skillNodeById[id];
+            return node && !node.start && Number.isInteger(rank) && rank > 0 &&
+                rank <= node.maxRank && skillNodeRequirementsMet(node, required => {
+                    const requiredNode = skillNodeById[required];
+                    return requiredNode.start || saved.skillRanks[required] > 0;
+                });
+        }) ||
+        saved.skillPoints + Object.values(saved.skillRanks).reduce((total, rank) => total + rank, 0) !==
+            saved.level ||
+        !gearSlots.every(slot => saved.gear[slot] === null || (
+            ownsItem(saved.gear[slot], saved) && itemById[saved.gear[slot]].slot === slot
+        ))
+    ) {
+        throw new Error('Save data has an invalid format.');
+    }
+
+    return saved;
+}
+
+function applyGameSave(saved) {
+    state.gold = saved.gold;
+    state.kills = saved.kills;
+    state.materials = saved.materials;
+    state.upgrades = saved.upgrades;
+    state.level = saved.level;
+    state.experience = saved.experience;
+    state.skillPoints = saved.skillPoints;
+    state.skillRanks = saved.skillRanks;
+    state.gear = saved.gear;
+    state.ownedItemIds = saved.ownedItemIds;
+    state.developerItemsEnabled = saved.developerItemsEnabled;
+    state.developerTravelEnabled = saved.developerTravelEnabled;
+    state.crafted = saved.crafted;
+    state.tutorials = saved.tutorials;
+    state.selectedMap = saved.selectedMap;
+    const savedMapWorld = worldForMap(saved.selectedMap) || worldData[0];
+    const savedWorldIndex = worldData.findIndex(world => world.id === saved.selectedWorld);
+    const savedMapWorldIndex = worldData.findIndex(world => world.id === savedMapWorld.id);
+    const fallbackWorld = savedMapWorldIndex >= 0 && worldIsUnlocked(savedMapWorldIndex)
+        ? savedMapWorld
+        : worldData.find((world, index) => worldIsUnlocked(index));
+    state.selectedWorld = savedWorldIndex >= 0 && worldIsUnlocked(savedWorldIndex)
+        ? saved.selectedWorld
+        : fallbackWorld.id;
+    state.lastMapByWorld = Object.fromEntries(worldData.map(world => {
+        const savedMap = saved.lastMapByWorld && saved.lastMapByWorld[world.id];
+        const maps = mapsForWorld(world.id);
+        const savedMapIndex = maps.findIndex(map => map.id === savedMap);
+        const fallbackMap = maps.reduce((fallback, map, index) =>
+            mapIsUnlocked(maps, index) ? map : fallback, maps[0]);
+        const selectedMap = savedMapIndex >= 0 && mapIsUnlocked(maps, savedMapIndex)
+            ? savedMap
+            : world.id === savedMapWorld.id &&
+                maps.some((map, index) => map.id === saved.selectedMap && mapIsUnlocked(maps, index))
+                ? saved.selectedMap
+                : fallbackMap.id;
+        return [world.id, selectedMap];
+    }));
+    const selectedWorldMaps = mapsForWorld(state.selectedWorld);
+    const selectedMapIndex = selectedWorldMaps.findIndex(map => map.id === state.selectedMap);
+    const selectedMapChanged = selectedMapIndex < 0 || !mapIsUnlocked(selectedWorldMaps, selectedMapIndex);
+    if (selectedMapChanged) {
+        state.selectedMap = state.lastMapByWorld[state.selectedWorld];
+    }
+    state.lastMapByWorld[state.selectedWorld] = state.selectedMap;
+    state.currentView = saved.currentView || (saved.isInTown === false ? 'map' : 'town');
+    state.isInTown = state.currentView !== 'map';
+    state.monsterStates = selectedMapChanged
+        ? createMonsterStates(currentMap())
+        : createMonsterStates(currentMap(), saved.monsterStates, saved.enemyHp, saved.enemyRespawnRemaining);
+    state.targetMonsterId = !selectedMapChanged && monsterDefinitions(currentMap())
+        .some(definition => definition.id === saved.targetMonsterId)
+        ? saved.targetMonsterId
+        : null;
+    if (!state.targetMonsterId) setInitialMonsterTarget();
+    syncLegacyEnemyState();
+    state.playerHp = saved.playerHp === undefined
+        ? getPlayerMaxHealth()
+        : Math.min(saved.playerHp, getPlayerMaxHealth());
+    state.combatPaused = saved.combatPaused === true || state.playerHp === 0;
+    state.lootLog = Array.isArray(saved.lootLog)
+        ? saved.lootLog.filter(entry => typeof entry === 'string').slice(0, 12)
+        : [];
+    state.lastDrop = typeof saved.lastDrop === 'string' ? saved.lastDrop : 'Defeat enemies to find loot.';
+    state.lastLoot = normalizeLootNotice(saved.lastLoot);
+    state.attackTimer = Number.isFinite(saved.attackTimer) && saved.attackTimer >= 0 ? saved.attackTimer : 0;
+    resetCombatClock(Number.isFinite(saved.lastSimulatedAt) && saved.lastSimulatedAt > 0
+        ? Math.min(saved.lastSimulatedAt, Date.now()) : Date.now());
+    clearOfflineRecap();
+    pendingOfflineRecap = normalizeOfflineRecap(saved.offlineRecap);
+}
+
 function loadGame() {
     try {
         const rawSave = localStorage.getItem(saveKey);
         if (!rawSave) return false;
-
-        const saved = JSON.parse(rawSave);
-        if (saved && saved.developerTravelEnabled === undefined) saved.developerTravelEnabled = false;
-        if (saved && typeof saved.selectedMap === 'string' && !mapData.some(map => map.id === saved.selectedMap)) {
-            saved.selectedMap = worldData[0].mapIds[0];
-            saved.enemyHp = mapData.find(map => map.id === saved.selectedMap).health;
-            saved.enemyRespawnRemaining = 0;
-            saved.monsterStates = [];
-        }
-        if (saved && saved.version === 1) {
-            if (Number.isInteger(saved.level) && saved.level >= 1) saved.level--;
-            saved.version = 2;
-        }
-        if (saved && saved.gear && typeof saved.gear === 'object' && !Array.isArray(saved.gear)) {
-            if (saved.gear.chest === undefined && saved.gear.armor !== undefined) {
-                saved.gear.chest = saved.gear.armor;
-            }
-            delete saved.gear.armor;
-            gearSlots.forEach(slot => {
-                if (saved.gear[slot] === undefined) saved.gear[slot] = null;
-            });
-        }
-        if (saved && saved.version === 2 && Array.isArray(saved.crafted)) {
-            saved.ownedItemIds = [...new Set([
-                ...saved.crafted,
-                ...Object.keys(saved.uniqueItems || {}).filter(id => saved.uniqueItems[id] === true)
-            ])];
-            saved.developerItemsEnabled = false;
-            saved.version = 3;
-        }
-        // Content edits can remove items or change their slots without invalidating all progress.
-        if (saved && saved.version === 3 && Array.isArray(saved.ownedItemIds) && Array.isArray(saved.crafted)) {
-            saved.ownedItemIds = [...new Set(saved.ownedItemIds.filter(id => typeof id === 'string' && Object.hasOwn(itemById, id)))];
-            saved.crafted = [...new Set(saved.crafted.filter(id => saved.ownedItemIds.includes(id) && itemById[id].recipe))];
-            if (saved.gear && typeof saved.gear === 'object' && !Array.isArray(saved.gear)) {
-                gearSlots.forEach(slot => {
-                    const item = itemById[saved.gear[slot]];
-                    if (!item || item.slot !== slot || !ownsItem(item.id, saved)) saved.gear[slot] = null;
-                });
-            }
-            if (saved.tutorials && saved.tutorials.firstGearItemId &&
-                (!ownsItem(saved.tutorials.firstGearItemId, saved) ||
-                itemById[saved.tutorials.firstGearItemId].slot !== saved.tutorials.firstGearSlot)) {
-                Object.assign(saved.tutorials, {
-                    firstGearPending: false, firstGearItemId: null, firstGearSlot: null,
-                    firstGearSlotSelected: false
-                });
-            }
-        }
-        if (saved && saved.tutorials === undefined) {
-            saved.tutorials = createTutorialState();
-            saved.tutorials.firstGearPrompted =
-                (Array.isArray(saved.crafted) && saved.crafted.length > 0) ||
-                (Array.isArray(saved.ownedItemIds) && saved.ownedItemIds.length > 0) ||
-                (saved.gear && Object.values(saved.gear).some(itemId => itemId !== null));
-        }
-        if (saved && saved.tutorials && saved.tutorials.firstNextMapPending === undefined) {
-            saved.tutorials.firstNextMapPending = false;
-        }
-        if (saved && saved.tutorials) {
-            [
-                'firstSkillPointDismissed',
-                'firstNextMapDismissed',
-                'firstMapGoalPending',
-                'firstMapGoalDismissed',
-                'firstGearDismissed'
-            ]
-                .forEach(key => {
-                    if (saved.tutorials[key] === undefined) saved.tutorials[key] = false;
-                });
-        }
-        if (saved && saved.level === undefined) {
-            let migratedExperience = 0;
-            const hasValidKillHistory = saved.kills &&
-                mapData.every(map => saved.kills[map.id] === undefined ||
-                    (Number.isSafeInteger(saved.kills[map.id]) && saved.kills[map.id] >= 0));
-            if (hasValidKillHistory) {
-                migratedExperience = mapData.reduce((total, map) =>
-                    total + (saved.kills[map.id] || 0) * map.experience, 0);
-                if (!Number.isSafeInteger(migratedExperience)) migratedExperience = 0;
-            }
-            let migratedLevel = 0;
-            while (migratedExperience >= experienceForNextLevel(migratedLevel)) {
-                migratedExperience -= experienceForNextLevel(migratedLevel);
-                migratedLevel++;
-            }
-            saved.level = migratedLevel;
-            saved.experience = migratedExperience;
-            saved.skillPoints = migratedLevel;
-            saved.skillRanks = {};
-        }
-        if (saved && saved.experience === undefined) saved.experience = 0;
-        if (saved && saved.skillPoints === undefined) saved.skillPoints = 0;
-        if (saved && Number.isInteger(saved.level) && Number.isInteger(saved.experience) &&
-            Number.isInteger(saved.skillPoints)) {
-            const previousLevel = saved.level;
-            while (saved.experience >= experienceForNextLevel(saved.level)) {
-                saved.experience -= experienceForNextLevel(saved.level);
-                saved.level++;
-                saved.skillPoints++;
-            }
-            if (previousLevel < 1 && saved.level >= 1 && saved.tutorials) {
-                saved.tutorials.firstSkillPointPending = true;
-                saved.tutorials.firstSkillPointDismissed = false;
-            }
-        }
-        if (saved && saved.skillRanks === undefined) {
-            saved.skillRanks = Array.isArray(saved.skillNodes)
-                ? Object.fromEntries(saved.skillNodes.map(id => [id, 1]))
-                : {};
-        }
-        if (saved) delete saved.skillNodes;
-        if (saved && saved.skillRanks && typeof saved.skillRanks === 'object' && !Array.isArray(saved.skillRanks)) {
-            let refundedRanks = 0;
-            Object.entries(saved.skillRanks).forEach(([id, rank]) => {
-                if (!skillNodeById[id] || skillNodeById[id].start || !Number.isInteger(rank) || rank <= 1) return;
-                refundedRanks += rank - 1;
-                saved.skillRanks[id] = 1;
-            });
-            saved.skillPoints += refundedRanks;
-        }
-        if (
-            saved &&
-            saved.upgrades &&
-            typeof saved.upgrades === 'object' &&
-            !Array.isArray(saved.upgrades) &&
-            saved.upgrades.evasion === undefined
-        ) {
-            saved.upgrades.evasion = 0;
-        }
-        if (
-            saved &&
-            saved.kills &&
-            typeof saved.kills === 'object' &&
-            !Array.isArray(saved.kills)
-        ) {
-            mapData.forEach(map => {
-                if (saved.kills[map.id] === undefined) saved.kills[map.id] = 0;
-            });
-        }
-        if (
-            saved &&
-            saved.materials &&
-            typeof saved.materials === 'object' &&
-            !Array.isArray(saved.materials)
-        ) {
-            Object.keys(materialNames).forEach(id => {
-                if (saved.materials[id] === undefined) saved.materials[id] = 0;
-            });
-            ['cinderHoof', 'singedMane'].forEach(id => {
-                if (!Number.isInteger(saved.materials[id]) || saved.materials[id] < 0) {
-                    saved.materials[id] = 0;
-                }
-            });
-        }
-        if (
-            saved === null ||
-            saved.version !== 3 ||
-            !Number.isFinite(saved.gold) || saved.gold < 0 ||
-            !saved.kills || !saved.materials || !saved.upgrades ||
-            !saved.gear || typeof saved.gear !== 'object' || Array.isArray(saved.gear) ||
-            !Array.isArray(saved.crafted) ||
-            !Number.isInteger(saved.level) || saved.level < 0 ||
-            !Number.isInteger(saved.experience) || saved.experience < 0 ||
-            saved.experience >= experienceForNextLevel(saved.level) ||
-            !Number.isInteger(saved.skillPoints) || saved.skillPoints < 0 ||
-            !saved.skillRanks || typeof saved.skillRanks !== 'object' || Array.isArray(saved.skillRanks) ||
-            !Array.isArray(saved.ownedItemIds) ||
-            !saved.ownedItemIds.every(id => typeof id === 'string' && Object.hasOwn(itemById, id)) ||
-            typeof saved.developerItemsEnabled !== 'boolean' ||
-            typeof saved.developerTravelEnabled !== 'boolean' ||
-            !saved.tutorials || typeof saved.tutorials !== 'object' ||
-            Array.isArray(saved.tutorials) ||
-            typeof saved.tutorials.firstSkillPointPending !== 'boolean' ||
-            typeof saved.tutorials.firstSkillPointDismissed !== 'boolean' ||
-            typeof saved.tutorials.firstNextMapPending !== 'boolean' ||
-            typeof saved.tutorials.firstNextMapDismissed !== 'boolean' ||
-            typeof saved.tutorials.firstMapGoalPending !== 'boolean' ||
-            typeof saved.tutorials.firstMapGoalDismissed !== 'boolean' ||
-            typeof saved.tutorials.firstGearPrompted !== 'boolean' ||
-            typeof saved.tutorials.firstGearPending !== 'boolean' ||
-            typeof saved.tutorials.firstGearDismissed !== 'boolean' ||
-            typeof saved.tutorials.firstGearSlotSelected !== 'boolean' ||
-            (saved.tutorials.firstGearSlot !== null &&
-                !gearSlots.includes(saved.tutorials.firstGearSlot)) ||
-            (saved.tutorials.firstGearItemId !== null &&
-                typeof saved.tutorials.firstGearItemId !== 'string') ||
-            ((saved.tutorials.firstGearSlot === null) !==
-                (saved.tutorials.firstGearItemId === null)) ||
-            (!saved.tutorials.firstGearPrompted && saved.tutorials.firstGearSlot !== null) ||
-            (saved.tutorials.firstGearPending && (
-                !saved.tutorials.firstGearPrompted ||
-                saved.tutorials.firstGearSlot === null ||
-                !(ownsItem(saved.tutorials.firstGearItemId, saved) &&
-                    itemById[saved.tutorials.firstGearItemId].slot === saved.tutorials.firstGearSlot)
-            )) ||
-            !mapData.some(map => map.id === saved.selectedMap) ||
-            (saved.selectedWorld !== undefined && typeof saved.selectedWorld !== 'string') ||
-            (saved.lastMapByWorld !== undefined && (
-                typeof saved.lastMapByWorld !== 'object' ||
-                saved.lastMapByWorld === null ||
-                Array.isArray(saved.lastMapByWorld)
-            )) ||
-            (saved.currentView !== undefined && !['map', 'town', 'upgrades', 'inventory'].includes(saved.currentView)) ||
-            !Number.isFinite(saved.enemyHp) || saved.enemyHp < 0 ||
-            (saved.enemyHp === 0 && !(Number.isFinite(saved.enemyRespawnRemaining) &&
-                saved.enemyRespawnRemaining > 0)) ||
-            (saved.enemyRespawnRemaining !== undefined &&
-                (!Number.isFinite(saved.enemyRespawnRemaining) || saved.enemyRespawnRemaining < 0)) ||
-            (saved.monsterStates !== undefined && (!Array.isArray(saved.monsterStates) ||
-                !saved.monsterStates.every(monster => monster && typeof monster.id === 'string' &&
-                    Number.isFinite(monster.hp) && monster.hp >= 0 &&
-                    Number.isFinite(monster.respawnRemaining) && monster.respawnRemaining >= 0 &&
-                    (monster.attackTimer === undefined ||
-                        Number.isFinite(monster.attackTimer) && monster.attackTimer >= 0) &&
-                    (monster.poisonStacks === undefined || Array.isArray(monster.poisonStacks) &&
-                        monster.poisonStacks.every(stack => stack &&
-                            Number.isFinite(stack.remainingDuration) && stack.remainingDuration > 0 &&
-                            stack.remainingDuration <= 60 && Number.isFinite(stack.timeUntilTick) &&
-                            stack.timeUntilTick > 0 && stack.timeUntilTick <= 10))))) ||
-            (saved.targetMonsterId !== undefined && typeof saved.targetMonsterId !== 'string') ||
-            (saved.playerHp !== undefined && (!Number.isFinite(saved.playerHp) || saved.playerHp < 0)) ||
-            (saved.combatPaused !== undefined && typeof saved.combatPaused !== 'boolean') ||
-            (saved.lootLog !== undefined && !Array.isArray(saved.lootLog))
-        ) {
-            throw new Error('Save data has an invalid format.');
-        }
-
-        const nonnegativeInteger = value => Number.isInteger(value) && value >= 0;
-        if (
-            !mapData.every(map => nonnegativeInteger(saved.kills[map.id])) ||
-            !Object.keys(materialNames).every(id => nonnegativeInteger(saved.materials[id])) ||
-            !legacyUpgradeIds.every(id => nonnegativeInteger(saved.upgrades[id])) ||
-            !saved.crafted.every(id => recipes.some(recipe => recipe.id === id)) ||
-            !Object.entries(saved.skillRanks).every(([id, rank]) => {
-                const node = skillNodeById[id];
-                return node && !node.start && Number.isInteger(rank) && rank > 0 &&
-                    rank <= node.maxRank && skillNodeRequirementsMet(node, required => {
-                        const requiredNode = skillNodeById[required];
-                        return requiredNode.start || saved.skillRanks[required] > 0;
-                    });
-            }) ||
-            saved.skillPoints + Object.values(saved.skillRanks).reduce((total, rank) => total + rank, 0) !==
-                saved.level ||
-            !gearSlots.every(slot => saved.gear[slot] === null || (
-                ownsItem(saved.gear[slot], saved) && itemById[saved.gear[slot]].slot === slot
-            ))
-        ) {
-            throw new Error('Save data has an invalid format.');
-        }
-
-        state.gold = saved.gold;
-        state.kills = saved.kills;
-        state.materials = saved.materials;
-        state.upgrades = saved.upgrades;
-        state.level = saved.level;
-        state.experience = saved.experience;
-        state.skillPoints = saved.skillPoints;
-        state.skillRanks = saved.skillRanks;
-        state.gear = saved.gear;
-        state.ownedItemIds = saved.ownedItemIds;
-        state.developerItemsEnabled = saved.developerItemsEnabled;
-        state.developerTravelEnabled = saved.developerTravelEnabled;
-        state.crafted = saved.crafted;
-        state.tutorials = saved.tutorials;
-        state.selectedMap = saved.selectedMap;
-        const savedMapWorld = worldForMap(saved.selectedMap) || worldData[0];
-        const savedWorldIndex = worldData.findIndex(world => world.id === saved.selectedWorld);
-        const savedMapWorldIndex = worldData.findIndex(world => world.id === savedMapWorld.id);
-        const fallbackWorld = savedMapWorldIndex >= 0 && worldIsUnlocked(savedMapWorldIndex)
-            ? savedMapWorld
-            : worldData.find((world, index) => worldIsUnlocked(index));
-        state.selectedWorld = savedWorldIndex >= 0 && worldIsUnlocked(savedWorldIndex)
-            ? saved.selectedWorld
-            : fallbackWorld.id;
-        state.lastMapByWorld = Object.fromEntries(worldData.map(world => {
-            const savedMap = saved.lastMapByWorld && saved.lastMapByWorld[world.id];
-            const maps = mapsForWorld(world.id);
-            const savedMapIndex = maps.findIndex(map => map.id === savedMap);
-            const fallbackMap = maps.reduce((fallback, map, index) =>
-                mapIsUnlocked(maps, index) ? map : fallback, maps[0]);
-            const selectedMap = savedMapIndex >= 0 && mapIsUnlocked(maps, savedMapIndex)
-                ? savedMap
-                : world.id === savedMapWorld.id &&
-                    maps.some((map, index) => map.id === saved.selectedMap && mapIsUnlocked(maps, index))
-                    ? saved.selectedMap
-                    : fallbackMap.id;
-            return [world.id, selectedMap];
-        }));
-        const selectedWorldMaps = mapsForWorld(state.selectedWorld);
-        const selectedMapIndex = selectedWorldMaps.findIndex(map => map.id === state.selectedMap);
-        const selectedMapChanged = selectedMapIndex < 0 || !mapIsUnlocked(selectedWorldMaps, selectedMapIndex);
-        if (selectedMapChanged) {
-            state.selectedMap = state.lastMapByWorld[state.selectedWorld];
-        }
-        state.lastMapByWorld[state.selectedWorld] = state.selectedMap;
-        state.currentView = saved.currentView || (saved.isInTown === false ? 'map' : 'town');
-        state.isInTown = state.currentView !== 'map';
-        state.monsterStates = selectedMapChanged
-            ? createMonsterStates(currentMap())
-            : createMonsterStates(currentMap(), saved.monsterStates, saved.enemyHp, saved.enemyRespawnRemaining);
-        state.targetMonsterId = !selectedMapChanged && monsterDefinitions(currentMap())
-            .some(definition => definition.id === saved.targetMonsterId)
-            ? saved.targetMonsterId
-            : null;
-        if (!state.targetMonsterId) setInitialMonsterTarget();
-        syncLegacyEnemyState();
-        state.playerHp = saved.playerHp === undefined
-            ? getPlayerMaxHealth()
-            : Math.min(saved.playerHp, getPlayerMaxHealth());
-        state.combatPaused = saved.combatPaused === true || state.playerHp === 0;
-        state.lootLog = Array.isArray(saved.lootLog)
-            ? saved.lootLog.filter(entry => typeof entry === 'string').slice(0, 12)
-            : [];
-        state.lastDrop = typeof saved.lastDrop === 'string' ? saved.lastDrop : 'Defeat enemies to find loot.';
-        state.lastLoot = normalizeLootNotice(saved.lastLoot);
-        state.attackTimer = Number.isFinite(saved.attackTimer) && saved.attackTimer >= 0 ? saved.attackTimer : 0;
-        resetCombatClock(Number.isFinite(saved.lastSimulatedAt) && saved.lastSimulatedAt > 0
-            ? Math.min(saved.lastSimulatedAt, Date.now()) : Date.now());
-        clearOfflineRecap();
-        pendingOfflineRecap = normalizeOfflineRecap(saved.offlineRecap);
+        applyGameSave(parseGameSave(rawSave));
         return true;
     } catch (error) {
         console.error('Could not load Idle Adventure progress.', error);
