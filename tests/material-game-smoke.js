@@ -38,6 +38,7 @@
         const materialDrops = [...elements.mapLootTable.querySelectorAll('[data-material-id="gel"]')];
         check('map and monster loot tables both show the configured material artwork', materialDrops.length === 2 && materialDrops.every(row => row.querySelector('img')?.getAttribute('src') === itemData.materialDetails.gel.sprite && row.querySelector('.loot-table-label').textContent === materialNames.gel));
         check('material icons preserve loot amounts and drop chances', materialDrops[0].querySelector('strong').textContent === '1–2 · 50%' && materialDrops[1].querySelector('strong').textContent === '3 · 100%');
+        check('map and monster material drops show the current inventory quantity', materialDrops.every(row => row.querySelector('.loot-table-owned')?.textContent === 'Owned: 3'));
         const lootIcon = materialDrops[0].querySelector('.item-sprite');
         check('loot icons stay compact, pixelated, and decorative', lootIcon.offsetWidth === 24 && lootIcon.offsetHeight === 24 && getComputedStyle(lootIcon.querySelector('img')).imageRendering === 'pixelated' && lootIcon.getAttribute('aria-hidden') === 'true');
         check('gold loot remains a text reward', !elements.mapLootTable.firstElementChild.querySelector('.item-sprite') && elements.mapLootTable.firstElementChild.textContent.startsWith('Gold'));
@@ -46,6 +47,20 @@
         delete itemData.materialDetails.gel.sprite; renderCombat();
         check('materials without sprites still have readable loot entries', [...elements.mapLootTable.querySelectorAll('[data-material-id="gel"]')].every(row => !row.querySelector('img') && row.textContent.includes(materialNames.gel)));
         itemData.materialDetails.gel.sprite = 'tests/fixtures/equipment-sprite.svg';
+        map.itemDrops = [{id: 'testDropHelm', chance: 1}]; renderCombat();
+        check('unowned equipment shows a zero quantity', elements.mapLootTable.querySelector('[data-item-id="testDropHelm"] .loot-table-owned')?.textContent === 'Owned: 0');
+        const originalRandom = Math.random, previousGold = state.gold;
+        try { Math.random = () => 0; defeatEnemy(activeMonster()); } finally { Math.random = originalRandom; }
+        renderCombat();
+        check('earning loot refreshes both material source rows and equipment ownership', state.materials.gel === 7 && [...elements.mapLootTable.querySelectorAll('[data-material-id="gel"] .loot-table-owned')].every(node => node.textContent === 'Owned: 7') && elements.mapLootTable.querySelector('[data-item-id="testDropHelm"] .loot-table-owned').textContent === 'Owned: 1');
+        check('the gold row shows the updated wallet balance', state.gold > previousGold && elements.mapLootTable.firstElementChild.querySelector('.loot-table-owned').textContent === 'Owned: ' + formatAmount(state.gold));
+        craftGear('testAmulet');
+        check('spending materials refreshes owned counts without changing the drop amount', state.materials.gel === 5 && [...elements.mapLootTable.querySelectorAll('[data-material-id="gel"] .loot-table-owned')].every(node => node.textContent === 'Owned: 5') && elements.mapLootTable.querySelector('[data-material-id="gel"] strong').textContent === '1–2 · 50%');
+        state.materials.gel = 12345; renderCombat();
+        check('large owned quantities are formatted and fit the loot table', [...elements.mapLootTable.querySelectorAll('[data-material-id="gel"]')].every(row => row.querySelector('.loot-table-owned').textContent === 'Owned: 12,345' && row.scrollWidth <= row.clientWidth + 1));
+        state.materials.gel = 0; renderCombat();
+        check('depleted materials show zero rather than disappearing', elements.mapLootTable.querySelector('[data-material-id="gel"] .loot-table-owned').textContent === 'Owned: 0');
+        state.materials.gel = 3;
         saveGame(); materialNames.newMaterial = 'New Material';
         check('existing saves accept newly added materials with zero quantity', loadGame() && state.materials.newMaterial === 0 && state.materials.gel === 3);
         const invalid = WorldContent.clone(itemData); invalid.materialDetails.gel.sprite = '../outside.png';

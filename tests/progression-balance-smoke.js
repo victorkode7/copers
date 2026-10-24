@@ -33,7 +33,7 @@
             }
         }
 
-        // Sample the actual combat callback at fixed midpoint builds. These are
+        // Sample the actual combat simulation at fixed midpoint builds. These are
         // active-combat estimates: revives are immediate and extra farming, travel
         // and time spent planning/crafting are excluded. No legacy upgrades,
         // developer items or rare equipment drops are equipped. Disable only
@@ -45,7 +45,7 @@
         awardExperience = () => 0;
         window.setTimeout = () => 0;
         elements.enemyRoster.replaceChildren();
-        const tick = smokeIntervals.at(-1);
+        const tick = () => simulateCombatStep(gameTickSeconds);
         const readers = {getSkillStat, getSkillMultiplier, getGearStat};
         const memoize = reader => {
             const values = new Map();
@@ -98,7 +98,6 @@
             resetMonsterStates(map);
             const start = state.kills[map.id]; let deaths = 0, firstKillSeconds = null, deathsBeforeFirstKill = 0;
             for (let step = 0; step < 6000; step++) {
-                lastTick = performance.now() - 101;
                 tick();
                 if (firstKillSeconds === null && state.kills[map.id] > start) firstKillSeconds = (step + 1) / 10;
                 if (state.combatPaused && firstKillSeconds === null) deathsBeforeFirstKill++;

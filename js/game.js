@@ -184,7 +184,157 @@ const elements = {
 };
 
 let lastTick = performance.now();
+let lastWallTick = Date.now();
+let lastSimulatedAt = lastWallTick;
+let pendingCombatSeconds = 0;
+let combatContinuation = null;
+let combatNeedsFullRender = false;
+let combatCatchingUp = false;
+let combatCatchupUiActive = false;
+let simulatingCombat = false;
+// undefined presents immediately; null suppresses effects; an array collects a live step.
+let combatEffects;
+let combatStatCache = null;
 let lastSave = Date.now();
+let pendingOfflineRecap = null;
+let offlineRecapReport = null;
+let offlineRecapShown = false;
+
+function captureOfflineRecapProgress() {
+    return {
+        gold: state.gold, level: state.level, experience: state.experience,
+        materials: {...state.materials}, ownedItemIds: [...state.ownedItemIds]
+    };
+}
+
+function normalizeOfflineRecap(value) {
+    const before = value?.before;
+    if (!value || !Number.isFinite(value.startedAt) || value.startedAt <= 0 ||
+        !before || !['gold', 'level', 'experience'].every(key => Number.isSafeInteger(before[key]) && before[key] >= 0) ||
+        !before.materials || typeof before.materials !== 'object' || Array.isArray(before.materials) ||
+        !Array.isArray(before.ownedItemIds)) return null;
+    return {
+        startedAt: Math.min(value.startedAt, Date.now()), returnedAt: Date.now(),
+        before: {
+            gold: before.gold, level: before.level, experience: before.experience,
+            materials: Object.fromEntries(Object.keys(materialNames).map(id => [id,
+                Number.isSafeInteger(before.materials[id]) && before.materials[id] >= 0 ? before.materials[id] : 0])),
+            ownedItemIds: before.ownedItemIds.filter(id => typeof id === 'string' && Object.hasOwn(itemById, id))
+        }
+    };
+}
+
+function startOfflineRecap() {
+    offlineRecapReport = null;
+    offlineRecapShown = false;
+    if (pendingOfflineRecap) pendingOfflineRecap.returnedAt = Date.now();
+    // Avoid a popup for a quick refresh. Tab switches never start a recap.
+    else if (pendingCombatSeconds >= 5) pendingOfflineRecap = {
+        startedAt: lastSimulatedAt, returnedAt: Date.now(), before: captureOfflineRecapProgress()
+    };
+}
+
+function buildOfflineRecap(session) {
+    const before = session.before, after = captureOfflineRecapProgress();
+    const totalExperience = progress => {
+        const levels = Math.max(0, progress.level - 1);
+        return progress.experience + (progress.level > 0 ? experienceForNextLevel(0) : 0) +
+            levels * skillTreeData.experienceBase + levels * (levels - 1) / 2 * skillTreeData.experiencePerLevel;
+    };
+    const levelPosition = progress => progress.level + progress.experience / experienceForNextLevel(progress.level);
+    return {
+        elapsedSeconds: Math.max(0, (session.returnedAt - session.startedAt) / 1000),
+        gold: Math.max(0, after.gold - before.gold),
+        experience: Math.max(0, totalExperience(after) - totalExperience(before)),
+        levelPercent: Math.max(0, (levelPosition(after) - levelPosition(before)) * 100),
+        startLevel: before.level, endLevel: after.level,
+        materials: Object.keys(materialNames).map(id => ({id, amount: after.materials[id] - (before.materials[id] || 0)})).filter(drop => drop.amount > 0),
+        items: after.ownedItemIds.filter(id => !before.ownedItemIds.includes(id) && Object.hasOwn(itemById, id)).map(id => ({id, amount: 1})),
+        dead: state.combatPaused
+    };
+}
+
+function formatOfflineRecapDuration(seconds) {
+    let remaining = Math.max(0, Math.floor(seconds));
+    const parts = [];
+    for (const [unit, length] of [['d', 86400], ['h', 3600], ['m', 60], ['s', 1]]) {
+        const amount = Math.floor(remaining / length);
+        if (amount) parts.push(amount + unit);
+        remaining %= length;
+    }
+    return parts.join(' ') || '0s';
+}
+
+function renderOfflineRecapRewards(container, drops, equipment) {
+    container.replaceChildren();
+    for (const drop of drops) {
+        const item = equipment ? itemById[drop.id] : itemData.materialDetails?.[drop.id];
+        const row = document.createElement('li');
+        row.dataset[equipment ? 'itemId' : 'materialId'] = drop.id;
+        if (equipment) row.dataset.rarity = item.rarity;
+        const name = document.createElement('span'); name.className = 'offline-recap-reward-name';
+        name.textContent = equipment ? item.name : materialNames[drop.id];
+        const quantity = document.createElement('strong'); quantity.textContent = '+' + formatAmount(drop.amount);
+        row.append(Equipment.createIcon(item), name, quantity); container.append(row);
+    }
+    if (!drops.length) {
+        const empty = document.createElement('li'); empty.className = 'offline-recap-empty';
+        empty.textContent = equipment ? 'No equipment found.' : 'No materials found.';
+        container.append(empty);
+    }
+}
+
+function showOfflineRecap() {
+    if (!pendingOfflineRecap) return;
+    if (!offlineRecapReport) offlineRecapReport = buildOfflineRecap(pendingOfflineRecap);
+    if (document.hidden || offlineRecapShown) return;
+    const report = offlineRecapReport, dialog = document.getElementById('offlineRecap');
+    document.getElementById('offlineRecapTime').textContent = 'You were away for ' + formatOfflineRecapDuration(report.elapsedSeconds) + '.';
+    document.getElementById('offlineRecapGold').textContent = '+' + formatAmount(report.gold);
+    document.getElementById('offlineRecapXp').textContent = '+' + formatAmount(report.experience) + ' XP';
+    const percent = report.levelPercent > 0 && report.levelPercent < .01 ? '<0.01' : combatStatFormatter.format(report.levelPercent);
+    document.getElementById('offlineRecapLevels').textContent = '+' + percent + '% level progress · Level ' + report.startLevel + ' → ' + report.endLevel;
+    document.getElementById('offlineRecapDeath').hidden = !report.dead;
+    renderOfflineRecapRewards(document.getElementById('offlineRecapMaterials'), report.materials, false);
+    renderOfflineRecapRewards(document.getElementById('offlineRecapItems'), report.items, true);
+    dialog.showModal();
+    offlineRecapShown = true;
+    saveGame();
+}
+
+function clearOfflineRecap() {
+    pendingOfflineRecap = null; offlineRecapReport = null; offlineRecapShown = false;
+    const dialog = document.getElementById('offlineRecap');
+    if (dialog.open) dialog.close();
+}
+
+function dismissOfflineRecap() {
+    clearOfflineRecap();
+    saveGame();
+}
+
+document.getElementById('offlineRecapContinue').addEventListener('click', dismissOfflineRecap);
+document.getElementById('offlineRecapClose').addEventListener('click', dismissOfflineRecap);
+document.getElementById('offlineRecap').addEventListener('close', event => {
+    if (offlineRecapShown && !event.currentTarget.open) dismissOfflineRecap();
+});
+document.getElementById('offlineRecap').addEventListener('click', event => {
+    if (event.target !== event.currentTarget) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dismissOfflineRecap();
+});
+
+function presentCombatEffect(effect) {
+    if (combatEffects === null || document.hidden) return;
+    if (combatEffects) combatEffects.push(effect);
+    else effect();
+}
+
+function cachedCombatStat(key, calculate) {
+    if (!combatStatCache) return calculate();
+    if (!combatStatCache.has(key)) combatStatCache.set(key, calculate());
+    return combatStatCache.get(key);
+}
 let selectedGearSlot = 'weapon';
 let inventoryCategory = 'slot';
 let selectedCraftCategory = 'all';
@@ -328,106 +478,122 @@ function syncLegacyEnemyState() {
 }
 
 function clearEnemyDamageIndicator() {
-    recentEnemyDamage = 0;
-    elements.enemyRoster.querySelectorAll('.enemy-health-damage, .enemy-health-poison-damage').forEach(indicator => {
-        window.clearTimeout(enemyDamageIndicatorTimers.get(indicator));
-        indicator.classList.remove('is-visible');
-        if (indicator.classList.contains('enemy-health-poison-damage')) {
-            indicator.style.left = '0%';
-            indicator.style.width = '0%';
-        }
+    presentCombatEffect(() => {
+        recentEnemyDamage = 0;
+        elements.enemyRoster.querySelectorAll('.enemy-health-damage, .enemy-health-poison-damage').forEach(indicator => {
+            window.clearTimeout(enemyDamageIndicatorTimers.get(indicator));
+            indicator.classList.remove('is-visible');
+            if (indicator.classList.contains('enemy-health-poison-damage')) {
+                indicator.style.left = '0%';
+                indicator.style.width = '0%';
+            }
+        });
     });
 }
 
 function flashDodge(track) {
-    window.clearTimeout(dodgeFlashTimeouts.get(track));
-    track.classList.remove('is-dodging');
-    void track.offsetWidth;
-    track.classList.add('is-dodging');
-    dodgeFlashTimeouts.set(track, window.setTimeout(function() {
+    presentCombatEffect(() => {
+        window.clearTimeout(dodgeFlashTimeouts.get(track));
         track.classList.remove('is-dodging');
-        dodgeFlashTimeouts.delete(track);
-    }, 420));
+        void track.offsetWidth;
+        track.classList.add('is-dodging');
+        dodgeFlashTimeouts.set(track, window.setTimeout(function() {
+            track.classList.remove('is-dodging');
+            dodgeFlashTimeouts.delete(track);
+        }, 420));
+    });
 }
 
 function showMonsterProc(monsterId, procName) {
-    const card = Array.from(elements.enemyRoster.children)
-        .find(entry => entry.dataset.monsterId === monsterId);
-    const notice = card && card.querySelector('[data-enemy-proc-notice]');
-    if (!notice) return;
+    presentCombatEffect(() => {
+        const card = Array.from(elements.enemyRoster.children)
+            .find(entry => entry.dataset.monsterId === monsterId);
+        const notice = card && card.querySelector('[data-enemy-proc-notice]');
+        if (!notice) return;
 
-    const activeProcs = (notice.dataset.activeProcs || '').split('|').filter(Boolean);
-    if (!activeProcs.includes(procName)) activeProcs.push(procName);
-    notice.dataset.activeProcs = activeProcs.join('|');
-    notice.textContent = activeProcs.join(' · ');
-    notice.classList.remove('is-visible');
-    void notice.offsetWidth;
-    notice.classList.add('is-visible');
-
-    window.clearTimeout(monsterProcTimers.get(notice));
-    monsterProcTimers.set(notice, window.setTimeout(function() {
-        notice.textContent = '';
-        notice.dataset.activeProcs = '';
-        notice.classList.remove('is-visible');
-        monsterProcTimers.delete(notice);
-    }, 1100));
-}
-
-function showPoisonStackProc(monster) {
-    const card = Array.from(elements.enemyRoster.children)
-        .find(entry => entry.dataset.monsterId === monster.id);
-    const indicator = card && card.querySelector('[data-enemy-dot-status]');
-    if (!indicator) return;
-    indicator.hidden = false;
-    indicator.querySelector('[data-enemy-dot-count]').textContent = monster.poisonStacks.length + 'x';
-    indicator.classList.remove('is-applying');
-    void indicator.offsetWidth;
-    indicator.classList.add('is-applying');
-}
-
-function flashShockwaveHealthBar(monsterId) {
-    const card = Array.from(elements.enemyRoster.children)
-        .find(entry => entry.dataset.monsterId === monsterId);
-    const healthTrack = card && card.querySelector('.health-track');
-    if (!healthTrack) return;
-    healthTrack.classList.remove('is-shockwave-hit');
-    void healthTrack.offsetWidth;
-    healthTrack.classList.add('is-shockwave-hit');
-}
-
-function showMonsterHitBadge(monsterId, label, isMultiHit = false) {
-    const card = Array.from(elements.enemyRoster.children)
-        .find(entry => entry.dataset.monsterId === monsterId);
-    if (!card) return;
-    const notice = card.querySelector('[data-combat-hit-badge]');
-    if (notice) {
-        notice.hidden = false;
-        notice.textContent = label;
-        notice.classList.toggle('is-multihit', isMultiHit);
+        const activeProcs = (notice.dataset.activeProcs || '').split('|').filter(Boolean);
+        if (!activeProcs.includes(procName)) activeProcs.push(procName);
+        notice.dataset.activeProcs = activeProcs.join('|');
+        notice.textContent = activeProcs.join(' · ');
         notice.classList.remove('is-visible');
         void notice.offsetWidth;
         notice.classList.add('is-visible');
-        window.clearTimeout(shockwaveHitTimers.get(notice));
-        shockwaveHitTimers.set(notice, window.setTimeout(() => {
+
+        window.clearTimeout(monsterProcTimers.get(notice));
+        monsterProcTimers.set(notice, window.setTimeout(function() {
+            notice.textContent = '';
+            notice.dataset.activeProcs = '';
             notice.classList.remove('is-visible');
-            shockwaveHitTimers.delete(notice);
-        }, 1500));
-    }
+            monsterProcTimers.delete(notice);
+        }, 1100));
+    });
+}
+
+function showPoisonStackProc(monster) {
+    presentCombatEffect(() => {
+        const card = Array.from(elements.enemyRoster.children)
+            .find(entry => entry.dataset.monsterId === monster.id);
+        const indicator = card && card.querySelector('[data-enemy-dot-status]');
+        if (!indicator) return;
+        indicator.hidden = false;
+        indicator.querySelector('[data-enemy-dot-count]').textContent = monster.poisonStacks.length + 'x';
+        indicator.classList.remove('is-applying');
+        void indicator.offsetWidth;
+        indicator.classList.add('is-applying');
+    });
+}
+
+function flashShockwaveHealthBar(monsterId) {
+    presentCombatEffect(() => {
+        const card = Array.from(elements.enemyRoster.children)
+            .find(entry => entry.dataset.monsterId === monsterId);
+        const healthTrack = card && card.querySelector('.health-track');
+        if (!healthTrack) return;
+        healthTrack.classList.remove('is-shockwave-hit');
+        void healthTrack.offsetWidth;
+        healthTrack.classList.add('is-shockwave-hit');
+    });
+}
+
+function showMonsterHitBadge(monsterId, label, isMultiHit = false) {
+    presentCombatEffect(() => {
+        const card = Array.from(elements.enemyRoster.children)
+            .find(entry => entry.dataset.monsterId === monsterId);
+        if (!card) return;
+        const notice = card.querySelector('[data-combat-hit-badge]');
+        if (notice) {
+            notice.hidden = false;
+            notice.textContent = label;
+            notice.classList.toggle('is-multihit', isMultiHit);
+            notice.classList.remove('is-visible');
+            void notice.offsetWidth;
+            notice.classList.add('is-visible');
+            window.clearTimeout(shockwaveHitTimers.get(notice));
+            shockwaveHitTimers.set(notice, window.setTimeout(() => {
+                notice.classList.remove('is-visible');
+                shockwaveHitTimers.delete(notice);
+            }, 1500));
+        }
+    });
 }
 
 function flashShockwaveCard(monsterId) {
-    const card = Array.from(elements.enemyRoster.children)
-        .find(entry => entry.dataset.monsterId === monsterId);
-    if (!card) return;
-    card.classList.remove('is-shockwave-splashed');
-    void card.offsetWidth;
-    card.classList.add('is-shockwave-splashed');
+    presentCombatEffect(() => {
+        const card = Array.from(elements.enemyRoster.children)
+            .find(entry => entry.dataset.monsterId === monsterId);
+        if (!card) return;
+        card.classList.remove('is-shockwave-splashed');
+        void card.offsetWidth;
+        card.classList.add('is-shockwave-splashed');
+    });
 }
 
 function nudgePlayerHealthBar() {
-    elements.playerHealthTrack.classList.remove('is-damaged');
-    void elements.playerHealthTrack.offsetWidth;
-    elements.playerHealthTrack.classList.add('is-damaged');
+    presentCombatEffect(() => {
+        elements.playerHealthTrack.classList.remove('is-damaged');
+        void elements.playerHealthTrack.offsetWidth;
+        elements.playerHealthTrack.classList.add('is-damaged');
+    });
 }
 
 function promptForFirstGear(itemId, slot) {
@@ -485,7 +651,9 @@ function getSkillStatFromRanks(stat, ranks) {
 }
 
 function getSkillStat(stat) {
-    return getSkillStatFromRanks(stat, state.skillRanks);
+    return cachedCombatStat('getSkillStat:' + stat, () => {
+        return getSkillStatFromRanks(stat, state.skillRanks);
+    });
 }
 
 function ownsItem(id, source = state) {
@@ -500,7 +668,9 @@ function getEquippedItems() {
 }
 
 function getGearStat(stat) {
-    return Equipment.aggregate(getEquippedItems(), stat);
+    return cachedCombatStat('getGearStat:' + stat, () => {
+        return Equipment.aggregate(getEquippedItems(), stat);
+    });
 }
 
 function getPlayerMaxHealth() {
@@ -509,14 +679,16 @@ function getPlayerMaxHealth() {
 }
 
 function getSkillMultiplier(stat) {
-    return Object.entries(state.skillRanks).reduce((total, [id, rank]) => {
-        const node = skillNodeById[id];
-        if (!node || !rank) return total;
-        if (stat === 'attackSpeedMultiplier' && node.stats.attackSpeedPerLevel) {
-            total *= Math.pow(1 + node.stats.attackSpeedPerLevel, state.level * rank);
-        }
-        return total * Math.pow(node.stats[stat] || 1, rank);
-    }, 1);
+    return cachedCombatStat('getSkillMultiplier:' + stat, () => {
+        return Object.entries(state.skillRanks).reduce((total, [id, rank]) => {
+            const node = skillNodeById[id];
+            if (!node || !rank) return total;
+            if (stat === 'attackSpeedMultiplier' && node.stats.attackSpeedPerLevel) {
+                total *= Math.pow(1 + node.stats.attackSpeedPerLevel, state.level * rank);
+            }
+            return total * Math.pow(node.stats[stat] || 1, rank);
+        }, 1);
+    });
 }
 
 function getDamage() {
@@ -721,9 +893,13 @@ function formatAmount(amount) {
 }
 
 function saveGame() {
+    if (simulatingCombat) return;
     try {
         localStorage.setItem(saveKey, JSON.stringify({
             version: 3,
+            lastSimulatedAt,
+            offlineRecap: pendingOfflineRecap,
+            attackTimer: state.attackTimer,
             gold: state.gold,
             kills: state.kills,
             materials: state.materials,
@@ -1078,6 +1254,11 @@ function loadGame() {
             : [];
         state.lastDrop = typeof saved.lastDrop === 'string' ? saved.lastDrop : 'Defeat enemies to find loot.';
         state.lastLoot = normalizeLootNotice(saved.lastLoot);
+        state.attackTimer = Number.isFinite(saved.attackTimer) && saved.attackTimer >= 0 ? saved.attackTimer : 0;
+        resetCombatClock(Number.isFinite(saved.lastSimulatedAt) && saved.lastSimulatedAt > 0
+            ? Math.min(saved.lastSimulatedAt, Date.now()) : Date.now());
+        clearOfflineRecap();
+        pendingOfflineRecap = normalizeOfflineRecap(saved.offlineRecap);
         return true;
     } catch (error) {
         console.error('Could not load Idle Adventure progress.', error);
@@ -2132,10 +2313,12 @@ function renderCombat() {
     elements.killProgressLabel.hidden = completed;
     elements.mapLootTable.innerHTML = '';
     const lootEntries = [
-        { name: 'Gold', amount: lootMonster.gold, chance: 1 },
-        ...[...map.drops, ...lootMonster.drops].map(drop => ({ name: materialNames[drop.id], materialId: drop.id, amount: drop.amount, chance: drop.chance })),
+        { name: 'Gold', amount: lootMonster.gold, chance: 1, owned: state.gold },
+        ...[...map.drops, ...lootMonster.drops].map(drop => ({ name: materialNames[drop.id], materialId: drop.id, amount: drop.amount, chance: drop.chance, owned: state.materials[drop.id] || 0 })),
         ...[...map.itemDrops, ...lootMonster.itemDrops].map(drop => ({
             name: itemById[drop.id].name,
+            itemId: drop.id,
+            owned: ownsItem(drop.id) ? 1 : 0,
             amount: [1, 1],
             chanceText: WorldContent.chanceText(drop.chance),
             unique: itemById[drop.id].rarity === 'unique'
@@ -2144,6 +2327,7 @@ function renderCombat() {
     lootEntries.forEach(drop => {
         const entry = document.createElement('li');
         if (drop.unique) entry.className = 'unique-drop';
+        if (drop.itemId) entry.dataset.itemId = drop.itemId;
         const amount = document.createElement('span');
         amount.className = 'loot-table-label';
         if (drop.materialId) {
@@ -2157,7 +2341,13 @@ function renderCombat() {
         details.textContent = formatAmount(drop.amount[0]) +
             (drop.amount[0] === drop.amount[1] ? '' : '–' + formatAmount(drop.amount[1])) +
             (drop.chanceText ? ' · ' + drop.chanceText : ' · ' + WorldContent.chanceText(drop.chance));
-        entry.append(amount, details);
+        const values = document.createElement('span');
+        values.className = 'loot-table-values';
+        const owned = document.createElement('small');
+        owned.className = 'loot-table-owned';
+        owned.textContent = 'Owned: ' + formatAmount(drop.owned);
+        values.append(details, owned);
+        entry.append(amount, values);
         elements.mapLootTable.appendChild(entry);
     });
     Array.from(elements.enemyRoster.children)
@@ -2303,6 +2493,7 @@ function awardExperience(amount) {
         levelsGained++;
         if (state.level === 1) state.tutorials.firstSkillPointPending = true;
     }
+    if (levelsGained && combatStatCache) combatStatCache.clear();
     return levelsGained;
 }
 
@@ -2351,27 +2542,30 @@ function defeatEnemy(monster) {
     };
     addLootDrop(gold, found);
 
-    const defeatedCard = Array.from(elements.enemyRoster.children)
-        .find(card => card.dataset.monsterId === monster.id);
-    if (state.currentView === 'map') {
-        const rewards = [
-            ...(gold > 0 ? [{key: 'gold', name: 'Gold', amount: gold, gold: true}] : []),
-            ...Array.from(lootMaterials, ([id, amount]) => ({
-                key: 'material:' + id, name: materialNames[id], amount,
-                sprite: itemData.materialDetails?.[id]?.sprite
-            })),
-            ...equipment.map(id => ({
-                key: 'equipment:' + id, name: itemById[id].name, amount: 1,
-                sprite: itemById[id].sprite, rarity: itemById[id].rarity, equipment: true
-            }))
-        ];
-        window.LootEffects?.drop(rewards, defeatedCard?.querySelector('.enemy-mark') || defeatedCard, map.id);
-    }
-    if (defeatedCard) {
-        defeatedCard.classList.remove('is-defeating');
-        void defeatedCard.offsetWidth;
-        defeatedCard.classList.add('is-defeating');
-    }
+    presentCombatEffect(() => {
+        const defeatedCard = Array.from(elements.enemyRoster.children)
+            .find(card => card.dataset.monsterId === monster.id);
+        if (state.currentView === 'map') {
+            const rewards = [
+                ...(gold > 0 ? [{key: 'gold', name: 'Gold', amount: gold, gold: true}] : []),
+                ...Array.from(lootMaterials, ([id, amount]) => ({
+                    key: 'material:' + id, name: materialNames[id], amount,
+                    sprite: itemData.materialDetails?.[id]?.sprite
+                })),
+                ...equipment.map(id => ({
+                    key: 'equipment:' + id, name: itemById[id].name, amount: 1,
+                    sprite: itemById[id].sprite, rarity: itemById[id].rarity, equipment: true
+                }))
+            ];
+            window.LootEffects?.drop(rewards, defeatedCard?.querySelector('.enemy-mark') || defeatedCard, map.id);
+        }
+        if (defeatedCard) {
+            defeatedCard.classList.remove('is-defeating');
+            void defeatedCard.offsetWidth;
+            defeatedCard.classList.add('is-defeating');
+        }
+
+    });
 
     monster.hp = 0;
     monster.poisonStacks = [];
@@ -2399,31 +2593,33 @@ function transferPoisonOnDeath(monster, stacks) {
 }
 
 function showPoisonTransfer(sourceId, targetId) {
-    const cards = [...elements.enemyRoster.querySelectorAll('.enemy-card')];
-    const source = cards.find(card => card.dataset.monsterId === sourceId)?.querySelector('.enemy-mark');
-    const target = cards.find(card => card.dataset.monsterId === targetId)?.querySelector('.enemy-mark');
-    if (!source || !target) return;
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.classList.add('poison-transfer');
-    svg.setAttribute('aria-hidden', 'true');
-    svg.dataset.sourceId = sourceId;
-    svg.dataset.targetId = targetId;
-    elements.combatPanel.appendChild(svg);
-    const frame = svg.getBoundingClientRect();
-    if (!frame.width || !frame.height) { svg.remove(); return; }
-    svg.setAttribute('viewBox', '0 0 ' + frame.width + ' ' + frame.height);
-    const from = source.getBoundingClientRect(), to = target.getBoundingClientRect();
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', String(from.left + from.width / 2 - frame.left));
-    line.setAttribute('y1', String(from.top + from.height / 2 - frame.top));
-    line.setAttribute('x2', String(to.left + to.width / 2 - frame.left));
-    line.setAttribute('y2', String(to.top + to.height / 2 - frame.top));
-    line.setAttribute('pathLength', '1');
-    svg.appendChild(line);
-    svg.addEventListener('animationend', event => {
-        if (event.target === svg) svg.remove();
+    presentCombatEffect(() => {
+        const cards = [...elements.enemyRoster.querySelectorAll('.enemy-card')];
+        const source = cards.find(card => card.dataset.monsterId === sourceId)?.querySelector('.enemy-mark');
+        const target = cards.find(card => card.dataset.monsterId === targetId)?.querySelector('.enemy-mark');
+        if (!source || !target) return;
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.classList.add('poison-transfer');
+        svg.setAttribute('aria-hidden', 'true');
+        svg.dataset.sourceId = sourceId;
+        svg.dataset.targetId = targetId;
+        elements.combatPanel.appendChild(svg);
+        const frame = svg.getBoundingClientRect();
+        if (!frame.width || !frame.height) { svg.remove(); return; }
+        svg.setAttribute('viewBox', '0 0 ' + frame.width + ' ' + frame.height);
+        const from = source.getBoundingClientRect(), to = target.getBoundingClientRect();
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', String(from.left + from.width / 2 - frame.left));
+        line.setAttribute('y1', String(from.top + from.height / 2 - frame.top));
+        line.setAttribute('x2', String(to.left + to.width / 2 - frame.left));
+        line.setAttribute('y2', String(to.top + to.height / 2 - frame.top));
+        line.setAttribute('pathLength', '1');
+        svg.appendChild(line);
+        svg.addEventListener('animationend', event => {
+            if (event.target === svg) svg.remove();
+        });
+        window.setTimeout(() => svg.remove(), 800);
     });
-    window.setTimeout(() => svg.remove(), 800);
 }
 
 function applyDamageToMonster(monster, damage, damageType = 'physical') {
@@ -2439,26 +2635,29 @@ function applyDamageToMonster(monster, damage, damageType = 'physical') {
     // Poison ticks check after updating every stack's remaining lifetime.
     if (damageType !== 'poison' && tryExecutePoison(monster)) return true;
 
-    recentEnemyDamage = previousHp - monster.hp;
-    const targetCard = Array.from(elements.enemyRoster.children)
-        .find(card => card.dataset.monsterId === monster.id);
-    const damageIndicator = damageType === 'physical' && targetCard
-        ? targetCard.querySelector('.enemy-health-damage')
-        : null;
-    if (damageIndicator) {
-        const maxHp = monsterDefinition(monster).health;
-        const currentHpPercent = Math.max(0, Math.min(100, monster.hp / maxHp * 100));
-        const damagePercent = Math.min(100 - currentHpPercent,
-            Math.max(recentEnemyDamage / maxHp * 100, 1));
-        damageIndicator.style.left = currentHpPercent + '%';
-        damageIndicator.style.width = damagePercent + '%';
-        damageIndicator.classList.add('is-visible');
-        window.clearTimeout(enemyDamageIndicatorTimers.get(damageIndicator));
-        enemyDamageIndicatorTimers.set(damageIndicator, window.setTimeout(() => {
-            damageIndicator.classList.remove('is-visible');
-            enemyDamageIndicatorTimers.delete(damageIndicator);
-        }, 250));
-    }
+    const damageDealt = previousHp - monster.hp;
+    presentCombatEffect(() => {
+        recentEnemyDamage = damageDealt;
+        const targetCard = Array.from(elements.enemyRoster.children)
+            .find(card => card.dataset.monsterId === monster.id);
+        const damageIndicator = damageType === 'physical' && targetCard
+            ? targetCard.querySelector('.enemy-health-damage')
+            : null;
+        if (damageIndicator) {
+            const maxHp = monsterDefinition(monster).health;
+            const currentHpPercent = Math.max(0, Math.min(100, monster.hp / maxHp * 100));
+            const damagePercent = Math.min(100 - currentHpPercent,
+                Math.max(recentEnemyDamage / maxHp * 100, 1));
+            damageIndicator.style.left = currentHpPercent + '%';
+            damageIndicator.style.width = damagePercent + '%';
+            damageIndicator.classList.add('is-visible');
+            window.clearTimeout(enemyDamageIndicatorTimers.get(damageIndicator));
+            enemyDamageIndicatorTimers.set(damageIndicator, window.setTimeout(() => {
+                damageIndicator.classList.remove('is-visible');
+                enemyDamageIndicatorTimers.delete(damageIndicator);
+            }, 250));
+        }
+    });
     return false;
 }
 
@@ -2641,6 +2840,8 @@ document.querySelector('#resetGame').addEventListener('click', function() {
     state.playerHp = getPlayerMaxHealth();
     state.combatPaused = false;
     state.attackTimer = 0;
+    resetCombatClock();
+    clearOfflineRecap();
     state.lootLog = [];
     state.lastDrop = 'Defeat enemies to find loot.';
     state.lastLoot = null;
@@ -2926,6 +3127,7 @@ document.querySelector('#developerTravel').addEventListener('change', function(e
 });
 
 const hasSavedGame = loadGame();
+if (hasSavedGame) startOfflineRecap();
 document.querySelector('#developerItems').checked = state.developerItemsEnabled;
 document.querySelector('#developerTravel').checked = state.developerTravelEnabled;
 if (!state.monsterStates.length) resetMonsterStates(currentMap());
@@ -2941,106 +3143,214 @@ if (state.currentView === 'upgrades') {
 }
 if (!hasSavedGame) saveGame();
 
-setInterval(function() {
-    const now = performance.now();
-    const elapsed = Math.min((now - lastTick) / 1000, gameTickSeconds);
-    lastTick = now;
-    const map = currentMap();
-    const killsBeforeTick = state.kills[map.id];
-    ensureLiveMonsterTarget();
-    const previousTarget = activeMonster();
-    let anyRespawned = false;
-    state.monsterStates.forEach(monster => {
-        if (monster.hp > 0 || monster.respawnRemaining <= 0) return;
-        monster.respawnRemaining = Math.max(0, monster.respawnRemaining - elapsed);
-        if (monster.respawnRemaining === 0) {
-            monster.hp = monsterDefinition(monster, map).health;
-            monster.attackTimer = 0;
-            anyRespawned = true;
-        }
-    });
-    if (!state.combatPaused) {
-        state.monsterStates.forEach(monster => {
-            if (monster.hp > 0) tickMonsterPoison(monster, elapsed);
-        });
+// All combat rules use the same 100 ms steps, including background catch-up.
+// Visual effects are returned to the caller; this function does not touch the DOM.
+function simulateCombatStep(elapsed, collectEffects = false) {
+    const previousEffects = combatEffects, previousSimulation = simulatingCombat;
+    const effects = collectEffects ? [] : null;
+    combatEffects = effects;
+    simulatingCombat = true;
+    try {
+        const map = currentMap();
+        const killsBeforeTick = state.kills[map.id];
+        const wasPaused = state.combatPaused;
         ensureLiveMonsterTarget();
-        syncLegacyEnemyState();
-        const target = activeMonster();
+        const previousTarget = activeMonster();
+        let anyRespawned = false;
         state.monsterStates.forEach(monster => {
-            if (monster.hp <= 0 || state.combatPaused) return;
-            const definition = monsterDefinition(monster, map);
-            monster.attackTimer += elapsed;
-            while (monster.attackTimer >= definition.attackInterval && !state.combatPaused) {
-                monster.attackTimer -= definition.attackInterval;
-                if (Math.random() * 100 < getEnemyHitChance(monster)) {
-                    const previousPlayerHp = state.playerHp;
-                    state.playerHp = Math.max(0, state.playerHp - definition.attackDamage);
-                    recentPlayerDamage = previousPlayerHp - state.playerHp;
-                    nudgePlayerHealthBar();
-                    elements.playerHealthDamage.classList.remove('is-visible');
-                    void elements.playerHealthDamage.offsetWidth;
-                    elements.playerHealthDamage.classList.add('is-visible');
-                    window.clearTimeout(damageFadeTimeout);
-                    damageFadeTimeout = window.setTimeout(function() {
-                        elements.playerHealthDamage.classList.remove('is-visible');
-                    }, 500);
-                    if (state.playerHp === 0) {
-                        state.combatPaused = true;
-                        state.attackTimer = 0;
-                    }
-                } else {
-                    flashDodge(elements.playerHealthTrack);
-                }
+            if (monster.hp > 0 || monster.respawnRemaining <= 0) return;
+            monster.respawnRemaining = Math.max(0, monster.respawnRemaining - elapsed);
+            if (monster.respawnRemaining === 0) {
+                monster.hp = monsterDefinition(monster, map).health;
+                monster.attackTimer = 0;
+                anyRespawned = true;
             }
         });
-        if (!target) {
-            state.attackTimer = 0;
-            if (state.kills[map.id] !== killsBeforeTick || anyRespawned) render();
-            else renderCombat();
-        } else {
-            if (!previousTarget && target || anyRespawned && previousTarget && target.id !== previousTarget.id) {
-                state.attackTimer = 0;
-            }
-            const attackInterval = getAttackSpeed();
-            state.attackTimer += elapsed;
-            while (state.attackTimer >= attackInterval && !state.combatPaused) {
-                state.attackTimer -= attackInterval;
-                const attackTargets = getPlayerAttackTargets();
-                for (let attackIndex = 0; attackIndex < attackTargets.length; attackIndex++) {
-                    const attackTarget = attackTargets[attackIndex];
-                    if (attackTarget.hp <= 0) continue;
-                    const targetCard = Array.from(elements.enemyRoster.children)
-                        .find(card => card.dataset.monsterId === attackTarget.id);
-                    if (Math.random() * 100 < getHitChance(getPlayerAccuracy(), monsterDefinition(attackTarget, map).evasion)) {
-                        const hitDamage = getDamage();
-                        if (attackIndex > 0) showMonsterHitBadge(attackTarget.id, 'MULTI-HIT', true);
-                        applyDamageToMonster(attackTarget, hitDamage, 'physical');
-                        tryApplyPoison(attackTarget);
-                        triggerShockwaveSlash(attackTarget, hitDamage);
+        if (!state.combatPaused) {
+            state.monsterStates.forEach(monster => {
+                if (monster.hp > 0) tickMonsterPoison(monster, elapsed);
+            });
+            ensureLiveMonsterTarget();
+            syncLegacyEnemyState();
+            const target = activeMonster();
+            state.monsterStates.forEach(monster => {
+                if (monster.hp <= 0 || state.combatPaused) return;
+                const definition = monsterDefinition(monster, map);
+                monster.attackTimer += elapsed;
+                while (monster.attackTimer >= definition.attackInterval && !state.combatPaused) {
+                    monster.attackTimer -= definition.attackInterval;
+                    if (Math.random() * 100 < getEnemyHitChance(monster)) {
+                        const previousPlayerHp = state.playerHp;
+                        state.playerHp = Math.max(0, state.playerHp - definition.attackDamage);
+                        const damage = previousPlayerHp - state.playerHp;
+                        presentCombatEffect(() => {
+                            recentPlayerDamage = damage;
+                            nudgePlayerHealthBar();
+                            elements.playerHealthDamage.classList.remove('is-visible');
+                            void elements.playerHealthDamage.offsetWidth;
+                            elements.playerHealthDamage.classList.add('is-visible');
+                            window.clearTimeout(damageFadeTimeout);
+                            damageFadeTimeout = window.setTimeout(() => {
+                                elements.playerHealthDamage.classList.remove('is-visible');
+                            }, 500);
+                        });
+                        if (state.playerHp === 0) {
+                            state.combatPaused = true;
+                            state.attackTimer = 0;
+                        }
                     } else {
-                        const targetTrack = targetCard && targetCard.querySelector('.health-track');
-                        if (targetTrack) flashDodge(targetTrack);
+                        flashDodge(elements.playerHealthTrack);
+                    }
+                }
+            });
+            if (!target) {
+                state.attackTimer = 0;
+            } else {
+                if (!previousTarget && target || anyRespawned && previousTarget && target.id !== previousTarget.id) {
+                    state.attackTimer = 0;
+                }
+                const attackInterval = getAttackSpeed();
+                state.attackTimer += elapsed;
+                while (state.attackTimer >= attackInterval && !state.combatPaused) {
+                    state.attackTimer -= attackInterval;
+                    const attackTargets = getPlayerAttackTargets();
+                    for (let attackIndex = 0; attackIndex < attackTargets.length; attackIndex++) {
+                        const attackTarget = attackTargets[attackIndex];
+                        if (attackTarget.hp <= 0) continue;
+                        if (Math.random() * 100 < getHitChance(getPlayerAccuracy(), monsterDefinition(attackTarget, map).evasion)) {
+                            const hitDamage = getDamage();
+                            if (attackIndex > 0) showMonsterHitBadge(attackTarget.id, 'MULTI-HIT', true);
+                            applyDamageToMonster(attackTarget, hitDamage, 'physical');
+                            tryApplyPoison(attackTarget);
+                            triggerShockwaveSlash(attackTarget, hitDamage);
+                        } else {
+                            presentCombatEffect(() => {
+                                const targetCard = Array.from(elements.enemyRoster.children)
+                                    .find(card => card.dataset.monsterId === attackTarget.id);
+                                const targetTrack = targetCard && targetCard.querySelector('.health-track');
+                                if (targetTrack) flashDodge(targetTrack);
+                            });
+                        }
                     }
                 }
             }
-            if (state.kills[map.id] !== killsBeforeTick || state.combatPaused || anyRespawned) {
-                render();
-            } else {
-                renderCombat();
+        } else {
+            state.monsterStates.forEach(monster => {
+                if (monster.hp > 0) tickMonsterPoison(monster, elapsed);
+            });
+            ensureLiveMonsterTarget();
+            syncLegacyEnemyState();
+        }
+
+        return {
+            needsRender: state.kills[map.id] !== killsBeforeTick || anyRespawned || wasPaused !== state.combatPaused,
+            effects: effects || []
+        };
+    } finally {
+        combatEffects = previousEffects;
+        simulatingCombat = previousSimulation;
+    }
+}
+
+function setCombatCatchupUi(active) {
+    if (document.hidden || combatCatchupUiActive === active) return;
+    combatCatchupUiActive = active;
+    document.querySelector('.nav-header').inert = active;
+    document.querySelector('.experience-strip').inert = active;
+    document.querySelector('main').inert = active;
+    document.querySelector('.developer-options').inert = active;
+    document.querySelector('#combatCatchupNotice').hidden = !active;
+    if (active) {
+        elements.combatStatusLabel.textContent = 'Catching up…';
+        document.querySelector('main').setAttribute('aria-busy', 'true');
+    } else {
+        document.querySelector('main').removeAttribute('aria-busy');
+    }
+}
+
+function resetCombatClock(timestamp = Date.now()) {
+    if (combatContinuation !== null) window.clearTimeout(combatContinuation);
+    combatContinuation = null;
+    lastTick = performance.now();
+    lastWallTick = Date.now();
+    lastSimulatedAt = timestamp;
+    pendingCombatSeconds = Math.max(0, (lastWallTick - timestamp) / 1000);
+    combatNeedsFullRender = true;
+    combatCatchingUp = pendingCombatSeconds >= 0.5;
+    setCombatCatchupUi(false);
+}
+
+function processCombatBacklog() {
+    const startedAt = performance.now(), effects = [];
+    const showEffects = !document.hidden && !combatCatchingUp;
+    combatStatCache = new Map();
+    try {
+        // Bound each batch, not the amount of elapsed game time. The remainder is
+        // retained and continued in another task so input and painting can run.
+        for (let steps = 0; pendingCombatSeconds + 1e-8 >= gameTickSeconds && steps < 250; steps++) {
+            let elapsed = gameTickSeconds;
+            if (state.combatPaused && state.monsterStates.every(monster => !monster.poisonStacks.length)) {
+                // Once poison expires, only respawns can change a dead player's
+                // state. Skip empty time, preserving the next 100 ms boundary.
+                const nextRespawn = Math.min(...state.monsterStates
+                    .filter(monster => monster.hp <= 0 && monster.respawnRemaining > 0)
+                    .map(monster => monster.respawnRemaining));
+                elapsed = Number.isFinite(nextRespawn)
+                    ? Math.min(pendingCombatSeconds, Math.max(gameTickSeconds,
+                        Math.ceil((nextRespawn - 1e-8) / gameTickSeconds) * gameTickSeconds))
+                    : pendingCombatSeconds;
             }
+            const result = simulateCombatStep(elapsed, showEffects);
+            pendingCombatSeconds = Math.max(0, pendingCombatSeconds - elapsed);
+            lastSimulatedAt += elapsed * 1000;
+            combatNeedsFullRender ||= result.needsRender;
+            effects.push(...result.effects);
+            if (performance.now() - startedAt >= 8) break;
+        }
+    } finally {
+        combatStatCache = null;
+    }
+    const unfinished = pendingCombatSeconds + 1e-8 >= gameTickSeconds;
+    if (unfinished) {
+        combatCatchingUp = true;
+        setCombatCatchupUi(true);
+        if (combatContinuation === null) {
+            combatContinuation = window.setTimeout(() => {
+                combatContinuation = null;
+                updateCombatClock();
+            }, 0);
         }
     } else {
-        state.monsterStates.forEach(monster => {
-            if (monster.hp > 0) tickMonsterPoison(monster, elapsed);
-        });
-        ensureLiveMonsterTarget();
-        syncLegacyEnemyState();
-        if (state.kills[map.id] !== killsBeforeTick || anyRespawned) render();
-        else renderCombat();
+        if (combatContinuation !== null) window.clearTimeout(combatContinuation);
+        combatContinuation = null;
+        setCombatCatchupUi(false);
+        if (!document.hidden) {
+            effects.forEach(effect => effect());
+            if (combatNeedsFullRender || combatCatchingUp) render();
+            else renderCombat();
+            combatNeedsFullRender = false;
+        }
+        combatCatchingUp = false;
+        showOfflineRecap();
     }
-
     if (Date.now() - lastSave >= 1000) saveGame();
-}, gameTickMilliseconds);
+}
+
+function updateCombatClock() {
+    const now = performance.now(), wallNow = Date.now();
+    // The wall clock also covers device sleep when the monotonic clock pauses.
+    const monotonicElapsed = Math.max(0, (now - lastTick) / 1000);
+    const wallElapsed = Math.max(0, (wallNow - lastWallTick) / 1000);
+    const elapsed = wallElapsed > monotonicElapsed + 1 ? wallElapsed : monotonicElapsed;
+    lastTick = now;
+    lastWallTick = wallNow;
+    pendingCombatSeconds += elapsed;
+    combatCatchingUp ||= pendingCombatSeconds >= 0.5;
+    processCombatBacklog();
+}
+
+setInterval(updateCombatClock, gameTickMilliseconds);
+if (pendingCombatSeconds >= gameTickSeconds) updateCombatClock();
 
 let skillTreePanListenersAdded = false;
 
@@ -3169,6 +3479,11 @@ renderUpgrades = function() {
 };
 
 window.addEventListener('beforeunload', saveGame);
+window.addEventListener('pagehide', saveGame);
 document.addEventListener('visibilitychange', function() {
     if (document.visibilityState === 'hidden') saveGame();
+    else {
+        combatNeedsFullRender = true;
+        updateCombatClock();
+    }
 });

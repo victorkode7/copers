@@ -3,7 +3,11 @@
     const check = (label, ok) => { checks.push((ok ? 'PASS ' : 'FAIL ') + label); if (!ok) throw new Error(label); };
     const near = (a, b) => Math.abs(a - b) < 0.000001;
     const priorRandom = Math.random;
-    const tick = () => { lastTick = performance.now() - 1000; smokeIntervals.at(-1)(); };
+    const tick = () => {
+        const result = simulateCombatStep(gameTickSeconds, true);
+        result.effects.forEach(effect => effect());
+        if (result.needsRender) render(); else renderCombat();
+    };
     try {
         const map = currentMap(), monsterId = worldContent.monsters[0].id;
         map.drops = []; map.itemDrops = [];

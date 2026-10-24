@@ -7,13 +7,12 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/nav.css">
     <link rel="stylesheet" href="css/app-nav.css">
-    <link rel="stylesheet" href="css/game.css?v=20261024-6">
+    <link rel="stylesheet" href="css/game.css?v=20261025-3">
     <link rel="stylesheet" href="css/equipment-effects.css?v=1">
     <link rel="stylesheet" href="css/world-game.css?v=7">
     <link rel="stylesheet" href="css/skill-tree-background.css?v=20261021-18">
     <link rel="stylesheet" href="css/inventory-categories.css?v=2">
     <link rel="stylesheet" href="css/loot-effects.css?v=6">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <title>Idle Adventure</title>
 </head>
 <body class="idle-adventure">
@@ -26,7 +25,7 @@
         </nav>
         <nav class="nav-header">
             <a class="logo" href="index.html">
-                <img src="https://picfiles.alphacoders.com/498/thumb-1920-498797.png" alt="Idle Adventure">
+                <img src="assets/ui/adventure-logo.png" alt="Idle Adventure">
             </a>
             <section id="tutorialNotifications" class="tutorial-notifications" aria-label="Progress tips" hidden></section>
             <ul class="navbar">
@@ -40,6 +39,7 @@
         </nav>
     </header>
 
+    <p id="combatCatchupNotice" class="combat-catchup-notice" role="status" hidden>Catching up on your adventure…</p>
     <section class="experience-strip" aria-label="Character experience">
         <div class="experience-meta">
             <strong id="levelDisplay">Level 0</strong>
@@ -214,6 +214,33 @@
           <ol id="lootLog" class="loot-list loot-panel-content" aria-live="polite"></ol>
       </details>
     </main>
+    <dialog id="offlineRecap" class="offline-recap" aria-labelledby="offlineRecapHeading" aria-describedby="offlineRecapTime">
+        <header class="offline-recap-header">
+            <div>
+                <span class="eyebrow">WHILE YOU WERE AWAY</span>
+                <h2 id="offlineRecapHeading">Welcome back!</h2>
+                <p id="offlineRecapTime" class="subtle"></p>
+            </div>
+            <button id="offlineRecapClose" class="offline-recap-close" type="button" aria-label="Close offline recap">×</button>
+        </header>
+        <div class="offline-recap-content">
+            <div class="offline-recap-stats">
+                <section aria-label="Gold gained"><span>Gold gained</span><strong id="offlineRecapGold"></strong></section>
+                <section aria-label="Experience gained"><span>Experience gained</span><strong id="offlineRecapXp"></strong><small id="offlineRecapLevels"></small></section>
+            </div>
+            <p id="offlineRecapDeath" class="offline-recap-death" hidden>Your adventurer fell while you were away. Revive to continue battling.</p>
+            <section aria-labelledby="offlineRecapMaterialsHeading">
+                <h3 id="offlineRecapMaterialsHeading">Materials found</h3>
+                <ul id="offlineRecapMaterials" class="offline-recap-rewards"></ul>
+            </section>
+            <section aria-labelledby="offlineRecapItemsHeading">
+                <h3 id="offlineRecapItemsHeading">Equipment found</h3>
+                <ul id="offlineRecapItems" class="offline-recap-rewards"></ul>
+            </section>
+        </div>
+        <footer class="offline-recap-footer"><button id="offlineRecapContinue" class="nav-button" type="button" autofocus>Continue</button></footer>
+    </dialog>
+    <p id="offlinePlayStatus" class="offline-play-status" role="status" hidden></p>
     <footer class="developer-options"><details><summary>Developer options</summary><label><input id="developerItems" type="checkbox"> Enable developer equipment</label><label><input id="developerTravel" type="checkbox"> Skip kill requirements — unlock all maps and worlds</label></details></footer>
     <script src="js/items.js?v=20261021-2"></script>
     <script src="js/item-system.js?v=20261023-1"></script>
@@ -224,6 +251,7 @@
     <script src="js/world-content.js?v=20261024-2"></script>
     <script src="js/world-system.js?v=20261024-3"></script>
     <script src="js/loot-effects.js?v=6"></script>
-    <script src="js/game.js?v=20261024-13"></script>
+    <script src="js/game.js?v=20261025-2"></script>
+    <script src="js/offline-play.js?v=20261025-1"></script>
 </body>
 </html>

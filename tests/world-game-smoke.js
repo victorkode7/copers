@@ -33,6 +33,7 @@
         const hp = state.playerHp;
         enemy.attackTimer = archer.attackInterval; state.attackTimer = 0;
         Math.random = () => 0;
+        lastTick = performance.now() - 101;
         smokeIntervals.at(-1)();
         check('combat applies the attacking monster’s damage and timing', state.playerHp === hp - 7 && enemy.attackTimer < archer.attackInterval);
         const gold = state.gold, gel = state.materials.gel, xp = state.experience;

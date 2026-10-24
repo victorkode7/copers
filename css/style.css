@@ -1,5 +1,5 @@
 body{
-    background-image: url('https://images.alphacoders.com/133/thumb-1920-1333782.jpeg');
+    background-image: url('../assets/ui/site-background.jpeg');
     background-color: var(--color-abyss);
     color:var(--color-text);
     font-size: var(--font-default-size);
