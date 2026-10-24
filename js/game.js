@@ -630,6 +630,83 @@ function mapIsUnlocked(maps, index) {
     return state.kills[maps[index - 1].id] >= maps[index - 1].goal;
 }
 
+function mapTravelAccess(mapId) {
+    const map = mapData.find(entry => entry.id === mapId), world = worldForMap(mapId);
+    if (!map || !world) return {unlocked: false, reason: 'Location unavailable.'};
+    const worldIndex = worldData.indexOf(world), maps = mapsForWorld(world.id);
+    if (!worldIsUnlocked(worldIndex)) {
+        const previousWorld = worldData[worldIndex - 1];
+        const finalMap = mapData.find(entry => entry.id === previousWorld?.mapIds.at(-1));
+        return {unlocked: false, reason: 'Clear ' + (finalMap?.name || 'the previous world') + ' to unlock ' + world.name + '.'};
+    }
+    const index = maps.findIndex(entry => entry.id === mapId);
+    if (!mapIsUnlocked(maps, index)) {
+        const previous = maps[index - 1];
+        return {unlocked: false, reason: 'Get ' + formatAmount(previous.goal) + ' kills in ' + previous.name + '.'};
+    }
+    return {unlocked: true, map, world};
+}
+
+function createMaterialLocation(source) {
+    const location = document.createElement('button'); location.type = 'button';
+    location.className = 'material-location-link';
+    const access = mapTravelAccess(source.mapId);
+    location.dataset.materialMap = source.mapId || '';
+    location.textContent = source.location + (access.unlocked ? '' : ' · Locked');
+    location.disabled = !access.unlocked;
+    location.title = access.unlocked ? 'Travel to ' + source.location + ' · ' + access.world.name : access.reason;
+    location.setAttribute('aria-label', access.unlocked ? location.title : source.location + '. Locked. ' + access.reason);
+    return location;
+}
+
+function travelToMap(mapId) {
+    const access = mapTravelAccess(mapId);
+    if (!access.unlocked) return false;
+    const {map: selected, world} = access;
+    const changedMap = state.selectedMap !== selected.id;
+    const tutorialNextMap = state.tutorials.firstNextMapPending || state.tutorials.firstMapGoalPending ? nextUnlockedMap() : null;
+    state.selectedWorld = world.id;
+    state.selectedMap = selected.id;
+    if (selected === tutorialNextMap) {
+        state.tutorials.firstNextMapPending = false;
+        if (state.tutorials.firstMapGoalPending) {
+            state.tutorials.firstMapGoalPending = false;
+            state.tutorials.firstMapGoalDismissed = true;
+        }
+    }
+    state.lastMapByWorld[world.id] = selected.id;
+    state.mapListExpanded = false;
+    if (changedMap) {
+        resetMonsterStates(selected);
+        clearEnemyDamageIndicator();
+        state.attackTimer = 0;
+        state.lastDrop = 'Defeat enemies to find loot.';
+        state.lastLoot = null;
+    }
+    state.isInTown = false;
+    state.currentView = 'map';
+    document.querySelectorAll('.craft-material-tooltip:popover-open').forEach(panel => panel.hidePopover());
+    render();
+    window.scrollTo(0, 0);
+    if (changedMap && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        elements.combatPanel.animate([{opacity: .72, transform: 'translateY(6px)'}, {opacity: 1, transform: 'translateY(0)'}], {duration: 260, easing: 'ease-out'});
+    }
+    saveGame();
+    return true;
+}
+
+function toggleMaterialSources(button) {
+    const panel = document.getElementById(button.dataset.materialInfo);
+    if (!panel) return;
+    if (panel.matches(':popover-open')) { panel.hidePopover(); button.setAttribute('aria-expanded', 'false'); return; }
+    panel.showPopover();
+    button.setAttribute('aria-expanded', 'true');
+    const bounds = button.getBoundingClientRect(), rect = panel.getBoundingClientRect();
+    panel.style.left = Math.max(12, Math.min(document.documentElement.clientWidth - rect.width - 12, bounds.left)) + 'px';
+    panel.style.top = Math.max(12, Math.min(innerHeight - rect.height - 12,
+        bounds.bottom + 8 + rect.height <= innerHeight - 12 ? bounds.bottom + 8 : bounds.top - rect.height - 8)) + 'px';
+}
+
 function nextUnlockedMap() {
     const maps = mapsForWorld(state.selectedWorld);
     const currentIndex = maps.findIndex(map => map.id === state.selectedMap);
@@ -1426,11 +1503,17 @@ function renderCrafting() {
                 const accessibleSources = sources.map(source => source.enemy + ' in ' + source.location).join('; ');
                 sourceInfo.setAttribute('aria-label', 'Drop source for ' + materialNames[id] + ': Drops from ' + accessibleSources);
                 const tooltipId = 'craft-source-' + recipe.id + '-' + id;
-                sourceInfo.setAttribute('aria-describedby', tooltipId);
+                sourceInfo.dataset.materialInfo = tooltipId;
+                sourceInfo.setAttribute('aria-controls', tooltipId);
+                sourceInfo.setAttribute('aria-expanded', 'false');
+                sourceInfo.setAttribute('aria-haspopup', 'dialog');
                 const tooltip = document.createElement('span');
                 tooltip.id = tooltipId;
                 tooltip.className = 'craft-material-tooltip';
-                tooltip.setAttribute('role', 'tooltip');
+                tooltip.setAttribute('popover', 'auto');
+                tooltip.setAttribute('role', 'dialog');
+                tooltip.setAttribute('aria-label', 'Drop locations for ' + materialNames[id]);
+                tooltip.addEventListener('toggle', () => sourceInfo.setAttribute('aria-expanded', String(tooltip.matches(':popover-open'))));
                 const tooltipHeading = document.createElement('strong');
                 tooltipHeading.textContent = 'Drops from:';
                 tooltip.appendChild(tooltipHeading);
@@ -1439,8 +1522,7 @@ function renderCrafting() {
                     sourceEntry.className = 'craft-material-tooltip-source';
                     const enemy = document.createElement('span');
                     enemy.textContent = source.enemy;
-                    const location = document.createElement('small');
-                    location.textContent = source.location;
+                    const location = createMaterialLocation(source);
                     sourceEntry.append(enemy, location);
                     tooltip.appendChild(sourceEntry);
                 });
@@ -1657,6 +1739,12 @@ function renderInventory() {
         lastRenderedGearSignature = gearSignature;
     }
 
+    const materialsVisible = state.currentView === 'inventory' && !elements.inventoryView.querySelector('.materials-panel').hidden;
+    const expandedMaterials = new Set(materialsVisible
+        ? [...elements.inventory.querySelectorAll('details[open]')].map(entry => entry.dataset.materialId) : []);
+    const focusedMaterial = materialsVisible && elements.inventory.contains(document.activeElement)
+        ? document.activeElement.closest('.material-entry')?.dataset.materialId : null;
+    const focusedMaterialMap = document.activeElement?.dataset.materialMap;
     elements.inventory.innerHTML = '';
     const ownedMaterials = Object.entries(materialNames).filter(([id]) => state.materials[id] > 0);
     if (ownedMaterials.length === 0) {
@@ -1666,22 +1754,43 @@ function renderInventory() {
         elements.inventory.appendChild(empty);
     }
     ownedMaterials.forEach(([id, name]) => {
-        const entry = document.createElement('div');
+        const entry = document.createElement('details');
         entry.className = 'material-entry';
+        entry.dataset.materialId = id;
+        entry.open = expandedMaterials.has(id);
+        const summary = document.createElement('summary'); summary.className = 'material-summary';
         const identity = document.createElement('span');
         identity.className = 'material-identity';
         const material = itemData.materialDetails?.[id];
         identity.appendChild(Equipment.createIcon(material, '◇'));
-        const copy = document.createElement('span');
-        const label = document.createElement('span'); label.textContent = name; copy.appendChild(label);
-        if (material?.description) {
-            const description = document.createElement('small'); description.textContent = material.description; copy.appendChild(description);
-        }
-        identity.appendChild(copy);
+        const label = document.createElement('span'); label.textContent = name; label.title = name;
+        identity.appendChild(label);
         const count = document.createElement('strong'); count.textContent = formatAmount(state.materials[id]);
-        entry.append(identity, count);
+        const toggle = document.createElement('span'); toggle.className = 'material-toggle'; toggle.setAttribute('aria-hidden', 'true');
+        summary.append(identity, count, toggle);
+        const details = document.createElement('div'); details.className = 'material-details';
+        const description = document.createElement('p'); description.className = 'material-description';
+        description.textContent = material?.description || 'No description available.';
+        const heading = document.createElement('h3'); heading.textContent = 'Drops from';
+        const sources = document.createElement('ul'); sources.className = 'material-sources';
+        for (const source of materialSources[id] || []) {
+            const location = document.createElement('li');
+            const enemy = document.createElement('span'); enemy.textContent = source.enemy;
+            const map = createMaterialLocation(source);
+            location.append(enemy, map); sources.append(location);
+        }
+        if (!sources.childElementCount) {
+            const empty = document.createElement('li'); empty.textContent = 'No known drop locations.'; sources.append(empty);
+        }
+        details.append(description, heading, sources);
+        entry.append(summary, details);
         elements.inventory.appendChild(entry);
     });
+    if (focusedMaterial) {
+        const entry = [...elements.inventory.children].find(entry => entry.dataset.materialId === focusedMaterial);
+        const location = [...(entry?.querySelectorAll('[data-material-map]') || [])].find(button => button.dataset.materialMap === focusedMaterialMap);
+        (location || entry?.querySelector('summary'))?.focus({preventScroll: true});
+    }
 }
 
 function renderTutorialNotifications() {
@@ -2103,6 +2212,7 @@ function renderCombat() {
     elements.combatStatus.classList.toggle('is-fighting', !state.combatPaused && Boolean(target));
     elements.resumeCombat.hidden = !state.combatPaused || state.currentView !== 'map';
     renderLootNotice();
+    window.LootEffects?.sync(state.currentView === 'map', map.id);
 }
 
 function render() {
@@ -2236,6 +2346,20 @@ function defeatEnemy(monster) {
 
     const defeatedCard = Array.from(elements.enemyRoster.children)
         .find(card => card.dataset.monsterId === monster.id);
+    if (state.currentView === 'map') {
+        const rewards = [
+            ...(gold > 0 ? [{key: 'gold', name: 'Gold', amount: gold, gold: true}] : []),
+            ...Array.from(lootMaterials, ([id, amount]) => ({
+                key: 'material:' + id, name: materialNames[id], amount,
+                sprite: itemData.materialDetails?.[id]?.sprite
+            })),
+            ...equipment.map(id => ({
+                key: 'equipment:' + id, name: itemById[id].name, amount: 1,
+                sprite: itemById[id].sprite, rarity: itemById[id].rarity, equipment: true
+            }))
+        ];
+        window.LootEffects?.drop(rewards, defeatedCard?.querySelector('.enemy-mark') || defeatedCard, map.id);
+    }
     if (defeatedCard) {
         defeatedCard.classList.remove('is-defeating');
         void defeatedCard.offsetWidth;
@@ -2556,38 +2680,7 @@ elements.mapList.addEventListener('click', function(event) {
         window.scrollTo(0, 0);
         return;
     }
-    const tutorialNextMap = state.tutorials.firstNextMapPending || state.tutorials.firstMapGoalPending
-        ? nextUnlockedMap()
-        : null;
-    state.selectedMap = selected.id;
-    if (selected === tutorialNextMap) {
-        state.tutorials.firstNextMapPending = false;
-        if (state.tutorials.firstMapGoalPending) {
-            state.tutorials.firstMapGoalPending = false;
-            state.tutorials.firstMapGoalDismissed = true;
-        }
-    }
-    state.lastMapByWorld[state.selectedWorld] = selected.id;
-    state.mapListExpanded = false;
-    resetMonsterStates(selected);
-    clearEnemyDamageIndicator();
-    state.attackTimer = 0;
-    state.isInTown = false;
-    state.currentView = 'map';
-    state.lastDrop = 'Defeat enemies to find loot.';
-    state.lastLoot = null;
-    render();
-    window.scrollTo(0, 0);
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        elements.combatPanel.animate(
-            [
-                { opacity: 0.72, transform: 'translateY(6px)' },
-                { opacity: 1, transform: 'translateY(0)' }
-            ],
-            { duration: 260, easing: 'ease-out' }
-        );
-    }
-    saveGame();
+    travelToMap(selected.id);
 });
 
 elements.upgrades.addEventListener('click', function(event) {
@@ -2683,8 +2776,17 @@ elements.upgrades.addEventListener('click', function(event) {
 });
 
 elements.crafts.addEventListener('click', function(event) {
+    const info = event.target.closest('[data-material-info]');
+    if (info) { toggleMaterialSources(info); return; }
+    const location = event.target.closest('[data-material-map]');
+    if (location) { if (!location.disabled) travelToMap(location.dataset.materialMap); return; }
     const button = event.target.closest('[data-craft]');
     if (button && !button.disabled) craftGear(button.dataset.craft);
+});
+
+elements.inventory.addEventListener('click', function(event) {
+    const location = event.target.closest('[data-material-map]');
+    if (location && !location.disabled) travelToMap(location.dataset.materialMap);
 });
 
 elements.craftingTools.addEventListener('click', function(event) {

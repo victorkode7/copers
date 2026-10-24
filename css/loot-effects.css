@@ -1,0 +1,108 @@
+/* Transient rewards appear beside the combat status. The existing loot log is
+   the permanent record; this overlay has no panels or controls. */
+.idle-adventure .loot-effects {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    pointer-events: none;
+    overflow: hidden;
+}
+.idle-adventure .loot-drop-row {
+    position: absolute;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    gap: 6px;
+}
+.idle-adventure .loot-drop-row[hidden] { display: none; }
+.idle-adventure .loot-drop {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1 1 40px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    gap: 3px;
+    color: #f4ffe3;
+    text-align: center;
+    text-shadow: 1px 2px 0 #000, -1px -1px 0 #000, 0 0 5px #000;
+    filter: drop-shadow(0 2px 2px #0009);
+    will-change: transform, opacity;
+}
+.idle-adventure .loot-drop .item-sprite { width: 64px; max-width: 100%; height: 64px; flex: 0 0 64px; font-size: 1.7rem; }
+.idle-adventure .loot-drop .item-sprite img { width: 32px; height: 32px; }
+.idle-adventure .loot-material-visual { position: relative; width: 40px; max-width: 100%; height: 64px; flex: 0 0 64px; }
+.idle-adventure .loot-material-visual > .item-sprite { width: 100%; }
+.idle-adventure .loot-material-visual > .loot-drop-amount {
+    position: absolute;
+    z-index: 1;
+    top: 8px;
+    right: 2px;
+    max-width: calc(100% - 4px);
+    padding: 1px 2px;
+    border-radius: 3px;
+    background: #0c151dc9;
+    color: #f4ffe3;
+    font-size: .7rem;
+}
+.idle-adventure .loot-drop-amount { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .8rem; line-height: 1.2; }
+.idle-adventure .loot-drop-gold { flex-basis: 48px; color: #ffdc72; }
+.idle-adventure .loot-drop-gold .loot-drop-amount { font-size: 1rem; }
+.idle-adventure .loot-drop-gold .loot-drop-amount { display: grid; place-items: center; height: 64px; }
+.idle-adventure .loot-drop-equipment { flex-basis: 112px; gap: 3px; isolation: isolate; }
+.idle-adventure .loot-drop-equipment .item-sprite { color: var(--item-rarity); filter: drop-shadow(0 0 6px var(--item-rarity)); }
+.idle-adventure .loot-drop-equipment .item-sprite img { width: 64px; height: 64px; }
+.idle-adventure .loot-drop.is-persistent { pointer-events: auto; cursor: pointer; border-radius: 5px; }
+.idle-adventure .loot-drop.is-dismissing { pointer-events: none; cursor: default; }
+.idle-adventure .loot-drop.is-persistent:hover .loot-drop-name { text-decoration: underline; }
+.idle-adventure .loot-drop.is-persistent:focus-visible { outline: 2px solid var(--item-rarity); outline-offset: 5px; }
+.idle-adventure .loot-drop-name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    max-width: 100%;
+    color: var(--item-rarity);
+    font-size: .75rem;
+    line-height: 1.5;
+}
+.idle-adventure .loot-drop-equipment.is-special::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    top: -80px;
+    left: calc(50% - 24px);
+    width: 48px;
+    height: 140px;
+    background: linear-gradient(transparent, color-mix(in srgb, var(--item-rarity) 65%, transparent));
+    clip-path: polygon(35% 0, 65% 0, 100% 100%, 0 100%);
+}
+.idle-adventure .loot-drop-equipment.is-special::after {
+    content: '✦';
+    position: absolute;
+    top: 0;
+    left: calc(50% + 28px);
+    color: var(--item-rarity);
+    font-size: 1.2rem;
+    text-shadow: -58px 20px 0 var(--item-rarity), -8px -28px 0 var(--item-rarity);
+    animation: loot-drop-sparkle 600ms ease-in-out 3 alternate;
+}
+.idle-adventure .loot-plate-flash {
+    position: absolute;
+    border: 2px solid var(--item-rarity);
+    border-radius: 14px;
+    box-shadow: inset 0 0 22px color-mix(in srgb, var(--item-rarity) 24%, transparent), 0 0 14px color-mix(in srgb, var(--item-rarity) 45%, transparent);
+}
+@keyframes loot-drop-sparkle {
+    from { opacity: .3; transform: scale(.7) rotate(-12deg); }
+    to { opacity: 1; transform: scale(1.1) rotate(12deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .idle-adventure .loot-drop-equipment.is-special::after { animation: none; }
+    .idle-adventure .loot-drop-equipment.is-special::before { opacity: .45; }
+}

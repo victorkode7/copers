@@ -2153,7 +2153,7 @@ html {
     font-size: 0.62rem;
     font-weight: 800;
     line-height: 1;
-    cursor: help;
+    cursor: pointer;
 }
 
 .idle-adventure .craft-material-info-wrap {
@@ -2163,13 +2163,14 @@ html {
 }
 
 .idle-adventure .craft-material-tooltip {
-    position: absolute;
+    position: fixed;
     z-index: 20;
-    bottom: calc(100% + 7px);
-    left: 0;
+    inset: auto;
+    margin: 0;
     display: grid;
-    min-width: 150px;
-    max-width: min(250px, calc(100vw - 32px));
+    width: min(260px, calc(100vw - 24px));
+    max-height: min(320px, calc(100dvh - 24px));
+    overflow: auto;
     gap: 0.35rem;
     padding: 0.6rem 0.7rem;
     border: 1px solid rgba(173, 221, 211, 0.3);
@@ -2179,19 +2180,11 @@ html {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
     font-size: 0.72rem;
     line-height: 1.25;
-    visibility: hidden;
-    opacity: 0;
-    transform: translateY(3px);
-    transition: opacity 120ms ease, transform 120ms ease, visibility 120ms ease;
-    pointer-events: none;
+    overflow-wrap: anywhere;
 }
-
-.idle-adventure .craft-material-info-wrap:hover .craft-material-tooltip,
-.idle-adventure .craft-material-info-wrap:focus-within .craft-material-tooltip {
-    visibility: visible;
-    opacity: 1;
-    transform: translateY(0);
-}
+.idle-adventure .craft-material-tooltip:not(:popover-open) { display: none; }
+.idle-adventure .craft-material-tooltip:popover-open { pointer-events: auto; }
+.idle-adventure .craft-material-tooltip::backdrop { background: transparent; }
 
 .idle-adventure .craft-material-tooltip > strong {
     color: var(--adventure-green);
@@ -2283,6 +2276,7 @@ html {
 
 .idle-adventure .inventory-list {
     display: grid;
+    align-items: start;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.75rem;
     margin: 1rem 0 0;
@@ -2299,27 +2293,66 @@ html {
 }
 
 .idle-adventure .material-entry {
-    display: flex;
-    min-height: 68px;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.85rem 1rem;
+    min-width: 0;
+    padding: 0;
     border: 1px solid var(--adventure-border);
-    border-radius: 10px;
+    border-radius: 8px;
     background: var(--adventure-card);
     color: var(--adventure-text);
-    font-size: 0.95rem;
+    font-size: 0.82rem;
 }
 
-.idle-adventure .material-entry strong {
+.idle-adventure .material-summary {
+    display: flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 7px;
+    list-style: none;
+    cursor: pointer;
+}
+.idle-adventure .material-summary::-webkit-details-marker { display: none; }
+.idle-adventure .material-summary:hover { background: rgba(101, 223, 181, 0.07); }
+.idle-adventure .material-summary:focus-visible { outline: 2px solid var(--adventure-green); outline-offset: 2px; }
+.idle-adventure .material-summary > strong {
+    flex: 0 0 auto;
     color: var(--adventure-green);
     font-variant-numeric: tabular-nums;
-    font-size: 1.05rem;
+    font-size: 0.85rem;
 }
-.idle-adventure .material-identity { display: flex; align-items: center; gap: .75rem; min-width: 0; }
-.idle-adventure .material-identity small { display: block; color: var(--adventure-muted); margin-top: .25rem; overflow-wrap: anywhere; }
-.idle-adventure .material-identity .item-sprite { width: 40px; height: 40px; flex: 0 0 40px; }
+.idle-adventure .material-identity { display: flex; align-items: center; gap: .4rem; min-width: 0; flex: 1; }
+.idle-adventure .material-identity > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.idle-adventure .material-identity .item-sprite { width: 32px; height: 32px; flex: 0 0 32px; }
+.idle-adventure .material-toggle { flex: 0 0 10px; color: var(--adventure-muted); text-align: center; }
+.idle-adventure .material-toggle::before { content: '+'; }
+.idle-adventure .material-entry[open] .material-toggle::before { content: '−'; }
+.idle-adventure .material-details { padding: .7rem; border-top: 1px solid var(--adventure-border); overflow-wrap: anywhere; }
+.idle-adventure .material-description { margin: 0 0 .7rem; color: var(--adventure-muted); font-size: .75rem; line-height: 1.6; }
+.idle-adventure .material-details h3 { margin: 0 0 .4rem; color: var(--adventure-green); font-size: .75rem; }
+.idle-adventure .material-sources { display: grid; gap: .45rem; font-size: .75rem; line-height: 1.5; }
+.idle-adventure .material-sources li { display: grid; gap: .1rem; }
+.idle-adventure .material-sources small { color: var(--adventure-muted); font-size: .7rem; }
+.idle-adventure .material-location-link {
+    justify-self: start;
+    max-width: 100%;
+    min-height: 28px;
+    padding: .15rem 0;
+    border: 0;
+    background: none;
+    color: var(--adventure-blue);
+    font: inherit;
+    font-size: .75rem;
+    text-align: left;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+}
+.idle-adventure .material-location-link:hover:not(:disabled) { color: var(--adventure-green); }
+.idle-adventure .material-location-link:disabled { color: var(--adventure-muted); text-decoration: none; cursor: not-allowed; opacity: .75; }
+.idle-adventure .material-location-link:focus-visible { outline: 2px solid var(--adventure-green); outline-offset: 3px; border-radius: 2px; }
 .idle-adventure .craft-material-label .item-sprite { width: 24px; height: 24px; flex: 0 0 24px; }
 
 .idle-adventure .gear-summary {

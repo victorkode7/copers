@@ -613,7 +613,12 @@ window.adventureWorld = {
                     ]
                 }
             ],
-            "itemDrops": [],
+            "itemDrops": [
+                {
+                    "id": "slimyNecklace",
+                    "chance": 1
+                }
+            ],
             "sprite": "assets/monsters/boar-1620e233.png",
             "id": "monster_eafa130d278dd6781312c386",
             "name": "Boar"
@@ -743,7 +748,16 @@ window.adventureWorld = {
                 1,
                 2
             ],
-            "drops": [],
+            "drops": [
+                {
+                    "id": "material_630e87734f9c2d4f706637f4",
+                    "chance": 1,
+                    "amount": [
+                        1,
+                        3
+                    ]
+                }
+            ],
             "itemDrops": [],
             "sprite": "assets/monsters/shyshark-fe7ec85c.png",
             "id": "monster_2b106413992cce9313c20ce7",
@@ -761,7 +775,16 @@ window.adventureWorld = {
                 1,
                 2
             ],
-            "drops": [],
+            "drops": [
+                {
+                    "id": "material_5f1658126246b7b3a5ede35d",
+                    "chance": 1,
+                    "amount": [
+                        2,
+                        4
+                    ]
+                }
+            ],
             "itemDrops": [],
             "sprite": "assets/monsters/warturtle-53f1878e.png",
             "id": "monster_37c07d183899f5c7036ac09f",
@@ -779,7 +802,16 @@ window.adventureWorld = {
                 1,
                 2
             ],
-            "drops": [],
+            "drops": [
+                {
+                    "id": "material_062b4fbe63e85e9a00f80a92",
+                    "chance": 1,
+                    "amount": [
+                        1,
+                        1
+                    ]
+                }
+            ],
             "itemDrops": [],
             "sprite": "assets/monsters/snowman-b8807e5c.png",
             "id": "monster_a4ff3e8e7127d10b1532501d",
@@ -797,7 +829,16 @@ window.adventureWorld = {
                 1,
                 2
             ],
-            "drops": [],
+            "drops": [
+                {
+                    "id": "material_84c44258b76b2d4efca9f050",
+                    "chance": 0.5,
+                    "amount": [
+                        1,
+                        1
+                    ]
+                }
+            ],
             "itemDrops": [],
             "sprite": "assets/monsters/big-penguin-3e7b66e8.png",
             "id": "monster_6352a14e888ed3fba2f151cd",
@@ -815,7 +856,16 @@ window.adventureWorld = {
                 1,
                 2
             ],
-            "drops": [],
+            "drops": [
+                {
+                    "id": "material_c5b9f767dd84fce3cc950ab7",
+                    "chance": 1,
+                    "amount": [
+                        1,
+                        3
+                    ]
+                }
+            ],
             "itemDrops": [],
             "sprite": "assets/monsters/icecube-b46d62a8.png",
             "id": "monster_ed1a656d3be2e7df0597f4f8",
@@ -833,7 +883,16 @@ window.adventureWorld = {
                 1,
                 2
             ],
-            "drops": [],
+            "drops": [
+                {
+                    "id": "material_b1c43d6c0bc463c355442072",
+                    "chance": 1,
+                    "amount": [
+                        1,
+                        1
+                    ]
+                }
+            ],
             "itemDrops": [],
             "sprite": "assets/monsters/polarbear-306b12ef.png",
             "id": "monster_2b10a0e61bd5ebd4e8050372",
@@ -851,7 +910,16 @@ window.adventureWorld = {
                 1,
                 2
             ],
-            "drops": [],
+            "drops": [
+                {
+                    "id": "material_09adb7d7fc1d647bac41b75d",
+                    "chance": 1,
+                    "amount": [
+                        1,
+                        3
+                    ]
+                }
+            ],
             "itemDrops": [],
             "sprite": "assets/monsters/tricolorbat-32d6e920.png",
             "id": "monster_70bf3d6d118e73ac85dee0cd",
@@ -869,7 +937,16 @@ window.adventureWorld = {
                 1,
                 2
             ],
-            "drops": [],
+            "drops": [
+                {
+                    "id": "material_9dcedc16887f1776d1611c8d",
+                    "chance": 1,
+                    "amount": [
+                        1,
+                        3
+                    ]
+                }
+            ],
             "itemDrops": [],
             "sprite": "assets/monsters/snowflake-bb1a2ed1.png",
             "id": "monster_3092b7b9b1bd23e7e2ad2b39",
@@ -887,7 +964,16 @@ window.adventureWorld = {
                 1,
                 2
             ],
-            "drops": [],
+            "drops": [
+                {
+                    "id": "material_b6b0c78bdb1d374fbf5b4a1c",
+                    "chance": 1,
+                    "amount": [
+                        1,
+                        1
+                    ]
+                }
+            ],
             "itemDrops": [],
             "sprite": "assets/monsters/notapokemon-f90ba127.png",
             "id": "monster_365f8e73c6121c5189836468",
@@ -905,7 +991,16 @@ window.adventureWorld = {
                 1,
                 2
             ],
-            "drops": [],
+            "drops": [
+                {
+                    "id": "material_985927188da978e5f7fa3e5c",
+                    "chance": 1,
+                    "amount": [
+                        1,
+                        1
+                    ]
+                }
+            ],
             "itemDrops": [],
             "sprite": "assets/monsters/iceboss3-b95fcecc.png",
             "id": "monster_f53770c6f3cb487158c3604f",

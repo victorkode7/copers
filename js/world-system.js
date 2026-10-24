@@ -67,7 +67,7 @@
         data.maps.forEach(map => definitions(data, map).forEach(monster => {
             [...(map.drops || []), ...(monster.drops || [])].filter(drop => drop.chance > 0).forEach(drop => {
                 const entries = result[drop.id] ||= [];
-                if (!entries.some(entry => entry.enemy === monster.name && entry.location === map.name)) entries.push({enemy: monster.name, location: map.name});
+                if (!entries.some(entry => entry.enemy === monster.name && entry.mapId === map.id)) entries.push({enemy: monster.name, location: map.name, mapId: map.id});
             });
         }));
         return result;

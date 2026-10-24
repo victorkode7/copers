@@ -48,11 +48,20 @@ window.adventureItems = {
         "gel": "Slime",
         "ore": "Ember Ore",
         "crystal": "Glow Crystal",
-        "cinderHoof": "Cinder Hoof",
         "singedMane": "Spicy snakeskin",
         "pearl": "Sea Pearl",
         "material_0e547cc411cb91fce7c30162": "Tusk",
-        "material_1b4e649727a05b3ad2ec7f8a": "Honeycomb"
+        "material_1b4e649727a05b3ad2ec7f8a": "Honeycomb",
+        "material_630e87734f9c2d4f706637f4": "Shark fin",
+        "material_5f1658126246b7b3a5ede35d": "Turtle Shell",
+        "material_062b4fbe63e85e9a00f80a92": "Carrot",
+        "material_84c44258b76b2d4efca9f050": "Shiny pebble",
+        "material_c5b9f767dd84fce3cc950ab7": "Ice shavings",
+        "material_b1c43d6c0bc463c355442072": "Wheel",
+        "material_09adb7d7fc1d647bac41b75d": "Ice cream",
+        "material_9dcedc16887f1776d1611c8d": "Snowflake",
+        "material_985927188da978e5f7fa3e5c": "Prismatic crystal",
+        "material_b6b0c78bdb1d374fbf5b4a1c": "Eye"
     },
     "items": [
         {
@@ -214,10 +223,10 @@ window.adventureItems = {
             "slot": "necklace",
             "rarity": "unique",
             "description": "",
-            "sprite": "",
+            "sprite": "assets/items/Slimy-Necklace-33b2b95e.png",
             "stats": {
-                "damage": 10,
-                "attackSpeedMultiplier": 1.1111111111111112
+                "damage": 3,
+                "attackSpeedMultiplier": 1.11
             },
             "recipe": null
         },
@@ -345,6 +354,50 @@ window.adventureItems = {
         "material_1b4e649727a05b3ad2ec7f8a": {
             "description": "Worth every mile of running for your life.",
             "sprite": "assets/materials/material_1b4e649727a05b3ad2ec7f8a-d2336d06.png"
+        },
+        "crystal": {
+            "description": "",
+            "sprite": "assets/materials/crystal-35b35dec.png"
+        },
+        "material_630e87734f9c2d4f706637f4": {
+            "description": "",
+            "sprite": "assets/materials/material_630e87734f9c2d4f706637f4-fc77876d.png"
+        },
+        "material_5f1658126246b7b3a5ede35d": {
+            "description": "",
+            "sprite": "assets/materials/material_5f1658126246b7b3a5ede35d-091337b8.png"
+        },
+        "material_062b4fbe63e85e9a00f80a92": {
+            "description": "How'd this get here?",
+            "sprite": "assets/materials/material_062b4fbe63e85e9a00f80a92-2154a9ea.png"
+        },
+        "material_84c44258b76b2d4efca9f050": {
+            "description": "The penguin really valued this? Well it's mine now!",
+            "sprite": "assets/materials/material_84c44258b76b2d4efca9f050-14a58fd0.png"
+        },
+        "material_c5b9f767dd84fce3cc950ab7": {
+            "description": "",
+            "sprite": "assets/materials/material_c5b9f767dd84fce3cc950ab7-db7aa144.png"
+        },
+        "material_b1c43d6c0bc463c355442072": {
+            "description": "",
+            "sprite": "assets/materials/material_b1c43d6c0bc463c355442072-9c60a3a0.png"
+        },
+        "material_09adb7d7fc1d647bac41b75d": {
+            "description": "",
+            "sprite": "assets/materials/material_09adb7d7fc1d647bac41b75d-f0625b60.png"
+        },
+        "material_9dcedc16887f1776d1611c8d": {
+            "description": "",
+            "sprite": "assets/materials/material_9dcedc16887f1776d1611c8d-12efa985.png"
+        },
+        "material_985927188da978e5f7fa3e5c": {
+            "description": "",
+            "sprite": "assets/materials/material_985927188da978e5f7fa3e5c-ea554823.png"
+        },
+        "material_b6b0c78bdb1d374fbf5b4a1c": {
+            "description": "",
+            "sprite": "assets/materials/material_b6b0c78bdb1d374fbf5b4a1c-fe7234d3.png"
         }
     }
 };
