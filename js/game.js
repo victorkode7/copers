@@ -1409,13 +1409,20 @@ function renderUpgrades() {
     });
 }
 
+function recipeIsUnlocked(recipe) {
+    return Object.keys(recipe.materials).every(id =>
+        (materialSources[id] || []).some(source => mapTravelAccess(source.mapId).unlocked));
+}
+
 function renderCrafting() {
     elements.crafts.innerHTML = '';
+    const unlockedRecipes = recipes.filter(recipe => (!recipe.developerOnly || state.developerItemsEnabled) && recipeIsUnlocked(recipe));
+    const unlockedIds = new Set(unlockedRecipes.map(recipe => recipe.id));
     const canCraftRecipe = recipe => !ownsItem(recipe.id) && (!recipe.developerOnly || state.developerItemsEnabled) && Object.entries(recipe.materials)
         .every(([id, amount]) => state.materials[id] >= amount);
-    const craftedCount = recipes.filter(recipe => state.crafted.includes(recipe.id)).length;
-    const craftableCount = recipes.filter(recipe => !state.crafted.includes(recipe.id) && canCraftRecipe(recipe)).length;
-    elements.craftingSummary.textContent = craftableCount + ' ready to craft · ' + craftedCount + ' of ' + recipes.length + ' crafted';
+    const craftedCount = unlockedRecipes.filter(recipe => state.crafted.includes(recipe.id)).length;
+    const craftableCount = unlockedRecipes.filter(recipe => !state.crafted.includes(recipe.id) && canCraftRecipe(recipe)).length;
+    elements.craftingSummary.textContent = craftableCount + ' ready to craft · ' + craftedCount + ' of ' + unlockedRecipes.length + ' unlocked recipes crafted';
     elements.craftingTools.querySelectorAll('[data-craft-category]').forEach(button => {
         const selected = button.dataset.craftCategory === selectedCraftCategory;
         button.classList.toggle('is-selected', selected);
@@ -1432,7 +1439,7 @@ function renderCrafting() {
     craftingCategories.forEach(categoryGroup => {
         const categoryRecipes = categoryGroup.recipes
             .map(id => recipes.find(recipe => recipe.id === id))
-            .filter(recipe => recipe && (!recipe.developerOnly || state.developerItemsEnabled))
+            .filter(recipe => recipe && unlockedIds.has(recipe.id))
             .filter(recipe => selectedCraftCategory === 'all' || (recipeCategories[recipe.slot] || 'accessories') === selectedCraftCategory)
             .filter(recipe => showCraftedRecipes || !state.crafted.includes(recipe.id))
             .filter(recipe => !showCraftableRecipesOnly || (!state.crafted.includes(recipe.id) && canCraftRecipe(recipe)));
@@ -1552,11 +1559,11 @@ function renderCrafting() {
         const empty = document.createElement('p');
         empty.className = 'crafting-empty subtle';
         empty.textContent = showCraftableRecipesOnly
-            ? 'Nothing is ready to craft yet. Collect the listed materials or turn off this filter.'
-            : !showCraftedRecipes && recipes.some(recipe => state.crafted.includes(recipe.id) &&
+            ? 'No unlocked recipes are ready to craft. Collect materials or turn off this filter.'
+            : !showCraftedRecipes && unlockedRecipes.some(recipe => state.crafted.includes(recipe.id) &&
                 (selectedCraftCategory === 'all' || recipeCategories[recipe.slot] === selectedCraftCategory))
                 ? 'All items in this category are crafted. Select Show hidden to view them.'
-                : 'No recipes match this category.';
+                : 'No recipes unlocked in this category yet. Unlock more areas to discover recipes.';
         elements.crafts.appendChild(empty);
     }
 }
@@ -2549,7 +2556,7 @@ function triggerShockwaveSlash(hitMonster, hitDamage) {
 
 function craftGear(id) {
     const recipe = recipes.find(entry => entry.id === id);
-    if (!recipe || ownsItem(id) || state.crafted.includes(id) || (recipe.developerOnly && !state.developerItemsEnabled)) return;
+    if (!recipe || !recipeIsUnlocked(recipe) || ownsItem(id) || state.crafted.includes(id) || (recipe.developerOnly && !state.developerItemsEnabled)) return;
     if (!Object.entries(recipe.materials).every(([material, amount]) => state.materials[material] >= amount)) return;
 
     Object.entries(recipe.materials).forEach(([material, amount]) => {
