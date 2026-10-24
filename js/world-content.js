@@ -1001,7 +1001,12 @@ window.adventureWorld = {
                     ]
                 }
             ],
-            "itemDrops": [],
+            "itemDrops": [
+                {
+                    "id": "item_3db2de48cb30c07c6cbcf61a90f3b8e4",
+                    "chance": 0.002
+                }
+            ],
             "sprite": "assets/monsters/iceboss3-b95fcecc.png",
             "id": "monster_f53770c6f3cb487158c3604f",
             "name": "Kevin the Frost Lord"

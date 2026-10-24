@@ -235,7 +235,7 @@ window.adventureItems = {
             "name": "Admin Ring",
             "slot": "ring",
             "rarity": "unique",
-            "description": "Developer equipment.",
+            "description": "The ring to rule them all!\nDeveloper equipment.",
             "sprite": "",
             "developerOnly": true,
             "stats": {
@@ -326,6 +326,169 @@ window.adventureItems = {
                 "damage": 15,
                 "attackSpeedMultiplier": 1.1,
                 "accuracy": 10
+            },
+            "recipe": null
+        },
+        {
+            "id": "item_8277f5eaf415ffef74d60716b2586e0a",
+            "name": "Eye sceptre",
+            "slot": "weapon",
+            "rarity": "epic",
+            "description": "",
+            "sprite": "assets/items/Eye-sceptre-f423cca6.png",
+            "stats": {
+                "poisonChance": 0.1,
+                "poisonDamage": 2,
+                "poisonDamageMultiplier": 2,
+                "attackSpeedMultiplier": 1.25
+            },
+            "recipe": {
+                "materials": {
+                    "material_b6b0c78bdb1d374fbf5b4a1c": 500
+                }
+            }
+        },
+        {
+            "id": "item_16605286e928a4751a742b1ca4487ff1",
+            "name": "Big ass hammer",
+            "slot": "weapon",
+            "rarity": "epic",
+            "description": "",
+            "sprite": "assets/items/Big-ass-hammer-07a7d53d.png",
+            "stats": {
+                "damage": 25,
+                "damageMultiplier": 1.5,
+                "attackSpeedMultiplier": 1.1
+            },
+            "recipe": {
+                "materials": {
+                    "material_985927188da978e5f7fa3e5c": 20
+                }
+            }
+        },
+        {
+            "id": "item_de7e0157494ced343b07598988202332",
+            "name": "Shark bow",
+            "slot": "weapon",
+            "rarity": "epic",
+            "description": "",
+            "sprite": "assets/items/Shark-bow-1e255237.png",
+            "stats": {
+                "multiHit": 0.5,
+                "attackSpeedMultiplier": 1.25,
+                "damageMultiplier": 1.33,
+                "damage": 15
+            },
+            "recipe": {
+                "materials": {
+                    "material_630e87734f9c2d4f706637f4": 300,
+                    "singedMane": 1
+                }
+            }
+        },
+        {
+            "id": "item_f4fd3037b690a28fd3a2f9ff839aea40",
+            "name": "Turtle Shield",
+            "slot": "weapon",
+            "rarity": "epic",
+            "description": "",
+            "sprite": "assets/items/Turtle-Shield-0887bf06.png",
+            "stats": {
+                "healthMultiplier": 2.5,
+                "health": 50
+            },
+            "recipe": {
+                "materials": {
+                    "material_5f1658126246b7b3a5ede35d": 100,
+                    "material_0e547cc411cb91fce7c30162": 25
+                }
+            }
+        },
+        {
+            "id": "item_b24a60dcdf0ccb4d46bd76d25fe323b9",
+            "name": "Ice helmet",
+            "slot": "helmet",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/Ice-helmet-d34a7251.png",
+            "stats": {
+                "evasion": 30,
+                "health": 40
+            },
+            "recipe": {
+                "materials": {
+                    "material_5f1658126246b7b3a5ede35d": 200,
+                    "material_985927188da978e5f7fa3e5c": 1,
+                    "hide": 50
+                }
+            }
+        },
+        {
+            "id": "item_472d75d45fc8629486e7b792509955eb",
+            "name": "Ice body",
+            "slot": "chest",
+            "rarity": "common",
+            "description": "",
+            "sprite": "assets/items/Ice-body-73d507ba.png",
+            "stats": {
+                "health": 80,
+                "evasion": 30
+            },
+            "recipe": {
+                "materials": {
+                    "material_5f1658126246b7b3a5ede35d": 300,
+                    "material_985927188da978e5f7fa3e5c": 1,
+                    "material_84c44258b76b2d4efca9f050": 50
+                }
+            }
+        },
+        {
+            "id": "item_2d985f476d15b709bf5a6b397e017227",
+            "name": "Ice legs",
+            "slot": "legs",
+            "rarity": "common",
+            "description": "",
+            "sprite": "assets/items/Ice-legs-65730862.png",
+            "stats": {
+                "health": 75,
+                "evasion": 30
+            },
+            "recipe": {
+                "materials": {
+                    "material_985927188da978e5f7fa3e5c": 1,
+                    "material_5f1658126246b7b3a5ede35d": 250,
+                    "material_630e87734f9c2d4f706637f4": 50
+                }
+            }
+        },
+        {
+            "id": "item_8559f22b5b4893dc7543f99f87560115",
+            "name": "Wizard Cloak",
+            "slot": "cape",
+            "rarity": "rare",
+            "description": "Does not make you invisible.",
+            "sprite": "assets/items/Wizard-Cloak-7b30a46d.png",
+            "stats": {
+                "accuracy": 15,
+                "damageMultiplier": 1.25,
+                "evasion": 33
+            },
+            "recipe": {
+                "materials": {
+                    "material_9dcedc16887f1776d1611c8d": 1000
+                }
+            }
+        },
+        {
+            "id": "item_3db2de48cb30c07c6cbcf61a90f3b8e4",
+            "name": "Blood cloak",
+            "slot": "cape",
+            "rarity": "unique",
+            "description": "Looks sick",
+            "sprite": "assets/items/Blood-cloak-14bcfbfd.png",
+            "stats": {
+                "healthMultiplier": 1.2,
+                "damageMultiplier": 1.25
             },
             "recipe": null
         }
