@@ -11,10 +11,11 @@
         worldContent.monsters.push(archer);
         map.spawns.push({id: 'smokeArcherSpawn', monsterId: archer.id, count: 1, overrides: {}});
         worldData[0].background = {sprite: 'assets/ui/brick128.png', color: '#071624', fit: 'tile', tileSize: 128, dim: 0.5};
+        map.background = null;
         state.currentView = 'map'; resetMonsterStates(map); render();
         const enemy = state.monsterStates.find(monster => monster.id === 'smokeArcherSpawn');
         const card = document.querySelector('[data-monster-id="smokeArcherSpawn"]');
-        check('mixed enemies use their own maximum health', enemy.hp === 83 && card.querySelector('[data-enemy-hp]').textContent === '83 / 83 HP' && state.monsterStates[0].hp === 12);
+        check('mixed enemies use their own maximum health', enemy.hp === 83 && card.querySelector('[data-enemy-hp]').textContent === '83 / 83 HP' && state.monsterStates[0].hp === monsterDefinitions(map)[0].health);
         check('mixed enemies display their own damage and interval', card.querySelector('[data-enemy-damage]').textContent === '7' && card.querySelector('[data-enemy-attack-interval]').textContent === '0.5s');
         check('enemy accuracy and evasion are specific to the monster', card.querySelector('[data-player-accuracy]').textContent === '60%' && getEnemyHitChance(enemy) === 75);
         const sprite = card.querySelector('.enemy-mark img');

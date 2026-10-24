@@ -88,7 +88,7 @@ window.adventureWorld = {
             "id": "whisperingWoods",
             "name": "Whispering Woods",
             "description": "A dark, moody forest where idle heroes come to leave their PCs running overnight.",
-            "goal": 60,
+            "goal": 100,
             "background": {
                 "sprite": "assets/backgrounds/Forest_cave-0929bfa4.png",
                 "color": "#172632",
@@ -119,7 +119,7 @@ window.adventureWorld = {
             "id": "emberCaverns",
             "name": "Gloom Caverns",
             "description": "Echoes, shadows, and monsters who desperately need some Vitamin D.",
-            "goal": 125,
+            "goal": 175,
             "background": {
                 "sprite": "assets/backgrounds/cave-e39c203c.png",
                 "color": "#172632",
@@ -218,7 +218,7 @@ window.adventureWorld = {
             "id": "salmen",
             "name": "Salmen village",
             "description": "A bright shoreline patrolled by salmon-folk and rich with hidden pearls.",
-            "goal": 100,
+            "goal": 7000,
             "background": {
                 "sprite": "assets/backgrounds/water_1-be737152.png",
                 "color": "#172632",
@@ -241,7 +241,7 @@ window.adventureWorld = {
             "id": "brineAndPunishment",
             "name": "Brine & Punishment",
             "description": "A stormy reef where a flatfish champion guards the deeper coast.",
-            "goal": 1250,
+            "goal": 1,
             "background": null,
             "drops": [],
             "itemDrops": [],
@@ -249,7 +249,7 @@ window.adventureWorld = {
                 {
                     "id": "main",
                     "monsterId": "brineAndPunishmentMonster",
-                    "count": 15,
+                    "count": 1,
                     "overrides": {}
                 }
             ]
@@ -258,7 +258,7 @@ window.adventureWorld = {
             "id": "map_378ad1dc8c08cecd68eb7eb4",
             "name": "Sunspire Meadow",
             "description": "10/10 sunbeams, 0/10 sunscreen. Welcome to sunburn paradise.",
-            "goal": 30,
+            "goal": 25,
             "background": {
                 "sprite": "assets/backgrounds/sunny-4a1f0145.png",
                 "color": "#172632",
@@ -304,7 +304,7 @@ window.adventureWorld = {
             "id": "map_048c8ea9df2da62fe1bd3073",
             "name": "1",
             "description": "",
-            "goal": 10,
+            "goal": 300,
             "background": {
                 "sprite": "assets/backgrounds/ice1-e5dfc877.png",
                 "color": "#172632",
@@ -327,7 +327,7 @@ window.adventureWorld = {
             "id": "map_f68402eddd52365a5ddd71d0",
             "name": "2",
             "description": "",
-            "goal": 10,
+            "goal": 500,
             "background": {
                 "sprite": "assets/backgrounds/ice2-4e6817e5.png",
                 "color": "#172632",
@@ -350,7 +350,7 @@ window.adventureWorld = {
             "id": "map_05b027e04704b6f33d4da8ee",
             "name": "3",
             "description": "",
-            "goal": 10,
+            "goal": 800,
             "background": {
                 "sprite": "assets/backgrounds/ice3-cb7470c1.png",
                 "color": "#172632",
@@ -373,7 +373,7 @@ window.adventureWorld = {
             "id": "map_d36b331dd838d14d34bb0365",
             "name": "4",
             "description": "",
-            "goal": 10,
+            "goal": 1200,
             "background": {
                 "sprite": "assets/backgrounds/ice4-ff191571.png",
                 "color": "#172632",
@@ -396,7 +396,7 @@ window.adventureWorld = {
             "id": "map_63d7d9b7d7889514e0171a58",
             "name": "5",
             "description": "",
-            "goal": 10,
+            "goal": 1800,
             "background": {
                 "sprite": "assets/backgrounds/ice5-d3a68e93.png",
                 "color": "#172632",
@@ -419,7 +419,7 @@ window.adventureWorld = {
             "id": "map_d2d78cfa833108d1f3031f26",
             "name": "6",
             "description": "",
-            "goal": 10,
+            "goal": 2500,
             "background": {
                 "sprite": "assets/backgrounds/ice6-a5ce48ae.png",
                 "color": "#172632",
@@ -442,7 +442,7 @@ window.adventureWorld = {
             "id": "map_4c4be6ec759af00dc8f2ab5f",
             "name": "7",
             "description": "",
-            "goal": 10,
+            "goal": 4500,
             "background": {
                 "sprite": "assets/backgrounds/ice7-8888abbc.png",
                 "color": "#172632",
@@ -465,7 +465,7 @@ window.adventureWorld = {
             "id": "map_677bad2999da2215a99e5ef9",
             "name": "8",
             "description": "",
-            "goal": 10,
+            "goal": 5000,
             "background": {
                 "sprite": "assets/backgrounds/ice8-8ad248e0.png",
                 "color": "#172632",
@@ -488,7 +488,7 @@ window.adventureWorld = {
             "id": "map_251364409b26827581f151b0",
             "name": "9",
             "description": "",
-            "goal": 10,
+            "goal": 12000,
             "background": {
                 "sprite": "assets/backgrounds/ice9-6473629d.png",
                 "color": "#172632",
@@ -511,7 +511,7 @@ window.adventureWorld = {
             "id": "map_ec2f730a5baeceee738b2f15",
             "name": "10",
             "description": "",
-            "goal": 10,
+            "goal": 1,
             "background": {
                 "sprite": "assets/backgrounds/ice10-01e88d4d.png",
                 "color": "#172632",
@@ -536,11 +536,11 @@ window.adventureWorld = {
             "id": "greenfieldsMonster",
             "name": "Blob",
             "sprite": "assets/monsters/sprite-fusion-pixel-art-generator-32x32-c37d999a.png",
-            "health": 20,
+            "health": 18,
             "respawnSeconds": 4,
             "accuracy": 55,
-            "evasion": 10,
-            "attackDamage": 5,
+            "evasion": 3,
+            "attackDamage": 3,
             "attackInterval": 2.5,
             "gold": [
                 4,
@@ -565,16 +565,16 @@ window.adventureWorld = {
             ]
         },
         {
-            "health": 8,
-            "accuracy": 55,
-            "evasion": 0,
-            "attackDamage": 2,
-            "attackInterval": 1,
+            "health": 24,
+            "accuracy": 58,
+            "evasion": 5,
+            "attackDamage": 3,
+            "attackInterval": 2.4,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 12,
             "gold": [
-                1,
-                2
+                6,
+                10
             ],
             "drops": [
                 {
@@ -592,16 +592,16 @@ window.adventureWorld = {
             "name": "Bee"
         },
         {
-            "health": 30,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 10,
-            "attackInterval": 3,
+            "health": 36,
+            "accuracy": 62,
+            "evasion": 8,
+            "attackDamage": 5,
+            "attackInterval": 2.8,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 16,
             "gold": [
-                1,
-                2
+                9,
+                14
             ],
             "drops": [
                 {
@@ -627,17 +627,17 @@ window.adventureWorld = {
             "id": "whisperingWoodsMonster",
             "name": "Wolf",
             "sprite": "assets/monsters/gen-c1c4a79f-f5f2-49f1-989f-8bdc0d87d728-f2401c93.png",
-            "health": 42,
+            "health": 52,
             "respawnSeconds": 5,
-            "accuracy": 65,
-            "evasion": 15,
-            "attackDamage": 8,
-            "attackInterval": 2.3,
+            "accuracy": 70,
+            "evasion": 12,
+            "attackDamage": 5,
+            "attackInterval": 2.4,
             "gold": [
                 12,
                 18
             ],
-            "experience": 10,
+            "experience": 20,
             "drops": [
                 {
                     "id": "hide",
@@ -654,17 +654,17 @@ window.adventureWorld = {
             "id": "emberCavernsMonster",
             "name": "Cave Stalker",
             "sprite": "assets/monsters/gen-23db66a5-cac1-4654-941a-c49dfd5a2ff3-22cb942c.png",
-            "health": 80,
+            "health": 75,
             "respawnSeconds": 5,
-            "accuracy": 75,
-            "evasion": 20,
-            "attackDamage": 4,
-            "attackInterval": 1.5,
+            "accuracy": 80,
+            "evasion": 14,
+            "attackDamage": 6,
+            "attackInterval": 2.5,
             "gold": [
-                30,
-                45
+                24,
+                34
             ],
-            "experience": 12,
+            "experience": 26,
             "drops": [
                 {
                     "id": "fang",
@@ -681,17 +681,17 @@ window.adventureWorld = {
             "id": "cinderPaddockMonster",
             "name": "Cindersnake",
             "sprite": "assets/monsters/lavasnake_96px-a53213be.png",
-            "health": 100,
+            "health": 110,
             "respawnSeconds": 5,
-            "accuracy": 50,
-            "evasion": 35,
-            "attackDamage": 4,
-            "attackInterval": 1,
+            "accuracy": 85,
+            "evasion": 18,
+            "attackDamage": 7,
+            "attackInterval": 2.4,
             "gold": [
-                42,
-                58
+                36,
+                50
             ],
-            "experience": 20,
+            "experience": 34,
             "drops": [
                 {
                     "id": "singedMane",
@@ -708,17 +708,17 @@ window.adventureWorld = {
             "id": "verdantWardenMonster",
             "name": "Grove Guardian",
             "sprite": "assets/monsters/grove_guardian-ae288fe1.png",
-            "health": 2000,
+            "health": 1800,
             "respawnSeconds": 15,
-            "accuracy": 100,
-            "evasion": 50,
-            "attackDamage": 10,
+            "accuracy": 125,
+            "evasion": 22,
+            "attackDamage": 24,
             "attackInterval": 2.5,
             "gold": [
-                75,
-                100
+                250,
+                350
             ],
-            "experience": 100,
+            "experience": 300,
             "drops": [
                 {
                     "id": "crystal",
@@ -737,16 +737,16 @@ window.adventureWorld = {
             ]
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 200,
+            "accuracy": 105,
+            "evasion": 20,
+            "attackDamage": 10,
+            "attackInterval": 3,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 40,
             "gold": [
-                1,
-                2
+                50,
+                70
             ],
             "drops": [
                 {
@@ -764,16 +764,16 @@ window.adventureWorld = {
             "name": "Shy shark"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 260,
+            "accuracy": 110,
+            "evasion": 21,
+            "attackDamage": 12,
+            "attackInterval": 3.2,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 45,
             "gold": [
-                1,
-                2
+                60,
+                80
             ],
             "drops": [
                 {
@@ -791,16 +791,16 @@ window.adventureWorld = {
             "name": "Warturtle"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 340,
+            "accuracy": 115,
+            "evasion": 22,
+            "attackDamage": 15,
+            "attackInterval": 2.8,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 50,
             "gold": [
-                1,
-                2
+                70,
+                95
             ],
             "drops": [
                 {
@@ -818,16 +818,16 @@ window.adventureWorld = {
             "name": "Snowman"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 430,
+            "accuracy": 120,
+            "evasion": 23,
+            "attackDamage": 17,
+            "attackInterval": 3,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 55,
             "gold": [
-                1,
-                2
+                80,
+                110
             ],
             "drops": [
                 {
@@ -845,16 +845,16 @@ window.adventureWorld = {
             "name": "Penguin"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 540,
+            "accuracy": 125,
+            "evasion": 24,
+            "attackDamage": 20,
+            "attackInterval": 3.2,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 60,
             "gold": [
-                1,
-                2
+                95,
+                125
             ],
             "drops": [
                 {
@@ -872,16 +872,16 @@ window.adventureWorld = {
             "name": "Ice cube"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 670,
+            "accuracy": 130,
+            "evasion": 25,
+            "attackDamage": 25,
+            "attackInterval": 2.8,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 65,
             "gold": [
-                1,
-                2
+                110,
+                145
             ],
             "drops": [
                 {
@@ -899,16 +899,16 @@ window.adventureWorld = {
             "name": "Polarbear"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 820,
+            "accuracy": 135,
+            "evasion": 26,
+            "attackDamage": 16,
+            "attackInterval": 3,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 70,
             "gold": [
-                1,
-                2
+                125,
+                165
             ],
             "drops": [
                 {
@@ -926,16 +926,16 @@ window.adventureWorld = {
             "name": "Tri-color Bat"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 1000,
+            "accuracy": 140,
+            "evasion": 28,
+            "attackDamage": 32,
+            "attackInterval": 2.8,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 75,
             "gold": [
-                1,
-                2
+                145,
+                190
             ],
             "drops": [
                 {
@@ -953,16 +953,16 @@ window.adventureWorld = {
             "name": "Snowflake"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 1200,
+            "accuracy": 145,
+            "evasion": 30,
+            "attackDamage": 12,
+            "attackInterval": 3.5,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 80,
             "gold": [
-                1,
-                2
+                165,
+                215
             ],
             "drops": [
                 {
@@ -980,16 +980,16 @@ window.adventureWorld = {
             "name": "Eyecicle"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
-            "respawnSeconds": 5,
-            "experience": 10,
+            "health": 15000,
+            "accuracy": 210,
+            "evasion": 35,
+            "attackDamage": 48,
+            "attackInterval": 3.2,
+            "respawnSeconds": 20,
+            "experience": 2000,
             "gold": [
-                1,
-                2
+                1800,
+                2400
             ],
             "drops": [
                 {
@@ -1015,17 +1015,17 @@ window.adventureWorld = {
             "id": "salmenMonster",
             "name": "Salmen",
             "sprite": "assets/monsters/seaman-7e70e357.png",
-            "health": 300,
-            "respawnSeconds": 4,
-            "accuracy": 78,
-            "evasion": 20,
-            "attackDamage": 14,
-            "attackInterval": 2.2,
+            "health": 1600,
+            "respawnSeconds": 5,
+            "accuracy": 155,
+            "evasion": 32,
+            "attackDamage": 38,
+            "attackInterval": 3,
             "gold": [
-                45,
-                65
+                210,
+                280
             ],
-            "experience": 30,
+            "experience": 100,
             "drops": [
                 {
                     "id": "pearl",
@@ -1042,17 +1042,17 @@ window.adventureWorld = {
             "id": "brineAndPunishmentMonster",
             "name": "The Plaice-holder",
             "sprite": "assets/monsters/big_whale-d850b321.png",
-            "health": 750,
-            "respawnSeconds": 9,
-            "accuracy": 82,
-            "evasion": 25,
-            "attackDamage": 18,
-            "attackInterval": 2,
+            "health": 24000,
+            "respawnSeconds": 25,
+            "accuracy": 245,
+            "evasion": 40,
+            "attackDamage": 90,
+            "attackInterval": 3,
             "gold": [
-                75,
-                100
+                3000,
+                4000
             ],
-            "experience": 40,
+            "experience": 4000,
             "drops": [
                 {
                     "id": "pearl",
