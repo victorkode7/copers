@@ -7,9 +7,9 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/nav.css">
     <link rel="stylesheet" href="css/app-nav.css">
-    <link rel="stylesheet" href="css/game.css?v=20261025-5">
+    <link rel="stylesheet" href="css/game.css?v=20261025-7">
     <link rel="stylesheet" href="css/equipment-effects.css?v=1">
-    <link rel="stylesheet" href="css/world-game.css?v=7">
+    <link rel="stylesheet" href="css/world-game.css?v=11">
     <link rel="stylesheet" href="css/skill-tree-background.css?v=20261021-18">
     <link rel="stylesheet" href="css/inventory-categories.css?v=2">
     <link rel="stylesheet" href="css/loot-effects.css?v=6">
@@ -35,9 +35,9 @@
                         <li><button id="townButton" class="nav-button" type="button" aria-pressed="true">Crafting</button></li>
                         <li><button id="upgradesButton" class="nav-button" type="button" aria-pressed="false">Skill Tree</button></li>
                         <li><button id="inventoryButton" class="nav-button" type="button" aria-pressed="false">Inventory</button></li>
+                        <li class="gold-display"><span>Gold</span><strong id="goldDisplay">0</strong></li>
                     </ul>
                 </li>
-                <li class="gold-display"><span>Gold</span><strong id="goldDisplay">0</strong></li>
                 <li class="reset-nav-item">
                     <button id="exportProfile" class="nav-button" type="button" title="Download a backup of your current game">Export Profile</button>
                     <button id="importProfile" class="nav-button" type="button" title="Restore a JSON backup, replacing your current progress">Import Profile</button>
@@ -253,15 +253,16 @@
     <p id="profileStatus" class="profile-status" role="status" aria-live="polite" hidden></p>
     <footer class="developer-options"><details><summary>Developer options</summary><label><input id="developerItems" type="checkbox"> Enable developer equipment</label><label><input id="developerTravel" type="checkbox"> Skip kill requirements — unlock all maps and worlds</label></details></footer>
     <script src="js/items.js?v=20261021-2"></script>
-    <script src="js/item-system.js?v=20261023-1"></script>
-    <script src="js/skill-tree.js?v=20261023-2"></script>
+    <script src="js/item-system.js?v=20261025-1"></script>
+    <script src="js/skill-tree.js?v=20261025-4"></script>
     <script src="js/skill-stat-compat.js?v=20261021-2"></script>
     <script src="js/skill-sprites.js?v=20261021-13"></script>
     <script src="js/equipment-effects.js?v=1"></script>
     <script src="js/world-content.js?v=20261024-2"></script>
-    <script src="js/world-system.js?v=20261024-3"></script>
+    <script src="js/world-system.js?v=20261025-1"></script>
     <script src="js/loot-effects.js?v=6"></script>
-    <script src="js/game.js?v=20261025-3"></script>
+    <script src="js/arrow-skills.js?v=20261025-7"></script>
+    <script src="js/game.js?v=20261025-7"></script>
     <script src="js/game-profiles.js?v=20261025-1"></script>
     <script src="js/offline-play.js?v=20261025-1"></script>
 </body>

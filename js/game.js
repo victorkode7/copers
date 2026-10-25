@@ -120,6 +120,7 @@ const state = {
     enemyHp: mapData.find(map => map.id === worldData[0].mapIds[0]).health,
     enemyRespawnRemaining: 0,
     monsterStates: [],
+    monsterColumns: 1,
     targetMonsterId: null,
     playerHp: basePlayerMaxHealth,
     combatPaused: false,
@@ -397,6 +398,8 @@ function createMonsterStates(map, savedStates, legacyHp, legacyRespawn) {
             hp: hp === 0 && respawnRemaining === 0 ? definition.health : hp,
             respawnRemaining,
             attackTimer: saved && Number.isFinite(saved.attackTimer) ? Math.max(0, saved.attackTimer) : 0,
+            freezeRemaining: saved && Number.isFinite(saved.freezeRemaining)
+                ? Math.max(0, Math.min(arrowSkillSettings.freezeDuration, saved.freezeRemaining)) : 0,
             poisonStacks: saved && Array.isArray(saved.poisonStacks)
                 ? saved.poisonStacks.filter(stack => stack &&
                     Number.isFinite(stack.remainingDuration) && stack.remainingDuration > 0 &&
@@ -555,13 +558,15 @@ function flashShockwaveHealthBar(monsterId) {
     });
 }
 
-function showMonsterHitBadge(monsterId, label, isMultiHit = false) {
+function showMonsterHitBadge(monsterId, label, isMultiHit = false, priority = 0) {
     presentCombatEffect(() => {
         const card = Array.from(elements.enemyRoster.children)
             .find(entry => entry.dataset.monsterId === monsterId);
         if (!card) return;
         const notice = card.querySelector('[data-combat-hit-badge]');
         if (notice) {
+            if (notice.classList.contains('is-visible') && Number(notice.dataset.hitPriority || 0) > priority) return;
+            notice.dataset.hitPriority = String(priority);
             notice.hidden = false;
             notice.textContent = label;
             notice.classList.toggle('is-multihit', isMultiHit);
@@ -572,7 +577,7 @@ function showMonsterHitBadge(monsterId, label, isMultiHit = false) {
             shockwaveHitTimers.set(notice, window.setTimeout(() => {
                 notice.classList.remove('is-visible');
                 shockwaveHitTimers.delete(notice);
-            }, 1500));
+            }, priority > 0 ? arrowVisualDurations.forkingArrow : 1500));
         }
     });
 }
@@ -919,6 +924,7 @@ function createGameSave() {
         enemyHp: state.enemyHp,
         enemyRespawnRemaining: state.enemyRespawnRemaining,
         monsterStates: state.monsterStates,
+        monsterColumns: state.monsterColumns,
         targetMonsterId: state.targetMonsterId,
         playerHp: state.playerHp,
         combatPaused: state.combatPaused,
@@ -1158,12 +1164,15 @@ function parseGameSave(rawSave) {
             saved.enemyRespawnRemaining > 0)) ||
         (saved.enemyRespawnRemaining !== undefined &&
             (!Number.isFinite(saved.enemyRespawnRemaining) || saved.enemyRespawnRemaining < 0)) ||
+        (saved.monsterColumns !== undefined && (!Number.isInteger(saved.monsterColumns) || saved.monsterColumns < 1 || saved.monsterColumns > 100)) ||
         (saved.monsterStates !== undefined && (!Array.isArray(saved.monsterStates) ||
             !saved.monsterStates.every(monster => monster && typeof monster.id === 'string' &&
                 Number.isFinite(monster.hp) && monster.hp >= 0 &&
                 Number.isFinite(monster.respawnRemaining) && monster.respawnRemaining >= 0 &&
                 (monster.attackTimer === undefined ||
                     Number.isFinite(monster.attackTimer) && monster.attackTimer >= 0) &&
+                (monster.freezeRemaining === undefined || Number.isFinite(monster.freezeRemaining) &&
+                    monster.freezeRemaining >= 0 && monster.freezeRemaining <= arrowSkillSettings.freezeDuration) &&
                 (monster.poisonStacks === undefined || Array.isArray(monster.poisonStacks) &&
                     monster.poisonStacks.every(stack => stack &&
                         Number.isFinite(stack.remainingDuration) && stack.remainingDuration > 0 &&
@@ -1254,6 +1263,7 @@ function applyGameSave(saved) {
     state.monsterStates = selectedMapChanged
         ? createMonsterStates(currentMap())
         : createMonsterStates(currentMap(), saved.monsterStates, saved.enemyHp, saved.enemyRespawnRemaining);
+    state.monsterColumns = saved.monsterColumns || 1;
     state.targetMonsterId = !selectedMapChanged && monsterDefinitions(currentMap())
         .some(definition => definition.id === saved.targetMonsterId)
         ? saved.targetMonsterId
@@ -2116,13 +2126,19 @@ function createEnemyCard(definition) {
     status.appendChild(targetLabel);
     const playerAccuracy = document.createElement('p');
     playerAccuracy.className = 'hit-chance';
-    playerAccuracy.append('Your hit chance: ');
+    playerAccuracy.title = 'Your chance to hit this enemy';
+    const playerAccuracyLabel = document.createElement('span');
+    playerAccuracyLabel.innerHTML = '<span class="hit-chance-full-label">Your hit chance:</span><span class="hit-chance-compact-label">You hit:</span>';
+    playerAccuracy.appendChild(playerAccuracyLabel);
     const playerAccuracyValue = document.createElement('strong');
     playerAccuracyValue.dataset.playerAccuracy = '';
     playerAccuracy.appendChild(playerAccuracyValue);
     const enemyAccuracy = document.createElement('p');
     enemyAccuracy.className = 'hit-chance';
-    enemyAccuracy.append('Enemy hit chance: ');
+    enemyAccuracy.title = 'This enemy\'s chance to hit you';
+    const enemyAccuracyLabel = document.createElement('span');
+    enemyAccuracyLabel.innerHTML = '<span class="hit-chance-full-label">Enemy hit chance:</span><span class="hit-chance-compact-label">Enemy hit:</span>';
+    enemyAccuracy.appendChild(enemyAccuracyLabel);
     const enemyAccuracyValue = document.createElement('strong');
     enemyAccuracyValue.dataset.enemyAccuracy = '';
     enemyAccuracy.appendChild(enemyAccuracyValue);
@@ -2145,7 +2161,11 @@ function createEnemyCard(definition) {
     const dotCount = document.createElement('strong');
     dotCount.dataset.enemyDotCount = '';
     dotStatus.append(droplet, dotCount);
-    effectRow.append(procNotice, dotStatus);
+    const freezeStatus = document.createElement('span');
+    freezeStatus.className = 'enemy-freeze-status';
+    freezeStatus.dataset.enemyFreezeStatus = '';
+    freezeStatus.hidden = true;
+    effectRow.append(procNotice, freezeStatus, dotStatus);
     const healthTrack = document.createElement('div');
     healthTrack.className = 'health-track';
     healthTrack.setAttribute('role', 'progressbar');
@@ -2316,10 +2336,11 @@ function renderCombat() {
     // map changes so creation-time sprites and health labels cannot carry over.
     if (elements.enemyRoster.dataset.mapId !== map.id ||
         ids.length !== renderedIds.length || ids.some((id, index) => id !== renderedIds[index])) {
-        elements.combatPanel.querySelectorAll('.poison-transfer').forEach(effect => effect.remove());
+        elements.combatPanel.querySelectorAll('.poison-transfer, .combat-arrow').forEach(effect => effect.remove());
         elements.enemyRoster.replaceChildren(...definitions.map(createEnemyCard));
         elements.enemyRoster.dataset.mapId = map.id;
     }
+    updateCombatFormation();
     const target = activeMonster();
     const lootMonster = monsterDefinition(target, map);
     renderMonsterArt(lootMonster);
@@ -2388,8 +2409,8 @@ function renderCombat() {
         card.querySelector('.enemy-target-label').hidden = !target || target.id !== monster.id;
         const playerAccuracyText = card.querySelector('[data-player-accuracy]');
         const enemyAccuracyText = card.querySelector('[data-enemy-accuracy]');
-        playerAccuracyText.textContent = playerHitChance + '%';
-        enemyAccuracyText.textContent = enemyHitChance + '%';
+        playerAccuracyText.textContent = combatStatFormatter.format(playerHitChance) + '%';
+        enemyAccuracyText.textContent = combatStatFormatter.format(enemyHitChance) + '%';
         setAccuracyClass(playerAccuracyText, playerHitChance, true);
         setAccuracyClass(enemyAccuracyText, enemyHitChance, false);
         card.querySelector('.health-fill').style.width = hpPercent + '%';
@@ -2405,7 +2426,13 @@ function renderCombat() {
             ? 'Poison will deal ' + remainingPoisonDamage + ' more damage'
             : '';
         card.querySelector('[data-enemy-hp]').textContent = Math.ceil(monster.hp) + ' / ' + definition.health + ' HP';
-        card.querySelector('[data-enemy-attack-interval]').textContent = definition.attackInterval.toFixed(1) + 's';
+        card.querySelector('[data-enemy-attack-interval]').textContent = getMonsterAttackInterval(monster).toFixed(1) + 's';
+        const freezeStatus = card.querySelector('[data-enemy-freeze-status]');
+        const frozen = monster.hp > 0 && monster.freezeRemaining > 0;
+        card.classList.toggle('is-frozen', frozen);
+        freezeStatus.hidden = !frozen;
+        freezeStatus.textContent = frozen ? 'Frozen ' + monster.freezeRemaining.toFixed(1) + 's' : '';
+        freezeStatus.title = 'Attacks take 3 seconds longer. Further arrow hits refresh the 9-second duration.';
         card.querySelector('[data-enemy-damage]').textContent = String(definition.attackDamage);
         const dotStatus = card.querySelector('[data-enemy-dot-status]');
         const poisonStackCount = monster.poisonStacks ? monster.poisonStacks.length : 0;
@@ -2594,6 +2621,7 @@ function defeatEnemy(monster) {
     monster.respawnRemaining = monsterDefinitions(map)
         .find(definition => definition.id === monster.id).respawnSeconds;
     monster.attackTimer = 0;
+    monster.freezeRemaining = 0;
     selectNextMonsterTarget(monster);
     syncLegacyEnemyState();
     state.attackTimer = 0;
@@ -3179,12 +3207,22 @@ function simulateCombatStep(elapsed, collectEffects = false) {
         ensureLiveMonsterTarget();
         const previousTarget = activeMonster();
         let anyRespawned = false;
+        const enemyAttackElapsed = new Map();
         state.monsterStates.forEach(monster => {
+            const frozenSeconds = Math.min(elapsed, monster.freezeRemaining || 0);
+            monster.freezeRemaining = Math.max(0, (monster.freezeRemaining || 0) - elapsed);
+            if (monster.freezeRemaining < 1e-6) monster.freezeRemaining = 0;
+            const interval = monsterDefinition(monster, map).attackInterval;
+            // Keep attack progress in normal interval units. This avoids a burst
+            // of banked attacks when freezing expires, including mid-step.
+            enemyAttackElapsed.set(monster.id, elapsed - frozenSeconds +
+                frozenSeconds * interval / (interval + arrowSkillSettings.freezeDelay));
             if (monster.hp > 0 || monster.respawnRemaining <= 0) return;
             monster.respawnRemaining = Math.max(0, monster.respawnRemaining - elapsed);
             if (monster.respawnRemaining === 0) {
                 monster.hp = monsterDefinition(monster, map).health;
                 monster.attackTimer = 0;
+                monster.freezeRemaining = 0;
                 anyRespawned = true;
             }
         });
@@ -3198,7 +3236,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
             state.monsterStates.forEach(monster => {
                 if (monster.hp <= 0 || state.combatPaused) return;
                 const definition = monsterDefinition(monster, map);
-                monster.attackTimer += elapsed;
+                monster.attackTimer += enemyAttackElapsed.get(monster.id);
                 while (monster.attackTimer >= definition.attackInterval && !state.combatPaused) {
                     monster.attackTimer -= definition.attackInterval;
                     if (Math.random() * 100 < getEnemyHitChance(monster)) {
@@ -3235,6 +3273,8 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                 state.attackTimer += elapsed;
                 while (state.attackTimer >= attackInterval && !state.combatPaused) {
                     state.attackTimer -= attackInterval;
+                    const arrowTarget = activeMonster();
+                    const arrowDamage = getDamage();
                     const attackTargets = getPlayerAttackTargets();
                     for (let attackIndex = 0; attackIndex < attackTargets.length; attackIndex++) {
                         const attackTarget = attackTargets[attackIndex];
@@ -3254,6 +3294,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                             });
                         }
                     }
+                    if (arrowTarget) triggerAttackArrowSkills(arrowTarget, arrowDamage);
                 }
             }
         } else {

@@ -138,10 +138,6 @@ html {
 }
 
 .idle-adventure .gold-display {
-    grid-column: 1;
-    grid-row: 1;
-    justify-self: start;
-    margin-left: calc(var(--nav-logo-size) + 2rem);
     display: flex;
     align-items: baseline;
     gap: 0.45rem;
@@ -1054,10 +1050,6 @@ html {
     font-size: 2rem;
 }
 
-.idle-adventure .enemy-roster.is-crowded .hit-chance {
-    display: none;
-}
-
 .idle-adventure .enemy-card.is-target {
     border: 2px solid #f1bd66;
     background: linear-gradient(90deg, rgba(241, 189, 102, 0.13), #142528 48%);
@@ -1163,6 +1155,25 @@ html {
 
 .idle-adventure .enemy-details .hit-chance strong {
     flex: 0 0 auto;
+}
+
+.idle-adventure .hit-chance-compact-label {
+    display: none;
+}
+
+.idle-adventure .enemy-roster.is-crowded .hit-chance {
+    gap: 0.25rem;
+    margin: 0.1rem 0;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.idle-adventure .enemy-roster.is-crowded .hit-chance-full-label {
+    display: none;
+}
+
+.idle-adventure .enemy-roster.is-crowded .hit-chance-compact-label {
+    display: inline;
 }
 
 .idle-adventure .enemy-title h3 {
@@ -3168,10 +3179,6 @@ html {
 }
 
 @media (min-width: 701px) and (max-width: 1100px) {
-    .idle-adventure .gold-display {
-        grid-row: 2;
-    }
-
     .idle-adventure .reset-nav-item {
         grid-column: 2 / 4;
         grid-row: 2;
@@ -3240,16 +3247,9 @@ html {
         grid-column: 1;
     }
 
-    .idle-adventure .gold-display {
-        grid-column: 1;
-        grid-row: 2;
-        justify-self: center;
-        margin-left: 0;
-    }
-
     .idle-adventure .reset-nav-item {
         grid-column: 1;
-        grid-row: 3;
+        grid-row: 2;
         position: static;
         display: flex;
         flex: 0 0 100%;

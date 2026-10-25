@@ -46,13 +46,13 @@
             if (rule.display) {
                 const {label, type, unit} = rule.display;
                 const amount = type === 'percentBonus' ? (value - 1) * 100 : type === 'percent' ? value * 100 : value;
-                const digits = type === 'flat' || type === 'limit' || (amount !== 0 && Math.abs(amount) < 0.01) ? 6 : 2;
+                const digits = type === 'flat' || (type === 'limit' && unit !== '%') ? 6 : 2;
                 const rounded = Number(amount.toFixed(digits));
                 const number = (rounded === 0 ? 0 : rounded).toLocaleString('en-US', {maximumFractionDigits: digits});
                 if (type === 'limit') return label + ': ' + number + (unit || '');
                 return (rounded >= 0 ? '+' : '') + number + (type === 'flat' ? '' : '%') + ' ' + label;
             }
-            const number = Number((rule.percent ? value * 100 : value).toFixed(6));
+            const number = Number((rule.percent ? value * 100 : value).toFixed(rule.percent ? 2 : 6));
             const label = rule.label.replace(/ \(.*\)$/, '');
             return rule.mode === 'multiply' ? label + ': ×' + number
                 : rule.mode === 'min' ? label + ': ' + number
@@ -86,12 +86,13 @@
             let deltaDescription = '';
             if (!equal) {
                 const percent = ['percent', 'percentBonus'].includes(rule.display?.type);
+                const percentageDisplay = percent || rule.display?.unit === '%';
                 const amount = difference * (percent ? 100 : 1);
-                const digits = percent && Math.abs(amount) >= 0.01 ? 2 : 6;
+                const digits = percentageDisplay ? 2 : 6;
                 const number = Math.abs(Number(amount.toFixed(digits))).toLocaleString('en-US', {maximumFractionDigits: digits});
                 const suffix = percent ? '%' : rule.display?.unit || '';
                 delta = (amount < 0 ? '−' : '+') + number + suffix;
-                deltaDescription = percent ? 'Bonus difference: ' + (amount < 0 ? 'minus ' : 'plus ') + number + ' percentage points.' : 'Difference: ' + delta + '.';
+                deltaDescription = percentageDisplay ? 'Bonus difference: ' + (amount < 0 ? 'minus ' : 'plus ') + number + ' percentage points.' : 'Difference: ' + delta + '.';
             }
             return [{key, status, text, delta, deltaDescription}];
         });

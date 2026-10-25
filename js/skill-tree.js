@@ -594,6 +594,85 @@ window.adventureSkillTree = {
             "start": false,
             "sprite": "assets/skills/bloomingFlower-a11a5059.png",
             "type": "attackSpeed"
+        },
+        {
+            "id": "piercingArrow",
+            "name": "Piercing arrow",
+            "icon": "✦",
+            "effect": "30% chance per attack to fire a piercing arrow through your target's row, dealing 200% of your normal physical hit damage.",
+            "requires": [
+                "accuracyNode2"
+            ],
+            "requiresMode": "all",
+            "column": 6,
+            "row": 5,
+            "maxRank": 1,
+            "stats": {
+                "damage": 1
+            },
+            "size": 1.25,
+            "start": false,
+            "sprite": "assets/skills/piercingArrow-2c69979f.png",
+            "type": "accuracy"
+        },
+        {
+            "id": "forkingArrow",
+            "name": "forkingArrow",
+            "icon": "✦",
+            "effect": "10% chance to fire an extra arrow from a random side. All ability arrows chain diagonally forward, hitting each enemy once.",
+            "requires": [
+                "accuracyNode2"
+            ],
+            "requiresMode": "all",
+            "column": 5,
+            "row": 6,
+            "maxRank": 1,
+            "stats": {
+                "damage": 1
+            },
+            "size": 1.25,
+            "start": false,
+            "sprite": "assets/skills/piercingArrow_copy-e21dedd1.png",
+            "type": "accuracy"
+        },
+        {
+            "id": "multiShot",
+            "name": "Multishot",
+            "icon": "✦",
+            "effect": "Every attack fires an additional arrow at a random enemy. Can trigger skill effects!",
+            "requires": [
+                "accuracyNode2"
+            ],
+            "requiresMode": "all",
+            "column": 6,
+            "row": 6,
+            "maxRank": 1,
+            "stats": {
+                "damage": 1
+            },
+            "size": 1.25,
+            "start": false,
+            "sprite": "assets/skills/piercingArrow_copy_copy-efdf2623.png",
+            "type": "accuracy"
+        },
+        {
+            "id": "freezingArrows",
+            "name": "Freezing arrows",
+            "icon": "✦",
+            "effect": "Ability arrows freeze enemies for 9 seconds, adding 3 seconds between their attacks. Further arrow hits refresh the duration.",
+            "requires": [
+                "piercingArrow"
+            ],
+            "requiresMode": "all",
+            "column": 7,
+            "row": 5,
+            "maxRank": 1,
+            "stats": {
+                "damage": 1
+            },
+            "size": 1,
+            "start": false,
+            "sprite": ""
         }
     ],
     "statSchemaVersion": 2

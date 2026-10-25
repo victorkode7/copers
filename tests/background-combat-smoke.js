@@ -18,7 +18,8 @@
     const ranks = ['damageNode', 'mightyBlows', 'shockwaveSlash', 'accuracyNode', 'multiHit1',
         'attackSpeedNode', 'attackSpeedNode2', 'snakeBite', 'poisonDMG_3', 'poisonDMG_2',
         'basicallySnake', 'bigAttackSpeed_1', 'bigAttackSpeed_4', 'bigAttackSpeed_3',
-        'poisonExecute', 'bloomingFlower', 'healthNode', 'thickHide', 'untouchable', 'quickHands', 'fleetFooted'];
+        'poisonExecute', 'bloomingFlower', 'healthNode', 'thickHide', 'untouchable', 'quickHands', 'fleetFooted',
+        'accuracyNode2', 'piercingArrow', 'forkingArrow', 'multiShot', 'freezingArrows'];
     function seedRandom(seed = 48271) {
         Math.random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
     }

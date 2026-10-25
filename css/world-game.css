@@ -65,9 +65,129 @@
     0%, 45% { opacity: 1; }
     100% { opacity: 0; }
 }
+
+.idle-adventure .combat-arrow {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    color: #ffe296;
+    pointer-events: none;
+    animation: combat-arrow-fade var(--arrow-duration, 450ms) ease-out forwards;
+}
+.idle-adventure .combat-arrow.is-freezing { color: #99edff; }
+.idle-adventure .combat-arrow[data-arrow-kind="piercingArrow"] {
+    color: #fff;
+    animation-name: combat-arrow-linger;
+}
+.idle-adventure .combat-arrow.is-directed {
+    z-index: 5;
+    animation-name: combat-arrow-trail;
+    animation-delay: var(--arrow-delay, 0ms);
+}
+.idle-adventure .combat-arrow.is-directed .arrow-shaft {
+    stroke-width: 4;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: arrow-shaft-draw var(--arrow-flight) linear var(--arrow-delay) both;
+}
+.idle-adventure .combat-arrow.is-incoming .arrow-shaft { stroke-width: 5; }
+.idle-adventure .combat-arrow .arrow-projectile {
+    transform-box: view-box;
+    transform-origin: 0 0;
+    animation: arrow-projectile-flight var(--arrow-flight) linear var(--arrow-delay) both,
+        arrow-projectile-fade var(--arrow-duration) linear var(--arrow-delay) both;
+}
+.idle-adventure .combat-arrow .arrow-projectile path {
+    fill: currentColor;
+    stroke: #fff;
+    stroke-width: 1.5;
+    stroke-dasharray: none;
+    filter: drop-shadow(0 0 5px currentColor);
+    animation: none;
+}
+.idle-adventure .arrow-origin {
+    fill: currentColor;
+    stroke: #fff;
+    stroke-width: 2;
+    animation: arrow-origin-flash 400ms ease-out var(--arrow-delay) both;
+}
+.idle-adventure .arrow-impact {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 3;
+    filter: drop-shadow(0 0 5px currentColor);
+    animation: arrow-impact-flash 450ms ease-out var(--arrow-impact-delay) both;
+}
+.idle-adventure .arrow-trail-stop {
+    stop-opacity: 0;
+    animation: arrow-trail-opacity var(--trail-duration) linear var(--trail-delay) both;
+}
+.idle-adventure .combat-arrow path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    filter: drop-shadow(0 0 4px currentColor);
+    animation: poison-transfer-draw 160ms ease-out both;
+}
+.idle-adventure .enemy-card.is-frozen .enemy-mark {
+    box-shadow: inset 0 0 16px rgba(110, 213, 255, .4), 0 0 8px rgba(110, 213, 255, .3);
+}
+.idle-adventure .enemy-card.is-frozen [data-enemy-attack-interval] { color: #99edff; }
+.idle-adventure .enemy-freeze-status {
+    flex: 0 0 auto;
+    color: #99edff;
+    font-size: .62rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+@keyframes combat-arrow-fade {
+    0%, 40% { opacity: 1; }
+    100% { opacity: 0; }
+}
+@keyframes combat-arrow-linger {
+    0%, 70% { opacity: 1; }
+    100% { opacity: 0; }
+}
+@keyframes combat-arrow-trail {
+    from, to { opacity: 1; }
+}
+@keyframes arrow-trail-opacity {
+    0%, 45% { stop-opacity: 1; }
+    100% { stop-opacity: 0; }
+}
+@keyframes arrow-shaft-draw {
+    from { stroke-dashoffset: 1; opacity: 0; }
+    1% { opacity: 1; }
+    to { stroke-dashoffset: 0; }
+}
+@keyframes arrow-projectile-flight {
+    from { transform: translate(var(--arrow-start-x), var(--arrow-start-y)) rotate(var(--arrow-angle)); }
+    to { transform: translate(var(--arrow-end-x), var(--arrow-end-y)) rotate(var(--arrow-angle)); }
+}
+@keyframes arrow-projectile-fade {
+    0%, 100% { opacity: 0; }
+    1%, 70% { opacity: 1; }
+}
+@keyframes arrow-origin-flash {
+    0%, 100% { opacity: 0; }
+    15%, 50% { opacity: 1; }
+}
+@keyframes arrow-impact-flash {
+    0% { opacity: 0; r: 5px; }
+    15% { opacity: 1; }
+    100% { opacity: 0; r: 18px; }
+}
 @media (prefers-reduced-motion: reduce) {
     .idle-adventure .poison-transfer { animation-duration: 250ms; }
     .idle-adventure .poison-transfer line { animation: none; }
+    .idle-adventure .combat-arrow { animation-timing-function: step-end; }
+    .idle-adventure .combat-arrow path { animation: none; }
 }
 @media (max-width: 899px) {
     .idle-adventure .combat-monster-art { opacity: .2; }

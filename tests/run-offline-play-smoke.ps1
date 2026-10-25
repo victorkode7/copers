@@ -115,7 +115,7 @@ try {
     $null = Send-Cdp 'Page.navigate' @{url=$origin + '/index.html'}
     Wait-For 'Boolean(navigator.serviceWorker.controller && document.getElementById("offlinePlayStatus")?.textContent === "Ready for offline play")'
     Check 'the hosted game installs a complete offline cache' (Evaluate '(async()=>{const names=await caches.keys();const cache=await caches.open(names.find(name=>name.startsWith("idle-adventure-offline-")));return (await cache.keys()).length>100;})()')
-    $baseline = Evaluate '(()=>{state.currentView="map";state.isInTown=false;state.combatPaused=false;state.playerHp=getPlayerMaxHealth();state.monsterStates[0].hp=1;state.attackTimer=getAttackSpeed();simulateCombatStep(gameTickSeconds);render();saveGame();return {gold:state.gold,gel:state.materials.gel,origin:performance.timeOrigin};})()'
+    $baseline = Evaluate '(()=>{const random=Math.random;Math.random=()=>0;try{state.currentView="map";state.isInTown=false;state.combatPaused=false;state.playerHp=getPlayerMaxHealth();state.monsterStates[0].hp=1;state.attackTimer=getAttackSpeed();simulateCombatStep(gameTickSeconds);render();saveGame();return {gold:state.gold,gel:state.materials.gel,origin:performance.timeOrigin};}finally{Math.random=random;}})()'
     Check 'combat awards and saves progress before disconnecting' ($baseline.gold -gt 0 -and $baseline.gel -gt 0)
     Stop-Job $server
     Check 'the origin server is stopped for the offline checks' ($server.State -eq 'Stopped')
@@ -130,7 +130,7 @@ try {
     Check 'offline play has no runtime errors' (Evaluate 'offlineSmokeErrors.length === 0')
     $null = Send-Cdp 'Page.navigate' @{url=([uri](Join-Path $projectPath 'index.html')).AbsoluteUri}
     Wait-For 'Boolean(location.protocol === "file:" && document.readyState === "complete" && typeof state !== "undefined")'
-    Check 'a downloaded folder also opens directly without a server' (Evaluate '(()=>{state.combatPaused=false;state.playerHp=getPlayerMaxHealth();state.monsterStates[0].hp=1;state.attackTimer=getAttackSpeed();simulateCombatStep(gameTickSeconds);return state.gold>0&&state.materials.gel>0&&offlineSmokeErrors.length===0;})()')
+    Check 'a downloaded folder also opens directly without a server' (Evaluate '(()=>{const random=Math.random;Math.random=()=>0;try{state.combatPaused=false;state.playerHp=getPlayerMaxHealth();state.monsterStates[0].hp=1;state.attackTimer=getAttackSpeed();simulateCombatStep(gameTickSeconds);return state.gold>0&&state.materials.gel>0&&offlineSmokeErrors.length===0;}finally{Math.random=random;}})()')
     $external = @($script:requests | Where-Object { $_ -match '^https?://' -and !$_.StartsWith($origin + '/') })
     Check 'the game makes no requests to external services' ($external.Count -eq 0)
     Write-Output 'SMOKE PASSED'

@@ -9,7 +9,15 @@
     function safePath(value) {
         return typeof value === 'string' && /^(?![\/\\]|.*(?:[:\\?#]|\.\.))[a-z0-9_ ./-]+\.(png|jpe?g|webp|gif|svg)$/i.test(value) ? value : '';
     }
-    function chanceText(chance) { return (chance * 100).toLocaleString('en-US', {maximumSignificantDigits: 6}) + '%'; }
+    function chanceText(chance) {
+        if (chance > 0 && chance < 0.01) {
+            const odds = 1 / chance;
+            const denominator = Math.round(odds);
+            const approximate = Math.abs(odds - denominator) > odds * 1e-10;
+            return (approximate ? '≈' : '') + '1/' + denominator.toLocaleString('en-US');
+        }
+        return (chance * 100).toLocaleString('en-US', {maximumFractionDigits: 2}) + '%';
+    }
     function definitions(data, map) {
         return (map.spawns || []).flatMap(spawn => {
             const monster = data.monsters.find(entry => entry.id === spawn.monsterId);
