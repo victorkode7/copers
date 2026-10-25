@@ -3149,6 +3149,7 @@ html {
 
 .idle-adventure .skill-node-tooltip span {
     display: block;
+    white-space: pre-line;
     color: var(--adventure-muted);
     font-size: 0.78rem;
     line-height: 1.4;

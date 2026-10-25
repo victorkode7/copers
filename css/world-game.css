@@ -66,6 +66,98 @@
     100% { opacity: 0; }
 }
 
+.idle-adventure .eruption-burst {
+    position: absolute;
+    inset: 0;
+    /* Each plate is a stacking context, keeping this above its background. */
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    transform-origin: center bottom;
+    background: linear-gradient(to top, #a7191e30, #d9414218 100%);
+    animation: volcanic-eruption-fade 700ms ease-out var(--eruption-delay, 0ms) both;
+}
+.idle-adventure .eruption-burst.is-center {
+    background: radial-gradient(ellipse at 50% 50%, #ffe1aacc 0%, #ff943999 15%, #c84a204d 48%, #7b1b1e66 100%);
+    box-shadow: inset 0 0 0 2px #ff9a52, inset 0 0 28px #e95b28aa, 0 0 16px #d53d24aa;
+    animation-name: volcanic-eruption-burst;
+}
+.idle-adventure .eruption-burst.is-center::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: min(35%, 4rem);
+    aspect-ratio: 1;
+    border: 2px solid #ffc078;
+    border-radius: 50%;
+    box-shadow: 0 0 12px #ff7b2f, inset 0 0 10px #ffc15d;
+    animation: volcanic-eruption-ring 700ms ease-out var(--eruption-delay, 0ms) both;
+}
+@keyframes volcanic-eruption-ring {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(.2); }
+    20% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(2.4); }
+}
+@keyframes volcanic-eruption-burst {
+    0% { opacity: 0; transform: scaleY(.15); }
+    20% { opacity: .85; transform: scaleY(1); }
+    45% { opacity: .65; transform: scaleY(1); }
+    100% { opacity: 0; transform: scaleY(1); }
+}
+
+.idle-adventure .eruption-chain {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    color: #ffc45c;
+    pointer-events: none;
+    animation: eruption-chain-visibility var(--eruption-trail-duration, 2000ms) linear var(--eruption-delay, 0ms) both;
+}
+.idle-adventure .eruption-chain .eruption-crack-core,
+.idle-adventure .eruption-chain .eruption-crack-reveal {
+    fill: none;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: miter;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: arrow-shaft-draw var(--eruption-flight, 1000ms) linear var(--eruption-delay, 0ms) both;
+}
+.idle-adventure .eruption-chain .eruption-crack-core {
+    filter: drop-shadow(0 0 3px #ff7626);
+}
+.idle-adventure .eruption-chain .eruption-crack-edge {
+    fill: #270609;
+    stroke: #6d111a;
+    stroke-width: 1.1;
+    stroke-linejoin: bevel;
+}
+.idle-adventure .eruption-chain .eruption-crack-reveal {
+    stroke: #fff;
+    animation-name: eruption-ground-open;
+}
+@keyframes eruption-ground-open {
+    0% { stroke-dashoffset: 1; stroke-width: .3; }
+    30% { stroke-width: 4; }
+    100% { stroke-dashoffset: 0; stroke-width: 8; }
+}
+.idle-adventure .eruption-trail-stop {
+    stop-opacity: 0;
+    animation: eruption-trail-fade var(--trail-duration) linear var(--trail-delay) forwards;
+}
+@keyframes eruption-trail-fade {
+    0%, 100% { stop-opacity: 0; }
+    15%, 35% { stop-opacity: 1; }
+}
+@keyframes eruption-chain-visibility {
+    0%, 100% { opacity: 0; }
+    2%, 70% { opacity: 1; }
+}
+
 .idle-adventure .combat-arrow {
     position: absolute;
     inset: 0;
@@ -184,10 +276,17 @@
     100% { opacity: 0; r: 18px; }
 }
 @media (prefers-reduced-motion: reduce) {
+    .idle-adventure .eruption-burst,
+    .idle-adventure .eruption-burst.is-center { animation-name: volcanic-eruption-fade; }
+    .idle-adventure .eruption-burst.is-center::before { animation-name: volcanic-eruption-fade; transform: translate(-50%, -50%); }
     .idle-adventure .poison-transfer { animation-duration: 250ms; }
     .idle-adventure .poison-transfer line { animation: none; }
     .idle-adventure .combat-arrow { animation-timing-function: step-end; }
     .idle-adventure .combat-arrow path { animation: none; }
+}
+@keyframes volcanic-eruption-fade {
+    0%, 100% { opacity: 0; }
+    20%, 45% { opacity: .65; }
 }
 @media (max-width: 899px) {
     .idle-adventure .combat-monster-art { opacity: .2; }

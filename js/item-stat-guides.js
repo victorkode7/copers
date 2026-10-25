@@ -11,6 +11,16 @@
             formula: 'Maximum health = (100 + flat item bonuses + flat skill bonuses) × item multipliers × skill multipliers',
             notes: 'Rounded to a whole number, with a minimum of 1. Increasing maximum health through equipment does not heal the character.', example: 50
         },
+        healthRegen: {
+            affects: 'Health restored each second while the character is alive.',
+            formula: 'Health regeneration per second = (flat item bonuses + flat skill bonuses) × item multipliers × skill multipliers',
+            notes: 'Starts at 0 HP/s. Regeneration also works during background and offline progress, stops at maximum health, and does not revive the character.', example: 1
+        },
+        maxFury: {
+            affects: 'The character’s maximum Fury capacity.',
+            formula: 'Maximum fury = (base maximum fury + flat item bonuses + flat skill bonuses) × item multipliers × skill multipliers',
+            notes: 'Rounded to a whole number, with a minimum of 0. Reserved for future Fury mechanics; this stat does not generate or spend Fury yet.', example: 10
+        },
         accuracy: {
             affects: 'The chance for your attacks to hit an enemy.',
             formula: 'Accuracy = (100 + flat item bonuses + flat skill bonuses) × item multipliers × skill multipliers',

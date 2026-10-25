@@ -7,9 +7,9 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/nav.css">
     <link rel="stylesheet" href="css/app-nav.css">
-    <link rel="stylesheet" href="css/game.css?v=20261025-7">
+    <link rel="stylesheet" href="css/game.css?v=20261025-8">
     <link rel="stylesheet" href="css/equipment-effects.css?v=1">
-    <link rel="stylesheet" href="css/world-game.css?v=11">
+    <link rel="stylesheet" href="css/world-game.css?v=23">
     <link rel="stylesheet" href="css/skill-tree-background.css?v=20261021-18">
     <link rel="stylesheet" href="css/inventory-categories.css?v=2">
     <link rel="stylesheet" href="css/loot-effects.css?v=6">
@@ -85,10 +85,12 @@
                   <section class="combat-stat-group" aria-labelledby="defensiveStatsHeading">
                       <h3 id="defensiveStatsHeading">Defensive stats</h3>
                       <div class="combat-stat"><span>Evasion</span><strong id="evasionDisplay">25</strong></div>
+                      <div class="combat-stat"><span title="Health restored each second while alive, including offline progress.">Health regen</span><strong id="healthRegenDisplay">0 HP/s</strong></div>
                   </section>
                   <section class="combat-stat-group" aria-labelledby="miscStatsHeading">
                       <h3 id="miscStatsHeading">Misc stats</h3>
                       <div class="combat-stat"><span title="Chance to apply a poison stack on each successful hit">Poison chance</span><strong id="poisonChanceDisplay">0%</strong></div>
+                      <div class="combat-stat"><span title="Maximum Fury capacity. Reserved for future Fury abilities.">Maximum fury</span><strong id="maxFuryDisplay">0</strong></div>
                   </section>
               </div>
           </aside>
@@ -253,16 +255,18 @@
     <p id="profileStatus" class="profile-status" role="status" aria-live="polite" hidden></p>
     <footer class="developer-options"><details><summary>Developer options</summary><label><input id="developerItems" type="checkbox"> Enable developer equipment</label><label><input id="developerTravel" type="checkbox"> Skip kill requirements — unlock all maps and worlds</label></details></footer>
     <script src="js/items.js?v=20261021-2"></script>
-    <script src="js/item-system.js?v=20261025-1"></script>
-    <script src="js/skill-tree.js?v=20261025-4"></script>
-    <script src="js/skill-stat-compat.js?v=20261021-2"></script>
+    <script src="js/item-system.js?v=20261025-3"></script>
+    <script src="js/skill-tree.js?v=20261025-8"></script>
+    <script src="js/skill-stat-compat.js?v=20261025-2"></script>
+    <script src="js/skill-descriptions.js?v=20261025-4"></script>
     <script src="js/skill-sprites.js?v=20261021-13"></script>
     <script src="js/equipment-effects.js?v=1"></script>
     <script src="js/world-content.js?v=20261024-2"></script>
     <script src="js/world-system.js?v=20261025-1"></script>
     <script src="js/loot-effects.js?v=6"></script>
-    <script src="js/arrow-skills.js?v=20261025-7"></script>
-    <script src="js/game.js?v=20261025-7"></script>
+    <script src="js/arrow-skills.js?v=20261025-9"></script>
+    <script src="js/eruption-skills.js?v=20261025-10"></script>
+    <script src="js/game.js?v=20261025-13"></script>
     <script src="js/game-profiles.js?v=20261025-1"></script>
     <script src="js/offline-play.js?v=20261025-1"></script>
 </body>

@@ -58,7 +58,7 @@ const createTutorialState = () => ({
 });
 
 const legacyUpgradeIds = ['strength', 'haste', 'evasion'];
-const skillTreeData = SkillStatCompat.normalize(window.adventureSkillTree);
+const skillTreeData = SkillDescriptions.normalize(SkillStatCompat.normalize(window.adventureSkillTree));
 if (!skillTreeData || !Array.isArray(skillTreeData.nodes)) {
     throw new Error('Idle Adventure skill tree data could not be loaded.');
 }
@@ -77,6 +77,7 @@ const experienceForNextLevel = level =>
         : skillTreeData.experienceBase + (level - 1) * skillTreeData.experiencePerLevel;
 
 const basePlayerMaxHealth = 100;
+const basePlayerMaxFury = 0;
 const playerAccuracy = 100;
 const basePlayerEvasion = 25;
 const baseMultiHit = 1;
@@ -120,6 +121,7 @@ const state = {
     enemyHp: mapData.find(map => map.id === worldData[0].mapIds[0]).health,
     enemyRespawnRemaining: 0,
     monsterStates: [],
+    pendingEruptions: [],
     monsterColumns: 1,
     targetMonsterId: null,
     playerHp: basePlayerMaxHealth,
@@ -144,6 +146,8 @@ const elements = {
     speed: document.querySelector('#speedDisplay'),
     accuracy: document.querySelector('#accuracyDisplay'),
     evasion: document.querySelector('#evasionDisplay'),
+    maxFury: document.querySelector('#maxFuryDisplay'),
+    healthRegen: document.querySelector('#healthRegenDisplay'),
     worldPanel: document.querySelector('.world-panel'),
     worldList: document.querySelector('#worldList'),
     mapList: document.querySelector('#mapList'),
@@ -415,6 +419,7 @@ function createMonsterStates(map, savedStates, legacyHp, legacyRespawn) {
 
 function resetMonsterStates(map = currentMap()) {
     monsterDefinitionCache.delete(map);
+    state.pendingEruptions = [];
     state.monsterStates = createMonsterStates(map);
     state.targetMonsterId = monsterDefinitions(map)[0].id;
     syncLegacyEnemyState();
@@ -683,6 +688,16 @@ function getPlayerMaxHealth() {
         getSkillMultiplier('healthMultiplier') * getGearStat('healthMultiplier')));
 }
 
+function getPlayerMaxFury() {
+    return Math.max(0, Math.round((basePlayerMaxFury + getSkillStat('maxFury') + getGearStat('maxFury')) *
+        getSkillMultiplier('maxFuryMultiplier') * getGearStat('maxFuryMultiplier')));
+}
+
+function getPlayerHealthRegen() {
+    return Math.max(0, (getSkillStat('healthRegen') + getGearStat('healthRegen')) *
+        getSkillMultiplier('healthRegenMultiplier') * getGearStat('healthRegenMultiplier'));
+}
+
 function getSkillMultiplier(stat) {
     return cachedCombatStat('getSkillMultiplier:' + stat, () => {
         return Object.entries(state.skillRanks).reduce((total, [id, rank]) => {
@@ -924,6 +939,7 @@ function createGameSave() {
         enemyHp: state.enemyHp,
         enemyRespawnRemaining: state.enemyRespawnRemaining,
         monsterStates: state.monsterStates,
+        pendingEruptions: state.pendingEruptions,
         monsterColumns: state.monsterColumns,
         targetMonsterId: state.targetMonsterId,
         playerHp: state.playerHp,
@@ -961,6 +977,7 @@ function parseGameSave(rawSave) {
         saved.enemyHp = mapData.find(map => map.id === saved.selectedMap).health;
         saved.enemyRespawnRemaining = 0;
         saved.monsterStates = [];
+        saved.pendingEruptions = [];
     }
     if (saved && saved.version === 1) {
         if (Number.isInteger(saved.level) && saved.level >= 1) saved.level--;
@@ -1181,6 +1198,12 @@ function parseGameSave(rawSave) {
         (saved.targetMonsterId !== undefined && saved.targetMonsterId !== null && typeof saved.targetMonsterId !== 'string') ||
         (saved.playerHp !== undefined && (!Number.isFinite(saved.playerHp) || saved.playerHp < 0)) ||
         (saved.combatPaused !== undefined && typeof saved.combatPaused !== 'boolean') ||
+        (saved.pendingEruptions !== undefined && (!Array.isArray(saved.pendingEruptions) ||
+            !saved.pendingEruptions.every(hit => hit && typeof hit.targetId === 'string' &&
+                Number.isFinite(hit.damage) && hit.damage > 0 &&
+                Number.isSafeInteger(hit.chainsRemaining) && hit.chainsRemaining >= 0 &&
+                Number.isFinite(hit.remaining) && hit.remaining > 0 &&
+                hit.remaining <= eruptionSkillSettings.chainDelay / 1000))) ||
         (saved.lootLog !== undefined && !Array.isArray(saved.lootLog))
     ) {
         throw new Error('Save data has an invalid format.');
@@ -1264,6 +1287,9 @@ function applyGameSave(saved) {
         ? createMonsterStates(currentMap())
         : createMonsterStates(currentMap(), saved.monsterStates, saved.enemyHp, saved.enemyRespawnRemaining);
     state.monsterColumns = saved.monsterColumns || 1;
+    state.pendingEruptions = selectedMapChanged ? [] : (saved.pendingEruptions || [])
+        .filter(hit => state.monsterStates.some(monster => monster.id === hit.targetId))
+        .map(hit => ({...hit}));
     state.targetMonsterId = !selectedMapChanged && monsterDefinitions(currentMap())
         .some(definition => definition.id === saved.targetMonsterId)
         ? saved.targetMonsterId
@@ -1491,7 +1517,7 @@ function renderUpgrades() {
                 name.textContent = node.name;
                 const effect = document.createElement('span');
                 effect.className = 'skill-node-effect';
-                effect.textContent = node.effect;
+                effect.textContent = SkillDescriptions.describe(node);
                 const status = document.createElement('span');
                 status.className = 'skill-node-status';
                 button.append(name, effect, status);
@@ -1582,7 +1608,10 @@ function renderUpgrades() {
             (!node.start && available && pendingPointCount >= state.skillPoints && rank < node.maxRank ? ' needs-point' : '');
         // The origin is interactive only to recenter the skill tree camera.
         button.disabled = !node.start && committedRank === 0 && !canAllocate && !canDeselect;
-        const labelParts = [node.name, node.effect];
+        const description = SkillDescriptions.describe(node);
+        const effect = button.querySelector('.skill-node-effect');
+        if (effect) effect.textContent = description;
+        const labelParts = [node.name, description];
         if (node.start) {
             labelParts.push('Starting node');
         } else {
@@ -2336,7 +2365,7 @@ function renderCombat() {
     // map changes so creation-time sprites and health labels cannot carry over.
     if (elements.enemyRoster.dataset.mapId !== map.id ||
         ids.length !== renderedIds.length || ids.some((id, index) => id !== renderedIds[index])) {
-        elements.combatPanel.querySelectorAll('.poison-transfer, .combat-arrow').forEach(effect => effect.remove());
+        elements.combatPanel.querySelectorAll('.poison-transfer, .combat-arrow, .eruption-chain').forEach(effect => effect.remove());
         elements.enemyRoster.replaceChildren(...definitions.map(createEnemyCard));
         elements.enemyRoster.dataset.mapId = map.id;
     }
@@ -2480,6 +2509,8 @@ function render() {
     elements.speed.textContent = (speedBonus >= 0 ? '+' : '') + combatStatFormatter.format(speedBonus) + '%';
     elements.accuracy.textContent = formatAmount(getPlayerAccuracy());
     elements.evasion.textContent = formatAmount(getPlayerEvasion());
+    elements.maxFury.textContent = formatAmount(getPlayerMaxFury());
+    elements.healthRegen.textContent = combatStatFormatter.format(getPlayerHealthRegen()) + ' HP/s';
     elements.townView.hidden = state.currentView !== 'town';
     elements.upgradesView.hidden = state.currentView !== 'upgrades';
     elements.mapView.hidden = state.currentView !== 'map';
@@ -2670,6 +2701,29 @@ function showPoisonTransfer(sourceId, targetId) {
         });
         window.setTimeout(() => svg.remove(), 800);
     });
+}
+
+function applyDamageToPlayer(damage) {
+    if (!Number.isFinite(damage) || damage <= 0 || state.playerHp <= 0) return;
+    const previousHp = state.playerHp;
+    state.playerHp = Math.max(0, state.playerHp - damage);
+    if (state.playerHp < 1e-8) state.playerHp = 0;
+    const damageDealt = previousHp - state.playerHp;
+    presentCombatEffect(() => {
+        recentPlayerDamage = damageDealt;
+        nudgePlayerHealthBar();
+        elements.playerHealthDamage.classList.remove('is-visible');
+        void elements.playerHealthDamage.offsetWidth;
+        elements.playerHealthDamage.classList.add('is-visible');
+        window.clearTimeout(damageFadeTimeout);
+        damageFadeTimeout = window.setTimeout(() => {
+            elements.playerHealthDamage.classList.remove('is-visible');
+        }, 500);
+    });
+    if (state.playerHp === 0) {
+        state.combatPaused = true;
+        state.attackTimer = 0;
+    }
 }
 
 function applyDamageToMonster(monster, damage, damageType = 'physical') {
@@ -3204,6 +3258,9 @@ function simulateCombatStep(elapsed, collectEffects = false) {
         const map = currentMap();
         const killsBeforeTick = state.kills[map.id];
         const wasPaused = state.combatPaused;
+        if (!state.combatPaused && state.playerHp > 0) {
+            state.playerHp = Math.min(getPlayerMaxHealth(), state.playerHp + getPlayerHealthRegen() * elapsed);
+        }
         ensureLiveMonsterTarget();
         const previousTarget = activeMonster();
         let anyRespawned = false;
@@ -3226,6 +3283,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                 anyRespawned = true;
             }
         });
+        tickPendingEruptions(elapsed);
         if (!state.combatPaused) {
             state.monsterStates.forEach(monster => {
                 if (monster.hp > 0) tickMonsterPoison(monster, elapsed);
@@ -3240,24 +3298,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                 while (monster.attackTimer >= definition.attackInterval && !state.combatPaused) {
                     monster.attackTimer -= definition.attackInterval;
                     if (Math.random() * 100 < getEnemyHitChance(monster)) {
-                        const previousPlayerHp = state.playerHp;
-                        state.playerHp = Math.max(0, state.playerHp - definition.attackDamage);
-                        const damage = previousPlayerHp - state.playerHp;
-                        presentCombatEffect(() => {
-                            recentPlayerDamage = damage;
-                            nudgePlayerHealthBar();
-                            elements.playerHealthDamage.classList.remove('is-visible');
-                            void elements.playerHealthDamage.offsetWidth;
-                            elements.playerHealthDamage.classList.add('is-visible');
-                            window.clearTimeout(damageFadeTimeout);
-                            damageFadeTimeout = window.setTimeout(() => {
-                                elements.playerHealthDamage.classList.remove('is-visible');
-                            }, 500);
-                        });
-                        if (state.playerHp === 0) {
-                            state.combatPaused = true;
-                            state.attackTimer = 0;
-                        }
+                        applyDamageToPlayer(definition.attackDamage);
                     } else {
                         flashDodge(elements.playerHealthTrack);
                     }
@@ -3276,6 +3317,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                     const arrowTarget = activeMonster();
                     const arrowDamage = getDamage();
                     const attackTargets = getPlayerAttackTargets();
+                    const extraEruptionTargets = [];
                     for (let attackIndex = 0; attackIndex < attackTargets.length; attackIndex++) {
                         const attackTarget = attackTargets[attackIndex];
                         if (attackTarget.hp <= 0) continue;
@@ -3285,6 +3327,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                             applyDamageToMonster(attackTarget, hitDamage, 'physical');
                             tryApplyPoison(attackTarget);
                             triggerShockwaveSlash(attackTarget, hitDamage);
+                            if (attackIndex > 0) extraEruptionTargets.push({target: attackTarget, damage: hitDamage});
                         } else {
                             presentCombatEffect(() => {
                                 const targetCard = Array.from(elements.enemyRoster.children)
@@ -3294,7 +3337,11 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                             });
                         }
                     }
-                    if (arrowTarget) triggerAttackArrowSkills(arrowTarget, arrowDamage);
+                    if (arrowTarget) {
+                        triggerVolcanicEruption(arrowTarget, arrowDamage);
+                        extraEruptionTargets.forEach(hit => triggerVolcanicEruption(hit.target, hit.damage));
+                        triggerAttackArrowSkills(arrowTarget, arrowDamage);
+                    }
                 }
             }
         } else {
@@ -3352,9 +3399,9 @@ function processCombatBacklog() {
         // retained and continued in another task so input and painting can run.
         for (let steps = 0; pendingCombatSeconds + 1e-8 >= gameTickSeconds && steps < 250; steps++) {
             let elapsed = gameTickSeconds;
-            if (state.combatPaused && state.monsterStates.every(monster => !monster.poisonStacks.length)) {
-                // Once poison expires, only respawns can change a dead player's
-                // state. Skip empty time, preserving the next 100 ms boundary.
+            if (state.combatPaused && !state.pendingEruptions.length && state.monsterStates.every(monster => !monster.poisonStacks.length)) {
+                // Once poison and travelling eruptions finish, only respawns
+                // can change a dead player's state. Preserve 100 ms boundaries.
                 const nextRespawn = Math.min(...state.monsterStates
                     .filter(monster => monster.hp <= 0 && monster.respawnRemaining > 0)
                     .map(monster => monster.respawnRemaining));
@@ -3454,7 +3501,7 @@ function initSkillTreePan(viewport) {
         const node = skillNodeById[button.dataset.skillNode];
         if (!node) return;
         tooltipTitle.textContent = node.name;
-        tooltipDescription.textContent = node.effect;
+        tooltipDescription.textContent = SkillDescriptions.describe(node);
         tooltip.hidden = false;
         tooltip.style.left = '0px';
         tooltip.style.top = '0px';

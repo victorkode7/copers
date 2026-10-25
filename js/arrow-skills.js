@@ -79,11 +79,7 @@ function shootAbilityArrow(targets, damage, kind, direction = 0) {
             });
             continue;
         }
-        shot.didHit = true;
-        if (shot.kind !== 'forkingArrow' || shot.sourceId) {
-            showMonsterHitBadge(target.id, shot.kind === 'piercingArrow' ? 'PIERCING ARROW' :
-                shot.kind === 'multiShot' ? 'MULTISHOT' : 'FORKING ARROW', false, shot.kind === 'forkingArrow' ? 1 : 0);
-        }
+        if (shot.kind === 'multiShot') showMonsterHitBadge(target.id, 'MULTISHOT');
         applyDamageToMonster(target, damage, 'physical');
         tryApplyPoison(target);
         applyArrowFreeze(target);
@@ -91,6 +87,7 @@ function shootAbilityArrow(targets, damage, kind, direction = 0) {
         // still poison, freeze and fork, but cannot recursively cast Multishot.
         if (shot.kind === 'multiShot') {
             triggerShockwaveSlash(target, damage);
+            triggerVolcanicEruption(target, damage);
             triggerAttackArrowSkills(target, damage, false);
         }
         if (canFork) {
@@ -104,17 +101,14 @@ function shootAbilityArrow(targets, damage, kind, direction = 0) {
             }
         }
     }
-    // Only announce and animate a fork when an arrow actually travels to a
+    // Only animate a fork when an arrow actually travels to a
     // second living target. Keep the final hop visible even if it cannot fork again.
     const forked = visualShots.some(shot => shot.sourceId);
     visualShots.forEach(shot => {
         // Multishot has no separate projectile effect. If it forks, show its
         // incoming leg as part of that real fork chain so the origin stays clear.
         if (shot.kind === 'multiShot' && !forked) return;
-        if (shot.kind === 'forkingArrow' && !shot.sourceId) {
-            if (!forked) return;
-            if (shot.didHit) showMonsterHitBadge(shot.target.id, 'FORKING ARROW', false, 1);
-        }
+        if (shot.kind === 'forkingArrow' && !shot.sourceId && !forked) return;
         const visualKind = shot.kind === 'multiShot' ? 'forkingArrow' : shot.kind;
         showCombatArrow(shot.sourceId, shot.target.id, visualKind, direction, {delay: shot.visualDelay});
     });

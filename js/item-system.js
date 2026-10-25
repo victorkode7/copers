@@ -2,8 +2,8 @@
     'use strict';
     // This registry is shared by the game, item tooltips, and editor controls.
     const stats = Object.create(null);
-    for (const [id, label] of Object.entries({damage: 'Damage', health: 'Maximum health', accuracy: 'Accuracy', evasion: 'Evasion', multiHit: 'Multi-hit', poisonDamage: 'Poison damage', poisonTickRate: 'Poison tick rate'})) {
-        const displayLabel = id === 'poisonTickRate' ? 'Poison tick speed' : label;
+    for (const [id, label] of Object.entries({damage: 'Damage', health: 'Maximum health', healthRegen: 'Health regeneration', maxFury: 'Maximum fury', accuracy: 'Accuracy', evasion: 'Evasion', multiHit: 'Multi-hit', poisonDamage: 'Poison damage', poisonTickRate: 'Poison tick rate'})) {
+        const displayLabel = id === 'poisonTickRate' ? 'Poison tick speed' : id === 'healthRegen' ? 'Health regeneration per second' : label;
         stats[id] = { label, mode: 'add', default: 0, display: {label: displayLabel, type: id === 'poisonTickRate' ? 'percent' : 'flat'} };
         stats[id + 'Multiplier'] = { label: label + ' multiplier', mode: 'multiply', default: 1, min: 0.000001, display: {label: displayLabel, type: 'percentBonus'} };
     }
@@ -18,7 +18,7 @@
     });
 
     const statOrder = [
-        'health', 'healthMultiplier', 'damage', 'damageMultiplier',
+        'health', 'healthMultiplier', 'healthRegen', 'healthRegenMultiplier', 'maxFury', 'maxFuryMultiplier', 'damage', 'damageMultiplier',
         'accuracy', 'accuracyMultiplier', 'evasion', 'evasionMultiplier',
         'multiHit', 'multiHitMultiplier', 'attackSpeedMultiplier',
         'poisonChance', 'poisonChanceMultiplier', 'poisonDamage', 'poisonDamageMultiplier',

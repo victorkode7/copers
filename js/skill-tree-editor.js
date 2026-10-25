@@ -7,7 +7,7 @@
         'evasion',
         'goldBonus', 'goldBonusMultiplier', 'attackSpeedMultiplier', 'attackSpeedBonus', 'attackSpeedPerLevel', 'health', 'healthMultiplier', 'accuracy', 'accuracyMultiplier', 'damageMultiplier', 'evasionMultiplier', 'multiHit', 'multiHitMultiplier',
         'poisonChance', 'poisonChanceMultiplier', 'poisonDamage', 'poisonDamageMultiplier',
-        'poisonTickRate', 'poisonTickRateMultiplier'
+        'poisonTickRate', 'poisonTickRateMultiplier', 'maxFury', 'maxFuryMultiplier', 'healthRegen', 'healthRegenMultiplier', 'eruptionChains'
     ];
     const baseNodeTemplates = {
         health: {
@@ -47,6 +47,9 @@
     const bonusStats = [
         { id: 'damage', label: 'Damage', additive: 'damage', multiplier: 'damageMultiplier' },
         { id: 'health', label: 'Maximum health', additive: 'health', multiplier: 'healthMultiplier' },
+        { id: 'healthRegen', label: 'Health regeneration (HP/s)', additive: 'healthRegen', multiplier: 'healthRegenMultiplier' },
+        { id: 'maxFury', label: 'Maximum fury', additive: 'maxFury', multiplier: 'maxFuryMultiplier' },
+        { id: 'eruptionChains', label: 'Maximum eruption chains', additive: 'eruptionChains' },
         { id: 'accuracy', label: 'Accuracy', additive: 'accuracy', multiplier: 'accuracyMultiplier' },
         { id: 'evasion', label: 'Evasion', additive: 'evasion', multiplier: 'evasionMultiplier' },
         { id: 'multiHit', label: 'Multi-hit', additive: 'multiHit', multiplier: 'multiHitMultiplier' },
@@ -59,9 +62,13 @@
     const structuredStatKeys = new Set(bonusStats.flatMap(stat => [stat.additive, stat.multiplier]));
     structuredStatKeys.add('attackSpeedMultiplier');
     const nodeSizes = [1, 1.25, 1.5];
-    const originalTree = SkillStatCompat.normalize(JSON.parse(JSON.stringify(window.adventureSkillTree)));
+    const originalTree = SkillDescriptions.normalize(SkillStatCompat.normalize(JSON.parse(JSON.stringify(window.adventureSkillTree))));
     let tree = JSON.parse(JSON.stringify(originalTree));
     let selectedId = tree.nodes[0] ? tree.nodes[0].id : null;
+    let selectedIds = new Set(selectedId ? [selectedId] : []);
+    let selectionAnchorId = selectedId;
+    let copiedNodes = null;
+    let cancelNodeDrag = null;
     let quickSave = null;
     let zoom = 0.85;
     let graphViewMode = 'detailed';
@@ -87,6 +94,10 @@
         graphNodes: document.querySelector('#graphNodes'),
         graphViewToggle: document.querySelector('#graphViewToggle'),
         graphHint: document.querySelector('#graphHint'),
+        selectionSummary: document.querySelector('#selectionSummary'),
+        groupSelectionNote: document.querySelector('#groupSelectionNote'),
+        copyNodes: document.querySelector('#copyNodes'),
+        pasteNodes: document.querySelector('#pasteNodes'),
         zoomRange: document.querySelector('#zoomRange'),
         zoomValue: document.querySelector('#zoomValue'),
         validationCount: document.querySelector('#validationCount'),
@@ -101,6 +112,7 @@
         nodeSpriteFile: document.querySelector('#nodeSpriteFile'),
         nodeSpritePreview: document.querySelector('#nodeSpritePreview'),
         nodeEffect: document.querySelector('#nodeEffect'),
+        nodeCustomDescription: document.querySelector('#nodeCustomDescription'),
         nodeSize: document.querySelector('#nodeSize'),
         nodeType: document.querySelector('#nodeType'),
         nodeMaxRank: document.querySelector('#nodeMaxRank'),
@@ -133,6 +145,32 @@
 
     function selectedNode() {
         return tree.nodes.find(node => node.id === selectedId) || null;
+    }
+
+    function setSelection(ids, primaryId, anchorId = primaryId) {
+        const validIds = new Set(tree.nodes.map(node => node.id));
+        selectedIds = new Set([...ids].filter(id => validIds.has(id)));
+        selectedId = selectedIds.has(primaryId) ? primaryId : [...selectedIds].at(-1) || null;
+        selectionAnchorId = validIds.has(anchorId) ? anchorId : selectedId;
+        selectedConnection = null;
+    }
+
+    function renderSelection() {
+        elements.graphNodes.querySelectorAll('[data-node-id]').forEach(card => {
+            card.setAttribute('aria-pressed', String(selectedIds.has(card.dataset.nodeId) && !selectedConnection));
+        });
+        elements.nodeList.querySelectorAll('[data-node-id]').forEach(button => {
+            button.setAttribute('aria-selected', String(selectedIds.has(button.dataset.nodeId) && !selectedConnection));
+        });
+        const count = selectedConnection ? 0 : selectedIds.size;
+        elements.selectionSummary.textContent = count + ' selected';
+        elements.copyNodes.disabled = count === 0;
+        elements.pasteNodes.disabled = !copiedNodes;
+        elements.groupSelectionNote.hidden = count < 2;
+        elements.groupSelectionNote.textContent = count > 1
+            ? count + ' nodes selected. The fields below edit ' + (selectedNode()?.name || selectedId) + '.' : '';
+        elements.deleteNode.setAttribute('aria-label', count > 1 ? 'Delete selected nodes' : 'Delete selected node');
+        elements.deleteNode.title = count > 1 ? 'Delete ' + count + ' selected nodes' : 'Delete selected node';
     }
 
     function nodeSize(node) {
@@ -177,7 +215,7 @@
 
     function saveDraft() {
         try {
-            localStorage.setItem(draftKey, JSON.stringify({version: 1, tree, selectedId, zoom, graphViewMode, panX, panY,
+            localStorage.setItem(draftKey, JSON.stringify({version: 1, tree, selectedId, selectedIds: [...selectedIds], selectionAnchorId, zoom, graphViewMode, panX, panY,
                 search: elements.nodeSearch.value, budget: elements.skillPointBudget?.value,
                 inspector: inspectorDraft()}));
         } catch {
@@ -198,6 +236,8 @@
         draft.bonuses.forEach(bonus => {
             if (bonusStats.some(stat => stat.id === bonus.stat) && ['additive', 'multiplier'].includes(bonus.mode)) addStatBonusRow(bonus);
         });
+        elements.nodeEffect.readOnly = !elements.nodeCustomDescription.checked;
+        if (elements.nodeEffect.readOnly) elements.nodeEffect.value = SkillDescriptions.describe(selectedNode());
     }
 
     function markChanged() {
@@ -216,10 +256,14 @@
 
     function undoTreeEdit() {
         if (!undoHistory.length) return;
+        const oldMinColumn = Math.min(1, ...tree.nodes.map(node => Number(node.column) || 0));
+        const oldMinRow = Math.min(1, ...tree.nodes.map(node => Number(node.row) || 0));
         tree = JSON.parse(undoHistory.pop());
+        panX += (Math.min(1, ...tree.nodes.map(node => Number(node.column) || 0)) - oldMinColumn) * 190 * zoom;
+        panY += (Math.min(1, ...tree.nodes.map(node => Number(node.row) || 0)) - oldMinRow) * 160 * zoom;
         historySnapshot = JSON.stringify(tree);
-        if (!tree.nodes.some(node => node.id === selectedId)) selectedId = tree.nodes[0] ? tree.nodes[0].id : null;
-        selectedConnection = null;
+        const remainingSelection = [...selectedIds].filter(id => tree.nodes.some(node => node.id === id));
+        setSelection(remainingSelection.length ? remainingSelection : tree.nodes.slice(0, 1).map(node => node.id), selectedId, selectionAnchorId);
         connectSourceId = null;
         updateUndoButton();
         render();
@@ -274,6 +318,25 @@
         };
     }
 
+    function edgeCoordinates(source, target, minColumn, minRow, offset = {x: 0, y: 0}) {
+        const from = graphNodeCenter(source, minColumn, minRow);
+        const to = graphNodeCenter(target, minColumn, minRow);
+        if (selectedIds.has(source.id)) { from.x += offset.x; from.y += offset.y; }
+        if (selectedIds.has(target.id)) { to.x += offset.x; to.y += offset.y; }
+        const deltaX = to.x - from.x, deltaY = to.y - from.y;
+        const distance = Math.hypot(deltaX, deltaY);
+        const edgeScale = node => {
+            if (distance === 0) return 0;
+            if (graphViewMode === 'player') return 36 * nodeSize(node) / distance;
+            const {width, height} = graphNodeDimensions(node);
+            return Math.min(deltaX === 0 ? Infinity : width / 2 / Math.abs(deltaX),
+                deltaY === 0 ? Infinity : height / 2 / Math.abs(deltaY));
+        };
+        const sourceScale = edgeScale(source), targetScale = edgeScale(target);
+        return {x1: from.x + deltaX * sourceScale, y1: from.y + deltaY * sourceScale,
+            x2: to.x - deltaX * targetScale, y2: to.y - deltaY * targetScale};
+    }
+
     function renderGraph() {
         const size = graphSize();
         const unscaledWidth = size.width;
@@ -297,14 +360,15 @@
 
         const nodeElements = new Map();
         tree.nodes.forEach(node => {
+            const description = SkillDescriptions.describe(node);
             const card = document.createElement('button');
             card.type = 'button';
             card.className = 'graph-node' + (node.start ? ' is-start' : '') + (node.id === connectSourceId ? ' is-connect-source' : '');
             if (nodeTypes.includes(node.type)) card.classList.add('type-' + node.type);
             card.dataset.nodeId = node.id;
-            card.setAttribute('aria-pressed', String(node.id === selectedId && !selectedConnection));
+            card.setAttribute('aria-pressed', String(selectedIds.has(node.id) && !selectedConnection));
             card.setAttribute('aria-label',
-                (node.name || node.id || '(unnamed)') + '. ' + (node.effect || ''));
+                (node.name || node.id || '(unnamed)') + '. ' + description);
             const dimensions = graphNodeDimensions(node);
             const center = graphNodeCenter(node, minColumn, minRow);
             card.style.left = (center.x - dimensions.width / 2) + 'px';
@@ -318,14 +382,12 @@
             name.textContent = node.name || node.id || '(unnamed)';
             const effect = document.createElement('span');
             effect.className = 'graph-node-effect';
-            effect.textContent = node.effect || '';
+            effect.textContent = description;
             const rank = document.createElement('span');
             rank.className = 'graph-node-rank';
             rank.textContent = node.start ? 'START' : 'ONE-TIME';
             card.append(icon, name, effect, rank);
-            if (graphViewMode === 'player') {
-                card.title = (node.name || node.id || '(unnamed)') + ' — ' + (node.effect || '');
-            }
+            card.title = (node.name || node.id || '(unnamed)') + ' — ' + description;
             elements.graphNodes.appendChild(card);
             nodeElements.set(node.id, card);
         });
@@ -348,35 +410,13 @@
                 if (!sourceNode) return;
                 const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 line.classList.add('graph-edge');
-                if (node.id === selectedId || requiredId === selectedId) line.classList.add('edge-active');
+                if (selectedIds.has(node.id) || selectedIds.has(requiredId)) line.classList.add('edge-active');
                 if (selectedConnection && selectedConnection.from === requiredId && selectedConnection.to === node.id) line.classList.add('edge-selected');
                 line.dataset.sourceId = requiredId;
                 line.dataset.targetId = node.id;
-                const sourceSize = nodeSize(sourceNode);
-                const targetSize = nodeSize(node);
-                const sourceDimensions = graphNodeDimensions(sourceNode);
-                const targetDimensions = graphNodeDimensions(node);
-                const sourceWidth = sourceDimensions.width;
-                const sourceHeight = sourceDimensions.height;
-                const targetWidth = targetDimensions.width;
-                const targetHeight = targetDimensions.height;
-                const {x: sourceX, y: sourceY} = graphNodeCenter(sourceNode, minColumn, minRow);
-                const {x: targetX, y: targetY} = graphNodeCenter(node, minColumn, minRow);
-                const deltaX = targetX - sourceX;
-                const deltaY = targetY - sourceY;
-                const distance = Math.hypot(deltaX, deltaY);
-                const edgeScale = (width, height, size) => {
-                    if (distance === 0) return 0;
-                    if (graphViewMode === 'player') return (36 * size) / distance;
-                    return Math.min(
-                        deltaX === 0 ? Infinity : width / 2 / Math.abs(deltaX),
-                        deltaY === 0 ? Infinity : height / 2 / Math.abs(deltaY)
-                    );
-                };
-                line.setAttribute('x1', String(sourceX + deltaX * edgeScale(sourceWidth, sourceHeight, sourceSize)));
-                line.setAttribute('y1', String(sourceY + deltaY * edgeScale(sourceWidth, sourceHeight, sourceSize)));
-                line.setAttribute('x2', String(targetX - deltaX * edgeScale(targetWidth, targetHeight, targetSize)));
-                line.setAttribute('y2', String(targetY - deltaY * edgeScale(targetWidth, targetHeight, targetSize)));
+                Object.entries(edgeCoordinates(sourceNode, node, minColumn, minRow)).forEach(([key, value]) => {
+                    line.setAttribute(key, String(value));
+                });
                 const hitLine = line.cloneNode(false);
                 hitLine.classList.remove('graph-edge');
                 hitLine.classList.add('graph-edge-hit');
@@ -389,20 +429,21 @@
         const dotOffset = 36 * zoom;
         elements.graphViewport.style.backgroundPosition = (panX + dotOffset) + 'px ' + (panY + dotOffset) + 'px';
         setZoom(zoom);
+        renderSelection();
     }
 
     function renderNodeList() {
         const query = elements.nodeSearch.value.trim().toLowerCase();
         elements.nodeList.innerHTML = '';
         const visibleNodes = tree.nodes.filter(node =>
-            !query || [node.name, node.id, node.effect].some(value =>
+            !query || [node.name, node.id, SkillDescriptions.describe(node)].some(value =>
                 String(value || '').toLowerCase().includes(query)));
         visibleNodes.forEach(node => {
             const button = document.createElement('button');
             button.type = 'button';
             button.className = 'node-list-item';
             button.setAttribute('role', 'option');
-            button.setAttribute('aria-selected', String(node.id === selectedId));
+            button.setAttribute('aria-selected', String(selectedIds.has(node.id) && !selectedConnection));
             button.dataset.nodeId = node.id;
             const icon = SkillSprites.icon(node, 'list-icon', true);
             const copy = document.createElement('span');
@@ -459,6 +500,12 @@
             modeSelect.appendChild(option);
         });
         modeSelect.value = bonus.mode;
+        const updateBonusMode = () => {
+            modeSelect.disabled = !bonusStats.find(stat => stat.id === statSelect.value)?.multiplier;
+            if (modeSelect.disabled) modeSelect.value = 'additive';
+        };
+        statSelect.addEventListener('change', updateBonusMode);
+        updateBonusMode();
         const amount = document.createElement('input');
         amount.type = 'number';
         amount.step = 'any';
@@ -469,7 +516,7 @@
         remove.className = 'icon-button danger-button';
         remove.textContent = '×';
         remove.setAttribute('aria-label', 'Remove stat bonus');
-        remove.addEventListener('click', () => row.remove());
+        remove.addEventListener('click', () => { row.remove(); applyInspector(null, true); });
         row.append(statSelect, modeSelect, amount, remove);
         elements.statBonusRows.appendChild(row);
     }
@@ -482,6 +529,7 @@
             const value = Number(amountInput.value);
             if (!stat || !Number.isFinite(value)) throw new Error('Each stat bonus needs a valid number.');
             const key = modeSelect.value === 'multiplier' ? stat.multiplier : stat.additive;
+            if (!key) throw new Error('This stat only supports additive bonuses.');
             if (modeSelect.value === 'multiplier' && value <= 0) throw new Error('Multipliers must be greater than zero.');
             if (key === 'attackSpeedBonus' && value <= -1) throw new Error('Additive attack speed must be greater than -1.');
             if (Object.prototype.hasOwnProperty.call(stats, key)) throw new Error('Remove duplicate bonuses for the same stat and type.');
@@ -521,7 +569,9 @@
         elements.nodeSprite.value = node.sprite || '';
         elements.nodeSpriteFile.value = '';
         renderSpritePreview(node);
-        elements.nodeEffect.value = node.effect || '';
+        elements.nodeCustomDescription.checked = SkillDescriptions.usesCustomDescription(node);
+        elements.nodeEffect.readOnly = !elements.nodeCustomDescription.checked;
+        elements.nodeEffect.value = SkillDescriptions.describe(node);
         elements.nodeSize.value = String(nodeSize(node));
         elements.nodeType.value = nodeTypes.includes(node.type) ? node.type : '';
         elements.nodeMaxRank.value = node.start ? '0' : '1';
@@ -594,7 +644,7 @@
             if (node.sprite !== undefined && (typeof node.sprite !== 'string' || node.sprite && !SkillSprites.safePath(node.sprite))) {
                 issues.push({ type: 'error', message: label + ': sprite must be a local image path.' });
             }
-            if (!String(node.effect || '').trim()) issues.push({ type: 'warning', message: label + ': add effect text so players understand the benefit.' });
+            if (!SkillDescriptions.describe(node)) issues.push({ type: 'warning', message: label + ': add effect text so players understand the benefit.' });
             if (!Number.isInteger(node.column) || !Number.isInteger(node.row)) {
                 issues.push({ type: 'error', message: label + ': row and column must be whole numbers.' });
             }
@@ -722,11 +772,103 @@
         }
     }
 
-    function selectNode(id) {
+    function selectNode(id, event = {}) {
         if (!tree.nodes.some(node => node.id === id)) return;
-        selectedId = id;
-        selectedConnection = null;
+        const node = tree.nodes.find(entry => entry.id === id);
+        const anchor = tree.nodes.find(entry => entry.id === selectionAnchorId) || selectedNode();
+        if (event.shiftKey && anchor) {
+            const left = Math.min(Number(anchor.column), Number(node.column));
+            const right = Math.max(Number(anchor.column), Number(node.column));
+            const top = Math.min(Number(anchor.row), Number(node.row));
+            const bottom = Math.max(Number(anchor.row), Number(node.row));
+            const range = tree.nodes.filter(entry => Number(entry.column) >= left && Number(entry.column) <= right &&
+                Number(entry.row) >= top && Number(entry.row) <= bottom).map(entry => entry.id);
+            setSelection(event.ctrlKey || event.metaKey ? [...selectedIds, ...range] : range, id, anchor.id);
+        } else if (event.ctrlKey || event.metaKey) {
+            const ids = new Set(selectedIds);
+            if (ids.has(id)) ids.delete(id);
+            else ids.add(id);
+            setSelection(ids, id, id);
+        } else {
+            setSelection([id], id);
+        }
         render();
+        saveDraft();
+    }
+
+    function copySelectedNodes() {
+        if (selectedConnection || !selectedIds.size) return null;
+        copiedNodes = {kind: 'idleAdventureSkillNodes', version: 1, primaryId: selectedId,
+            nodes: JSON.parse(JSON.stringify(tree.nodes.filter(node => selectedIds.has(node.id))))};
+        renderSelection();
+        showToast('Copied ' + copiedNodes.nodes.length + ' node' + (copiedNodes.nodes.length === 1 ? '' : 's') + '.');
+        return copiedNodes;
+    }
+
+    function readCopiedNodes(text) {
+        try {
+            const data = JSON.parse(text);
+            if (data?.kind !== 'idleAdventureSkillNodes' || data.version !== 1 || !Array.isArray(data.nodes) || !data.nodes.length) return null;
+            if (!data.nodes.every(node => node && typeof node.id === 'string' && typeof node.name === 'string' &&
+                Number.isFinite(node.column) && Number.isFinite(node.row) && Array.isArray(node.requires) &&
+                node.requires.every(id => typeof id === 'string') && node.stats && typeof node.stats === 'object' && !Array.isArray(node.stats))) return null;
+            if (new Set(data.nodes.map(node => node.id)).size !== data.nodes.length) return null;
+            return data;
+        } catch { return null; }
+    }
+
+    function revealSelection() {
+        const cards = [...elements.graphNodes.querySelectorAll('[aria-pressed=true]')];
+        if (!cards.length) return;
+        const left = Math.min(...cards.map(card => parseFloat(card.style.left)));
+        const right = Math.max(...cards.map(card => parseFloat(card.style.left) + parseFloat(card.style.width)));
+        const top = Math.min(...cards.map(card => parseFloat(card.style.top)));
+        const bottom = Math.max(...cards.map(card => parseFloat(card.style.top) + parseFloat(card.style.height)));
+        const width = elements.graphViewport.clientWidth, height = elements.graphViewport.clientHeight;
+        const nextZoom = Math.max(0.1, Math.min(zoom, (width - 48) / (right - left), (height - 48) / (bottom - top)));
+        panX = width / 2 - (left + right) / 2 * nextZoom;
+        panY = height / 2 - (top + bottom) / 2 * nextZoom;
+        setZoom(nextZoom);
+    }
+
+    function pasteCopiedNodes(data = copiedNodes) {
+        if (!data || cancelNodeDrag) return;
+        const nodes = JSON.parse(JSON.stringify(data.nodes));
+        const occupiedIds = new Set(tree.nodes.map(node => node.id));
+        const idMap = new Map();
+        nodes.forEach(node => {
+            const base = String(node.id + '_copy').replace(/[^A-Za-z0-9_]/g, '').replace(/^[^A-Za-z_]+/, '') || 'newNode';
+            let id = base, suffix = 2;
+            while (occupiedIds.has(id)) id = base + suffix++;
+            idMap.set(node.id, id);
+            occupiedIds.add(id);
+        });
+        const occupiedCells = new Set(tree.nodes.map(node => Number(node.column) + ',' + Number(node.row)));
+        let offset = 1;
+        while (nodes.some(node => occupiedCells.has((Number(node.column) + offset) + ',' + (Number(node.row) + offset)))) offset++;
+        nodes.forEach(node => {
+            node.customDescription = SkillDescriptions.usesCustomDescription(node);
+            node.id = idMap.get(node.id);
+            node.name += ' Copy';
+            node.column = Number(node.column) + offset;
+            node.row = Number(node.row) + offset;
+            node.start = false;
+            node.maxRank = 1;
+            node.requires = node.requires.filter(id => idMap.has(id)).map(id => idMap.get(id));
+        });
+        tree.nodes.push(...nodes);
+        connectMode = false;
+        connectSourceId = null;
+        elements.connectToggle.classList.remove('is-active');
+        elements.connectToggle.setAttribute('aria-pressed', 'false');
+        elements.connectHint.hidden = true;
+        setSelection(nodes.map(node => node.id), idMap.get(data.primaryId) || nodes[0].id);
+        markChanged();
+        render();
+        revealSelection();
+        elements.graphViewport.focus({preventScroll: true});
+        showToast('Pasted ' + nodes.length + ' node' + (nodes.length === 1 ? '' : 's') + '. Drag the selection to place it.');
+        saveDraft();
     }
 
     function applyInspector(event, live = false) {
@@ -755,7 +897,8 @@
         node.name = elements.nodeName.value.trim();
         node.icon = elements.nodeIcon.value.trim();
         node.sprite = elements.nodeSprite.value.trim();
-        node.effect = elements.nodeEffect.value.trim();
+        node.customDescription = elements.nodeCustomDescription.checked;
+        if (node.customDescription) node.effect = elements.nodeEffect.value.trim();
         node.size = Number(elements.nodeSize.value);
         if (elements.nodeType.value) node.type = elements.nodeType.value;
         else delete node.type;
@@ -766,11 +909,16 @@
         node.requires = requires;
         node.requiresMode = elements.nodeRequiresMode.value;
         node.stats = stats;
+        if (!node.customDescription) node.effect = SkillDescriptions.describe(node);
+        elements.nodeEffect.readOnly = !node.customDescription;
+        if (!node.customDescription) elements.nodeEffect.value = node.effect;
         if (oldId !== newId) {
             tree.nodes.forEach(other => {
                 other.requires = (other.requires || []).map(id => id === oldId ? newId : id);
             });
             if (selectedId === oldId) selectedId = newId;
+            if (selectedIds.delete(oldId)) selectedIds.add(newId);
+            if (selectionAnchorId === oldId) selectionAnchorId = newId;
         }
         markChanged();
         if (live) renderEditedTree();
@@ -819,21 +967,24 @@
             node.requiresMode = node.requiresMode === 'any' ? 'any' : 'all';
         }
         if (!Number.isInteger(node.maxRank) || node.maxRank < 1) node.maxRank = 1;
+        node.customDescription = SkillDescriptions.usesCustomDescription(node);
+        node.effect = SkillDescriptions.describe(node);
         tree.nodes.push(node);
-        selectedId = id;
+        setSelection([id], id);
         markChanged();
         render();
     }
 
     function removeNode(skipConfirm = false) {
-        const node = selectedNode();
-        if (!node) return;
-        if (!skipConfirm && !window.confirm('Delete "' + (node.name || node.id) + '"? Its connection links will be removed from other nodes.')) return;
-        tree.nodes = tree.nodes.filter(entry => entry !== node);
+        const nodes = tree.nodes.filter(node => selectedIds.has(node.id));
+        if (!nodes.length) return;
+        const label = nodes.length === 1 ? '"' + (nodes[0].name || nodes[0].id) + '"' : nodes.length + ' selected nodes';
+        if (!skipConfirm && !window.confirm('Delete ' + label + '? Their connection links will be removed from other nodes.')) return;
+        tree.nodes = tree.nodes.filter(entry => !selectedIds.has(entry.id));
         tree.nodes.forEach(other => {
-            other.requires = (other.requires || []).filter(id => id !== node.id);
+            other.requires = (other.requires || []).filter(id => !selectedIds.has(id));
         });
-        selectedId = tree.nodes[0] ? tree.nodes[0].id : null;
+        setSelection(tree.nodes.slice(0, 1).map(node => node.id), tree.nodes[0]?.id);
         markChanged();
         render();
     }
@@ -905,8 +1056,10 @@
             if (!imported || typeof imported !== 'object' || !Array.isArray(imported.nodes)) {
                 throw new Error('The JSON must contain a nodes array.');
             }
-            tree = {
+            tree = SkillDescriptions.normalize({
                 statSchemaVersion: 2,
+                furySchemaVersion: 1,
+                eruptionChainSchemaVersion: 1,
                 experienceBase: imported.experienceBase,
                 experiencePerLevel: imported.experiencePerLevel,
                 nodes: imported.nodes.map(node => ({
@@ -914,8 +1067,8 @@
                     maxRank: node.start ? 0 : 1,
                     requiresMode: node.requiresMode === 'any' ? 'any' : 'all'
                 }))
-            };
-            selectedId = tree.nodes[0] ? tree.nodes[0].id : null;
+            });
+            setSelection(tree.nodes.slice(0, 1).map(node => node.id), tree.nodes[0]?.id);
             if (elements.experienceBase) elements.experienceBase.value = String(tree.experienceBase ?? '');
             if (elements.experiencePerLevel) elements.experiencePerLevel.value = String(tree.experiencePerLevel ?? '');
             markChanged();
@@ -930,7 +1083,7 @@
     function resetTree() {
         if (!window.confirm('Discard editor changes and reload the default skill tree?')) return;
         tree = JSON.parse(JSON.stringify(originalTree));
-        selectedId = tree.nodes[0] ? tree.nodes[0].id : null;
+        setSelection(tree.nodes.slice(0, 1).map(node => node.id), tree.nodes[0]?.id);
         if (elements.experienceBase) elements.experienceBase.value = String(tree.experienceBase);
         if (elements.experiencePerLevel) elements.experiencePerLevel.value = String(tree.experiencePerLevel);
         if (elements.skillPointBudget) elements.skillPointBudget.value = '10';
@@ -979,6 +1132,8 @@
             inserted.start = false;
             inserted.requires = [from.id];
             inserted.requiresMode = 'all';
+            inserted.customDescription = false;
+            inserted.effect = SkillDescriptions.describe(inserted);
             inserted.column = Math.round(((Number(from.column) || 0) + (Number(to.column) || 0)) / 2);
             inserted.row = Math.round(((Number(from.row) || 0) + (Number(to.row) || 0)) / 2);
             while (tree.nodes.some(node => node.column === inserted.column && node.row === inserted.row)) inserted.row++;
@@ -994,8 +1149,7 @@
             return false;
         }
         to.requires = [...new Set((to.requires || []).filter(id => id !== from.id).concat(inserted.id))];
-        selectedId = inserted.id;
-        selectedConnection = null;
+        setSelection([inserted.id], inserted.id);
         elements.insertBetween.disabled = true;
         markChanged();
         render();
@@ -1003,14 +1157,14 @@
         return true;
     }
 
-    function handleGraphNodeClick(id) {
+    function handleGraphNodeClick(id, event = {}) {
         if (!connectMode) {
-            selectNode(id);
+            selectNode(id, event);
             return;
         }
         if (!connectSourceId) {
             connectSourceId = id;
-            selectedId = id;
+            setSelection([id], id);
             render();
             return;
         }
@@ -1020,61 +1174,104 @@
         target.requires = [...new Set([...(target.requires || []), connectSourceId])];
         target.requiresMode = target.requiresMode === 'any' ? 'any' : 'all';
         connectSourceId = null;
-        selectedId = id;
+        setSelection([id], id);
         markChanged();
         render();
     }
     function beginDrag(event) {
         const card = event.target.closest('[data-node-id]');
-        if (!card || event.button !== 0) return;
+        if (!card || event.button !== 0 || cancelNodeDrag) return;
         const node = tree.nodes.find(entry => entry.id === card.dataset.nodeId);
         if (!node) return;
         if (event.target.closest('button') !== card) return;
         const startX = event.clientX;
         const startY = event.clientY;
-        if (connectMode) { handleGraphNodeClick(node.id); return; }
+        event.preventDefault();
+        elements.graphViewport.focus({preventScroll: true});
+        if (connectMode || event.shiftKey || event.ctrlKey || event.metaKey) { handleGraphNodeClick(node.id, event); return; }
+        if (!selectedIds.has(node.id)) setSelection([node.id], node.id);
+        selectedId = node.id;
+        selectedConnection = null;
+        renderSelection();
+        renderInspector();
         const minColumn = Math.min(1, ...tree.nodes.map(entry => Number(entry.column) || 0));
         const minRow = Math.min(1, ...tree.nodes.map(entry => Number(entry.row) || 0));
-        const center = graphNodeCenter(node, minColumn, minRow);
-        const dimensions = graphNodeDimensions(node);
-        const originalLeft = center.x - dimensions.width / 2;
-        const originalTop = center.y - dimensions.height / 2;
+        const moving = tree.nodes.filter(entry => selectedIds.has(entry.id)).map(entry => {
+            const element = elements.graphNodes.querySelector('[data-node-id="' + entry.id + '"]');
+            return {node: entry, element, left: parseFloat(element.style.left), top: parseFloat(element.style.top)};
+        });
+        const byId = new Map(tree.nodes.map(entry => [entry.id, entry]));
+        const lines = [...elements.graphEdges.querySelectorAll('line')];
         let dragged = false;
+        const offsetFor = pointer => ({column: Math.round((pointer.clientX - startX) / zoom / 190),
+            row: Math.round((pointer.clientY - startY) / zoom / 160)});
         card.setPointerCapture(event.pointerId);
         function move(moveEvent) {
-            const deltaX = (moveEvent.clientX - startX) / zoom;
-            const deltaY = (moveEvent.clientY - startY) / zoom;
-            if (!dragged && Math.abs(deltaX) + Math.abs(deltaY) < 5) return;
+            if (moveEvent.pointerId !== event.pointerId) return;
+            if (!dragged && Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) < 5) return;
             dragged = true;
-            card.style.left = originalLeft + deltaX + 'px';
-            card.style.top = originalTop + deltaY + 'px';
+            const cell = offsetFor(moveEvent), offset = {x: cell.column * 190, y: cell.row * 160};
+            moving.forEach(entry => {
+                entry.element.classList.add('is-dragging');
+                entry.element.style.left = entry.left + offset.x + 'px';
+                entry.element.style.top = entry.top + offset.y + 'px';
+            });
+            lines.forEach(line => {
+                const source = byId.get(line.dataset.sourceId), target = byId.get(line.dataset.targetId);
+                if (!source || !target) return;
+                Object.entries(edgeCoordinates(source, target, minColumn, minRow, offset)).forEach(([key, value]) => {
+                    line.setAttribute(key, String(value));
+                });
+            });
+            const startingNode = tree.nodes.find(entry => entry.start);
+            if (startingNode && selectedIds.has(startingNode.id)) {
+                const center = graphNodeCenter(startingNode, minColumn, minRow);
+                elements.graphStage.style.setProperty('--skill-tree-background-x', center.x + offset.x + 'px');
+                elements.graphStage.style.setProperty('--skill-tree-background-y', center.y + offset.y + 'px');
+            }
         }
         function end(endEvent) {
+            if (endEvent.pointerId !== event.pointerId) return;
+            const cancelled = endEvent.type !== 'pointerup';
             card.removeEventListener('pointermove', move);
             card.removeEventListener('pointerup', end);
             card.removeEventListener('pointercancel', end);
+            card.removeEventListener('lostpointercapture', end);
+            cancelNodeDrag = null;
+            if (card.hasPointerCapture(event.pointerId)) card.releasePointerCapture(event.pointerId);
+            if (cancelled) { render(); return; }
             if (!dragged) {
                 handleGraphNodeClick(node.id);
                 return;
             }
-            node.column = minColumn - 1 + Math.round((center.x - 36 +
-                (endEvent.clientX - startX) / zoom) / 190);
-            node.row = minRow - 1 + Math.round((center.y - 36 +
-                (endEvent.clientY - startY) / zoom) / 160);
-            selectedId = node.id;
+            const offset = offsetFor(endEvent);
+            moving.forEach(entry => {
+                entry.node.column = Number(entry.node.column) + offset.column;
+                entry.node.row = Number(entry.node.row) + offset.row;
+            });
+            const nextMinColumn = Math.min(1, ...tree.nodes.map(entry => Number(entry.column) || 0));
+            const nextMinRow = Math.min(1, ...tree.nodes.map(entry => Number(entry.row) || 0));
+            panX += (nextMinColumn - minColumn) * 190 * zoom;
+            panY += (nextMinRow - minRow) * 160 * zoom;
             markChanged();
             render();
         }
+        cancelNodeDrag = () => end({type: 'pointercancel', pointerId: event.pointerId});
         card.addEventListener('pointermove', move);
         card.addEventListener('pointerup', end);
         card.addEventListener('pointercancel', end);
+        card.addEventListener('lostpointercapture', end);
     }
 
     elements.nodeList.addEventListener('click', event => {
         const button = event.target.closest('[data-node-id]');
-        if (button) selectNode(button.dataset.nodeId);
+        if (button) { selectNode(button.dataset.nodeId, event); elements.graphViewport.focus({preventScroll: true}); }
     });
     elements.graphNodes.addEventListener('pointerdown', beginDrag);
+    elements.graphNodes.addEventListener('click', event => {
+        const card = event.target.closest('[data-node-id]');
+        if (card && event.detail === 0) handleGraphNodeClick(card.dataset.nodeId, event);
+    });
     elements.graphViewToggle.addEventListener('click', event => {
         const button = event.target.closest('[data-view-mode]');
         if (!button || button.dataset.viewMode === graphViewMode) return;
@@ -1104,7 +1301,15 @@
         event.target.value = '';
     });
     elements.addStatBonus.addEventListener('click', () => addStatBonusRow());
-    elements.deleteNode.addEventListener('click', removeNode);
+    elements.deleteNode.addEventListener('click', () => removeNode());
+    elements.copyNodes.addEventListener('click', () => {
+        // Use the same native copy event as Ctrl+C, including on file URLs.
+        // Keep an editor-local copy when the browser disallows clipboard writes.
+        let copied = false;
+        try { copied = document.execCommand('copy'); } catch { /* Use the local clipboard below. */ }
+        if (!copied) copySelectedNodes();
+    });
+    elements.pasteNodes.addEventListener('click', () => pasteCopiedNodes());
     document.querySelector('#addNode').addEventListener('click', () => addNode(null));
     document.querySelectorAll('[data-base-node]').forEach(button => {
         button.addEventListener('click', () => addNode(null, button.dataset.baseNode));
@@ -1131,11 +1336,13 @@
     elements.graphEdges.addEventListener('click', event => {
         const line = event.target.closest('.graph-edge-hit');
         if (!line) return;
+        setSelection([], null);
         selectedConnection = { from: line.dataset.sourceId, to: line.dataset.targetId };
         if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-        renderGraph();
+        render();
     });
     elements.connectToggle.addEventListener('click', () => {
+        if (cancelNodeDrag) cancelNodeDrag();
         connectMode = !connectMode;
         connectSourceId = null;
         elements.connectToggle.classList.toggle('is-active', connectMode);
@@ -1165,6 +1372,7 @@
     });
     elements.graphViewport.addEventListener('wheel', event => {
         event.preventDefault();
+        if (cancelNodeDrag) return;
         setZoom(zoom * Math.exp(-event.deltaY * 0.001), event.clientX, event.clientY);
     }, { passive: false });
     elements.nodeStart.addEventListener('change', () => {
@@ -1185,14 +1393,35 @@
         renderValidation();
     });
     if (elements.skillPointBudget) elements.skillPointBudget.addEventListener('input', renderInspector);
+    function isEditingText(event) {
+        return [event.target, document.activeElement].some(element => element instanceof Element &&
+            (element.closest('input, textarea, select') || element.isContentEditable));
+    }
+    document.addEventListener('copy', event => {
+        if (isEditingText(event) || elements.insertNodeDialog.open || cancelNodeDrag) return;
+        const data = copySelectedNodes();
+        if (!data || !event.clipboardData) return;
+        event.clipboardData.setData('text/plain', JSON.stringify(data));
+        event.preventDefault();
+    });
+    document.addEventListener('paste', event => {
+        if (isEditingText(event) || elements.insertNodeDialog.open || cancelNodeDrag) return;
+        const data = readCopiedNodes(event.clipboardData?.getData('text/plain'));
+        if (!data) return;
+        event.preventDefault();
+        copiedNodes = data;
+        pasteCopiedNodes(data);
+    });
     document.addEventListener('keydown', event => {
-        const active = document.activeElement;
-        const isEditingText = active instanceof Element && active.closest('input, textarea, select, [contenteditable=true]');
-        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !isEditingText) { event.preventDefault(); undoTreeEdit(); }
+        const editing = isEditingText(event);
+        if (cancelNodeDrag) {
+            if (event.key === 'Escape') { event.preventDefault(); cancelNodeDrag(); }
+            return;
+        }
+        if (elements.insertNodeDialog.open) return;
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !editing) { event.preventDefault(); undoTreeEdit(); }
         if (event.key === 'Escape' && connectMode) { connectMode = false; connectSourceId = null; elements.connectToggle.classList.remove('is-active'); elements.connectToggle.setAttribute('aria-pressed', 'false'); elements.connectHint.hidden = true; renderGraph(); }
-        if ((event.key === 'Delete' || event.key === 'Backspace') &&
-            (!isEditingText || selectedConnection) &&
-            !(active instanceof Element && active.matches('input, textarea, select, [contenteditable=true]') && !selectedConnection)) {
+        if ((event.key === 'Delete' || event.key === 'Backspace') && !editing) {
             if (selectedConnection) {
                 const targetNode = tree.nodes.find(node => node.id === selectedConnection.to);
                 if (!targetNode) return;
@@ -1215,9 +1444,10 @@
                 !draft.tree.nodes.every(node => node && typeof node.id === 'string' && Array.isArray(node.requires) && node.stats && typeof node.stats === 'object')) {
                 throw new Error('Invalid saved skill draft');
             }
-            tree = SkillStatCompat.normalize(draft.tree);
+            tree = SkillDescriptions.normalize(SkillStatCompat.normalize(draft.tree));
             historySnapshot = JSON.stringify(tree);
-            selectedId = tree.nodes.some(node => node.id === draft.selectedId) ? draft.selectedId : tree.nodes[0]?.id || null;
+            const restoredIds = Array.isArray(draft.selectedIds) ? draft.selectedIds : [draft.selectedId || tree.nodes[0]?.id];
+            setSelection(restoredIds, draft.selectedId, draft.selectionAnchorId || draft.selectedId);
             if (Number.isFinite(draft.zoom)) zoom = Math.max(0.1, Math.min(2, draft.zoom));
             if (Number.isFinite(draft.panX)) panX = draft.panX;
             if (Number.isFinite(draft.panY)) panY = draft.panY;

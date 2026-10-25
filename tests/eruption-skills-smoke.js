@@ -1,0 +1,182 @@
+(async function () {
+    const checks=[];
+    const check=(label,ok)=>{checks.push((ok?'PASS ':'FAIL ')+label);if(!ok)throw new Error(label);};
+    const near=(a,b)=>Math.abs(a-b)<1e-6;
+    const originalRandom=Math.random, originalAmulet=JSON.parse(JSON.stringify(itemById.testAmulet.stats));
+    const map=currentMap();
+    let observer;
+    function fresh(ranks={},count=9,columns=3,overrides={}) {
+        state.skillRanks=ranks;state.level=Object.keys(ranks).length;state.skillPoints=0;state.experience=0;
+        state.gear=createEmptyGear();state.ownedItemIds=[];state.crafted=[];
+        state.upgrades={strength:0,haste:0,evasion:0};state.gold=0;
+        state.kills=Object.fromEntries(mapData.map(entry=>[entry.id,0]));
+        state.materials=Object.fromEntries(Object.keys(materialNames).map(id=>[id,0]));
+        state.tutorials=createTutorialState();state.lootLog=[];state.lastLoot=null;
+        state.selectedMap=map.id;state.selectedWorld=worldForMap(map.id).id;state.currentView='map';state.isInTown=false;
+        map.drops=[];map.itemDrops=[];
+        map.spawns=[{id:'eruptionTarget',monsterId:worldContent.monsters[0].id,count,overrides:{health:100,attackDamage:0,attackInterval:100,accuracy:100,evasion:0,respawnSeconds:2,gold:[1,1],experience:0,drops:[],itemDrops:[],...overrides}}];
+        resetMonsterStates(map);resetCombatClock();clearOfflineRecap();
+        state.playerHp=getPlayerMaxHealth();state.combatPaused=false;state.attackTimer=0;
+        render();state.monsterColumns=columns;Math.random=()=>0;
+        elements.combatPanel.querySelectorAll('.eruption-burst,.eruption-chain,.combat-arrow').forEach(effect=>effect.remove());
+        return state.monsterStates;
+    }
+    const attack=()=>{state.attackTimer=getAttackSpeed()-.05;return simulateCombatStep(.1,true);};
+    const snapshot=()=>JSON.stringify({hp:state.playerHp,paused:state.combatPaused,attack:state.attackTimer,monsters:state.monsterStates,pending:state.pendingEruptions,kills:state.kills,gold:state.gold,target:state.targetMonsterId});
+    function advance(seconds, showEffects=false) {
+        for(let index=0;index<Math.round(seconds*10);index++) {
+            const result=simulateCombatStep(.1,showEffects);
+            if(showEffects)result.effects.forEach(effect=>effect());
+        }
+    }
+    function seedRandom(){let seed=1234;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};}
+    try {
+        const legacyChains={statSchemaVersion:2,furySchemaVersion:1,nodes:[{id:'eruptionChain',stats:{damage:1}},{id:'eruptionChain_copy',stats:{damage:1}},{id:'unrelatedDamage',stats:{damage:1}}]};
+        SkillStatCompat.normalize(legacyChains);
+        check('older chain nodes and their copies gain additive bonuses without changing other damage nodes',legacyChains.nodes[0].stats.eruptionChains===1&&legacyChains.nodes[1].stats.eruptionChains===1&&!Object.hasOwn(legacyChains.nodes[1].stats,'damage')&&legacyChains.nodes[2].stats.damage===1);
+        legacyChains.nodes[0].stats={damage:1};SkillStatCompat.normalize(legacyChains);
+        check('chain conversion runs once and preserves later intentional edits',legacyChains.nodes[0].stats.damage===1&&!Object.hasOwn(legacyChains.nodes[0].stats,'eruptionChains'));
+        let chainMonsters=fresh({volcanicEruption:1,eruptionChain:1,eruptionChain_copy:1,eruptionChain_copy2:1});
+        check('all three chain nodes add one maximum chain each',getMaxEruptionChains()===3&&['eruptionChain','eruptionChain_copy','eruptionChain_copy2'].every(id=>skillNodeById[id].stats.eruptionChains===1&&!Object.hasOwn(skillNodeById[id].stats,'damage')));
+        triggerVolcanicEruption(chainMonsters[0],1);state.attackTimer=-100;
+        check('an eruption snapshots the combined additive chain budget',state.pendingEruptions[0].chainsRemaining===2);
+        advance(1);check('the first added chain leaves two more possible eruptions',state.pendingEruptions[0].chainsRemaining===1);
+        advance(1);check('the second added chain leaves one more possible eruption',state.pendingEruptions[0].chainsRemaining===0);
+        advance(1);check('three added chains produce three delayed eruptions with one health cost',state.pendingEruptions.length===0&&chainMonsters[0].hp===96&&state.playerHp===95);
+        fresh({volcanicEruption:1,eruptionChain_copy:1,eruptionChain_copy2:1});
+        check('copied bonuses work independently of the original node ID',getMaxEruptionChains()===2);
+        let monsters=fresh({eruptionChain:1});
+        Math.random=()=>{throw new Error('An unallocated eruption rolled randomness.');};
+        triggerVolcanicEruption(monsters[4],10);
+        check('Eruption Chain does nothing without Volcanic Eruption',monsters.every(monster=>monster.hp===100)&&state.playerHp===100);
+        monsters=fresh({volcanicEruption:1});triggerVolcanicEruption(monsters[4],10);
+        check('center eruptions damage the target and all eight neighboring grid positions',monsters.every(monster=>monster.hp===90));
+        check('one eruption costs five percent of maximum health',state.playerHp===95);
+        check('eruptions use full-plate bursts without text labels or unneeded chain lines',elements.enemyRoster.querySelectorAll('.eruption-burst').length===9&&!elements.enemyRoster.querySelector('.eruption-source-label')&&!elements.enemyRoster.querySelector('[data-combat-hit-badge].is-visible')&&!elements.combatPanel.querySelector('.eruption-chain'));
+        const centerBurst=elements.enemyRoster.querySelector('.eruption-burst.is-center'),neighborBurst=elements.enemyRoster.querySelector('.eruption-burst:not(.is-center)');
+        check('the source has a distinct bright border and an outward ring',getComputedStyle(centerBurst).boxShadow!==getComputedStyle(neighborBurst).boxShadow&&getComputedStyle(centerBurst,'::before').content==='""');
+        check('splash plates have a quiet tint without a glow, ring, or movement',getComputedStyle(neighborBurst).boxShadow==='none'&&getComputedStyle(neighborBurst,'::before').content==='none'&&getComputedStyle(neighborBurst).animationName==='volcanic-eruption-fade');
+        monsters=fresh({volcanicEruption:1});triggerVolcanicEruption(monsters[2],10);
+        check('edge eruptions do not wrap across rows',monsters.every((monster,index)=>monster.hp===([1,2,4,5].includes(index)?90:100)));
+        monsters=fresh({volcanicEruption:1},7,3);triggerVolcanicEruption(monsters[5],10);
+        check('incomplete rows cannot produce nonexistent adjacent targets',monsters.every((monster,index)=>monster.hp===([1,2,4,5].includes(index)?90:100)));
+        monsters=fresh({volcanicEruption:1},3,1);triggerVolcanicEruption(monsters[1],10);
+        check('single-column encounters erupt across the neighboring rows',monsters.every(monster=>monster.hp===90));
+        monsters=fresh({volcanicEruption:1});itemById.testAmulet.stats={health:100};state.ownedItemIds=['testAmulet'];state.gear.necklace='testAmulet';state.playerHp=40;
+        triggerVolcanicEruption(monsters[4],10);
+        check('the health cost scales with maximum health rather than current health',getPlayerMaxHealth()===200&&state.playerHp===30);
+        monsters=fresh({volcanicEruption:1,eruptionChain:1});Math.random=()=>.999;
+        triggerVolcanicEruption(monsters[0],10);
+        check('chained damage and burst are queued rather than applied when the crack starts',monsters[8].hp===100&&state.pendingEruptions.length===1&&state.pendingEruptions[0].targetId===monsters[8].id&&!elements.enemyRoster.querySelector('[data-eruption-center="'+monsters[8].id+'"]'));
+        advance(.9,true);
+        check('the destination takes no chain damage before the one-second arrival',monsters[8].hp===100&&state.pendingEruptions.length===1);
+        advance(.1,true);
+        check('arrival deals chain damage and shows its burst at exactly one second',state.pendingEruptions.length===0&&elements.enemyRoster.querySelector('[data-eruption-center="'+monsters[8].id+'"]')&&monsters.every((monster,index)=>monster.hp===(index===4?80:[0,1,3,5,7,8].includes(index)?90:100)));
+        check('chained eruptions never add another health cost',state.playerHp===95);
+        const chain=elements.combatPanel.querySelector('.eruption-chain'),line=chain?.querySelector('.eruption-crack-core');
+        check('chained eruptions connect their centers with a fissure and no arrow shapes',elements.combatPanel.querySelectorAll('.eruption-chain').length===1&&chain.dataset.sourceId===monsters[0].id&&chain.dataset.targetId===monsters[8].id&&chain.querySelectorAll('path').length===3&&!chain.querySelector('circle,polygon,marker')&&!line.hasAttribute('marker-end')&&line.getAttribute('d').split(' L').length>6);
+        const frame=chain.getBoundingClientRect(),cards=[...elements.enemyRoster.children],from=cards[0].getBoundingClientRect(),to=cards[8].getBoundingClientRect();
+        const firstPoint=line.getPointAtLength(0),lastPoint=line.getPointAtLength(line.getTotalLength());
+        check('the crack joins the actual plate centers',Math.abs(firstPoint.x-(from.left+from.width/2-frame.left))<.01&&Math.abs(firstPoint.y-(from.top+from.height/2-frame.top))<.01&&Math.abs(lastPoint.x-(to.left+to.width/2-frame.left))<.01&&Math.abs(lastPoint.y-(to.top+to.height/2-frame.top))<.01);
+        check('the crack reveal stays active under the current motion preference',getComputedStyle(line).animationName==='arrow-shaft-draw');
+        line.getAnimations().forEach(animation=>{animation.pause();animation.currentTime=500;});
+        check('the crack draws halfway to the next eruption after half a second',near(parseFloat(getComputedStyle(line).strokeDashoffset),.5)&&chain.style.getPropertyValue('--eruption-flight')==='1000ms');
+        const stops=chain.querySelectorAll('stop');
+        check('the trail fades at the source before its destination',stops.length>1&&parseFloat(stops[0].style.getPropertyValue('--trail-delay'))<parseFloat(stops[stops.length-1].style.getPropertyValue('--trail-delay')));
+        stops.forEach(stop=>stop.getAnimations().forEach(animation=>{animation.pause();animation.currentTime=900;}));
+        const visibleStops=[...stops].filter(stop=>parseFloat(getComputedStyle(stop).stopOpacity)>.001);
+        check('yellow-orange glow travels along the opening edge',visibleStops.length>0&&parseFloat(getComputedStyle(stops[0]).stopOpacity)===0&&getComputedStyle(chain).color==='rgb(255, 196, 92)');
+        const edge=chain.querySelector('.eruption-crack-edge');
+        const opening=chain.querySelector('.eruption-crack-reveal');
+        opening.getAnimations().forEach(animation=>{animation.pause();animation.currentTime=100;});
+        const narrow=parseFloat(getComputedStyle(opening).strokeWidth);
+        opening.getAnimations().forEach(animation=>{animation.currentTime=1000;});
+        check('irregular banks separate into a dark red fissure as the opening travels',edge.getAttribute('d').endsWith(' Z')&&edge.hasAttribute('mask')&&getComputedStyle(edge).fill==='rgb(39, 6, 9)'&&near(parseFloat(getComputedStyle(opening).strokeDashoffset),0)&&parseFloat(getComputedStyle(opening).strokeWidth)>narrow);
+        line.dispatchEvent(new Event('animationend',{bubbles:true}));
+        check('finishing the draw does not remove the lingering trail',chain.isConnected);
+        chain.dispatchEvent(new Event('animationend'));
+        check('completed chain effects clean themselves up',!chain.isConnected);
+        const combatRandom=Math.random;Math.random=()=>{throw new Error('Cosmetic cracks consumed combat randomness.');};
+        showEruptionChain(monsters[0].id,monsters[8].id,0);Math.random=combatRandom;
+        check('crack jaggedness changes each time without consuming combat randomness',elements.combatPanel.querySelector('.eruption-crack-core').getAttribute('d')!==line.getAttribute('d'));
+        monsters=fresh({volcanicEruption:1,eruptionChain:2});let randomIndex=0;Math.random=()=>[.999,0][randomIndex++]??0;triggerVolcanicEruption(monsters[0],1);
+        state.attackTimer=-100;advance(1,true);
+        const hops=[...elements.combatPanel.querySelectorAll('.eruption-chain')];
+        check('the next crack launches from the previous arrival rather than all chains firing together',hops.length===2&&hops[0].dataset.targetId===hops[1].dataset.sourceId&&state.pendingEruptions.length===1&&near(state.pendingEruptions[0].remaining,1)&&monsters[0].hp===99);
+        advance(.9);check('the second chained hit also waits for its own arrival',monsters[0].hp===99);
+        advance(.1);check('the second chained hit lands two seconds after the original eruption',monsters[0].hp===98&&state.pendingEruptions.length===0);
+        queueEruptionChain(monsters[0].id,1,1);
+        const nextMap=mapData.find(entry=>entry.id!==map.id);state.selectedMap=nextMap.id;resetMonsterStates(nextMap);renderCombat();
+        check('changing maps removes pending chain lines and damage',!elements.combatPanel.querySelector('.eruption-chain')&&state.pendingEruptions.length===0);
+        monsters=fresh({volcanicEruption:1,eruptionChain:1},1,1);triggerVolcanicEruption(monsters[0],1);
+        check('a chain on the same monster does not draw a zero-length line',!elements.combatPanel.querySelector('.eruption-chain'));
+        monsters=fresh({volcanicEruption:1,eruptionChain:1});monsters[8].hp=5;Math.random=()=>.999;triggerVolcanicEruption(monsters[0],10);state.attackTimer=-100;
+        advance(.9);check('kills and loot are not awarded while a lethal crack is travelling',monsters[8].hp===5&&state.gold===0&&state.kills[map.id]===0);
+        advance(.1);check('arrival awards a lethal chain kill and loot exactly once',monsters[8].hp===0&&state.gold===1&&state.kills[map.id]===1);
+        monsters=fresh({volcanicEruption:1,eruptionChain:1});Math.random=()=>.999;triggerVolcanicEruption(monsters[0],10);applyDamageToMonster(monsters[8],100);state.attackTimer=-100;
+        advance(1);check('a destination killed en route still erupts beneath its neighbors without duplicate rewards',monsters[8].hp===0&&monsters[5].hp===90&&state.gold===1);
+        monsters=fresh({volcanicEruption:1,eruptionChain:1});Math.random=()=>.999;state.playerHp=4;triggerVolcanicEruption(monsters[0],10);
+        advance(1);check('a paid-for travelling eruption still lands after the player dies',state.playerHp===0&&state.combatPaused&&monsters[8].hp===90&&state.pendingEruptions.length===0);
+        monsters=fresh({volcanicEruption:1,eruptionChain:1});Math.random=()=>.999;triggerVolcanicEruption(monsters[0],10);advance(.4);
+        // Allocated ranks are irrelevant to an already-launched hit; keep this save valid without allocating a full tree path.
+        state.skillRanks={};state.level=0;state.skillPoints=0;syncLegacyEnemyState();saveGame();
+        const savedPending=JSON.parse(localStorage.getItem(saveKey));
+        check('saving and loading preserves pending damage and its remaining travel time',loadGame()&&state.pendingEruptions.length===1&&near(state.pendingEruptions[0].remaining,.6)&&state.pendingEruptions[0].damage===10);
+        advance(.5);check('loading does not cause a pending eruption to land early',state.monsterStates[8].hp===100);
+        advance(.1);check('a loaded eruption lands after the remaining travel time',state.monsterStates[8].hp===90&&state.pendingEruptions.length===0);
+        for(const changes of [{remaining:-1},{remaining:2},{damage:-1},{chainsRemaining:1.5},{targetId:null}]) {
+            const invalid=JSON.parse(JSON.stringify(savedPending));Object.assign(invalid.pendingEruptions[0],changes);let rejected=false;
+            try{parseGameSave(JSON.stringify(invalid));}catch{rejected=true;}
+            check('invalid pending eruption is rejected: '+JSON.stringify(changes),rejected);
+        }
+        const oldSave=JSON.parse(JSON.stringify(savedPending));delete oldSave.pendingEruptions;applyGameSave(parseGameSave(JSON.stringify(oldSave)));
+        check('older profiles without pending eruptions still load',state.pendingEruptions.length===0);
+        monsters=fresh({volcanicEruption:1,eruptionChain:1},9,3,{health:1});triggerVolcanicEruption(monsters[4],10);
+        check('eruptions award each kill once and stop chaining when no living enemy remains',state.kills[map.id]===9&&state.gold===9&&state.playerHp===95&&monsters.every(monster=>monster.hp===0&&monster.respawnRemaining===2));
+
+        monsters=fresh({volcanicEruption:1});state.targetMonsterId=monsters[4].id;let damage=getDamage();attack();
+        check('normal attack cycles trigger exactly one eruption at normal physical hit damage',monsters.every((monster,index)=>monster.hp===100-damage*(index===4?2:1))&&state.playerHp===95);
+        monsters=fresh({volcanicEruption:1});state.targetMonsterId=monsters[4].id;damage=getDamage();Math.random=()=>.99;attack();
+        check('every attack erupts even when its normal hit misses',monsters.every(monster=>monster.hp===100-damage)&&state.playerHp===95);
+        monsters=fresh({volcanicEruption:1});itemById.testAmulet.stats={multiHit:1};state.ownedItemIds=['testAmulet'];state.gear.necklace='testAmulet';state.targetMonsterId=monsters[4].id;
+        attack().effects.forEach(effect=>effect());
+        const multiCenters=[...elements.enemyRoster.querySelectorAll('.eruption-burst.is-center')].map(burst=>burst.parentElement.dataset.monsterId);
+        check('successful multi-hits trigger their own eruption and health cost',state.playerHp===90&&monsters[4].hp===100-getDamage()*3&&monsters[5].hp===100-getDamage()*3&&multiCenters.includes(monsters[4].id)&&multiCenters.includes(monsters[5].id));
+        monsters=fresh({volcanicEruption:1});itemById.testAmulet.stats={multiHit:1};state.ownedItemIds=['testAmulet'];state.gear.necklace='testAmulet';state.targetMonsterId=monsters[4].id;
+        let hitRoll=0;Math.random=()=>hitRoll++<2?0:.99;attack();
+        check('missed multi-hits do not trigger extra eruptions or health costs',state.playerHp===95);
+        monsters=fresh({volcanicEruption:1});itemById.testAmulet.stats={multiHit:2};state.ownedItemIds=['testAmulet'];state.gear.necklace='testAmulet';state.playerHp=7;attack();
+        check('multiple eruption costs can kill the player and stop further eruptions',state.playerHp===0&&state.combatPaused);
+        monsters=fresh({volcanicEruption:1});monsters[0].hp=1;damage=getDamage();attack();
+        check('an eruption still hits the neighbors when the normal hit kills its center',monsters[0].hp===0&&[1,3,4].every(index=>monsters[index].hp===100-damage));
+        monsters=fresh({volcanicEruption:1,multiShot:1});damage=getDamage();shootAbilityArrow([monsters[4]],damage,'multiShot');
+        check('Multishot can trigger an eruption without recursively firing more attacks',monsters.every((monster,index)=>monster.hp===100-damage*(index===4?2:1))&&state.playerHp===95);
+        monsters=fresh({volcanicEruption:1,snakeBite:1,poisonExecute:1},9,3,{health:4});triggerVolcanicEruption(monsters[4],1);
+        check('eruption hits apply poison and honor poison executes without duplicate rewards',state.kills[map.id]===9&&state.gold===9&&monsters.every(monster=>monster.hp===0));
+        monsters=fresh({volcanicEruption:1});state.playerHp=4;state.attackTimer=10;triggerVolcanicEruption(monsters[4],10);
+        const death=monsters.map(monster=>monster.hp).join();
+        simulateCombatStep(2);
+        check('self-damage can kill the player and stops subsequent attacks',state.playerHp===0&&state.combatPaused&&state.attackTimer===0&&monsters.map(monster=>monster.hp).join()===death);
+        monsters=fresh({volcanicEruption:1},1,1,{health:1000});itemById.testAmulet.stats={health:11};state.ownedItemIds=['testAmulet'];state.gear.necklace='testAmulet';state.playerHp=getPlayerMaxHealth();
+        for(let index=0;index<20;index++)triggerVolcanicEruption(monsters[0],1);
+        check('fractional health costs do not leave the player alive on a floating-point remainder',getPlayerMaxHealth()===111&&state.playerHp===0&&state.combatPaused);
+
+        monsters=fresh({volcanicEruption:1,eruptionChain:1});state.targetMonsterId=monsters[4].id;
+        observer=new MutationObserver(()=>{});observer.observe(document.body,{subtree:true,childList:true,attributes:true,characterData:true});
+        const effects=attack().effects;
+        check('combat simulation collects eruption visuals without touching the DOM',effects.length>0&&observer.takeRecords().length===0);
+        effects.forEach(effect=>effect());
+        check('collected eruption effects render when the foreground presents them',elements.enemyRoster.querySelector('.eruption-burst')&&observer.takeRecords().length>0);
+        observer.disconnect();
+        fresh({volcanicEruption:1,eruptionChain:1},9,3,{health:10});itemById.testAmulet.stats={multiHit:1};state.ownedItemIds=['testAmulet'];state.gear.necklace='testAmulet';seedRandom();
+        for(let index=0;index<300;index++)simulateCombatStep(.1);
+        const reference=snapshot();
+        fresh({volcanicEruption:1,eruptionChain:1},9,3,{health:10});itemById.testAmulet.stats={multiHit:1};state.ownedItemIds=['testAmulet'];state.gear.necklace='testAmulet';seedRandom();
+        resetCombatClock(Date.now()-30000);processCombatBacklog();
+        for(let index=0;pendingCombatSeconds+1e-8>=gameTickSeconds&&index<100;index++)await new Promise(resolve=>setTimeout(resolve,0));
+        check('background catch-up matches foreground eruptions, chains, rewards, and self-damage',pendingCombatSeconds<gameTickSeconds&&snapshot()===reference);
+        check('no runtime errors: '+window.smokeErrors.join('; '),!window.smokeErrors.length);checks.push('SMOKE PASSED');
+    } catch(error){checks.push('ERROR '+error.stack);}
+    finally{observer?.disconnect();Math.random=originalRandom;itemById.testAmulet.stats=originalAmulet;resetCombatClock();clearOfflineRecap();}
+    const report=document.createElement('pre');report.id='smoke-results';report.textContent=checks.join('\n');document.body.append(report);
+}());

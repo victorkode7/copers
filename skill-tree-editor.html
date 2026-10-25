@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Skill Tree Editor | Idle Adventure</title>
-    <link rel="stylesheet" href="css/skill-tree-editor.css?v=20261023-1">
+    <link rel="stylesheet" href="css/skill-tree-editor.css?v=20261025-2">
     <link rel="stylesheet" href="css/skill-tree-background.css?v=20261023-1">
     <link rel="stylesheet" href="css/app-nav.css">
     <link rel="stylesheet" href="css/editor-quick-save.css?v=1">
@@ -68,7 +68,7 @@
                     <button type="button" data-base-node="damage"><span aria-hidden="true">⚔</span> Damage</button>
                 </div>
             </div>
-            <div id="nodeList" class="node-list" role="listbox" aria-label="Skill tree nodes"></div>
+            <div id="nodeList" class="node-list" role="listbox" aria-label="Skill tree nodes" aria-multiselectable="true"></div>
             <div class="sidebar-footer">
                 <span class="status-dot"></span>
                 <span id="saveStatus">Changes are local until quick-saved or exported</span>
@@ -81,7 +81,7 @@
                     <div>
                         <p class="eyebrow">PATHWAYS</p>
                         <h2 id="graphHeading">Tree map</h2>
-                        <p class="muted">Drag nodes to arrange them. Scroll to explore larger trees.</p>
+                        <p class="muted">Shift-click to select a group. Drag selected nodes to move them together.</p>
                     </div>
                     <div class="legend">
                         <button id="connectToggle" class="button secondary" type="button" aria-pressed="false" title="Click nodes to connect them with bidirectional lines">Connect nodes</button>
@@ -102,7 +102,12 @@
                     </div>
                 </div>
                 <div class="graph-footer">
-                    <span id="graphHint">Select a connection, choose Insert node between, then pick a preset or an existing node. Drag nodes to reposition them.</span>
+                    <span id="graphHint">Shift-click selects the rectangle between two nodes. Ctrl-click toggles a node. Ctrl+C / Ctrl+V copies and pastes selected nodes.</span>
+                    <div class="selection-actions" aria-label="Selected nodes">
+                        <span id="selectionSummary" role="status" aria-live="polite">1 selected</span>
+                        <button id="copyNodes" class="button secondary" type="button" title="Copy selected nodes (Ctrl+C)">Copy</button>
+                        <button id="pasteNodes" class="button secondary" type="button" title="Paste copied nodes (Ctrl+V)" disabled>Paste</button>
+                    </div>
                     <button id="fitTree" class="text-button" type="button">Fit tree</button>
                 </div>
             </section>
@@ -126,6 +131,7 @@
                 </div>
                 <button id="deleteNode" class="icon-button danger-button" type="button" aria-label="Delete selected node" title="Delete selected node">×</button>
             </div>
+            <p id="groupSelectionNote" class="field-help" hidden></p>
             <p id="emptyInspector" class="empty-inspector">Select a node on the map or from the list to edit its properties.</p>
             <details class="quick-save-settings">
                 <summary>Quick-save file</summary>
@@ -179,9 +185,14 @@
                         </select>
                     </label>
                 </div>
+                <label class="check-row">
+                    <input id="nodeCustomDescription" type="checkbox">
+                    <span>Custom description for a unique effect</span>
+                </label>
                 <label>
-                    <span>Effect text</span>
-                    <input id="nodeEffect" name="effect" type="text" required>
+                    <span>Description</span>
+                    <textarea id="nodeEffect" name="effect" rows="3" required></textarea>
+                    <small>Generated from the stat bonuses below. Enable custom description to write a unique skill effect.</small>
                 </label>
                 <div class="form-row three-columns">
                     <label>
@@ -250,12 +261,13 @@
         </form>
     </dialog>
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-    <script src="js/skill-tree.js?v=20261021-2"></script>
-    <script src="js/skill-stat-compat.js?v=20261021-2"></script>
+    <script src="js/skill-tree.js?v=20261025-8"></script>
+    <script src="js/skill-stat-compat.js?v=20261025-2"></script>
+    <script src="js/skill-descriptions.js?v=20261025-4"></script>
     <script src="js/item-package.js?v=20261021-2"></script>
     <script src="js/skill-sprites.js?v=20261021-13"></script>
     <script src="js/editor-file-save.js?v=2"></script>
     <script src="js/editor-quick-save.js?v=2"></script>
-    <script src="js/skill-tree-editor.js?v=20261023-2"></script>
+    <script src="js/skill-tree-editor.js?v=20261025-5"></script>
 </body>
 </html>

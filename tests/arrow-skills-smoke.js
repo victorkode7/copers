@@ -41,6 +41,7 @@
         check('Piercing Arrow deals twice normal physical damage to the target row only',
             monsters.slice(0, 3).every(monster => monster.hp === 100 - piercingDamage) && monsters.slice(3).every(monster => monster.hp === 100));
         check('piercing arrows have an on-screen effect', Boolean(elements.combatPanel.querySelector('[data-arrow-kind="piercingArrow"] path')));
+        check('piercing hits show their beam without labels above plates', !elements.enemyRoster.querySelector('[data-combat-hit-badge].is-visible'));
 
         monsters = fresh({forkingArrow: 1}, 9);
         Math.random = () => .1;
@@ -66,10 +67,7 @@
         check('already visited enemies cannot be fork targets',
             getForwardDiagonalArrowTargets(monsters[4], new Set([monsters[2].id, monsters[8].id]), {x: 1, y: 0}).length === 0);
         check('fork visuals connect one monster to the next', Boolean(elements.combatPanel.querySelector('.combat-arrow[data-source-id]')));
-        const forkBadge = elements.enemyRoster.querySelector('[data-monster-id="' + monsters[4].id + '"] [data-combat-hit-badge]');
-        showMonsterHitBadge(monsters[4].id, 'PIERCING ARROW');
-        showMonsterHitBadge(monsters[4].id, 'MULTI-HIT', true);
-        check('fork labels retain priority over piercing and multihit labels', forkBadge.textContent === 'FORKING ARROW');
+        check('forks show their incoming and chained arrows without labels above plates', !elements.enemyRoster.querySelector('[data-combat-hit-badge].is-visible'));
         monsters = fresh({forkingArrow: 1}, 9, 3, {health: 1});
         triggerAttackArrowSkills(monsters[0], getDamage());
         check('forks continue forward from killed enemies and award each kill once',

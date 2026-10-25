@@ -491,6 +491,22 @@ window.adventureItems = {
                 "damageMultiplier": 1.25
             },
             "recipe": null
+        },
+        {
+            "id": "item_9e83e3705d8ed822691e528bb795a64c",
+            "name": "Admin Ring Copy",
+            "slot": "ring",
+            "rarity": "unique",
+            "description": "The ring to rule them all!\nDeveloper equipment.",
+            "sprite": "",
+            "developerOnly": true,
+            "stats": {
+                "accuracy": 9999999,
+                "evasionMultiplier": 100000.99,
+                "minimumEnemyHitChance": 0,
+                "healthRegen": 999999
+            },
+            "recipe": null
         }
     ],
     "materialDetails": {
