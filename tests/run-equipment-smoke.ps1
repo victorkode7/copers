@@ -3,7 +3,8 @@ param(
     [string]$Page = 'index.html',
     [string]$TestScript = 'tests/equipment-smoke.js',
     [string]$ReportPath,
-    [string]$WindowSize = '1440,1000'
+    [string]$WindowSize = '1440,1000',
+    [int]$TimeoutSeconds = 25
 )
 $ErrorActionPreference = 'Stop'
 $workspacePath = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -80,7 +81,7 @@ try {
             if (!$process.HasExited) { $process.Kill(); $process.WaitForExit() }
         }
     } else {
-        if (!$process.WaitForExit(25000)) { $process.Kill(); throw 'Browser test timed out.' }
+        if (!$process.WaitForExit($TimeoutSeconds * 1000)) { $process.Kill(); throw 'Browser test timed out.' }
         $outputText = $outputTask.Result
     }
     $result = [regex]::Match($outputText, '<pre id="smoke-results">([\s\S]*?)</pre>')

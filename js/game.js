@@ -200,6 +200,9 @@ let simulatingCombat = false;
 // undefined presents immediately; null suppresses effects; an array collects a live step.
 let combatEffects;
 let combatStatCache = null;
+let combatPoisonForecasts = null;
+let combatAnimationRestarts = null;
+let combatEffectLayout = null;
 let lastSave = Date.now();
 let pendingOfflineRecap = null;
 let offlineRecapReport = null;
@@ -339,6 +342,56 @@ function cachedCombatStat(key, calculate) {
     if (!combatStatCache) return calculate();
     if (!combatStatCache.has(key)) combatStatCache.set(key, calculate());
     return combatStatCache.get(key);
+}
+
+function restartCombatAnimation(element, className) {
+    element.classList.remove(className);
+    if (combatAnimationRestarts) {
+        if (!combatAnimationRestarts.has(element)) combatAnimationRestarts.set(element, new Set());
+        combatAnimationRestarts.get(element).add(className);
+    } else {
+        void element.offsetWidth;
+        element.classList.add(className);
+    }
+}
+
+function flushCombatEffects(effects) {
+    if (!effects.length) return;
+    const previousRestarts = combatAnimationRestarts;
+    if (previousRestarts) { effects.forEach(effect => effect()); return; }
+    combatAnimationRestarts = new Map();
+    combatEffectLayout = {
+        cards: new Map(Array.from(elements.enemyRoster.children, card => [card.dataset.monsterId, card])),
+        bounds: new WeakMap(),
+        frame: null
+    };
+    try { effects.forEach(effect => effect()); }
+    finally {
+        const restarts = combatAnimationRestarts;
+        combatAnimationRestarts = previousRestarts;
+        combatEffectLayout = null;
+        // Restart all hit flashes together after a single layout flush.
+        if (restarts.size) void elements.combatPanel.offsetWidth;
+        restarts.forEach((classes, element) => classes.forEach(name => element.classList.add(name)));
+    }
+}
+
+function getCombatEffectCard(id) {
+    return combatEffectLayout ? combatEffectLayout.cards.get(id) :
+        Array.from(elements.enemyRoster.children).find(card => card.dataset.monsterId === id);
+}
+
+function getCombatEffectBounds(element) {
+    if (!combatEffectLayout) return element.getBoundingClientRect();
+    if (!combatEffectLayout.bounds.has(element)) combatEffectLayout.bounds.set(element, element.getBoundingClientRect());
+    return combatEffectLayout.bounds.get(element);
+}
+
+function getCombatOverlayBounds(svg) {
+    // All combat overlays use the same absolute inset and dimensions. Reuse
+    // their coordinate frame only for this synchronous batch of effects.
+    if (!combatEffectLayout) return svg.getBoundingClientRect();
+    return combatEffectLayout.frame ||= svg.getBoundingClientRect();
 }
 let selectedGearSlot = 'weapon';
 let inventoryCategory = 'slot';
@@ -508,9 +561,7 @@ function clearEnemyDamageIndicator() {
 function flashDodge(track) {
     presentCombatEffect(() => {
         window.clearTimeout(dodgeFlashTimeouts.get(track));
-        track.classList.remove('is-dodging');
-        void track.offsetWidth;
-        track.classList.add('is-dodging');
+        restartCombatAnimation(track, 'is-dodging');
         dodgeFlashTimeouts.set(track, window.setTimeout(function() {
             track.classList.remove('is-dodging');
             dodgeFlashTimeouts.delete(track);
@@ -520,8 +571,7 @@ function flashDodge(track) {
 
 function showMonsterProc(monsterId, procName) {
     presentCombatEffect(() => {
-        const card = Array.from(elements.enemyRoster.children)
-            .find(entry => entry.dataset.monsterId === monsterId);
+        const card = getCombatEffectCard(monsterId);
         const notice = card && card.querySelector('[data-enemy-proc-notice]');
         if (!notice) return;
 
@@ -529,9 +579,7 @@ function showMonsterProc(monsterId, procName) {
         if (!activeProcs.includes(procName)) activeProcs.push(procName);
         notice.dataset.activeProcs = activeProcs.join('|');
         notice.textContent = activeProcs.join(' · ');
-        notice.classList.remove('is-visible');
-        void notice.offsetWidth;
-        notice.classList.add('is-visible');
+        restartCombatAnimation(notice, 'is-visible');
 
         window.clearTimeout(monsterProcTimers.get(notice));
         monsterProcTimers.set(notice, window.setTimeout(function() {
@@ -545,45 +593,37 @@ function showMonsterProc(monsterId, procName) {
 
 function showPoisonStackProc(monster) {
     presentCombatEffect(() => {
-        const card = Array.from(elements.enemyRoster.children)
-            .find(entry => entry.dataset.monsterId === monster.id);
+        const card = getCombatEffectCard(monster.id);
         const indicator = card && card.querySelector('[data-enemy-dot-status]');
         if (!indicator) return;
         indicator.hidden = false;
         indicator.querySelector('[data-enemy-dot-count]').textContent = monster.poisonStacks.length + 'x';
-        indicator.classList.remove('is-applying');
-        void indicator.offsetWidth;
-        indicator.classList.add('is-applying');
+        restartCombatAnimation(indicator, 'is-applying');
     });
 }
 
 function flashShockwaveHealthBar(monsterId) {
     presentCombatEffect(() => {
-        const card = Array.from(elements.enemyRoster.children)
-            .find(entry => entry.dataset.monsterId === monsterId);
+        const card = getCombatEffectCard(monsterId);
         const healthTrack = card && card.querySelector('.health-track');
         if (!healthTrack) return;
-        healthTrack.classList.remove('is-shockwave-hit');
-        void healthTrack.offsetWidth;
-        healthTrack.classList.add('is-shockwave-hit');
+        restartCombatAnimation(healthTrack, 'is-shockwave-hit');
     });
 }
 
 function showMonsterHitBadge(monsterId, label, isMultiHit = false, priority = 0) {
     presentCombatEffect(() => {
-        const card = Array.from(elements.enemyRoster.children)
-            .find(entry => entry.dataset.monsterId === monsterId);
+        const card = getCombatEffectCard(monsterId);
         if (!card) return;
         const notice = card.querySelector('[data-combat-hit-badge]');
         if (notice) {
-            if (notice.classList.contains('is-visible') && Number(notice.dataset.hitPriority || 0) > priority) return;
+            if ((notice.classList.contains('is-visible') || combatAnimationRestarts?.get(notice)?.has('is-visible')) &&
+                Number(notice.dataset.hitPriority || 0) > priority) return;
             notice.dataset.hitPriority = String(priority);
             notice.hidden = false;
             notice.textContent = label;
             notice.classList.toggle('is-multihit', isMultiHit);
-            notice.classList.remove('is-visible');
-            void notice.offsetWidth;
-            notice.classList.add('is-visible');
+            restartCombatAnimation(notice, 'is-visible');
             window.clearTimeout(shockwaveHitTimers.get(notice));
             shockwaveHitTimers.set(notice, window.setTimeout(() => {
                 notice.classList.remove('is-visible');
@@ -595,20 +635,15 @@ function showMonsterHitBadge(monsterId, label, isMultiHit = false, priority = 0)
 
 function flashShockwaveCard(monsterId) {
     presentCombatEffect(() => {
-        const card = Array.from(elements.enemyRoster.children)
-            .find(entry => entry.dataset.monsterId === monsterId);
+        const card = getCombatEffectCard(monsterId);
         if (!card) return;
-        card.classList.remove('is-shockwave-splashed');
-        void card.offsetWidth;
-        card.classList.add('is-shockwave-splashed');
+        restartCombatAnimation(card, 'is-shockwave-splashed');
     });
 }
 
 function nudgePlayerHealthBar() {
     presentCombatEffect(() => {
-        elements.playerHealthTrack.classList.remove('is-damaged');
-        void elements.playerHealthTrack.offsetWidth;
-        elements.playerHealthTrack.classList.add('is-damaged');
+        restartCombatAnimation(elements.playerHealthTrack, 'is-damaged');
     });
 }
 
@@ -2669,8 +2704,7 @@ function defeatEnemy(monster) {
     addLootDrop(gold, found);
 
     presentCombatEffect(() => {
-        const defeatedCard = Array.from(elements.enemyRoster.children)
-            .find(card => card.dataset.monsterId === monster.id);
+        const defeatedCard = getCombatEffectCard(monster.id);
         if (state.currentView === 'map') {
             const rewards = [
                 ...(gold > 0 ? [{key: 'gold', name: 'Gold', amount: gold, gold: true}] : []),
@@ -2686,17 +2720,14 @@ function defeatEnemy(monster) {
             window.LootEffects?.drop(rewards, defeatedCard?.querySelector('.enemy-mark') || defeatedCard, map.id);
         }
         if (defeatedCard) {
-            defeatedCard.classList.remove('is-defeating');
-            void defeatedCard.offsetWidth;
-            defeatedCard.classList.add('is-defeating');
+            restartCombatAnimation(defeatedCard, 'is-defeating');
         }
 
     });
 
     monster.hp = 0;
     monster.poisonStacks = [];
-    monster.respawnRemaining = monsterDefinitions(map)
-        .find(definition => definition.id === monster.id).respawnSeconds;
+    monster.respawnRemaining = definition.respawnSeconds;
     monster.attackTimer = 0;
     monster.freezeRemaining = 0;
     selectNextMonsterTarget(monster);
@@ -2721,9 +2752,8 @@ function transferPoisonOnDeath(monster, stacks) {
 
 function showPoisonTransfer(sourceId, targetId) {
     presentCombatEffect(() => {
-        const cards = [...elements.enemyRoster.querySelectorAll('.enemy-card')];
-        const source = cards.find(card => card.dataset.monsterId === sourceId)?.querySelector('.enemy-mark');
-        const target = cards.find(card => card.dataset.monsterId === targetId)?.querySelector('.enemy-mark');
+        const source = getCombatEffectCard(sourceId)?.querySelector('.enemy-mark');
+        const target = getCombatEffectCard(targetId)?.querySelector('.enemy-mark');
         if (!source || !target) return;
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.classList.add('poison-transfer');
@@ -2731,10 +2761,10 @@ function showPoisonTransfer(sourceId, targetId) {
         svg.dataset.sourceId = sourceId;
         svg.dataset.targetId = targetId;
         elements.combatPanel.appendChild(svg);
-        const frame = svg.getBoundingClientRect();
+        const frame = getCombatOverlayBounds(svg);
         if (!frame.width || !frame.height) { svg.remove(); return; }
         svg.setAttribute('viewBox', '0 0 ' + frame.width + ' ' + frame.height);
-        const from = source.getBoundingClientRect(), to = target.getBoundingClientRect();
+        const from = getCombatEffectBounds(source), to = getCombatEffectBounds(target);
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('x1', String(from.left + from.width / 2 - frame.left));
         line.setAttribute('y1', String(from.top + from.height / 2 - frame.top));
@@ -2758,9 +2788,7 @@ function applyDamageToPlayer(damage) {
     presentCombatEffect(() => {
         recentPlayerDamage = damageDealt;
         nudgePlayerHealthBar();
-        elements.playerHealthDamage.classList.remove('is-visible');
-        void elements.playerHealthDamage.offsetWidth;
-        elements.playerHealthDamage.classList.add('is-visible');
+        restartCombatAnimation(elements.playerHealthDamage, 'is-visible');
         window.clearTimeout(damageFadeTimeout);
         damageFadeTimeout = window.setTimeout(() => {
             elements.playerHealthDamage.classList.remove('is-visible');
@@ -2788,8 +2816,7 @@ function applyDamageToMonster(monster, damage, damageType = 'physical') {
     const damageDealt = previousHp - monster.hp;
     presentCombatEffect(() => {
         recentEnemyDamage = damageDealt;
-        const targetCard = Array.from(elements.enemyRoster.children)
-            .find(card => card.dataset.monsterId === monster.id);
+        const targetCard = getCombatEffectCard(monster.id);
         const damageIndicator = damageType === 'physical' && targetCard
             ? targetCard.querySelector('.enemy-health-damage')
             : null;
@@ -2812,27 +2839,34 @@ function applyDamageToMonster(monster, damage, damageType = 'physical') {
 }
 
 function getPoisonTickInterval() {
-    const rate = (1 + getSkillStat('poisonTickRate') + getGearStat('poisonTickRate')) *
-        getSkillMultiplier('poisonTickRateMultiplier') * getGearStat('poisonTickRateMultiplier');
-    return poisonDamageType.tickIntervalSeconds / Math.max(0.1, rate);
+    return cachedCombatStat('getPoisonTickInterval', () => {
+        const rate = (1 + getSkillStat('poisonTickRate') + getGearStat('poisonTickRate')) *
+            getSkillMultiplier('poisonTickRateMultiplier') * getGearStat('poisonTickRateMultiplier');
+        return poisonDamageType.tickIntervalSeconds / Math.max(0.1, rate);
+    });
 }
 
 function getPoisonDamage() {
-    return Math.max(1, Math.round((poisonDamageType.baseDamage + getSkillStat('poisonDamage') + getGearStat('poisonDamage')) *
-        getSkillMultiplier('poisonDamageMultiplier') * getGearStat('poisonDamageMultiplier')));
+    return cachedCombatStat('getPoisonDamage', () => Math.max(1, Math.round((poisonDamageType.baseDamage + getSkillStat('poisonDamage') + getGearStat('poisonDamage')) *
+        getSkillMultiplier('poisonDamageMultiplier') * getGearStat('poisonDamageMultiplier'))));
 }
 
 function getPoisonChance() {
-    return Math.max(0, Math.min(1,
+    return cachedCombatStat('getPoisonChance', () => Math.max(0, Math.min(1,
         (getSkillStat('poisonChance') + getGearStat('poisonChance')) *
-        getSkillMultiplier('poisonChanceMultiplier') * getGearStat('poisonChanceMultiplier')));
+        getSkillMultiplier('poisonChanceMultiplier') * getGearStat('poisonChanceMultiplier'))));
 }
 
 function getRemainingPoisonDamage(monster) {
     if (!monster || monster.hp <= 0 || !Array.isArray(monster.poisonStacks) || !monster.poisonStacks.length) return 0;
     const tickInterval = getPoisonTickInterval();
     const damagePerTick = getPoisonDamage();
-    return monster.poisonStacks.reduce((total, stack) => {
+    const cached = combatPoisonForecasts?.get(monster);
+    // Ticking replaces the array; applying or spreading poison changes its length.
+    // Scope forecasts to this simulation step and recheck stats after level-ups.
+    if (cached && cached.stacks === monster.poisonStacks && cached.length === monster.poisonStacks.length &&
+        cached.interval === tickInterval && cached.damage === damagePerTick) return cached.total;
+    const total = monster.poisonStacks.reduce((total, stack) => {
         const firstTickIn = Math.max(0, stack.timeUntilTick);
         if (firstTickIn > stack.remainingDuration + 1e-6) return total;
         const ticksRemaining = 1 + Math.floor(
@@ -2840,6 +2874,11 @@ function getRemainingPoisonDamage(monster) {
         );
         return total + Math.max(0, ticksRemaining) * damagePerTick;
     }, 0);
+    combatPoisonForecasts?.set(monster, {
+        stacks: monster.poisonStacks, length: monster.poisonStacks.length,
+        interval: tickInterval, damage: damagePerTick, total
+    });
+    return total;
 }
 
 function tryExecutePoison(monster) {
@@ -3297,6 +3336,8 @@ if (!hasSavedGame) saveGame();
 // Visual effects are returned to the caller; this function does not touch the DOM.
 function simulateCombatStep(elapsed, collectEffects = false) {
     const previousEffects = combatEffects, previousSimulation = simulatingCombat;
+    const previousForecasts = combatPoisonForecasts;
+    combatPoisonForecasts = new WeakMap();
     const effects = collectEffects ? [] : null;
     combatEffects = effects;
     simulatingCombat = true;
@@ -3376,8 +3417,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                             if (attackIndex > 0) extraEruptionTargets.push({target: attackTarget, damage: hitDamage});
                         } else {
                             presentCombatEffect(() => {
-                                const targetCard = Array.from(elements.enemyRoster.children)
-                                    .find(card => card.dataset.monsterId === attackTarget.id);
+                                const targetCard = getCombatEffectCard(attackTarget.id);
                                 const targetTrack = targetCard && targetCard.querySelector('.health-track');
                                 if (targetTrack) flashDodge(targetTrack);
                             });
@@ -3405,6 +3445,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
     } finally {
         combatEffects = previousEffects;
         simulatingCombat = previousSimulation;
+        combatPoisonForecasts = previousForecasts;
     }
 }
 
@@ -3481,7 +3522,7 @@ function processCombatBacklog() {
         combatContinuation = null;
         setCombatCatchupUi(false);
         if (!document.hidden) {
-            effects.forEach(effect => effect());
+            flushCombatEffects(effects);
             if (combatNeedsFullRender || combatCatchingUp) render();
             else renderCombat();
             combatNeedsFullRender = false;

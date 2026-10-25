@@ -67,7 +67,9 @@ function showVolcanicEruption(centerId, targetIds) {
     presentCombatEffect(() => {
         if (document.hidden || state.currentView !== 'map' || state.selectedMap !== mapId) return;
         const ids = new Set([centerId, ...targetIds]);
-        [...elements.enemyRoster.children].filter(card => ids.has(card.dataset.monsterId)).forEach(card => {
+        ids.forEach(id => {
+            const card = getCombatEffectCard(id);
+            if (!card) return;
             const isCenter = card.dataset.monsterId === centerId;
             const burst = document.createElement('span');
             burst.className = 'eruption-burst';
@@ -144,9 +146,8 @@ function showEruptionChain(sourceId, targetId, delay) {
     const mapId = state.selectedMap;
     presentCombatEffect(() => {
         if (document.hidden || state.currentView !== 'map' || state.selectedMap !== mapId) return;
-        const cards = [...elements.enemyRoster.children];
-        const source = cards.find(card => card.dataset.monsterId === sourceId);
-        const target = cards.find(card => card.dataset.monsterId === targetId);
+        const source = getCombatEffectCard(sourceId);
+        const target = getCombatEffectCard(targetId);
         if (!source || !target) return;
         const namespace = 'http://www.w3.org/2000/svg';
         const svg = document.createElementNS(namespace, 'svg');
@@ -158,10 +159,10 @@ function showEruptionChain(sourceId, targetId, delay) {
         svg.style.setProperty('--eruption-flight', eruptionSkillSettings.chainDelay + 'ms');
         svg.style.setProperty('--eruption-trail-duration', eruptionSkillSettings.trailDuration + 'ms');
         elements.combatPanel.append(svg);
-        const frame = svg.getBoundingClientRect();
+        const frame = getCombatOverlayBounds(svg);
         if (!frame.width || !frame.height) { svg.remove(); return; }
         svg.setAttribute('viewBox', '0 0 ' + frame.width + ' ' + frame.height);
-        const from = source.getBoundingClientRect(), to = target.getBoundingClientRect();
+        const from = getCombatEffectBounds(source), to = getCombatEffectBounds(target);
         const start = {x: from.left + from.width / 2 - frame.left, y: from.top + from.height / 2 - frame.top};
         const end = {x: to.left + to.width / 2 - frame.left, y: to.top + to.height / 2 - frame.top};
         const points = createEruptionCrackPoints(start, end);

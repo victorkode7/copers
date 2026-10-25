@@ -74,7 +74,7 @@ function shootAbilityArrow(targets, damage, kind, direction = 0) {
         if (shot.kind !== 'piercingArrow') visualShots.push(shot);
         if (Math.random() * 100 >= getHitChance(getPlayerAccuracy(), monsterDefinition(target).evasion)) {
             presentCombatEffect(() => {
-                const card = [...elements.enemyRoster.children].find(entry => entry.dataset.monsterId === target.id);
+                const card = getCombatEffectCard(target.id);
                 if (card) flashDodge(card.querySelector('.health-track'));
             });
             continue;
@@ -141,9 +141,8 @@ function showCombatArrow(sourceId, targetId, kind, direction, visual = {}) {
         ? state.monsterStates.slice(row * columns, (row + 1) * columns).map(monster => monster.id) : [];
     presentCombatEffect(() => {
         if (document.hidden || state.currentView !== 'map' || state.selectedMap !== mapId) return;
-        const cards = [...elements.enemyRoster.children];
-        const target = cards.find(card => card.dataset.monsterId === targetId)?.querySelector('.enemy-mark');
-        const source = cards.find(card => card.dataset.monsterId === sourceId)?.querySelector('.enemy-mark');
+        const target = getCombatEffectCard(targetId)?.querySelector('.enemy-mark');
+        const source = getCombatEffectCard(sourceId)?.querySelector('.enemy-mark');
         if (!target) return;
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.classList.add('combat-arrow');
@@ -163,7 +162,7 @@ function showCombatArrow(sourceId, targetId, kind, direction, visual = {}) {
         svg.style.setProperty('--arrow-impact-delay', delay + flight + 'ms');
         svg.setAttribute('aria-hidden', 'true');
         elements.combatPanel.append(svg);
-        const frame = svg.getBoundingClientRect(), to = target.getBoundingClientRect();
+        const frame = getCombatOverlayBounds(svg), to = getCombatEffectBounds(target);
         if (!frame.width || !frame.height) { svg.remove(); return; }
         svg.setAttribute('viewBox', '0 0 ' + frame.width + ' ' + frame.height);
         let end = {x: to.left + to.width / 2 - frame.left, y: to.top + to.height / 2 - frame.top};
@@ -171,15 +170,15 @@ function showCombatArrow(sourceId, targetId, kind, direction, visual = {}) {
             {x: end.x, y: 4}, {x: end.x, y: frame.height - 4}];
         let start = starts[direction] || starts[0];
         if (kind === 'piercingArrow') {
-            const first = cards.find(card => card.dataset.monsterId === rowIds[0]);
-            const last = cards.find(card => card.dataset.monsterId === rowIds[rowIds.length - 1]);
+            const first = getCombatEffectCard(rowIds[0]);
+            const last = getCombatEffectCard(rowIds[rowIds.length - 1]);
             if (!first || !last) { svg.remove(); return; }
-            const firstBounds = first.getBoundingClientRect(), lastBounds = last.getBoundingClientRect();
+            const firstBounds = getCombatEffectBounds(first), lastBounds = getCombatEffectBounds(last);
             const y = firstBounds.top + firstBounds.height / 2 - frame.top;
             start = {x: firstBounds.left - frame.left, y};
             end = {x: lastBounds.right - frame.left, y};
         } else if (source) {
-            const from = source.getBoundingClientRect();
+            const from = getCombatEffectBounds(source);
             start = {x: from.left + from.width / 2 - frame.left, y: from.top + from.height / 2 - frame.top};
         } else if (directed) {
             // Keep the incoming approach near its target, rather than starting
