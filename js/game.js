@@ -370,6 +370,7 @@ function currentMap() {
 }
 
 const monsterDefinitionCache = new WeakMap();
+const monsterDefinitionIndices = new WeakMap();
 function monsterDefinitions(map = currentMap()) {
     if (monsterDefinitionCache.has(map)) return monsterDefinitionCache.get(map);
     const definitions = WorldContent.definitions(worldContent, map).map(monster => ({
@@ -378,12 +379,13 @@ function monsterDefinitions(map = currentMap()) {
         itemDrops: monster.itemDrops.filter(drop => Object.hasOwn(itemById, drop.id) && !itemById[drop.id].developerOnly)
     }));
     monsterDefinitionCache.set(map, definitions);
+    monsterDefinitionIndices.set(map, new Map(definitions.map(definition => [definition.id, definition])));
     return definitions;
 }
 
 function monsterDefinition(monster, map = currentMap()) {
     const definitions = monsterDefinitions(map);
-    return definitions.find(definition => definition.id === monster?.id) || definitions[0];
+    return monsterDefinitionIndices.get(map).get(monster?.id) || definitions[0];
 }
 
 function createMonsterStates(map, savedStates, legacyHp, legacyRespawn) {
@@ -454,11 +456,15 @@ function ensureLiveMonsterTarget() {
 function getPlayerAttackTargets() {
     if (!activeMonster()) return [];
     const targetIndex = state.monsterStates.findIndex(monster => monster.id === state.targetMonsterId);
-    const orderedMonsters = state.monsterStates.slice(targetIndex).concat(state.monsterStates.slice(0, targetIndex));
     const multiHit = getMultiHit();
     const guaranteedHits = Math.floor(multiHit);
     const extraHit = Math.random() < multiHit - guaranteedHits ? 1 : 0;
-    return orderedMonsters.filter(monster => monster.hp > 0).slice(0, guaranteedHits + extraHit);
+    const targets = [];
+    for (let offset = 0; offset < state.monsterStates.length && targets.length < guaranteedHits + extraHit; offset++) {
+        const monster = state.monsterStates[(targetIndex + offset) % state.monsterStates.length];
+        if (monster.hp > 0) targets.push(monster);
+    }
+    return targets;
 }
 
 function setInitialMonsterTarget() {
@@ -758,8 +764,10 @@ function setAccuracyClass(element, hitChance, isPlayerAttack) {
             : hitChance >= 21
                 ? (isPlayerAttack ? 2 : 1)
                 : (isPlayerAttack ? 3 : 0);
-    element.classList.remove(...classes);
-    element.classList.add(classes[colorIndex]);
+    if (!element.classList.contains(classes[colorIndex])) {
+        element.classList.remove(...classes);
+        element.classList.add(classes[colorIndex]);
+    }
 }
 
 function getGoldMultiplier() {
@@ -2119,6 +2127,7 @@ function renderTutorialNotifications() {
     });
 }
 
+const enemyCardViews = new WeakMap();
 function createEnemyCard(definition) {
     const card = document.createElement('article');
     card.className = 'enemy-card';
@@ -2253,6 +2262,9 @@ function createEnemyCard(definition) {
     title.append(name, status);
     details.append(playerAccuracy, enemyAccuracy, effectRow, healthTrack, summary);
     card.append(title, mark, details, shockwaveNotice);
+    enemyCardViews.set(card, {name, targetLabel, playerAccuracyValue, enemyAccuracyValue,
+        healthBar, healthTrack, poisonDamageBar, hpText, intervalValue, damageValue,
+        dotStatus, dotCount, respawn, freezeStatus});
     card.addEventListener('animationend', event => {
         if (event.animationName === 'enemy-death-shake') card.classList.remove('is-defeating');
         if (event.animationName === 'poison-stack-proc') event.target.classList.remove('is-applying');
@@ -2352,13 +2364,38 @@ function renderMonsterArt(definition) {
     else art.removeAttribute('src');
 }
 
+function updateCombatText(element, value) {
+    const text = String(value);
+    if (element.textContent !== text) element.textContent = text;
+}
+
+function updateCombatAttribute(element, name, value) {
+    const text = String(value);
+    if (element.getAttribute(name) !== text) element.setAttribute(name, text);
+}
+
+function updateCombatHidden(element, hidden) {
+    if (element.hidden !== hidden) element.hidden = hidden;
+}
+
+let combatLootSignature = null;
+let combatLootOwnedLabels = [];
+
 function renderCombat() {
+    // This cache expires every render so equipment, ranks and levels stay current.
+    const previousCache = combatStatCache;
+    combatStatCache = new Map();
+    try { renderCombatContent(); }
+    finally { combatStatCache = previousCache; }
+}
+
+function renderCombatContent() {
     const map = currentMap();
     const definitions = monsterDefinitions(map);
     const ids = definitions.map(definition => definition.id);
     elements.enemyRoster.classList.toggle('has-multiple', definitions.length > 1);
     elements.enemyRoster.classList.toggle('is-crowded', definitions.length > 3);
-    const renderedCards = Array.from(elements.enemyRoster.children)
+    let renderedCards = Array.from(elements.enemyRoster.children)
         .filter(card => card.classList.contains('enemy-card'));
     const renderedIds = renderedCards.map(card => card.dataset.monsterId);
     // Spawn IDs are local to a map (several maps use "main"). Rebuild on
@@ -2366,7 +2403,8 @@ function renderCombat() {
     if (elements.enemyRoster.dataset.mapId !== map.id ||
         ids.length !== renderedIds.length || ids.some((id, index) => id !== renderedIds[index])) {
         elements.combatPanel.querySelectorAll('.poison-transfer, .combat-arrow, .eruption-chain').forEach(effect => effect.remove());
-        elements.enemyRoster.replaceChildren(...definitions.map(createEnemyCard));
+        renderedCards = definitions.map(createEnemyCard);
+        elements.enemyRoster.replaceChildren(...renderedCards);
         elements.enemyRoster.dataset.mapId = map.id;
     }
     updateCombatFormation();
@@ -2374,16 +2412,15 @@ function renderCombat() {
     const lootMonster = monsterDefinition(target, map);
     renderMonsterArt(lootMonster);
     WorldContent.applyBackground(elements.combatPanel, WorldContent.background(worldContent, map));
-    elements.lootTableHeading.textContent = 'Loot table · ' + lootMonster.name;
+    updateCombatText(elements.lootTableHeading, 'Loot table · ' + lootMonster.name);
     const progress = state.kills[map.id];
     const completed = progress >= map.goal;
     const maxHealth = getPlayerMaxHealth();
     const playerHpPercent = Math.max(0, Math.min(100, state.playerHp / maxHealth * 100));
-    elements.mapName.textContent = map.name;
-    elements.mapDescription.textContent = map.description;
-    elements.killProgress.textContent = completed ? progress + ' kills' : Math.min(progress, map.goal) + ' / ' + map.goal;
-    elements.killProgressLabel.hidden = completed;
-    elements.mapLootTable.innerHTML = '';
+    updateCombatText(elements.mapName, map.name);
+    updateCombatText(elements.mapDescription, map.description);
+    updateCombatText(elements.killProgress, completed ? progress + ' kills' : Math.min(progress, map.goal) + ' / ' + map.goal);
+    updateCombatHidden(elements.killProgressLabel, completed);
     const lootEntries = [
         { name: 'Gold', amount: lootMonster.gold, chance: 1, owned: state.gold },
         ...[...map.drops, ...lootMonster.drops].map(drop => ({ name: materialNames[drop.id], materialId: drop.id, amount: drop.amount, chance: drop.chance, owned: state.materials[drop.id] || 0 })),
@@ -2396,96 +2433,105 @@ function renderCombat() {
             unique: itemById[drop.id].rarity === 'unique'
         }))
     ];
-    lootEntries.forEach(drop => {
-        const entry = document.createElement('li');
-        if (drop.unique) entry.className = 'unique-drop';
-        if (drop.itemId) entry.dataset.itemId = drop.itemId;
-        const amount = document.createElement('span');
-        amount.className = 'loot-table-label';
-        if (drop.materialId) {
-            entry.dataset.materialId = drop.materialId;
-            amount.appendChild(Equipment.createIcon(itemData.materialDetails?.[drop.materialId]));
-        }
-        const name = document.createElement('span');
-        name.textContent = drop.name;
-        amount.appendChild(name);
-        const details = document.createElement('strong');
-        details.textContent = formatAmount(drop.amount[0]) +
-            (drop.amount[0] === drop.amount[1] ? '' : '–' + formatAmount(drop.amount[1])) +
-            (drop.chanceText ? ' · ' + drop.chanceText : ' · ' + WorldContent.chanceText(drop.chance));
-        const values = document.createElement('span');
-        values.className = 'loot-table-values';
-        const owned = document.createElement('small');
-        owned.className = 'loot-table-owned';
-        owned.textContent = 'Owned: ' + formatAmount(drop.owned);
-        values.append(details, owned);
-        entry.append(amount, values);
-        elements.mapLootTable.appendChild(entry);
-    });
-    Array.from(elements.enemyRoster.children)
-        .filter(card => card.classList.contains('enemy-card'))
-        .forEach((card, index) => {
+    const lootSignature = JSON.stringify(lootEntries.map(drop => [drop.name, drop.itemId, drop.materialId,
+        drop.amount, drop.chance, drop.chanceText, drop.unique, itemData.materialDetails?.[drop.materialId]?.sprite]));
+    if (combatLootSignature !== lootSignature) {
+        combatLootSignature = lootSignature;
+        combatLootOwnedLabels = [];
+        elements.mapLootTable.replaceChildren();
+        lootEntries.forEach(drop => {
+            const entry = document.createElement('li');
+            if (drop.unique) entry.className = 'unique-drop';
+            if (drop.itemId) entry.dataset.itemId = drop.itemId;
+            const amount = document.createElement('span');
+            amount.className = 'loot-table-label';
+            if (drop.materialId) {
+                entry.dataset.materialId = drop.materialId;
+                amount.appendChild(Equipment.createIcon(itemData.materialDetails?.[drop.materialId]));
+            }
+            const name = document.createElement('span');
+            name.textContent = drop.name;
+            amount.appendChild(name);
+            const details = document.createElement('strong');
+            details.textContent = formatAmount(drop.amount[0]) +
+                (drop.amount[0] === drop.amount[1] ? '' : '–' + formatAmount(drop.amount[1])) +
+                (drop.chanceText ? ' · ' + drop.chanceText : ' · ' + WorldContent.chanceText(drop.chance));
+            const values = document.createElement('span');
+            values.className = 'loot-table-values';
+            const owned = document.createElement('small');
+            owned.className = 'loot-table-owned';
+            combatLootOwnedLabels.push(owned);
+            values.append(details, owned);
+            entry.append(amount, values);
+            elements.mapLootTable.appendChild(entry);
+        });
+    }
+    lootEntries.forEach((drop, index) => updateCombatText(combatLootOwnedLabels[index], 'Owned: ' + formatAmount(drop.owned)));
+    const monstersById = new Map(state.monsterStates.map(monster => [monster.id, monster]));
+    const playerAccuracy = getPlayerAccuracy();
+    renderedCards.forEach((card, index) => {
         const definition = definitions[index];
-        const monster = state.monsterStates.find(entry => entry.id === definition.id);
+        const monster = monstersById.get(definition.id);
         if (!monster) return;
-        const playerHitChance = getHitChance(getPlayerAccuracy(), definition.evasion);
+        const view = enemyCardViews.get(card);
+        const playerHitChance = getHitChance(playerAccuracy, definition.evasion);
         const enemyHitChance = getEnemyHitChance(monster);
         const hpPercent = Math.max(0, Math.min(100, monster.hp / definition.health * 100));
         card.classList.toggle('is-target', Boolean(target && target.id === monster.id));
         card.classList.toggle('is-respawning', monster.hp <= 0);
-        card.querySelector('[data-enemy-name]').textContent = definition.name;
-        card.querySelector('[data-enemy-name]').title = definition.name;
-        card.querySelector('.enemy-target-label').hidden = !target || target.id !== monster.id;
-        const playerAccuracyText = card.querySelector('[data-player-accuracy]');
-        const enemyAccuracyText = card.querySelector('[data-enemy-accuracy]');
-        playerAccuracyText.textContent = combatStatFormatter.format(playerHitChance) + '%';
-        enemyAccuracyText.textContent = combatStatFormatter.format(enemyHitChance) + '%';
+        updateCombatText(view.name, definition.name);
+        if (view.name.title !== definition.name) view.name.title = definition.name;
+        updateCombatHidden(view.targetLabel, !target || target.id !== monster.id);
+        const playerAccuracyText = view.playerAccuracyValue;
+        const enemyAccuracyText = view.enemyAccuracyValue;
+        updateCombatText(playerAccuracyText, combatStatFormatter.format(playerHitChance) + '%');
+        updateCombatText(enemyAccuracyText, combatStatFormatter.format(enemyHitChance) + '%');
         setAccuracyClass(playerAccuracyText, playerHitChance, true);
         setAccuracyClass(enemyAccuracyText, enemyHitChance, false);
-        card.querySelector('.health-fill').style.width = hpPercent + '%';
-        const healthTrack = card.querySelector('.health-track');
-        healthTrack.setAttribute('aria-valuenow', String(Math.round(hpPercent)));
-        const poisonIndicator = card.querySelector('.enemy-health-poison-damage');
+        view.healthBar.style.width = hpPercent + '%';
+        const healthTrack = view.healthTrack;
+        updateCombatAttribute(healthTrack, 'aria-valuenow', Math.round(hpPercent));
+        const poisonIndicator = view.poisonDamageBar;
         const remainingPoisonDamage = Math.min(monster.hp, getRemainingPoisonDamage(monster));
         const poisonPercent = remainingPoisonDamage / definition.health * 100;
         poisonIndicator.style.left = Math.max(0, hpPercent - poisonPercent) + '%';
         poisonIndicator.style.width = poisonPercent + '%';
         poisonIndicator.classList.toggle('is-visible', monster.hp > 0 && remainingPoisonDamage > 0);
-        poisonIndicator.title = remainingPoisonDamage > 0
+        updateCombatAttribute(poisonIndicator, 'title', remainingPoisonDamage > 0
             ? 'Poison will deal ' + remainingPoisonDamage + ' more damage'
-            : '';
-        card.querySelector('[data-enemy-hp]').textContent = Math.ceil(monster.hp) + ' / ' + definition.health + ' HP';
-        card.querySelector('[data-enemy-attack-interval]').textContent = getMonsterAttackInterval(monster).toFixed(1) + 's';
-        const freezeStatus = card.querySelector('[data-enemy-freeze-status]');
+            : '');
+        updateCombatText(view.hpText, Math.ceil(monster.hp) + ' / ' + definition.health + ' HP');
+        updateCombatText(view.intervalValue, getMonsterAttackInterval(monster).toFixed(1) + 's');
+        const freezeStatus = view.freezeStatus;
         const frozen = monster.hp > 0 && monster.freezeRemaining > 0;
         card.classList.toggle('is-frozen', frozen);
-        freezeStatus.hidden = !frozen;
-        freezeStatus.textContent = frozen ? 'Frozen ' + monster.freezeRemaining.toFixed(1) + 's' : '';
-        freezeStatus.title = 'Attacks take 3 seconds longer. Further arrow hits refresh the 9-second duration.';
-        card.querySelector('[data-enemy-damage]').textContent = String(definition.attackDamage);
-        const dotStatus = card.querySelector('[data-enemy-dot-status]');
+        updateCombatHidden(freezeStatus, !frozen);
+        updateCombatText(freezeStatus, frozen ? 'Frozen ' + monster.freezeRemaining.toFixed(1) + 's' : '');
+        updateCombatAttribute(freezeStatus, 'title', 'Attacks take 3 seconds longer. Further arrow hits refresh the 9-second duration.');
+        updateCombatText(view.damageValue, String(definition.attackDamage));
+        const dotStatus = view.dotStatus;
         const poisonStackCount = monster.poisonStacks ? monster.poisonStacks.length : 0;
-        dotStatus.hidden = poisonStackCount === 0;
-        dotStatus.querySelector('[data-enemy-dot-count]').textContent = poisonStackCount + 'x';
-        dotStatus.setAttribute('aria-label', poisonStackCount + ' poison ' +
+        updateCombatHidden(dotStatus, poisonStackCount === 0);
+        updateCombatText(view.dotCount, poisonStackCount + 'x');
+        updateCombatAttribute(dotStatus, 'aria-label', poisonStackCount + ' poison ' +
             (poisonStackCount === 1 ? 'stack' : 'stacks'));
-        dotStatus.title = poisonStackCount + ' poison ' + (poisonStackCount === 1 ? 'stack' : 'stacks');
-        const respawn = card.querySelector('[data-enemy-respawn]');
-        respawn.hidden = monster.respawnRemaining <= 0;
-        respawn.textContent = monster.respawnRemaining > 0
+        updateCombatAttribute(dotStatus, 'title', poisonStackCount + ' poison ' + (poisonStackCount === 1 ? 'stack' : 'stacks'));
+        const respawn = view.respawn;
+        updateCombatHidden(respawn, monster.respawnRemaining <= 0);
+        updateCombatText(respawn, monster.respawnRemaining > 0
             ? 'Respawns in ' + monster.respawnRemaining.toFixed(1) + 's'
-            : '';
+            : '');
     });
     elements.playerHealthBar.style.width = playerHpPercent + '%';
     const damagePercent = Math.min(100 - playerHpPercent, recentPlayerDamage / maxHealth * 100);
     elements.playerHealthDamage.style.left = playerHpPercent + '%';
     elements.playerHealthDamage.style.width = damagePercent + '%';
-    elements.playerHealthTrack.setAttribute('aria-valuenow', String(Math.round(playerHpPercent)));
-    elements.playerHealthText.textContent = Math.ceil(state.playerHp) + ' / ' + maxHealth + ' HP';
-    elements.combatStatusLabel.textContent = state.combatPaused ? 'Dead' : target ? 'Auto-battling' : 'Waiting for respawn';
+    updateCombatAttribute(elements.playerHealthTrack, 'aria-valuenow', Math.round(playerHpPercent));
+    updateCombatText(elements.playerHealthText, Math.ceil(state.playerHp) + ' / ' + maxHealth + ' HP');
+    updateCombatText(elements.combatStatusLabel, state.combatPaused ? 'Dead' : target ? 'Auto-battling' : 'Waiting for respawn');
     elements.combatStatus.classList.toggle('combat-dead', state.combatPaused);
     elements.combatStatus.classList.toggle('is-fighting', !state.combatPaused && Boolean(target));
-    elements.resumeCombat.hidden = !state.combatPaused || state.currentView !== 'map';
+    updateCombatHidden(elements.resumeCombat, !state.combatPaused || state.currentView !== 'map');
     renderLootNotice();
     window.LootEffects?.sync(state.currentView === 'map', map.id);
 }
@@ -2783,7 +2829,7 @@ function getPoisonChance() {
 }
 
 function getRemainingPoisonDamage(monster) {
-    if (!monster || monster.hp <= 0 || !Array.isArray(monster.poisonStacks)) return 0;
+    if (!monster || monster.hp <= 0 || !Array.isArray(monster.poisonStacks) || !monster.poisonStacks.length) return 0;
     const tickInterval = getPoisonTickInterval();
     const damagePerTick = getPoisonDamage();
     return monster.poisonStacks.reduce((total, stack) => {
@@ -3264,16 +3310,16 @@ function simulateCombatStep(elapsed, collectEffects = false) {
         ensureLiveMonsterTarget();
         const previousTarget = activeMonster();
         let anyRespawned = false;
-        const enemyAttackElapsed = new Map();
-        state.monsterStates.forEach(monster => {
+        const enemyAttackElapsed = [];
+        state.monsterStates.forEach((monster, index) => {
             const frozenSeconds = Math.min(elapsed, monster.freezeRemaining || 0);
             monster.freezeRemaining = Math.max(0, (monster.freezeRemaining || 0) - elapsed);
             if (monster.freezeRemaining < 1e-6) monster.freezeRemaining = 0;
             const interval = monsterDefinition(monster, map).attackInterval;
             // Keep attack progress in normal interval units. This avoids a burst
             // of banked attacks when freezing expires, including mid-step.
-            enemyAttackElapsed.set(monster.id, elapsed - frozenSeconds +
-                frozenSeconds * interval / (interval + arrowSkillSettings.freezeDelay));
+            enemyAttackElapsed[index] = elapsed - frozenSeconds +
+                frozenSeconds * interval / (interval + arrowSkillSettings.freezeDelay);
             if (monster.hp > 0 || monster.respawnRemaining <= 0) return;
             monster.respawnRemaining = Math.max(0, monster.respawnRemaining - elapsed);
             if (monster.respawnRemaining === 0) {
@@ -3291,10 +3337,10 @@ function simulateCombatStep(elapsed, collectEffects = false) {
             ensureLiveMonsterTarget();
             syncLegacyEnemyState();
             const target = activeMonster();
-            state.monsterStates.forEach(monster => {
+            state.monsterStates.forEach((monster, index) => {
                 if (monster.hp <= 0 || state.combatPaused) return;
                 const definition = monsterDefinition(monster, map);
-                monster.attackTimer += enemyAttackElapsed.get(monster.id);
+                monster.attackTimer += enemyAttackElapsed[index];
                 while (monster.attackTimer >= definition.attackInterval && !state.combatPaused) {
                     monster.attackTimer -= definition.attackInterval;
                     if (Math.random() * 100 < getEnemyHitChance(monster)) {

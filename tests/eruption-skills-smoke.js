@@ -50,16 +50,16 @@
         triggerVolcanicEruption(monsters[4],10);
         check('Eruption Chain does nothing without Volcanic Eruption',monsters.every(monster=>monster.hp===100)&&state.playerHp===100);
         monsters=fresh({volcanicEruption:1});triggerVolcanicEruption(monsters[4],10);
-        check('center eruptions damage the target and all eight neighboring grid positions',monsters.every(monster=>monster.hp===90));
+        check('center eruptions damage only the target and its four cardinal neighbors',monsters.every((monster,index)=>monster.hp===([1,3,4,5,7].includes(index)?90:100)));
         check('one eruption costs five percent of maximum health',state.playerHp===95);
-        check('eruptions use full-plate bursts without text labels or unneeded chain lines',elements.enemyRoster.querySelectorAll('.eruption-burst').length===9&&!elements.enemyRoster.querySelector('.eruption-source-label')&&!elements.enemyRoster.querySelector('[data-combat-hit-badge].is-visible')&&!elements.combatPanel.querySelector('.eruption-chain'));
+        check('eruption visuals cover only the five affected plates without text or unneeded chain lines',elements.enemyRoster.querySelectorAll('.eruption-burst').length===5&&!elements.enemyRoster.querySelector('.eruption-source-label')&&!elements.enemyRoster.querySelector('[data-combat-hit-badge].is-visible')&&!elements.combatPanel.querySelector('.eruption-chain'));
         const centerBurst=elements.enemyRoster.querySelector('.eruption-burst.is-center'),neighborBurst=elements.enemyRoster.querySelector('.eruption-burst:not(.is-center)');
         check('the source has a distinct bright border and an outward ring',getComputedStyle(centerBurst).boxShadow!==getComputedStyle(neighborBurst).boxShadow&&getComputedStyle(centerBurst,'::before').content==='""');
         check('splash plates have a quiet tint without a glow, ring, or movement',getComputedStyle(neighborBurst).boxShadow==='none'&&getComputedStyle(neighborBurst,'::before').content==='none'&&getComputedStyle(neighborBurst).animationName==='volcanic-eruption-fade');
         monsters=fresh({volcanicEruption:1});triggerVolcanicEruption(monsters[2],10);
-        check('edge eruptions do not wrap across rows',monsters.every((monster,index)=>monster.hp===([1,2,4,5].includes(index)?90:100)));
+        check('edge eruptions exclude diagonals and do not wrap across rows',monsters.every((monster,index)=>monster.hp===([1,2,5].includes(index)?90:100)));
         monsters=fresh({volcanicEruption:1},7,3);triggerVolcanicEruption(monsters[5],10);
-        check('incomplete rows cannot produce nonexistent adjacent targets',monsters.every((monster,index)=>monster.hp===([1,2,4,5].includes(index)?90:100)));
+        check('incomplete rows cannot produce nonexistent or diagonal targets',monsters.every((monster,index)=>monster.hp===([2,4,5].includes(index)?90:100)));
         monsters=fresh({volcanicEruption:1},3,1);triggerVolcanicEruption(monsters[1],10);
         check('single-column encounters erupt across the neighboring rows',monsters.every(monster=>monster.hp===90));
         monsters=fresh({volcanicEruption:1});itemById.testAmulet.stats={health:100};state.ownedItemIds=['testAmulet'];state.gear.necklace='testAmulet';state.playerHp=40;
@@ -71,7 +71,7 @@
         advance(.9,true);
         check('the destination takes no chain damage before the one-second arrival',monsters[8].hp===100&&state.pendingEruptions.length===1);
         advance(.1,true);
-        check('arrival deals chain damage and shows its burst at exactly one second',state.pendingEruptions.length===0&&elements.enemyRoster.querySelector('[data-eruption-center="'+monsters[8].id+'"]')&&monsters.every((monster,index)=>monster.hp===(index===4?80:[0,1,3,5,7,8].includes(index)?90:100)));
+        check('arrival deals cardinal splash damage and shows its burst at exactly one second',state.pendingEruptions.length===0&&elements.enemyRoster.querySelector('[data-eruption-center="'+monsters[8].id+'"]')&&monsters.every((monster,index)=>monster.hp===([0,1,3,5,7,8].includes(index)?90:100)));
         check('chained eruptions never add another health cost',state.playerHp===95);
         const chain=elements.combatPanel.querySelector('.eruption-chain'),line=chain?.querySelector('.eruption-crack-core');
         check('chained eruptions connect their centers with a fissure and no arrow shapes',elements.combatPanel.querySelectorAll('.eruption-chain').length===1&&chain.dataset.sourceId===monsters[0].id&&chain.dataset.targetId===monsters[8].id&&chain.querySelectorAll('path').length===3&&!chain.querySelector('circle,polygon,marker')&&!line.hasAttribute('marker-end')&&line.getAttribute('d').split(' L').length>6);
@@ -131,13 +131,13 @@
         }
         const oldSave=JSON.parse(JSON.stringify(savedPending));delete oldSave.pendingEruptions;applyGameSave(parseGameSave(JSON.stringify(oldSave)));
         check('older profiles without pending eruptions still load',state.pendingEruptions.length===0);
-        monsters=fresh({volcanicEruption:1,eruptionChain:1},9,3,{health:1});triggerVolcanicEruption(monsters[4],10);
-        check('eruptions award each kill once and stop chaining when no living enemy remains',state.kills[map.id]===9&&state.gold===9&&state.playerHp===95&&monsters.every(monster=>monster.hp===0&&monster.respawnRemaining===2));
+        monsters=fresh({volcanicEruption:1,eruptionChain:1},3,1,{health:1});triggerVolcanicEruption(monsters[1],10);
+        check('eruptions award each kill once and stop chaining when no living enemy remains',state.kills[map.id]===3&&state.gold===3&&state.playerHp===95&&monsters.every(monster=>monster.hp===0&&monster.respawnRemaining===2));
 
         monsters=fresh({volcanicEruption:1});state.targetMonsterId=monsters[4].id;let damage=getDamage();attack();
-        check('normal attack cycles trigger exactly one eruption at normal physical hit damage',monsters.every((monster,index)=>monster.hp===100-damage*(index===4?2:1))&&state.playerHp===95);
+        check('normal attack cycles trigger one cardinal eruption at normal physical hit damage',monsters.every((monster,index)=>monster.hp===100-damage*(index===4?2:[1,3,5,7].includes(index)?1:0))&&state.playerHp===95);
         monsters=fresh({volcanicEruption:1});state.targetMonsterId=monsters[4].id;damage=getDamage();Math.random=()=>.99;attack();
-        check('every attack erupts even when its normal hit misses',monsters.every(monster=>monster.hp===100-damage)&&state.playerHp===95);
+        check('every attack erupts even when its normal hit misses',monsters.every((monster,index)=>monster.hp===100-([1,3,4,5,7].includes(index)?damage:0))&&state.playerHp===95);
         monsters=fresh({volcanicEruption:1});itemById.testAmulet.stats={multiHit:1};state.ownedItemIds=['testAmulet'];state.gear.necklace='testAmulet';state.targetMonsterId=monsters[4].id;
         attack().effects.forEach(effect=>effect());
         const multiCenters=[...elements.enemyRoster.querySelectorAll('.eruption-burst.is-center')].map(burst=>burst.parentElement.dataset.monsterId);
@@ -148,11 +148,11 @@
         monsters=fresh({volcanicEruption:1});itemById.testAmulet.stats={multiHit:2};state.ownedItemIds=['testAmulet'];state.gear.necklace='testAmulet';state.playerHp=7;attack();
         check('multiple eruption costs can kill the player and stop further eruptions',state.playerHp===0&&state.combatPaused);
         monsters=fresh({volcanicEruption:1});monsters[0].hp=1;damage=getDamage();attack();
-        check('an eruption still hits the neighbors when the normal hit kills its center',monsters[0].hp===0&&[1,3,4].every(index=>monsters[index].hp===100-damage));
+        check('an eruption still hits cardinal neighbors when the normal hit kills its center',monsters[0].hp===0&&[1,3].every(index=>monsters[index].hp===100-damage)&&monsters[4].hp===100);
         monsters=fresh({volcanicEruption:1,multiShot:1});damage=getDamage();shootAbilityArrow([monsters[4]],damage,'multiShot');
-        check('Multishot can trigger an eruption without recursively firing more attacks',monsters.every((monster,index)=>monster.hp===100-damage*(index===4?2:1))&&state.playerHp===95);
+        check('Multishot can trigger a cardinal eruption without recursively firing more attacks',monsters.every((monster,index)=>monster.hp===100-damage*(index===4?2:[1,3,5,7].includes(index)?1:0))&&state.playerHp===95);
         monsters=fresh({volcanicEruption:1,snakeBite:1,poisonExecute:1},9,3,{health:4});triggerVolcanicEruption(monsters[4],1);
-        check('eruption hits apply poison and honor poison executes without duplicate rewards',state.kills[map.id]===9&&state.gold===9&&monsters.every(monster=>monster.hp===0));
+        check('cardinal eruption hits apply poison and honor poison executes without duplicate rewards',state.kills[map.id]===5&&state.gold===5&&monsters.every((monster,index)=>monster.hp===([1,3,4,5,7].includes(index)?0:4)));
         monsters=fresh({volcanicEruption:1});state.playerHp=4;state.attackTimer=10;triggerVolcanicEruption(monsters[4],10);
         const death=monsters.map(monster=>monster.hp).join();
         simulateCombatStep(2);

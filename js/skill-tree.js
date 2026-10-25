@@ -989,7 +989,7 @@ window.adventureSkillTree = {
             "id": "volcanicEruption",
             "name": "Volcanic Eruption",
             "icon": "✦",
-            "effect": "Every attack erupts the ground beneath the target, hitting all adjacent enemies. You are hit as well, losing 5% health.",
+            "effect": "Every attack erupts the ground beneath the target, hitting it and enemies directly above, below, left, and right. You are hit as well, losing 5% health.",
             "requires": [
                 "damageNode2"
             ],

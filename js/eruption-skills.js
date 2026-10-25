@@ -10,7 +10,7 @@ function getEruptionTargets(center) {
     const columns = Math.max(1, state.monsterColumns || 1);
     return state.monsterStates.filter((monster, index) => {
         if (monster.hp <= 0) return false;
-        return Math.abs(Math.floor(index / columns) - origin.row) <= 1 && Math.abs(index % columns - origin.column) <= 1;
+        return Math.abs(Math.floor(index / columns) - origin.row) + Math.abs(index % columns - origin.column) <= 1;
     });
 }
 

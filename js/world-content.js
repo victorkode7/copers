@@ -502,7 +502,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_7febce5ed2e4d886cc363ea2",
                     "monsterId": "monster_365f8e73c6121c5189836468",
-                    "count": 21,
+                    "count": 50,
                     "overrides": {}
                 }
             ]
