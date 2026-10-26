@@ -20,7 +20,7 @@
         'attackSpeedNode', 'attackSpeedNode2', 'snakeBite', 'poisonDMG_3', 'poisonDMG_2',
         'basicallySnake', 'bigAttackSpeed_1', 'bigAttackSpeed_4', 'bigAttackSpeed_3',
         'poisonExecute', 'bloomingFlower', 'healthNode', 'thickHide', 'untouchable', 'quickHands', 'fleetFooted',
-        'accuracyNode2', 'piercingArrow', 'forkingArrow', 'multiShot', 'freezingArrows'].filter(id => skillNodeById[id]);
+        'accuracyNode2', 'piercingArrow', 'forkingArrow', 'multiShot', 'freezingArrows'].map(SkillStatCompat.resolveNodeId).filter(id => skillNodeById[id]);
     // This synthetic combat loadout tests clock/save behavior independently of
     // the user's changing editor layout and prerequisite paths.
     const rootId = skillNodes.find(node => node.start).id;

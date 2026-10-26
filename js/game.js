@@ -56,6 +56,14 @@ const createTutorialState = () => ({
     firstGearItemId: null,
     firstGearSlotSelected: false
 });
+let preservedSaveFields = {};
+
+function saveCompatibilityContext() {
+    return {skills:skillNodeById,connections:skillNodeConnections,skillAliases:skillTreeData.nodeIdAliases,
+        removedSkills:skillTreeData.removedNodes,items:itemById,slots:gearSlots,
+        materials:materialNames,maps:Object.fromEntries(mapData.map(map=>[map.id,map])),worlds:worldData,
+        worldById:Object.fromEntries(worldData.map(world=>[world.id,world]))};
+}
 
 const legacyUpgradeIds = ['strength', 'haste', 'evasion'];
 const skillTreeData = SkillDescriptions.normalize(SkillStatCompat.normalize(window.adventureSkillTree));
@@ -114,6 +122,8 @@ const state = {
     experience: 0,
     skillPoints: 0,
     skillRanks: {},
+    unlockedMapIds: [],
+    unlockedWorldIds: [],
     gear: createEmptyGear(),
     ownedItemIds: [],
     developerItemsEnabled: false,
@@ -689,8 +699,23 @@ function promptForFirstGear(itemId, slot) {
     state.tutorials.firstGearSlotSelected = false;
 }
 
+function resolveSkillNodeId(id) {
+    if (Object.hasOwn(skillNodeById,id)) return id;
+    const visited = new Set();
+    while (!Object.hasOwn(skillNodeById,id)) {
+        const next = skillTreeData.nodeIdAliases?.[id] ?? SkillStatCompat.nodeIdAliases[id];
+        if (typeof next !== 'string' || visited.has(id)) return id;
+        visited.add(id);id = next;
+    }
+    return id;
+}
+
+function skillNodeDefinition(id) {
+    return skillNodeById[resolveSkillNodeId(id)];
+}
+
 function getSkillNodeRank(id, ranks = state.skillRanks) {
-    return ranks[id] || 0;
+    return ranks[resolveSkillNodeId(id)] || 0;
 }
 
 function getPendingSkillPointCount() {
@@ -818,12 +843,13 @@ function tryShieldSlam() {
             let slamTarget = target;
             while (slamTarget && remainingDamage > 1e-8) {
                 const healthBefore = slamTarget.hp;
+                const damageMultiplier = getMonsterDamageTakenMultiplier(slamTarget);
                 hitIds.push(slamTarget.id);
                 applyDamageToMonster(slamTarget, remainingDamage, 'physical', hitIds.length === 1 ? 'shieldSlam' : 'overflowingSlam');
                 tryApplyPoison(slamTarget);
                 // Only unused physical damage carries on. Poison executions
                 // and newly gained Fury cannot increase this slam's budget.
-                remainingDamage = Math.max(0, remainingDamage - healthBefore);
+                remainingDamage = Math.max(0, remainingDamage - healthBefore / damageMultiplier);
                 if (!overflowing || slamTarget.hp > 0 || remainingDamage <= 1e-8) break;
                 slamTarget = activeMonster();
             }
@@ -918,14 +944,14 @@ function renderCombatBuffs() {
     normalizeShields();
     const buffs = [];
     if (state.shieldStacks > 0) {
-        const node = getSkillNodeRank('shieldGenerator') > 0 ? skillNodeById.shieldGenerator : skillNodeById.resonantGuard;
+        const node = skillNodeDefinition(getSkillNodeRank('shieldGenerator') > 0 ? 'shieldGenerator' : 'resonantGuard');
         buffs.push({id:'shields',name:'Shields',sprite:SkillSprites.safePath(node?.sprite),icon:'🛡',
             stacks:state.shieldStacks,value:'1 hit',
             description:state.shieldStacks + ' / ' + getPlayerMaxShields() + ' shields. Each shield blocks one enemy hit. Self-damage and health drain bypass shields.'});
     }
     if (state.furyStacks > 0) {
         const bonus = formatBuffAmount(state.furyStacks * furyDamagePerStack * 100) + '%';
-        buffs.push({id:'fury',name:'Fury',sprite:SkillSprites.safePath(skillNodeById.maxFury?.sprite) || 'assets/ui/icon-sword.png',
+        buffs.push({id:'fury',name:'Fury',sprite:SkillSprites.safePath(skillNodeDefinition('maxFury')?.sprite) || 'assets/ui/icon-sword.png',
             stacks:state.furyStacks,value:bonus,duration:state.furyRemaining,
             description:'+' + bonus + ' damage. ' + combatStatFormatter.format(state.furyRemaining) + 's until the next stack is lost. Hits add ' + furySecondsPerStack + ' seconds.'});
     }
@@ -957,7 +983,7 @@ function hasFireOfTheRighteous() {
 
 function getRighteousFireNode() {
     for (const id of righteousFireNodeIds) {
-        if (skillNodeById[id] && getSkillNodeRank(id) > 0) return skillNodeById[id];
+        if (skillNodeDefinition(id) && getSkillNodeRank(id) > 0) return skillNodeDefinition(id);
     }
     return null;
 }
@@ -1145,15 +1171,17 @@ function renderDetailedStats() {
         ]},
         {id:'bleedDamage', name:'Bleed from a normal hit', total:number(getBleedDamage()) + ' / tick', rows:[
             ['Triggering hit damage', number(getDamage())],
-            ['Damage taken from hit', percent(bleedDamageType.hitDamageRatio)],
-            ['Flat bonus per application', number(flat('bleedDamage'))],
-            ['Bleed damage multiplier', multiplier(combinedMultiplier('bleedDamageMultiplier'))]
+            ['Damage taken from hit', percent(getBleedHitDamageRatio())],
+            ['Flat bonus per stack', number(flat('bleedDamage'))],
+            ['Bleed damage multiplier', multiplier(combinedMultiplier('bleedDamageMultiplier'))],
+            ['Maximum stacks', hasDeepWounds() ? number(getBleedMaximumStacks()) : 'Unlimited'],
+            ['Stacks per successful application', number(getBleedStacksPerApplication())]
         ]},
         {id:'bleedTickRate', name:'Bleed tick speed', total:number(1 / getBleedTickInterval()) + ' ticks/s', rows:[
             ['Tick speed bonus', percent(flat('bleedTickRate'))],
             ['Tick speed multiplier', multiplier(combinedMultiplier('bleedTickRateMultiplier'))],
             ['Tick interval', number(getBleedTickInterval()) + 's'],
-            ['Time per application', number(bleedDamageType.secondsPerApplication) + 's'],
+            ['Time per successful application', number(bleedDamageType.secondsPerApplication * getBleedStacksPerApplication()) + 's'],
             ['Maximum shared duration', number(bleedDamageType.maximumDuration) + 's']
         ]},
         {id:'maxFury', name:'Maximum fury', total:formatAmount(getPlayerMaxFury()), rows:[
@@ -1233,6 +1261,7 @@ function worldForMap(mapId) {
 function worldIsUnlocked(index) {
     if (!worldData[index]) return false;
     if (state.developerTravelEnabled) return true;
+    if (state.unlockedWorldIds.includes(worldData[index].id)) return true;
     if (index === 0) return true;
     const previousWorld = worldData[index - 1];
     const finalMapId = previousWorld.mapIds[previousWorld.mapIds.length - 1];
@@ -1248,6 +1277,7 @@ function worldSelectorIsUnlocked() {
 function mapIsUnlocked(maps, index) {
     if (!maps[index]) return false;
     if (state.developerTravelEnabled) return true;
+    if (state.unlockedMapIds.includes(maps[index].id)) return true;
     if (index === 0) return true;
     return state.kills[maps[index - 1].id] >= maps[index - 1].goal;
 }
@@ -1344,7 +1374,10 @@ function formatAmount(amount) {
 
 function createGameSave() {
     return {
-        version: 3,
+        ...preservedSaveFields,
+        ...SaveCompatibility.unlocks(state,saveCompatibilityContext()),
+        version: SaveCompatibility.version,
+        contentMigrationVersion: SaveCompatibility.contentMigrations.at(-1).version,
         lastSimulatedAt,
         offlineRecap: pendingOfflineRecap,
         attackTimer: state.attackTimer,
@@ -1385,7 +1418,7 @@ function createGameSave() {
 }
 
 function saveGame() {
-    if (simulatingCombat) return;
+    if (simulatingCombat || SaveCompatibility.protection.blocked) return;
     try {
         localStorage.setItem(saveKey, JSON.stringify(createGameSave()));
         lastSave = Date.now();
@@ -1396,23 +1429,18 @@ function saveGame() {
 
 // Parse and migrate without changing live progress or browser storage.
 function parseGameSave(rawSave) {
-    const saved = JSON.parse(rawSave);
+    const saved = JSON.parse(rawSave.replace(/^\uFEFF/,''));
     if (!saved || typeof saved !== 'object' || Array.isArray(saved) ||
-        ![1, 2, 3].includes(saved.version)) {
+        ![1, 2, 3, SaveCompatibility.version].includes(saved.version)) {
         throw new Error('Save data has an invalid or unsupported format.');
     }
+    SaveCompatibility.assertCollections(saved);
     if (['level', 'experience', 'skillPoints'].some(key => saved[key] !== undefined &&
         (!Number.isSafeInteger(saved[key]) || saved[key] < 0))) {
         throw new Error('Save data has invalid experience or skill points.');
     }
     if (saved && saved.developerTravelEnabled === undefined) saved.developerTravelEnabled = false;
-    if (saved && typeof saved.selectedMap === 'string' && !mapData.some(map => map.id === saved.selectedMap)) {
-        saved.selectedMap = worldData[0].mapIds[0];
-        saved.enemyHp = mapData.find(map => map.id === saved.selectedMap).health;
-        saved.enemyRespawnRemaining = 0;
-        saved.monsterStates = [];
-        saved.pendingEruptions = [];
-    }
+    if (saved && saved.developerItemsEnabled === undefined) saved.developerItemsEnabled = false;
     if (saved && saved.version === 1) {
         if (Number.isInteger(saved.level) && saved.level >= 1) saved.level--;
         saved.version = 2;
@@ -1433,25 +1461,6 @@ function parseGameSave(rawSave) {
         ])];
         saved.developerItemsEnabled = false;
         saved.version = 3;
-    }
-    // Content edits can remove items or change their slots without invalidating all progress.
-    if (saved && saved.version === 3 && Array.isArray(saved.ownedItemIds) && Array.isArray(saved.crafted)) {
-        saved.ownedItemIds = [...new Set(saved.ownedItemIds.filter(id => typeof id === 'string' && Object.hasOwn(itemById, id)))];
-        saved.crafted = [...new Set(saved.crafted.filter(id => saved.ownedItemIds.includes(id) && itemById[id].recipe))];
-        if (saved.gear && typeof saved.gear === 'object' && !Array.isArray(saved.gear)) {
-            gearSlots.forEach(slot => {
-                const item = itemById[saved.gear[slot]];
-                if (!item || item.slot !== slot || !ownsItem(item.id, saved)) saved.gear[slot] = null;
-            });
-        }
-        if (saved.tutorials && saved.tutorials.firstGearItemId &&
-            (!ownsItem(saved.tutorials.firstGearItemId, saved) ||
-            itemById[saved.tutorials.firstGearItemId].slot !== saved.tutorials.firstGearSlot)) {
-            Object.assign(saved.tutorials, {
-                firstGearPending: false, firstGearItemId: null, firstGearSlot: null,
-                firstGearSlotSelected: false
-            });
-        }
     }
     if (saved && saved.tutorials === undefined) {
         saved.tutorials = createTutorialState();
@@ -1496,7 +1505,7 @@ function parseGameSave(rawSave) {
         saved.skillRanks = {};
     }
     if (saved && saved.experience === undefined) saved.experience = 0;
-    if (saved && saved.skillPoints === undefined) saved.skillPoints = 0;
+    if (saved && saved.skillPoints === undefined) saved.skillPoints = saved.level - Object.values(saved.skillRanks || Object.fromEntries((saved.skillNodes || []).map(id=>[id,1]))).reduce((sum,rank)=>sum+rank,0);
     if (saved && Number.isInteger(saved.level) && Number.isInteger(saved.experience) &&
         Number.isInteger(saved.skillPoints)) {
         const previousLevel = saved.level;
@@ -1516,23 +1525,6 @@ function parseGameSave(rawSave) {
             : {};
     }
     if (saved) delete saved.skillNodes;
-    if (saved && saved.skillRanks && typeof saved.skillRanks === 'object' && !Array.isArray(saved.skillRanks)) {
-        // Keep allocated Fire when an editor export switches between its IDs.
-        const fireNodeId = righteousFireNodeIds.find(id => skillNodeById[id]);
-        righteousFireNodeIds.forEach(id => {
-            if (fireNodeId && !skillNodeById[id] && Object.hasOwn(saved.skillRanks, id) && !Object.hasOwn(saved.skillRanks, fireNodeId)) {
-                saved.skillRanks[fireNodeId] = saved.skillRanks[id];
-                delete saved.skillRanks[id];
-            }
-        });
-        let refundedRanks = 0;
-        Object.entries(saved.skillRanks).forEach(([id, rank]) => {
-            if (!skillNodeById[id] || skillNodeById[id].start || !Number.isInteger(rank) || rank <= 1) return;
-            refundedRanks += rank - 1;
-            saved.skillRanks[id] = 1;
-        });
-        saved.skillPoints += refundedRanks;
-    }
     if (
         saved &&
         saved.upgrades &&
@@ -1561,15 +1553,13 @@ function parseGameSave(rawSave) {
         Object.keys(materialNames).forEach(id => {
             if (saved.materials[id] === undefined) saved.materials[id] = 0;
         });
-        ['cinderHoof', 'singedMane'].forEach(id => {
-            if (!Number.isInteger(saved.materials[id]) || saved.materials[id] < 0) {
-                saved.materials[id] = 0;
-            }
-        });
     }
+    if (saved.tutorials && typeof saved.tutorials === 'object' && !Array.isArray(saved.tutorials)) saved.tutorials = {...createTutorialState(),...saved.tutorials};
+    if (saved.upgrades && typeof saved.upgrades === 'object' && !Array.isArray(saved.upgrades)) legacyUpgradeIds.forEach(id=>{if(saved.upgrades[id]===undefined)saved.upgrades[id]=0;});
+    SaveCompatibility.migrate(saved,saveCompatibilityContext());
     if (
         saved === null ||
-        saved.version !== 3 ||
+        saved.version !== SaveCompatibility.version ||
         !Number.isFinite(saved.gold) || saved.gold < 0 ||
         !saved.kills || typeof saved.kills !== 'object' || Array.isArray(saved.kills) ||
         !saved.materials || typeof saved.materials !== 'object' || Array.isArray(saved.materials) ||
@@ -1683,6 +1673,7 @@ function parseGameSave(rawSave) {
 }
 
 function applyGameSave(saved) {
+    preservedSaveFields = JSON.parse(JSON.stringify(saved));
     state.gold = saved.gold;
     state.kills = saved.kills;
     state.materials = saved.materials;
@@ -1691,6 +1682,8 @@ function applyGameSave(saved) {
     state.experience = saved.experience;
     state.skillPoints = saved.skillPoints;
     state.skillRanks = saved.skillRanks;
+    state.unlockedMapIds = saved.unlockedMapIds || [];
+    state.unlockedWorldIds = saved.unlockedWorldIds || [];
     state.gear = saved.gear;
     state.ownedItemIds = saved.ownedItemIds;
     state.developerItemsEnabled = saved.developerItemsEnabled;
@@ -1767,16 +1760,77 @@ function applyGameSave(saved) {
 }
 
 function loadGame() {
+    let rawSave;
     try {
-        const rawSave = localStorage.getItem(saveKey);
-        if (!rawSave) return false;
-        applyGameSave(parseGameSave(rawSave));
+        rawSave = localStorage.getItem(saveKey);
+        if (rawSave === null) return false;
+        const saved = parseGameSave(rawSave);
+        const migrated = JSON.stringify(saved);
+        const changed = JSON.stringify(JSON.parse(rawSave.replace(/^\uFEFF/,''))) !== migrated;
+        if (changed) SaveCompatibility.backup(rawSave,'Before automatic save migration');
+        const previous = createGameSave();
+        try {
+            applyGameSave(saved);
+            if (changed) localStorage.setItem(saveKey,migrated);
+        } catch (error) {
+            applyGameSave(previous);
+            throw error;
+        }
+        clearSaveRecovery();
+        const report = SaveCompatibility.report(saved);
+        if (report?.refundedPoints || report?.unavailableItems.length) {
+            const status = document.getElementById('profileStatus');
+            status.textContent = 'Save updated.'+(report.refundedPoints?' Refunded '+report.refundedPoints+' skill points after tree changes.':'')+
+                (report.unavailableItems.length?' '+report.unavailableItems.length+' unavailable items are preserved for returning content.':'')+' Original saves are available in Backups.';
+            status.classList.remove('is-error');status.hidden = false;
+        }
         return true;
     } catch (error) {
         console.error('Could not load Idle Adventure progress.', error);
-        state.lootLog = [];
+        try { SaveCompatibility.backup(rawSave,'Original save that could not be loaded'); } catch { /* The primary save remains protected even when storage is unavailable. */ }
+        showSaveRecovery(rawSave,error);
         return false;
     }
+}
+
+function showSaveRecovery(raw,error) {
+    Object.assign(SaveCompatibility.protection,{blocked:true,raw:typeof raw==='string'?raw:null,error});
+    if (combatContinuation !== null) window.clearTimeout(combatContinuation);
+    combatContinuation = null;
+    const dialog = document.getElementById('saveRecovery');
+    const reason = ['QuotaExceededError','SecurityError'].includes(error.name)
+        ? 'Your browser could not store a recovery backup. Download the original save, then free storage or allow browser storage and retry.'
+        : ['SyntaxError','TypeError'].includes(error.name) ? 'The saved profile is incomplete or unreadable.' : error.message;
+    document.getElementById('saveRecoveryMessage').textContent = 'Your save could not be loaded. The original is protected and automatic saving is paused. '+reason;
+    document.getElementById('downloadProtectedSave').disabled = typeof raw !== 'string';
+    if (!dialog.open) dialog.showModal();
+}
+
+function clearSaveRecovery() {
+    Object.assign(SaveCompatibility.protection,{blocked:false,raw:null,error:null});
+    document.getElementById('saveRecovery').close();
+}
+
+function restoreImportedProfile(saved, originalInput) {
+    const previousRaw=localStorage.getItem(saveKey),previous=createGameSave();
+    try {
+        SaveCompatibility.backup(originalInput,'Original imported profile');
+        SaveCompatibility.backup(previousRaw,'Before profile import');
+        if (!SaveCompatibility.protection.blocked) SaveCompatibility.backup(JSON.stringify(previous),'Latest progress before profile import');
+        localStorage.setItem(saveKey,JSON.stringify(saved));
+    } catch {
+        throw new Error('Your browser could not store the imported profile or its recovery backup.');
+    }
+    try {
+        applyGameSave(saved);
+    } catch (error) {
+        try {
+            if (previousRaw === null) localStorage.removeItem(saveKey); else localStorage.setItem(saveKey,previousRaw);
+            applyGameSave(previous);
+        } catch (rollbackError) {showSaveRecovery(previousRaw,rollbackError);}
+        throw error;
+    }
+    clearSaveRecovery();
 }
 
 function addLootDrop(gold, found) {
@@ -2963,7 +3017,7 @@ function renderCombatContent() {
         poisonIndicator.style.width = poisonPercent + '%';
         poisonIndicator.classList.toggle('is-visible', monster.hp > 0 && remainingPoisonDamage > 0);
         updateCombatAttribute(poisonIndicator, 'title', remainingPoisonDamage > 0
-            ? 'Poison will deal ' + remainingPoisonDamage + ' more damage'
+            ? 'Poison will deal ' + combatStatFormatter.format(remainingPoisonDamage) + ' more damage'
             : '');
         const remainingBleedDamage = Math.min(Math.max(0, monster.hp - remainingPoisonDamage), getRemainingBleedDamage(monster));
         const bleedPercent = remainingBleedDamage / definition.health * 100;
@@ -3252,13 +3306,21 @@ function applyDamageToPlayer(damage, source = 'enemy') {
     }
 }
 
+function getMonsterDamageTakenMultiplier(monster) {
+    if (!monster || monster.hp <= 0 || getSkillNodeRank('singledOff') <= 0) return 1;
+    // Check current HP each time: kills and respawns can change isolation within
+    // the same combat step. Dead enemies waiting to respawn do not count.
+    return state.monsterStates.some(other => other !== monster && other.hp > 0) ? 1 : 1.3;
+}
+
 function applyDamageToMonster(monster, damage, damageType = 'physical', abilityId = null) {
     if (!monster || monster.hp <= 0 || !Number.isFinite(damage) || damage <= 0) return false;
     // Every successful hit builds Fury, including splash and generated arrows.
     // Damage over time and poison executions never build or extend Fury.
     if (damageType !== 'poison' && damageType !== 'bleed' && damageType !== 'dot') gainFuryFromHit();
     const previousHp = monster.hp;
-    monster.hp = Math.max(0, monster.hp - damage);
+    const receivedDamage = damage * (abilityId === 'poisonExecute' ? 1 : getMonsterDamageTakenMultiplier(monster));
+    monster.hp = Math.max(0, monster.hp - receivedDamage);
     recordMonsterDamage(previousHp - monster.hp, damageType, abilityId);
     syncLegacyEnemyState();
     if (monster.hp <= 0) {
@@ -3269,7 +3331,9 @@ function applyDamageToMonster(monster, damage, damageType = 'physical', abilityI
     // Poison ticks check after updating every stack's remaining lifetime.
     if (damageType !== 'poison' && tryExecutePoison(monster)) return true;
     if (damageType === 'physical' && abilityId &&
-        SkillDescriptions.getAbilityTargeting(skillNodeById[abilityId]) === 'singleTarget') {
+        SkillDescriptions.getAbilityTargeting(skillNodeDefinition(abilityId)) === 'singleTarget') {
+        // Bleed stores the hit before target modifiers; its ticks apply the
+        // current vulnerability once, just like Poison and burning damage.
         tryApplyBleed(monster, damage);
     }
 
@@ -3321,11 +3385,12 @@ function getRemainingPoisonDamage(monster) {
     if (!monster || monster.hp <= 0 || !Array.isArray(monster.poisonStacks) || !monster.poisonStacks.length) return 0;
     const tickInterval = getPoisonTickInterval();
     const damagePerTick = getPoisonDamage();
+    const damageMultiplier = getMonsterDamageTakenMultiplier(monster);
     const cached = combatPoisonForecasts?.get(monster);
     // Ticking replaces the array; applying or spreading poison changes its length.
     // Scope forecasts to this simulation step and recheck stats after level-ups.
     if (cached && cached.stacks === monster.poisonStacks && cached.length === monster.poisonStacks.length &&
-        cached.interval === tickInterval && cached.damage === damagePerTick) return cached.total;
+        cached.interval === tickInterval && cached.damage === damagePerTick) return cached.total * damageMultiplier;
     const total = monster.poisonStacks.reduce((total, stack) => {
         const firstTickIn = Math.max(0, stack.timeUntilTick);
         if (firstTickIn > stack.remainingDuration + 1e-6) return total;
@@ -3338,7 +3403,7 @@ function getRemainingPoisonDamage(monster) {
         stacks: monster.poisonStacks, length: monster.poisonStacks.length,
         interval: tickInterval, damage: damagePerTick, total
     });
-    return total;
+    return total * damageMultiplier;
 }
 
 function tryExecutePoison(monster) {
@@ -3464,7 +3529,10 @@ elements.tutorialNotifications.addEventListener('click', function(event) {
 });
 
 document.querySelector('#resetGame').addEventListener('click', function() {
-    if (!window.confirm('Reset all Idle Adventure progress? This cannot be undone.')) return;
+    if (!window.confirm('Reset all Idle Adventure progress? A recovery backup will be kept.')) return;
+    try { SaveCompatibility.backup(SaveCompatibility.protection.blocked ? SaveCompatibility.protection.raw : JSON.stringify(createGameSave()),'Before explicit game reset'); }
+    catch (error) {showSaveRecovery(localStorage.getItem(saveKey),error);return;}
+    clearSaveRecovery();preservedSaveFields={};state.unlockedMapIds=[];state.unlockedWorldIds=[];
     state.gold = 0;
     state.kills = Object.fromEntries(mapData.map(map => [map.id, 0]));
     state.materials = Object.fromEntries(Object.keys(materialNames).map(id => [id, 0]));
@@ -3486,7 +3554,7 @@ document.querySelector('#resetGame').addEventListener('click', function() {
     state.tutorials = createTutorialState();
     state.selectedWorld = worldData[0].id;
     state.lastMapByWorld = Object.fromEntries(worldData.map(world => [world.id, world.mapIds[0]]));
-    state.selectedMap = 'greenfields';
+    state.selectedMap = worldData[0].mapIds[0];
     state.mapListExpanded = true;
     state.isInTown = true;
     state.currentView = 'town';
@@ -3802,6 +3870,7 @@ if (!hasSavedGame) saveGame();
 // All combat rules use the same 100 ms steps, including background catch-up.
 // Visual effects are returned to the caller; this function does not touch the DOM.
 function simulateCombatStep(elapsed, collectEffects = false) {
+    if (SaveCompatibility.protection.blocked) return {needsRender:false,effects:[]};
     const previousEffects = combatEffects, previousSimulation = simulatingCombat;
     const previousForecasts = combatPoisonForecasts;
     combatPoisonForecasts = new WeakMap();
@@ -3955,6 +4024,7 @@ function resetCombatClock(timestamp = Date.now()) {
 }
 
 function processCombatBacklog() {
+    if (SaveCompatibility.protection.blocked) return;
     const startedAt = performance.now(), effects = [];
     const showEffects = !document.hidden && !combatCatchingUp;
     combatStatCache = new Map();
@@ -4011,6 +4081,7 @@ function processCombatBacklog() {
 }
 
 function updateCombatClock() {
+    if (SaveCompatibility.protection.blocked) return;
     const now = performance.now(), wallNow = Date.now();
     // The wall clock also covers device sleep when the monotonic clock pauses.
     const monotonicElapsed = Math.max(0, (now - lastTick) / 1000);
@@ -4071,7 +4142,7 @@ function initSkillTreePan(viewport) {
         tooltipTag.textContent = tag;
         tooltipTag.dataset.targeting = SkillDescriptions.getAbilityTargeting(node) || '';
         tooltipTag.hidden = !tag;
-        tooltip.classList.toggle('is-righteous-fire', righteousFireNodeIds.includes(node.id));
+        tooltip.classList.toggle('is-righteous-fire', righteousFireNodeIds.some(id => resolveSkillNodeId(id) === node.id));
         tooltip.hidden = false;
         tooltip.style.left = '0px';
         tooltip.style.top = '0px';

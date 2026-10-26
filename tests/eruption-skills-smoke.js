@@ -36,14 +36,14 @@
         check('older chain nodes and their copies gain additive bonuses without changing other damage nodes',legacyChains.nodes[0].stats.eruptionChains===1&&legacyChains.nodes[1].stats.eruptionChains===1&&!Object.hasOwn(legacyChains.nodes[1].stats,'damage')&&legacyChains.nodes[2].stats.damage===1);
         legacyChains.nodes[0].stats={damage:1};SkillStatCompat.normalize(legacyChains);
         check('chain conversion runs once and preserves later intentional edits',legacyChains.nodes[0].stats.damage===1&&!Object.hasOwn(legacyChains.nodes[0].stats,'eruptionChains'));
-        let chainMonsters=fresh({volcanicEruption:1,eruptionChain:1,eruptionChain_copy:1,eruptionChain_copy2:1});
-        check('all three chain nodes add one maximum chain each',getMaxEruptionChains()===3&&['eruptionChain','eruptionChain_copy','eruptionChain_copy2'].every(id=>skillNodeById[id].stats.eruptionChains===1&&!Object.hasOwn(skillNodeById[id].stats,'damage')));
+        let chainMonsters=fresh({volcanicEruption:1,eruptionChain:1,eruptionChain2:1,eruptionChain3:1});
+        check('all three chain nodes add one maximum chain each',getMaxEruptionChains()===3&&['eruptionChain','eruptionChain2','eruptionChain3'].every(id=>skillNodeById[id].stats.eruptionChains===1&&!Object.hasOwn(skillNodeById[id].stats,'damage')));
         triggerVolcanicEruption(chainMonsters[0],1);state.attackTimer=-100;
         check('an eruption snapshots the combined additive chain budget',state.pendingEruptions[0].chainsRemaining===2);
         advance(1);check('the first added chain leaves two more possible eruptions',state.pendingEruptions[0].chainsRemaining===1);
         advance(1);check('the second added chain leaves one more possible eruption',state.pendingEruptions[0].chainsRemaining===0);
         advance(1);check('three added chains produce three delayed eruptions with one health cost',state.pendingEruptions.length===0&&chainMonsters[0].hp===96&&state.playerHp===95);
-        fresh({volcanicEruption:1,eruptionChain_copy:1,eruptionChain_copy2:1});
+        fresh({volcanicEruption:1,eruptionChain2:1,eruptionChain3:1});
         check('copied bonuses work independently of the original node ID',getMaxEruptionChains()===2);
         let monsters=fresh({eruptionChain:1});
         Math.random=()=>{throw new Error('An unallocated eruption rolled randomness.');};

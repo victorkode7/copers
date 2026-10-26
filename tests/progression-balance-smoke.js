@@ -55,7 +55,7 @@
             'attackSpeedNode', 'attackSpeedNode2', 'bigAttackSpeed_1', 'bigAttackSpeed_2', 'quickHands', 'fleetFooted',
             'accuracyNode', 'multiHit1', 'multiHit1_copy', 'multiHit1_copy_copy', 'multiHit1_copy_copy_copy',
             'bigAttackSpeed_4', 'bigAttackSpeed_3', 'snakeBite', 'poisonDMG_3', 'poisonDMG_2', 'basicallySnake',
-            'snakeBite_2', 'poisonExecute', 'bloomingFlower', 'damageNode2', 'accuracyNode2', 'healthNode2', 'scavenger', 'treasureHunter'];
+            'snakeBite_2', 'poisonExecute', 'bloomingFlower', 'damageNode2', 'accuracyNode2', 'healthNode2', 'scavenger', 'treasureHunter'].map(SkillStatCompat.resolveNodeId);
         const poisonNodes = new Set(['snakeBite', 'poisonDMG_3', 'poisonDMG_2', 'basicallySnake', 'snakeBite_2', 'poisonExecute', 'bloomingFlower']);
         const levelAt = xp => { let level = 0; while (xp >= experienceForNextLevel(level)) xp -= experienceForNextLevel(level++); return level; };
         function equip(names) {

@@ -1,5 +1,85 @@
 (function() {
     'use strict';
+    const nodeIdAliases = Object.freeze({
+        "multiHit1_copy": "multiHit2",
+        "attackSpeedNode5_copy": "arrowSpeed2",
+        "eruptionChain_copy": "eruptionChain2",
+        "eruptionChain_copy2": "eruptionChain3",
+        "healthNode4": "flatHealthRegen",
+        "healthNode5": "maxHealthRegen",
+        "healthNode5_copy": "maxHealthRegen2",
+        "healthNode5_copy2": "maxHealthRegen3",
+        "attackSpeedNode9": "maxHealthRegen4",
+        "addedShields_copy": "addedShields2",
+        "addedShields_copy2": "reinforcedVitality",
+        "addedShields_copy2_copy": "evasiveBulwark",
+        "untouchable_copy": "untouchable2",
+        "untouchable_copy2": "evasiveVitality",
+        "maxFury_copy": "maxFury2",
+        "bleed_copy": "bleedChance2",
+        "bleed_copy2": "bleedChance3",
+        "bleed_copy3": "bleedChance4",
+        "bleed_copy4": "quickBleeding",
+        "bleed_copy_copy": "bleedDamage",
+        "greedyPig_copy": "greedierPig",
+        "greedyPig_copy2": "soGreedy",
+        "thickHide_copy": "thickHide2",
+        "newNode": "heavyBlows",
+        "newNode2": "bleederer",
+        "bigAttackSpeed_3": "accuracyBoost",
+        "bigAttackSpeed_4": "damageBoost"
+    });
+
+    function resolveNodeId(id) {
+        return Object.hasOwn(nodeIdAliases, id) ? nodeIdAliases[id] : id;
+    }
+
+    function cleanNodeName(name) {
+        return String(name || '').replace(/(?:\s+Copy)+$/i, '').trim();
+    }
+
+    function normalizeNodeIds(tree) {
+        const legacyIds = tree.nodeIdSchemaVersion !== 1;
+        const occupied = new Set(tree.nodes.map(node => node.id));
+        const renamed = new Map();
+        for (const node of tree.nodes) {
+            const nextId = resolveNodeId(node.id);
+            if (nextId !== node.id && !occupied.has(nextId)) {
+                renamed.set(node.id, nextId);
+                occupied.delete(node.id); occupied.add(nextId); node.id = nextId;
+            }
+            node.name = cleanNodeName(node.name);
+            if (node.id === 'heavyBlows' && node.name === 'New Skill') node.name = 'Heavy Blows';
+            if (/^maxHealthRegen\d*$/.test(node.id) && /^(?:Health|Max health regen|Attack Speed)$/i.test(node.name)) node.name = 'Maximum Health Regeneration';
+            if (node.id === 'flatHealthRegen' && node.name === 'Health') node.name = 'Health Regeneration';
+            if (node.id === 'reinforcedVitality' && /^Added shields$/i.test(node.name)) node.name = 'Reinforced Vitality';
+            if (node.id === 'evasiveBulwark' && /^Added shields$/i.test(node.name)) node.name = 'Evasive Bulwark';
+            if (node.id === 'bleedDamage' && /^Deep wound$/i.test(node.name)) node.name = 'Bleed Damage';
+            if (/^bleedChance\d+$/.test(node.id) && node.name === 'Bleed') node.name = 'Bleed Chance';
+            if (node.id === 'quickBleeding' && node.name === 'Bleed enemies') node.name = 'Quick Bleeding';
+            if ((/^bleedChance\d+$/.test(node.id) || node.id === 'quickBleeding') && /^\d+% on hit: 10% hit damage\/s\./.test(node.effect || '')) node.customDescription = false;
+            if (legacyIds && ['singledOff','bleederer'].includes(node.id) && Object.keys(node.stats || {}).length === 1 && node.stats.damage === 1) delete node.stats.damage;
+            if (node.id === 'bleederer' && node.effect === 'Hits now generate two bleed stacks each time! (Requires chance to bleed)') node.effect = 'Successful Bleed rolls add 2 stacks.\nStill requires Bleed chance.';
+            if (node.id === 'singledOff' && node.effect === 'Enemies become vulnerable. taking 30% more damage when they are alone.') node.effect = 'The last living enemy takes 30% more damage.';
+        }
+        tree.nodes.forEach(node => {node.requires = (node.requires || []).map(id => renamed.get(id) || id);});
+        tree.nodeIdSchemaVersion = 1;
+        return tree;
+    }
+
+    function normalizeRankIds(ranks, nodesById) {
+        for (const [oldId, nextId] of Object.entries(nodeIdAliases)) {
+            if (!Object.hasOwn(ranks, oldId) || nodesById[oldId] || !nodesById[nextId]) continue;
+            const rank = ranks[oldId];
+            if (Object.hasOwn(ranks, nextId)) {
+                // Keep malformed values for the save validator to reject.
+                if (!Number.isSafeInteger(rank) || rank <= 0 || !Number.isSafeInteger(ranks[nextId]) || ranks[nextId] <= 0) continue;
+                ranks[nextId] += rank;
+            } else ranks[nextId] = rank;
+            delete ranks[oldId];
+        }
+        return ranks;
+    }
     function normalizeShieldSlamDescription(effect) {
         return effect === 'On reaching max shield stacks. Consume half your shield stacks. Dealing 30% physical damage per stack to the target.'
             ? 'At maximum shields, consume half your shields. Deal 100% of your physical damage per shield consumed to the target.' : effect;
@@ -76,7 +156,8 @@
         tree.eruptionChainSchemaVersion = 1;
         tree.shieldSchemaVersion = 1;
         tree.righteousFireSchemaVersion = 1;
-        return tree;
+        return normalizeNodeIds(tree);
     }
-    window.SkillStatCompat = {normalize, normalizeShieldSlamDescription, normalizeBleedDescription};
+    window.SkillStatCompat = {normalize, normalizeShieldSlamDescription, normalizeBleedDescription,
+        nodeIdAliases, resolveNodeId, cleanNodeName, normalizeRankIds};
 })();

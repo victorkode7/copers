@@ -185,16 +185,26 @@
         return nodeSizes.includes(Number(node.size)) ? Number(node.size) : 1;
     }
 
-    function uniqueId(base) {
-        const normalized = String(base || 'newNode')
+    function uniqueId(base, occupiedIds = new Set(tree.nodes.map(node => node.id))) {
+        const normalized = String(base || 'skillNode')
             .replace(/[^A-Za-z0-9_]/g, '')
-            .replace(/^[^A-Za-z_]+/, '') || 'newNode';
+            .replace(/^[^A-Za-z_]+/, '') || 'skillNode';
+        const root = normalized.replace(/(?:_copy\d*)+$/i, '').replace(/\d+$/, '') || normalized;
         let id = normalized;
         let suffix = 2;
-        while (tree.nodes.some(node => node.id === id)) {
-            id = normalized + suffix++;
+        while (occupiedIds.has(id) || SkillStatCompat.resolveNodeId(id) !== id ||
+            Object.hasOwn(tree.nodeIdAliases || {}, id) || (tree.removedNodes || []).some(node => node.id === id)) {
+            id = root + suffix++;
         }
         return id;
+    }
+
+    function copiedNodeId(node) {
+        const words = SkillStatCompat.cleanNodeName(node.name).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').match(/[A-Za-z0-9]+/g) || ['skillNode'];
+        return words.map((word,index) => {
+            if (word === word.toUpperCase()) word = word.toLowerCase();
+            return index ? word[0].toUpperCase() + word.slice(1) : word[0].toLowerCase() + word.slice(1);
+        }).join('');
     }
 
     function showToast(message) {
@@ -233,7 +243,15 @@
 
     function restoreInspector(draft) {
         if (!draft || !draft.fields || !Array.isArray(draft.bonuses) || !selectedNode()) return;
-        for (const [id, value] of Object.entries(draft.fields)) {
+        const migratedPlaceholder = ['singledOff','bleederer'].includes(selectedNode().id) && !Object.keys(selectedNode().stats).length &&
+            draft.bonuses.length === 1 && draft.bonuses[0].stat === 'damage' && draft.bonuses[0].mode === 'additive' && Number(draft.bonuses[0].value) === 1;
+        for (const [id, savedValue] of Object.entries(draft.fields)) {
+            let value = savedValue;
+            if (id === 'nodeId' && !tree.nodes.some(node => node.id === value)) value = SkillStatCompat.resolveNodeId(value);
+            if (id === 'nodeName') value = SkillStatCompat.cleanNodeName(value);
+            if (id === 'nodeRequires' && Array.isArray(value)) value = value.map(requiredId => tree.nodes.some(node => node.id === requiredId) ? requiredId : SkillStatCompat.resolveNodeId(requiredId));
+            if (id === 'nodeStats' && migratedPlaceholder) value = '{}';
+            if (id === 'nodeEffect' && ['Hits now generate two bleed stacks each time! (Requires chance to bleed)', 'Enemies become vulnerable. taking 30% more damage when they are alone.'].includes(value)) value = selectedNode().effect;
             const control = document.getElementById(id);
             if (!control || control.type === 'file' || !elements.nodeForm.contains(control)) continue;
             if (control.type === 'checkbox') control.checked = value === true;
@@ -242,6 +260,7 @@
         }
         elements.statBonusRows.replaceChildren();
         draft.bonuses.forEach(bonus => {
+            if (migratedPlaceholder) return;
             if (bonusStats.some(stat => stat.id === bonus.stat) && ['additive', 'multiplier'].includes(bonus.mode)) addStatBonusRow(bonus);
         });
         elements.nodeEffect.readOnly = !elements.nodeCustomDescription.checked;
@@ -834,18 +853,37 @@
         } catch { return null; }
     }
 
-    function revealSelection() {
-        const cards = [...elements.graphNodes.querySelectorAll('[aria-pressed=true]')];
-        if (!cards.length) return;
-        const left = Math.min(...cards.map(card => parseFloat(card.style.left)));
-        const right = Math.max(...cards.map(card => parseFloat(card.style.left) + parseFloat(card.style.width)));
-        const top = Math.min(...cards.map(card => parseFloat(card.style.top)));
-        const bottom = Math.max(...cards.map(card => parseFloat(card.style.top) + parseFloat(card.style.height)));
-        const width = elements.graphViewport.clientWidth, height = elements.graphViewport.clientHeight;
-        const nextZoom = Math.max(0.1, Math.min(zoom, (width - 48) / (right - left), (height - 48) / (bottom - top)));
-        panX = width / 2 - (left + right) / 2 * nextZoom;
-        panY = height / 2 - (top + bottom) / 2 * nextZoom;
-        setZoom(nextZoom);
+    function graphMinimum() {
+        return {column:Math.min(1,...tree.nodes.map(node => Number(node.column) || 0)),
+            row:Math.min(1,...tree.nodes.map(node => Number(node.row) || 0))};
+    }
+
+    function preserveGraphPosition(previous) {
+        const current = graphMinimum();
+        panX += (current.column - previous.column) * 190 * zoom;
+        panY += (current.row - previous.row) * 160 * zoom;
+    }
+
+    function nearbyFreeOffset(nodes, primary, anchor) {
+        const occupied = new Set(tree.nodes.map(node => node.column + ',' + node.row));
+        const baseX = Number(anchor.column) - Number(primary.column), baseY = Number(anchor.row) - Number(primary.row);
+        // Search every direction, nearest first, rather than walking down one
+        // diagonal. The whole group moves together and keeps its internal shape.
+        let best = null;
+        for (let radius = 0; ; radius++) {
+            const candidates = [];
+            for (let x = -radius; x <= radius; x++) for (let y = -radius; y <= radius; y++) {
+                if (Math.max(Math.abs(x),Math.abs(y)) !== radius) continue;
+                candidates.push({x,y,distance:x*x+y*y,angle:(Math.atan2(y,x)+2*Math.PI)%(2*Math.PI)});
+            }
+            candidates.sort((a,b) => a.distance-b.distance || a.angle-b.angle);
+            for (const candidate of candidates) {
+                if (best && candidate.distance >= best.distance) continue;
+                const x = baseX + candidate.x, y = baseY + candidate.y;
+                if (nodes.every(node => !occupied.has((Number(node.column)+x)+','+(Number(node.row)+y)))) best = {...candidate,x,y};
+            }
+            if (best && best.distance < (radius+1)*(radius+1)) return best;
+        }
     }
 
     function pasteCopiedNodes(data = copiedNodes) {
@@ -854,26 +892,25 @@
         const occupiedIds = new Set(tree.nodes.map(node => node.id));
         const idMap = new Map();
         nodes.forEach(node => {
-            const base = String(node.id + '_copy').replace(/[^A-Za-z0-9_]/g, '').replace(/^[^A-Za-z_]+/, '') || 'newNode';
-            let id = base, suffix = 2;
-            while (occupiedIds.has(id)) id = base + suffix++;
+            const id = uniqueId(copiedNodeId(node), occupiedIds);
             idMap.set(node.id, id);
             occupiedIds.add(id);
         });
-        const occupiedCells = new Set(tree.nodes.map(node => Number(node.column) + ',' + Number(node.row)));
-        let offset = 1;
-        while (nodes.some(node => occupiedCells.has((Number(node.column) + offset) + ',' + (Number(node.row) + offset)))) offset++;
+        const previousMinimum = graphMinimum();
+        const primary = nodes.find(node => node.id === data.primaryId) || nodes[0];
+        const offset = nearbyFreeOffset(nodes, primary, selectedNode() || primary);
         nodes.forEach(node => {
             node.customDescription = SkillDescriptions.usesCustomDescription(node);
             node.id = idMap.get(node.id);
-            node.name += ' Copy';
-            node.column = Number(node.column) + offset;
-            node.row = Number(node.row) + offset;
+            node.name = SkillStatCompat.cleanNodeName(node.name);
+            node.column = Number(node.column) + offset.x;
+            node.row = Number(node.row) + offset.y;
             node.start = false;
             node.maxRank = 1;
             node.requires = node.requires.filter(id => idMap.has(id)).map(id => idMap.get(id));
         });
         tree.nodes.push(...nodes);
+        preserveGraphPosition(previousMinimum);
         connectMode = false;
         connectSourceId = null;
         elements.connectToggle.classList.remove('is-active');
@@ -882,7 +919,7 @@
         setSelection(nodes.map(node => node.id), idMap.get(data.primaryId) || nodes[0].id);
         markChanged();
         render();
-        revealSelection();
+        setZoom(zoom);
         elements.graphViewport.focus({preventScroll: true});
         showToast('Pasted ' + nodes.length + ' node' + (nodes.length === 1 ? '' : 's') + '. Drag the selection to place it.');
         saveDraft();
@@ -896,6 +933,12 @@
         if (tree.nodes.some(other => other !== node && other.id === newId)) {
             showToast('That identifier is already in use.');
             elements.nodeId.focus();
+            return;
+        }
+        if (newId !== node.id && ((tree.removedNodes || []).some(entry => entry.id === newId) ||
+            Object.hasOwn(tree.nodeIdAliases || {},newId) && tree.nodeIdAliases[newId] !== node.id ||
+            SkillStatCompat.resolveNodeId(newId) !== newId && SkillStatCompat.resolveNodeId(newId) !== node.id)) {
+            showToast('That identifier belongs to historical content. Use a new identifier to keep older saves compatible.');
             return;
         }
         let stats;
@@ -931,6 +974,11 @@
         elements.nodeEffect.readOnly = !node.customDescription;
         if (!node.customDescription) elements.nodeEffect.value = node.effect;
         if (oldId !== newId) {
+            // Export the history with the tree so saves can follow future renames.
+            const aliases = tree.nodeIdAliases ||= {};
+            delete aliases[newId];
+            Object.keys(aliases).forEach(id => { if (aliases[id] === oldId) aliases[id] = newId; });
+            aliases[oldId] = newId;
             tree.nodes.forEach(other => {
                 other.requires = (other.requires || []).map(id => id === oldId ? newId : id);
             });
@@ -945,7 +993,7 @@
 
     function addNode(template, baseType) {
         const baseTemplate = baseType ? baseNodeTemplates[baseType] : null;
-        const id = uniqueId(baseTemplate ? baseTemplate.id : template ? template.id + '_copy' : 'newNode');
+        const id = uniqueId(baseTemplate ? baseTemplate.id : template ? copiedNodeId(template) : 'skillNode');
         const node = baseTemplate
             ? JSON.parse(JSON.stringify(baseTemplate))
             : template
@@ -963,21 +1011,19 @@
                 stats: { damage: 1 }
             };
         node.id = id;
-        node.name = baseTemplate ? baseTemplate.name : template ? template.name + ' Copy' : node.name;
+        node.name = SkillStatCompat.cleanNodeName(baseTemplate ? baseTemplate.name : template ? template.name : node.name);
         node.size = baseTemplate ? 1 : template ? nodeSize(template) : 1;
+        const parent = selectedNode() || tree.nodes.find(entry => entry.start);
+        const previousMinimum = graphMinimum();
+        if (!Number.isFinite(node.column)) node.column = 0;
+        if (!Number.isFinite(node.row)) node.row = 0;
+        const placement = nearbyFreeOffset([node], node, template || parent || node);
+        node.column = Number(node.column) + placement.x;
+        node.row = Number(node.row) + placement.y;
         if (baseTemplate) {
-            const parent = selectedNode() || tree.nodes.find(entry => entry.start);
-            node.column = Math.max(1, Number(parent ? parent.column : 2) || 2) + 1;
-            node.row = Math.max(1, Number(parent ? parent.row : 1) || 1);
-            while (tree.nodes.some(entry => entry.column === node.column && entry.row === node.row)) {
-                node.row++;
-            }
             node.maxRank = 1;
             node.requires = parent ? [parent.id] : [];
             node.requiresMode = 'all';
-        } else {
-            node.column = (Number(template ? template.column : 3) || 3) + 1;
-            node.row = Number(template ? template.row : 3) || 3;
         }
         node.start = false;
         if (!baseTemplate) {
@@ -988,6 +1034,7 @@
         node.customDescription = SkillDescriptions.usesCustomDescription(node);
         node.effect = SkillDescriptions.describe(node);
         tree.nodes.push(node);
+        preserveGraphPosition(previousMinimum);
         setSelection([id], id);
         markChanged();
         render();
@@ -998,6 +1045,10 @@
         if (!nodes.length) return;
         const label = nodes.length === 1 ? '"' + (nodes[0].name || nodes[0].id) + '"' : nodes.length + ' selected nodes';
         if (!skipConfirm && !window.confirm('Delete ' + label + '? Their connection links will be removed from other nodes.')) return;
+        const removed = tree.removedNodes ||= [];
+        nodes.forEach(node => {
+            if (!removed.some(entry => entry.id === node.id)) removed.push({id:node.id,name:node.name,reason:'Removed in skill tree editor'});
+        });
         tree.nodes = tree.nodes.filter(entry => !selectedIds.has(entry.id));
         tree.nodes.forEach(other => {
             other.requires = (other.requires || []).filter(id => !selectedIds.has(id));
@@ -1075,6 +1126,7 @@
                 throw new Error('The JSON must contain a nodes array.');
             }
             tree = SkillDescriptions.normalize({
+                ...imported,
                 statSchemaVersion: 2,
                 furySchemaVersion: 1,
                 eruptionChainSchemaVersion: 1,
@@ -1477,9 +1529,19 @@
                 if (added && !tree.nodes.some(node => node.id === added.id)) tree.nodes.push(JSON.parse(JSON.stringify(added)));
                 tree.bleedSchemaVersion = 1;
             }
+            if (tree.deepWoundsSchemaVersion !== 1 && originalTree.deepWoundsSchemaVersion === 1) {
+                const source = originalTree.nodes.find(node => node.id === 'deepWounds');
+                if (source && !tree.nodes.some(node => node.id === source.id)) {
+                    const added = JSON.parse(JSON.stringify(source));
+                    while (tree.nodes.some(node => node.column === added.column && node.row === added.row)) added.column -= 2;
+                    tree.nodes.push(added);
+                }
+                tree.deepWoundsSchemaVersion = 1;
+            }
             historySnapshot = JSON.stringify(tree);
-            const restoredIds = Array.isArray(draft.selectedIds) ? draft.selectedIds : [draft.selectedId || tree.nodes[0]?.id];
-            setSelection(restoredIds, draft.selectedId, draft.selectionAnchorId || draft.selectedId);
+            const restoredId = id => tree.nodes.some(node => node.id === id) ? id : SkillStatCompat.resolveNodeId(id);
+            const restoredIds = (Array.isArray(draft.selectedIds) ? draft.selectedIds : [draft.selectedId || tree.nodes[0]?.id]).map(restoredId);
+            setSelection(restoredIds, restoredId(draft.selectedId), restoredId(draft.selectionAnchorId || draft.selectedId));
             if (Number.isFinite(draft.zoom)) zoom = Math.max(0.1, Math.min(2, draft.zoom));
             if (Number.isFinite(draft.panX)) panX = draft.panX;
             if (Number.isFinite(draft.panY)) panY = draft.panY;

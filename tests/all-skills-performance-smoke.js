@@ -1,5 +1,6 @@
 // Run with tests/run-equipment-smoke.ps1 -TestScript tests/all-skills-performance-smoke.js -TimeoutSeconds 120.
-// Fixed digests include Fury, Fire of the Righteous, and the shield skills. Intentional tree or
+// Fixed digests include 93 allocatable nodes, cleaned IDs, Bleederer, Deep Wounds, Singled Off, Fury,
+// Fire of the Righteous, and the shield skills. Intentional tree or
 // combat balance changes require reviewing and updating the reference outcomes.
 (function () {
     const checks = [], originalRandom = Math.random, originalStats = itemById.testAmulet.stats;
@@ -61,7 +62,7 @@
         // The extreme multi-hit build can kill itself through stacked eruption
         // costs while Fire caps healing at 30% HP. Stop timing at death so the
         // benchmark never reports idle simulation as fast combat.
-        const scenarios = [{count:9,digest:'581e781'},{count:64,digest:'92d1036c'},{count:128,digest:'780148dd'},{count:64,durable:true,digest:'740e4997'},{count:64,durable:true,stress:true,digest:'62beae83'}];
+        const scenarios = [{count:9,digest:'4b61c8ad'},{count:64,digest:'ee8b92ca'},{count:128,digest:'35c66775'},{count:64,durable:true,digest:'c3050a2c'},{count:64,durable:true,stress:true,digest:'f1326294'}];
         for (const scenario of scenarios) {
             const times = []; let reference;
             for (let run = 0; run < 4; run++) {
@@ -70,6 +71,7 @@
                 if (!run) reference = current; else { check('all-skills ' + JSON.stringify(scenario) + ' repeat ' + run + ' matches', current === reference); times.push(elapsed); }
             }
             check('all-skills fight stays finite and only pauses on death', Number.isFinite(state.playerHp) && state.monsterStates.every(monster => Number.isFinite(monster.hp)) && (!state.combatPaused || state.playerHp === 0));
+            check('Deep Wounds keeps active Bleed pools within the three-stack cap', state.monsterStates.every(monster => !monster.bleed || monster.bleed.stacks <= 3));
             if (!scenario.stress) check('sustained benchmark completes all 1500 combat steps', advancedSteps === 1500 && !state.combatPaused);
             check('all-skills outcomes match the expanded-tree combat reference', hash(reference) === scenario.digest);
             checks.push('BENCH ' + JSON.stringify({...scenario,steps:advancedSteps,medianMs:Math.round(median(times)*100)/100,digest:hash(reference),kills:state.kills[map.id],stacks:state.monsterStates.reduce((sum,m) => sum+m.poisonStacks.length,0),pending:state.pendingEruptions.length}));

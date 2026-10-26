@@ -8,6 +8,42 @@
     let statusTimeout;
     let importing = false;
 
+    function downloadText(text,name) {
+        const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),link=document.createElement('a');
+        link.href=url;link.download=name;document.body.append(link);link.click();link.remove();
+        window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }
+
+    function showBackups() {
+        const list=document.getElementById('saveBackupsList');list.replaceChildren();
+        try {
+            const entries=SaveCompatibility.backups();
+            if(!entries.length){const empty=document.createElement('li');empty.textContent='No automatic backups yet.';list.append(empty);}
+            entries.forEach((entry,index)=>{
+                const row=document.createElement('li'),label=document.createElement('span'),button=document.createElement('button');
+                label.textContent=new Date(entry.createdAt).toLocaleString()+' — '+entry.reason;
+                button.type='button';button.textContent='Download';
+                button.addEventListener('click',()=>downloadText(entry.raw,'idle-adventure-recovery-'+entry.createdAt+'-'+index+'.json'));
+                row.append(label,button);list.append(row);
+            });
+        }catch{const error=document.createElement('li');error.textContent='Your browser could not read recovery backups.';list.append(error);}
+        const dialog=document.getElementById('saveBackupsDialog');if(!dialog.open)dialog.showModal();
+    }
+
+    document.getElementById('saveBackupsButton').addEventListener('click',showBackups);
+    document.getElementById('browseRecoveryBackups').addEventListener('click',showBackups);
+    document.getElementById('closeSaveBackups').addEventListener('click',()=>document.getElementById('saveBackupsDialog').close());
+    document.getElementById('saveRecovery').addEventListener('cancel',event=>event.preventDefault());
+    document.getElementById('downloadProtectedSave').addEventListener('click',()=>{
+        const raw=SaveCompatibility.protection.raw;
+        if(typeof raw==='string')downloadText(raw,'idle-adventure-original-save.json');
+    });
+    document.getElementById('retryProtectedSave').addEventListener('click',()=>{
+        if(loadGame()){startOfflineRecap();render();updateCombatClock();}
+    });
+    document.getElementById('importRecoveryProfile').addEventListener('click',()=>{fileInput.value='';fileInput.click();});
+    document.getElementById('resetProtectedSave').addEventListener('click',()=>document.getElementById('resetGame').click());
+
     function showStatus(message, error = false) {
         window.clearTimeout(statusTimeout);
         status.textContent = message;
@@ -39,6 +75,10 @@
         let url;
         const link = document.createElement('a');
         try {
+            if(SaveCompatibility.protection.blocked){
+                if(typeof SaveCompatibility.protection.raw!=='string')throw new Error('Original save is unavailable.');
+                downloadText(SaveCompatibility.protection.raw,'idle-adventure-original-save.json');return;
+            }
             const now = new Date();
             const backup = {
                 format: 'idle-adventure-profile', version: 1,
@@ -73,16 +113,12 @@
         exportButton.disabled = importButton.disabled = true;
         try {
             if (file.size > 2 * 1024 * 1024) throw new Error('That file is too large to be a game profile.');
-            const saved = readBackup(await file.text());
+            const originalInput = await file.text();
+            const saved = readBackup(originalInput);
             // Validate first, then ensure the replacement can be persisted before
             // changing the running game. Invalid files and storage failures keep it intact.
-            try {
-                localStorage.setItem(saveKey, JSON.stringify(saved));
-            } catch {
-                throw new Error('Your browser could not store the imported profile.');
-            }
+            restoreImportedProfile(saved,originalInput);
             restored = true;
-            applyGameSave(saved);
             pendingSkillRanks = {};
             refundMode = false;
             skillTreePanning = false;
@@ -110,11 +146,14 @@
             }
             saveGame();
             updateCombatClock();
-            showStatus('Profile imported. Your restored progress is now saved.');
+            const refunded=SaveCompatibility.report(saved)?.refundedPoints || 0;
+            showStatus('Profile imported. Your restored progress is now saved.'+(refunded?' Refunded '+refunded+' skill points after tree changes.':''));
         } catch (error) {
-            showStatus(restored
+            const message = restored
                 ? 'Your profile was saved, but could not be displayed. Reload the game to finish restoring it.'
-                : 'Import failed. ' + error.message + ' Your current progress was kept.', true);
+                : 'Import failed. ' + error.message + ' Your current progress was kept.';
+            showStatus(message,true);
+            if(SaveCompatibility.protection.blocked)document.getElementById('saveRecoveryMessage').textContent=message+' The original save remains protected.';
         } finally {
             fileInput.value = '';
             importing = false;

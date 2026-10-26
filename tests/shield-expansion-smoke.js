@@ -14,26 +14,38 @@
             };
             if (!phase) {
                 const old=JSON.parse(JSON.stringify(window.adventureSkillTree));
-                old.nodes=old.nodes.filter(node=>!['overflowingSlam','resonantGuard','bleed'].includes(node.id)); delete old.shieldExpansionSchemaVersion;delete old.bleedSchemaVersion;
-                const edited=old.nodes.find(node=>node.id==='healthNode'); edited.stats={health:321}; edited.column=-5; edited.row=-3;
+                old.nodes=old.nodes.filter(node=>!['overflowingSlam','resonantGuard','bleed','deepWounds'].includes(node.id)); delete old.shieldExpansionSchemaVersion;delete old.bleedSchemaVersion;delete old.deepWoundsSchemaVersion;
+                const edited=old.nodes.find(node=>node.id==='healthNode'); edited.stats={health:321}; edited.column=-8; edited.row=-2;
+                old.nodes.find(node=>node.id==='maxFury2').id='maxFury_copy';
+                old.nodes.find(node=>node.id==='maxFury_copy').name='Fury Copy';
+                old.nodes.forEach(node=>{node.requires=node.requires.map(id=>id==='maxFury2'?'maxFury_copy':id);});
                 const legacyEffect='On reaching max shield stacks. Consume half your shield stacks. Dealing 30% physical damage per stack to the target.';
                 old.nodes.find(node=>node.id==='shieldSlam').effect=legacyEffect;
-                reloadDraft({version:1,tree:old,selectedId:'shieldSlam',inspector:{fields:{nodeEffect:legacyEffect,nodeCustomDescription:true},bonuses:[]}},'restored',true);return;
+                reloadDraft({version:1,tree:old,selectedId:'shieldSlam',selectedIds:['shieldSlam','maxFury_copy'],selectionAnchorId:'maxFury_copy',inspector:{fields:{nodeEffect:legacyEffect,nodeCustomDescription:true},bonuses:[]}},'restored',true);return;
             }
             if (phase==='restored') {
-                for(const id of ['overflowingSlam','resonantGuard','bleed']) check(id+' is added once to the older local draft',document.querySelectorAll('#nodeList [data-node-id="'+id+'"]').length===1);
+                for(const id of ['overflowingSlam','resonantGuard','bleed','deepWounds']) check(id+' is added once to the older local draft',document.querySelectorAll('#nodeList [data-node-id="'+id+'"]').length===1);
                 check('restoring an older Shield Slam inspector shows the current damage description',document.getElementById('nodeEffect').value.includes('100%'));
+                check('renamed nodes remain selected when an older draft is restored',document.querySelector('#graphNodes [data-node-id="maxFury2"]').getAttribute('aria-pressed')==='true');
                 document.querySelector('#nodeList [data-node-id="resonantGuard"]').click();await settle();
                 const draft=JSON.parse(localStorage.getItem(draftKey)),edited=draft.tree.nodes.find(node=>node.id==='healthNode');
-                check('adding new skills preserves existing edited stats and positions',edited.stats.health===321&&edited.column===-5&&edited.row===-3);
+                check('adding new skills preserves existing edited stats and positions',edited.stats.health===321&&edited.column===-8&&edited.row===-2);
+                const addedDeepWounds=draft.tree.nodes.find(node=>node.id==='deepWounds');
+                check('Deep Wounds avoids occupied positions when migrating an older draft',addedDeepWounds.column!==edited.column||addedDeepWounds.row!==edited.row);
                 check('new shield nodes retain unique descriptions and the current editor connections',JSON.stringify(draft.tree.nodes.find(node=>node.id==='overflowingSlam').requires)===JSON.stringify(window.adventureSkillTree.nodes.find(node=>node.id==='overflowingSlam').requires)&&document.getElementById('nodeEffect').value.includes('1 shield')&&document.getElementById('nodeCustomDescription').checked);
-                draft.tree.nodes=draft.tree.nodes.filter(node=>!['overflowingSlam','bleed'].includes(node.id));
+                draft.tree.nodes=draft.tree.nodes.filter(node=>!['overflowingSlam','bleed','deepWounds'].includes(node.id));
                 const guard=draft.tree.nodes.find(node=>node.id==='resonantGuard');guard.name='My Guard';guard.effect='My shield mechanic';guard.column=-4;guard.row=-2;guard.requires=['healthNode'];
                 draft.tree.nodes.find(node=>node.id==='shieldSlam').effect='My custom slam description';
-                reloadDraft(draft,'custom');return;
+                const fury=draft.tree.nodes.find(node=>node.id==='maxFury2');fury.id='maxFury_copy';fury.name='Fury Copy';
+                draft.tree.nodes.forEach(node=>{node.requires=node.requires.map(id=>id==='maxFury2'?'maxFury_copy':id);});
+                draft.selectedId='maxFury_copy';draft.selectedIds=['maxFury_copy'];draft.selectionAnchorId='maxFury_copy';
+                draft.inspector={fields:{nodeId:'maxFury_copy',nodeName:'Fury Copy'},bonuses:[]};
+                reloadDraft(draft,'custom',true);return;
             }
             check('later intentional deletion of a new node is preserved',!document.querySelector('#nodeList [data-node-id="overflowingSlam"]'));
             check('later intentional deletion of Bleed is preserved',!document.querySelector('#nodeList [data-node-id="bleed"]'));
+            check('later intentional deletion of Deep Wounds is preserved',!document.querySelector('#nodeList [data-node-id="deepWounds"]'));
+            check('old inspector IDs and Copy labels cannot overwrite a migrated node',document.getElementById('nodeId').value==='maxFury2'&&document.getElementById('nodeName').value==='Fury');
             document.querySelector('#nodeList [data-node-id="resonantGuard"]').click();await settle();
             const draft=JSON.parse(localStorage.getItem(draftKey)),guard=draft.tree.nodes.find(node=>node.id==='resonantGuard');
             check('later names, descriptions, positions and connections remain editable',guard.name==='My Guard'&&guard.effect==='My shield mechanic'&&guard.column===-4&&guard.row===-2&&guard.requires.join()==='healthNode');

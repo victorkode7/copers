@@ -53,13 +53,13 @@
         },
         bleedDamage: {
             affects: 'Damage each Bleed application contributes to the shared DOT, based on the basic attack, multihit, or single-target ability hit that triggered it.',
-            formula: 'Bleed damage added per tick = (10% of triggering hit damage + flat item bonuses + flat skill bonuses) × item multipliers × skill multipliers',
-            notes: 'A 100-damage hit adds 10 base damage per tick; a later 200-damage hit adds another 20. Fractional damage is retained. Hit values are preserved while Bleed bonuses and multipliers apply to the combined DOT. Applications add one second to a shared timer, up to five seconds, and all stacks expire together. DOT ticks cannot apply Bleed or build Fury.', example: 1
+            formula: 'Bleed damage added per tick = (triggering hit damage × hit ratio + flat item bonuses + flat skill bonuses) × item multipliers × skill multipliers',
+            notes: 'A 100-damage hit adds 10 base damage per stack per tick, or 50 with Deep Wounds. Bleederer adds two stacks per successful chance roll, each contributing its own damage and one second of duration. Deep Wounds keeps the three strongest stacks; further applications still extend the shared timer. Fractional damage is retained. Hit values are preserved while Bleed bonuses and multipliers apply to the combined DOT. The shared timer caps at five seconds and all stacks expire together. DOT ticks cannot apply Bleed or build Fury.', example: 1
         },
         bleedChance: {
             affects: 'The chance to apply Bleed after a successful basic attack, multihit, or ability hit tagged Single target. Hits tagged AOE and DOT ticks cannot apply Bleed.',
             formula: 'Bleed chance = (item chance bonuses + skill chance bonuses) × item multipliers × skill multipliers',
-            notes: 'Limited to 0–100%. Each application adds one stack and one second without resetting the tick timer. Chance multipliers need an existing chance.', example: .25
+            notes: 'Limited to 0–100%. Each successful roll adds one stack, or two with Bleederer, and one second per stack without resetting the tick timer. Deep Wounds limits active stacks to three. Chance multipliers need an existing chance.', example: .25
         },
         bleedTickRate: {
             affects: 'How frequently all Bleed stacks deal damage together.',

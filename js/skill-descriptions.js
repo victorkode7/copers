@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     const uniqueEffects = new Set(['shockwaveSlash', 'poisonExecute', 'bloomingFlower',
-        'piercingArrow', 'forkingArrow', 'multiShot', 'freezingArrows', 'volcanicEruption', 'eruptionChain', 'shieldGenerator', 'shieldSlam', 'overflowingSlam', 'resonantGuard', 'righteousFire', 'fireOfTheRighteous', 'bleed']);
+        'piercingArrow', 'forkingArrow', 'multiShot', 'freezingArrows', 'volcanicEruption', 'eruptionChain', 'shieldGenerator', 'shieldSlam', 'overflowingSlam', 'resonantGuard', 'righteousFire', 'fireOfTheRighteous', 'bleed', 'singledOff', 'deepWounds', 'bleederer']);
     const abilityTargetingDefaults = Object.freeze({
         shockwaveSlash:'aoe', piercingArrow:'aoe', forkingArrow:'aoe', multiShot:'singleTarget',
         volcanicEruption:'aoe', shieldSlam:'singleTarget', overflowingSlam:'aoe',

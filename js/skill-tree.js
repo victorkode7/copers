@@ -60,29 +60,15 @@ window.adventureSkillTree = {
             "abilityTargeting": "aoe"
         },
         {
-            "id": "fleetFooted",
-            "name": "Fleet-Footed",
-            "icon": "➤",
-            "effect": "+0.5% attack speed per character level",
-            "requires": [],
-            "column": 4,
-            "row": 0,
-            "maxRank": 1,
-            "stats": {
-                "attackSpeedPerLevel": 0.005
-            },
-            "customDescription": false
-        },
-        {
             "id": "thickHide",
             "name": "Thick Hide",
             "icon": "⬟",
             "effect": "+25 evasion",
             "requires": [
-                "healthNode"
+                "healthNode2"
             ],
-            "column": 2,
-            "row": 5,
+            "column": 1,
+            "row": 6,
             "maxRank": 1,
             "stats": {
                 "evasion": 25
@@ -100,8 +86,8 @@ window.adventureSkillTree = {
             "requires": [
                 "thickHide"
             ],
-            "column": 2,
-            "row": 6,
+            "column": 1,
+            "row": 7,
             "maxRank": 1,
             "stats": {
                 "evasionMultiplier": 1.25
@@ -135,10 +121,10 @@ window.adventureSkillTree = {
             "id": "healthNode2",
             "name": "Health",
             "icon": "♥",
-            "effect": "+10% maximum health",
+            "effect": "+5% maximum health",
             "type": "health",
             "stats": {
-                "healthMultiplier": 1.1
+                "healthMultiplier": 1.05
             },
             "size": 1,
             "column": 1,
@@ -150,7 +136,8 @@ window.adventureSkillTree = {
             "requiresMode": "all",
             "start": false,
             "customDescription": false,
-            "sprite": ""
+            "sprite": "",
+            "abilityTargeting": null
         },
         {
             "id": "damageNode",
@@ -176,10 +163,10 @@ window.adventureSkillTree = {
             "id": "damageNode2",
             "name": "Damage",
             "icon": "⚔",
-            "effect": "+10% damage",
+            "effect": "+5% damage",
             "type": "damage",
             "stats": {
-                "damageMultiplier": 1.1
+                "damageMultiplier": 1.05
             },
             "size": 1,
             "column": 1,
@@ -190,7 +177,9 @@ window.adventureSkillTree = {
             ],
             "requiresMode": "all",
             "start": false,
-            "customDescription": false
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
         },
         {
             "id": "accuracyNode",
@@ -279,7 +268,8 @@ window.adventureSkillTree = {
             "icon": "✦",
             "effect": "+0.25 multi-hit",
             "requires": [
-                "healthNode3"
+                "healthNode3",
+                "evasiveVitality"
             ],
             "requiresMode": "all",
             "column": 5,
@@ -334,15 +324,15 @@ window.adventureSkillTree = {
             "customDescription": false
         },
         {
-            "id": "bigAttackSpeed_3",
+            "id": "accuracyBoost",
             "name": "LESS.. NO MORE!",
             "icon": "⚡",
-            "effect": "+10% attack speed",
-            "type": "attackSpeed",
+            "effect": "+10% accuracy",
+            "type": "accuracy",
             "stats": {
-                "attackSpeedMultiplier": 1.1
+                "accuracyMultiplier": 1.1
             },
-            "size": 1.25,
+            "size": 1,
             "column": 8,
             "row": -2,
             "maxRank": 1,
@@ -352,18 +342,19 @@ window.adventureSkillTree = {
             "requiresMode": "any",
             "start": false,
             "sprite": "",
-            "customDescription": false
+            "customDescription": false,
+            "abilityTargeting": null
         },
         {
-            "id": "bigAttackSpeed_4",
+            "id": "damageBoost",
             "name": "EVEN MORE SUPER SPEED",
             "icon": "⚡",
-            "effect": "+30% attack speed",
-            "type": "attackSpeed",
+            "effect": "+25% damage",
+            "type": "damage",
             "stats": {
-                "attackSpeedMultiplier": 1.3
+                "damageMultiplier": 1.25
             },
-            "size": 1.25,
+            "size": 1,
             "column": 8,
             "row": -1,
             "maxRank": 1,
@@ -373,28 +364,8 @@ window.adventureSkillTree = {
             "requiresMode": "any",
             "start": false,
             "sprite": "",
-            "customDescription": false
-        },
-        {
-            "id": "bigAttackSpeed_2",
-            "name": "TOO MUCH SPEED",
-            "icon": "⚡",
-            "effect": "+50% attack speed",
-            "type": "attackSpeed",
-            "stats": {
-                "attackSpeedMultiplier": 1.5
-            },
-            "size": 1.25,
-            "column": 7,
-            "row": -2,
-            "maxRank": 1,
-            "requires": [
-                "bigAttackSpeed_1"
-            ],
-            "requiresMode": "any",
-            "start": false,
-            "sprite": "",
-            "customDescription": false
+            "customDescription": false,
+            "abilityTargeting": null
         },
         {
             "id": "poisonDMG_3",
@@ -441,8 +412,8 @@ window.adventureSkillTree = {
             "customDescription": false
         },
         {
-            "id": "multiHit1_copy",
-            "name": "Multi hitterrrr Copy",
+            "id": "multiHit2",
+            "name": "Multi hitterrrr",
             "icon": "✦",
             "effect": "+0.25 multi-hit",
             "requires": [
@@ -487,7 +458,7 @@ window.adventureSkillTree = {
             "icon": "✦",
             "effect": "Poison damage now executes!",
             "requires": [
-                "bigAttackSpeed_4"
+                "damageBoost"
             ],
             "requiresMode": "all",
             "column": 9,
@@ -508,7 +479,7 @@ window.adventureSkillTree = {
             "icon": "✦",
             "effect": "On death, enemies transfer all remaining poison stacks to a random living enemy, preserving their remaining duration.",
             "requires": [
-                "bigAttackSpeed_3"
+                "accuracyBoost"
             ],
             "requiresMode": "all",
             "column": 9,
@@ -595,7 +566,7 @@ window.adventureSkillTree = {
             "effect": "Arrows from abilities freeze enemies, increasing their attack timer by 3s for 9s.",
             "requires": [
                 "attackSpeedNode5",
-                "attackSpeedNode5_copy"
+                "arrowSpeed2"
             ],
             "requiresMode": "all",
             "column": 14,
@@ -686,7 +657,7 @@ window.adventureSkillTree = {
             "start": false,
             "requires": [
                 "accuracyNode2",
-                "multiHit1_copy"
+                "multiHit2"
             ],
             "requiresMode": "all",
             "column": 6,
@@ -737,8 +708,8 @@ window.adventureSkillTree = {
             "customDescription": false
         },
         {
-            "id": "attackSpeedNode5_copy",
-            "name": "Attack Speed Copy",
+            "id": "arrowSpeed2",
+            "name": "Attack Speed",
             "icon": "⚡",
             "effect": "+3 damage\n+5% attack speed",
             "type": "attackSpeed",
@@ -997,11 +968,11 @@ window.adventureSkillTree = {
             "icon": "✦",
             "effect": "Every attack erupts the ground beneath the target, hitting all adjacent enemies. You are hit as well, losing 5% health.",
             "requires": [
-                "damageNode7"
+                "accuracyNode14"
             ],
             "requiresMode": "all",
-            "column": -3,
-            "row": -3,
+            "column": 2,
+            "row": -6,
             "maxRank": 1,
             "stats": {
                 "damage": 1
@@ -1022,8 +993,8 @@ window.adventureSkillTree = {
                 "volcanicEruption"
             ],
             "requiresMode": "all",
-            "column": -2,
-            "row": -4,
+            "column": 2,
+            "row": -7,
             "maxRank": 1,
             "stats": {
                 "eruptionChains": 1
@@ -1040,11 +1011,11 @@ window.adventureSkillTree = {
             "icon": "✦",
             "effect": "+10 maximum fury",
             "requires": [
-                "healthNode2"
+                "heavyBlows"
             ],
             "requiresMode": "all",
-            "column": 1,
-            "row": 8,
+            "column": -2,
+            "row": 6,
             "maxRank": 1,
             "stats": {
                 "maxFury": 10
@@ -1052,19 +1023,21 @@ window.adventureSkillTree = {
             "size": 1,
             "start": false,
             "customDescription": false,
-            "sprite": ""
+            "sprite": "",
+            "type": "health",
+            "abilityTargeting": null
         },
         {
-            "id": "eruptionChain_copy",
-            "name": "Eruption chain Copy",
+            "id": "eruptionChain2",
+            "name": "Eruption chain",
             "icon": "✦",
             "effect": "+1 maximum eruption chains",
             "requires": [
                 "eruptionChain"
             ],
             "requiresMode": "all",
-            "column": -2,
-            "row": -5,
+            "column": 2,
+            "row": -8,
             "maxRank": 1,
             "stats": {
                 "eruptionChains": 1
@@ -1076,16 +1049,16 @@ window.adventureSkillTree = {
             "type": "damage"
         },
         {
-            "id": "eruptionChain_copy2",
-            "name": "Eruption chain Copy",
+            "id": "eruptionChain3",
+            "name": "Eruption chain",
             "icon": "✦",
             "effect": "+1 maximum eruption chains",
             "requires": [
                 "eruptionChain"
             ],
             "requiresMode": "all",
-            "column": -1,
-            "row": -4,
+            "column": 3,
+            "row": -7,
             "maxRank": 1,
             "stats": {
                 "eruptionChains": 1
@@ -1097,8 +1070,8 @@ window.adventureSkillTree = {
             "type": "damage"
         },
         {
-            "id": "healthNode4",
-            "name": "Health",
+            "id": "flatHealthRegen",
+            "name": "Health Regeneration",
             "icon": "♥",
             "effect": "+10 flat health regeneration per second",
             "type": "health",
@@ -1106,11 +1079,11 @@ window.adventureSkillTree = {
                 "healthRegen": 10
             },
             "size": 1,
-            "column": -1,
-            "row": 4,
+            "column": -4,
+            "row": 3,
             "maxRank": 1,
             "requires": [
-                "healthNode5"
+                "righteousFire"
             ],
             "requiresMode": "all",
             "start": false,
@@ -1123,12 +1096,11 @@ window.adventureSkillTree = {
             "icon": "🔥",
             "effect": "Regeneration heals only up to 30% of maximum HP.\nDrain 10% of maximum HP per second.\nDeal unused regeneration as burning damage, split evenly among all living enemies.",
             "requires": [
-                "healthNode4",
-                "healthNode5_copy"
+                "healthNode7"
             ],
             "requiresMode": "all",
-            "column": -2,
-            "row": 5,
+            "column": -3,
+            "row": 3,
             "maxRank": 1,
             "stats": {},
             "size": 1.5,
@@ -1138,8 +1110,8 @@ window.adventureSkillTree = {
             "abilityTargeting": "aoe"
         },
         {
-            "id": "healthNode5",
-            "name": "Health",
+            "id": "maxHealthRegen",
+            "name": "Maximum Health Regeneration",
             "icon": "♥",
             "effect": "+15% maximum health regenerated per second",
             "type": "health",
@@ -1147,11 +1119,11 @@ window.adventureSkillTree = {
                 "healthRegenPercent": 0.15
             },
             "size": 1,
-            "column": 0,
-            "row": 5,
+            "column": -4,
+            "row": 2,
             "maxRank": 1,
             "requires": [
-                "healthNode2"
+                "flatHealthRegen"
             ],
             "requiresMode": "all",
             "start": false,
@@ -1159,8 +1131,8 @@ window.adventureSkillTree = {
             "sprite": ""
         },
         {
-            "id": "healthNode5_copy",
-            "name": "Health Copy",
+            "id": "maxHealthRegen2",
+            "name": "Maximum Health Regeneration",
             "icon": "♥",
             "effect": "+15% maximum health regenerated per second",
             "type": "health",
@@ -1168,11 +1140,11 @@ window.adventureSkillTree = {
                 "healthRegenPercent": 0.15
             },
             "size": 1,
-            "column": -1,
-            "row": 5,
+            "column": -5,
+            "row": 3,
             "maxRank": 1,
             "requires": [
-                "healthNode5"
+                "flatHealthRegen"
             ],
             "requiresMode": "all",
             "start": false,
@@ -1185,11 +1157,11 @@ window.adventureSkillTree = {
             "icon": "✦",
             "effect": "Kills give the player a shield that protects the player from one hit",
             "requires": [
-                "healthNode2",
-                "shieldSlam"
+                "shieldSlam",
+                "heavyBlows"
             ],
             "requiresMode": "all",
-            "column": -1,
+            "column": -4,
             "row": 7,
             "maxRank": 1,
             "stats": {},
@@ -1206,7 +1178,7 @@ window.adventureSkillTree = {
             "effect": "At maximum shields, consume half your shields. Deal 100% of your physical damage per shield consumed to the target.",
             "requires": [],
             "requiresMode": "all",
-            "column": -3,
+            "column": -6,
             "row": 7,
             "maxRank": 1,
             "stats": {},
@@ -1226,7 +1198,7 @@ window.adventureSkillTree = {
                 "shieldSlam"
             ],
             "requiresMode": "all",
-            "column": -4,
+            "column": -7,
             "row": 8,
             "maxRank": 1,
             "stats": {
@@ -1245,10 +1217,10 @@ window.adventureSkillTree = {
             "icon": "🛡",
             "effect": "Shield Slam carries excess physical damage from a kill into the next living enemy. Continues until the damage is spent.",
             "requires": [
-                "addedShields_copy"
+                "addedShields2"
             ],
             "requiresMode": "all",
-            "column": -5,
+            "column": -8,
             "row": 5,
             "maxRank": 1,
             "stats": {},
@@ -1268,7 +1240,7 @@ window.adventureSkillTree = {
                 "addedShields"
             ],
             "requiresMode": "all",
-            "column": -5,
+            "column": -8,
             "row": 9,
             "maxRank": 1,
             "stats": {},
@@ -1279,15 +1251,15 @@ window.adventureSkillTree = {
             "type": "health"
         },
         {
-            "id": "addedShields_copy",
-            "name": "Added shields Copy",
+            "id": "addedShields2",
+            "name": "Added shields",
             "icon": "✦",
             "effect": "+2 maximum shields\n+5 damage",
             "requires": [
                 "shieldSlam"
             ],
             "requiresMode": "all",
-            "column": -4,
+            "column": -7,
             "row": 6,
             "maxRank": 1,
             "stats": {
@@ -1312,7 +1284,7 @@ window.adventureSkillTree = {
             "maxRank": 1,
             "start": false,
             "requires": [
-                "damageNode2"
+                "damageNode9"
             ],
             "requiresMode": "all",
             "customDescription": false,
@@ -1322,15 +1294,15 @@ window.adventureSkillTree = {
             "size": 1
         },
         {
-            "id": "addedShields_copy2",
-            "name": "Added shields Copy",
+            "id": "reinforcedVitality",
+            "name": "Reinforced Vitality",
             "icon": "✦",
             "effect": "+5 maximum health\n+25% maximum health",
             "requires": [
                 "resonantGuard"
             ],
             "requiresMode": "all",
-            "column": -6,
+            "column": -9,
             "row": 8,
             "maxRank": 1,
             "stats": {
@@ -1344,15 +1316,15 @@ window.adventureSkillTree = {
             "type": "health"
         },
         {
-            "id": "addedShields_copy2_copy",
-            "name": "Added shields Copy Copy",
+            "id": "evasiveBulwark",
+            "name": "Evasive Bulwark",
             "icon": "✦",
             "effect": "+2 maximum shields\n+25% evasion",
             "requires": [
                 "overflowingSlam"
             ],
             "requiresMode": "all",
-            "column": -6,
+            "column": -9,
             "row": 6,
             "maxRank": 1,
             "stats": {
@@ -1369,17 +1341,15 @@ window.adventureSkillTree = {
             "id": "singledOff",
             "name": "Singled off",
             "icon": "✦",
-            "effect": "Enemies become vulnerable. taking 30% more damage when they are alone.",
+            "effect": "The last living enemy takes 30% more damage.",
             "requires": [
-                "volcanicEruption"
+                "accuracyNode12"
             ],
             "requiresMode": "all",
-            "column": -5,
-            "row": -1,
+            "column": -8,
+            "row": 0,
             "maxRank": 1,
-            "stats": {
-                "damage": 1
-            },
+            "stats": {},
             "size": 1.25,
             "start": false,
             "customDescription": true,
@@ -1390,56 +1360,36 @@ window.adventureSkillTree = {
             "id": "bleed",
             "name": "Bleed",
             "icon": "🩸",
-            "effect": "25% on hit: 10% hit damage/s.\nSingle target. +1s (max 5s).",
+            "effect": "10% on hit: 10% hit damage/s.\nSingle target. +1s (max 5s).",
             "requires": [
-                "singledOff"
+                "bleedChance2",
+                "bleedDamage"
             ],
             "requiresMode": "all",
-            "column": -6,
+            "column": -8,
             "row": -2,
             "maxRank": 1,
             "stats": {
-                "bleedChance": 0.25
+                "bleedChance": 0.1
             },
             "size": 1.25,
             "start": false,
             "customDescription": true,
             "sprite": "",
-            "type": "damage"
-        },
-        {
-            "id": "bleed_copy",
-            "name": "Bleed Copy",
-            "icon": "🩸",
-            "effect": "25% on hit: 10% hit damage/s.\nSingle target. +1s (max 5s).",
-            "requires": [
-                "singledOff"
-            ],
-            "requiresMode": "all",
-            "column": -6,
-            "row": 0,
-            "maxRank": 1,
-            "stats": {
-                "bleedChance": 0.25
-            },
-            "size": 1.25,
-            "start": false,
-            "customDescription": true,
-            "sprite": "",
-            "type": "health",
+            "type": "damage",
             "abilityTargeting": null
         },
         {
-            "id": "bleed_copy_copy",
-            "name": "Bleed Copy Copy",
+            "id": "bleedDamage",
+            "name": "Bleed Damage",
             "icon": "🩸",
             "effect": "+100% bleed damage",
             "requires": [
-                "singledOff"
+                "quickBleeding"
             ],
             "requiresMode": "all",
-            "column": -5,
-            "row": 0,
+            "column": -7,
+            "row": -3,
             "maxRank": 1,
             "stats": {
                 "bleedDamageMultiplier": 2
@@ -1450,6 +1400,580 @@ window.adventureSkillTree = {
             "sprite": "",
             "type": "health",
             "abilityTargeting": null
+        },
+        {
+            "id": "maxHealthRegen3",
+            "name": "Maximum Health Regeneration",
+            "icon": "♥",
+            "effect": "+15% maximum health regenerated per second",
+            "type": "health",
+            "stats": {
+                "healthRegenPercent": 0.15
+            },
+            "size": 1,
+            "column": -4,
+            "row": 4,
+            "maxRank": 1,
+            "requires": [
+                "flatHealthRegen"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": ""
+        },
+        {
+            "id": "untouchable2",
+            "name": "Untouchable",
+            "icon": "◈",
+            "effect": "+25% evasion",
+            "requires": [
+                "thickHide"
+            ],
+            "column": 2,
+            "row": 7,
+            "maxRank": 1,
+            "stats": {
+                "evasionMultiplier": 1.25
+            },
+            "size": 1,
+            "start": false,
+            "requiresMode": "all",
+            "customDescription": false,
+            "sprite": ""
+        },
+        {
+            "id": "evasiveVitality",
+            "name": "Untouchable",
+            "icon": "◈",
+            "effect": "+10% maximum health\n+25% evasion",
+            "requires": [
+                "untouchable",
+                "untouchable2"
+            ],
+            "column": 2,
+            "row": 8,
+            "maxRank": 1,
+            "stats": {
+                "evasionMultiplier": 1.25,
+                "healthMultiplier": 1.1
+            },
+            "size": 1,
+            "start": false,
+            "requiresMode": "all",
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "greedyPig",
+            "name": "Greedy Pig",
+            "icon": "✦",
+            "effect": "+25% gold gained",
+            "requires": [
+                "origin"
+            ],
+            "requiresMode": "all",
+            "column": 5,
+            "row": 3,
+            "maxRank": 1,
+            "stats": {
+                "goldBonusMultiplier": 1.25
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "deepWounds",
+            "name": "Deep Wounds",
+            "icon": "🩸",
+            "effect": "Bleed: 50% hit damage/s.\nKeeps your 3 strongest stacks.",
+            "requires": [],
+            "requiresMode": "all",
+            "column": -7,
+            "row": -4,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1.25,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "type": "damage"
+        },
+        {
+            "id": "healthNode6",
+            "name": "Health",
+            "icon": "♥",
+            "effect": "+5% maximum health",
+            "type": "health",
+            "stats": {
+                "healthMultiplier": 1.05
+            },
+            "size": 1,
+            "column": 0,
+            "row": 5,
+            "maxRank": 1,
+            "requires": [
+                "healthNode2"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "healthNode7",
+            "name": "Health",
+            "icon": "♥",
+            "effect": "+10% maximum health\n+25% accuracy",
+            "type": "health",
+            "stats": {
+                "healthMultiplier": 1.1,
+                "accuracyMultiplier": 1.25
+            },
+            "size": 1,
+            "column": -1,
+            "row": 4,
+            "maxRank": 1,
+            "requires": [
+                "healthNode6",
+                "accuracyNode11"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "accuracyNode11",
+            "name": "Accuracy",
+            "icon": "◎",
+            "effect": "+10% accuracy",
+            "type": "accuracy",
+            "stats": {
+                "accuracyMultiplier": 1.1
+            },
+            "size": 1,
+            "column": 0,
+            "row": 4,
+            "maxRank": 1,
+            "requires": [
+                "healthNode2"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "heavyBlows",
+            "name": "Heavy Blows",
+            "icon": "✦",
+            "effect": "+10 damage",
+            "requires": [
+                "evasiveVitality",
+                "healthNode7"
+            ],
+            "requiresMode": "all",
+            "column": -1,
+            "row": 7,
+            "maxRank": 1,
+            "stats": {
+                "damage": 10
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "type": "accuracy",
+            "abilityTargeting": null
+        },
+        {
+            "id": "maxFury2",
+            "name": "Fury",
+            "icon": "✦",
+            "effect": "+10 maximum fury",
+            "requires": [
+                "heavyBlows"
+            ],
+            "requiresMode": "all",
+            "column": -2,
+            "row": 8,
+            "maxRank": 1,
+            "stats": {
+                "maxFury": 10
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "type": "health",
+            "abilityTargeting": null
+        },
+        {
+            "id": "bleedChance2",
+            "name": "Bleed Chance",
+            "icon": "🩸",
+            "effect": "+10% bleed chance",
+            "requires": [
+                "quickBleeding"
+            ],
+            "requiresMode": "all",
+            "column": -7,
+            "row": -1,
+            "maxRank": 1,
+            "stats": {
+                "bleedChance": 0.1
+            },
+            "size": 1.25,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "type": "health",
+            "abilityTargeting": null
+        },
+        {
+            "id": "bleedChance3",
+            "name": "Bleed Chance",
+            "icon": "🩸",
+            "effect": "+10% bleed chance",
+            "requires": [],
+            "requiresMode": "all",
+            "column": -10,
+            "row": -3,
+            "maxRank": 1,
+            "stats": {
+                "bleedChance": 0.1
+            },
+            "size": 1.25,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "type": "health",
+            "abilityTargeting": null
+        },
+        {
+            "id": "bleedChance4",
+            "name": "Bleed Chance",
+            "icon": "🩸",
+            "effect": "+10% bleed chance",
+            "requires": [],
+            "requiresMode": "all",
+            "column": -10,
+            "row": -4,
+            "maxRank": 1,
+            "stats": {
+                "bleedChance": 0.1
+            },
+            "size": 1.25,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "type": "health",
+            "abilityTargeting": null
+        },
+        {
+            "id": "quickBleeding",
+            "name": "Quick Bleeding",
+            "icon": "🩸",
+            "effect": "+10% attack speed\n+10% bleed chance",
+            "requires": [],
+            "requiresMode": "all",
+            "column": -6,
+            "row": -2,
+            "maxRank": 1,
+            "stats": {
+                "bleedChance": 0.1,
+                "attackSpeedMultiplier": 1.1
+            },
+            "size": 1.25,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "type": "health",
+            "abilityTargeting": null
+        },
+        {
+            "id": "bleederer",
+            "name": "Bleederer",
+            "icon": "✦",
+            "effect": "Successful Bleed rolls add 2 stacks.\nStill requires Bleed chance.",
+            "requires": [],
+            "requiresMode": "all",
+            "column": -8,
+            "row": 2,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1.25,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "type": "health",
+            "abilityTargeting": null
+        },
+        {
+            "id": "attackSpeedNode7",
+            "name": "Attack Speed",
+            "icon": "⚡",
+            "effect": "+10% attack speed",
+            "type": "attackSpeed",
+            "stats": {
+                "attackSpeedMultiplier": 1.1
+            },
+            "size": 1,
+            "column": -7,
+            "row": 2,
+            "maxRank": 1,
+            "requires": [
+                "bleederer",
+                "maxHealthRegen4"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "accuracyNode12",
+            "name": "Accuracy",
+            "icon": "◎",
+            "effect": "+15 accuracy",
+            "type": "accuracy",
+            "stats": {
+                "accuracy": 15
+            },
+            "size": 1,
+            "column": -7,
+            "row": 0,
+            "maxRank": 1,
+            "requires": [
+                "maxHealthRegen4"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "attackSpeedNode8",
+            "name": "Attack Speed",
+            "icon": "⚡",
+            "effect": "+15% attack speed",
+            "type": "attackSpeed",
+            "stats": {
+                "attackSpeedMultiplier": 1.15
+            },
+            "size": 1,
+            "column": -2,
+            "row": 0,
+            "maxRank": 1,
+            "requires": [
+                "damageNode7"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "maxHealthRegen4",
+            "name": "Maximum Health Regeneration",
+            "icon": "♥",
+            "effect": "+2% maximum health regenerated per second",
+            "type": "health",
+            "stats": {
+                "healthRegenPercent": 0.02
+            },
+            "size": 1,
+            "column": -5,
+            "row": 1,
+            "maxRank": 1,
+            "requires": [
+                "attackSpeedNode8"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "damageNode8",
+            "name": "Damage",
+            "icon": "⚔",
+            "effect": "+10% damage",
+            "type": "damage",
+            "stats": {
+                "damageMultiplier": 1.1
+            },
+            "size": 1,
+            "column": -2,
+            "row": -2,
+            "maxRank": 1,
+            "requires": [
+                "damageNode7"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "accuracyNode13",
+            "name": "Accuracy",
+            "icon": "◎",
+            "effect": "+5 accuracy",
+            "type": "accuracy",
+            "stats": {
+                "accuracy": 5
+            },
+            "size": 1,
+            "column": 0,
+            "row": -2,
+            "maxRank": 1,
+            "requires": [
+                "damageNode7"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false
+        },
+        {
+            "id": "accuracyNode14",
+            "name": "Accuracy",
+            "icon": "◎",
+            "effect": "+5 accuracy",
+            "type": "accuracy",
+            "stats": {
+                "accuracy": 5
+            },
+            "size": 1,
+            "column": 1,
+            "row": -4,
+            "maxRank": 1,
+            "requires": [
+                "accuracyNode13"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false
+        },
+        {
+            "id": "healthNode8",
+            "name": "Health",
+            "icon": "♥",
+            "effect": "+10 maximum health",
+            "type": "health",
+            "stats": {
+                "health": 10
+            },
+            "size": 1,
+            "column": -11,
+            "row": 1,
+            "maxRank": 1,
+            "requires": [
+                "bleederer",
+                "singledOff"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false
+        },
+        {
+            "id": "greedierPig",
+            "name": "Greedier pig",
+            "icon": "✦",
+            "effect": "+50% gold gained",
+            "requires": [
+                "greedyPig"
+            ],
+            "requiresMode": "all",
+            "column": 6,
+            "row": 4,
+            "maxRank": 1,
+            "stats": {
+                "goldBonusMultiplier": 1.5
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "soGreedy",
+            "name": "So greedy!",
+            "icon": "✦",
+            "effect": "+100% gold gained",
+            "requires": [
+                "greedierPig"
+            ],
+            "requiresMode": "all",
+            "column": 7,
+            "row": 5,
+            "maxRank": 1,
+            "stats": {
+                "goldBonusMultiplier": 2
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "thickHide2",
+            "name": "Thick Hide",
+            "icon": "⬟",
+            "effect": "+25 evasion",
+            "requires": [
+                "damageNode8",
+                "quickBleeding"
+            ],
+            "column": -4,
+            "row": -2,
+            "maxRank": 1,
+            "stats": {
+                "evasion": 25
+            },
+            "size": 1,
+            "start": false,
+            "requiresMode": "all",
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "damageNode9",
+            "name": "Damage Path Node",
+            "icon": "⚔",
+            "effect": "+5% damage",
+            "type": "damage",
+            "stats": {
+                "damageMultiplier": 1.05
+            },
+            "maxRank": 1,
+            "start": false,
+            "requires": [
+                "damageNode2"
+            ],
+            "requiresMode": "all",
+            "customDescription": false,
+            "column": 0,
+            "row": 0,
+            "sprite": "",
+            "size": 1,
+            "abilityTargeting": null
         }
     ],
     "statSchemaVersion": 2,
@@ -1458,5 +1982,7 @@ window.adventureSkillTree = {
     "shieldSchemaVersion": 1,
     "righteousFireSchemaVersion": 1,
     "shieldExpansionSchemaVersion": 1,
-    "bleedSchemaVersion": 1
+    "bleedSchemaVersion": 1,
+    "deepWoundsSchemaVersion": 1,
+    "nodeIdSchemaVersion": 1
 };

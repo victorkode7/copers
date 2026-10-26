@@ -31,7 +31,7 @@
         check('repairing Fire preserves the user layout, sprite and connections',migratedFire.column===-2&&migratedFire.row===5&&migratedFire.size===1.5&&migratedFire.requires.join()==='healthNode4'&&migratedFire.sprite==='assets/skills/custom-fire.png');
         migratedFire.effect='My custom description';migratedFire.stats={damage:1};migratedFire.icon='F';SkillStatCompat.normalize(legacyFire);
         check('the Fire repair runs once and preserves later custom edits',migratedFire.effect==='My custom description'&&migratedFire.stats.damage===1&&migratedFire.icon==='F');
-        check('the new unique skill connects to the regeneration branch',node && node.requires.includes('healthNode4') && node.customDescription && SkillDescriptions.describe(node).includes('30%') && SkillDescriptions.describe(node).includes('10%'));
+        check('the new unique skill connects to the regeneration branch',node && skillNodeConnections[node.id].has('flatHealthRegen') && node.customDescription && SkillDescriptions.describe(node).includes('30%') && SkillDescriptions.describe(node).includes('10%'));
         fresh(20,30,1,{}); simulateCombatStep(1);
         check('unallocated Fire leaves ordinary regeneration and enemy health unchanged',state.playerHp===50 && state.monsterStates[0].hp===1000);
         fresh(20,20); simulateCombatStep(.1);

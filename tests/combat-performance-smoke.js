@@ -5,7 +5,7 @@
     const hash = value => { let result = 2166136261; for (const char of JSON.stringify(value)) result = Math.imul(result ^ char.charCodeAt(0), 16777619); return (result >>> 0).toString(16); };
     const median = values => values.sort((a,b) => a-b)[Math.floor(values.length/2)];
     function fresh(abilities) {
-        state.skillRanks = abilities ? Object.fromEntries(['volcanicEruption','eruptionChain','eruptionChain_copy','piercingArrow','forkingArrow','multiShot','freezingArrows','snakeBite','bloomingFlower','poisonExecute'].map(id => [id,1])) : {};
+        state.skillRanks = abilities ? Object.fromEntries(['volcanicEruption','eruptionChain','eruptionChain2','piercingArrow','forkingArrow','multiShot','freezingArrows','snakeBite','bloomingFlower','poisonExecute'].map(id => [id,1])) : {};
         state.level = Object.keys(state.skillRanks).length; state.experience = 0; state.skillPoints = 0;
         state.upgrades = {strength:0,haste:0,evasion:0}; state.gear = createEmptyGear(); state.gear.necklace = 'testAmulet'; state.ownedItemIds = ['testAmulet']; state.crafted = [];
         itemById.testAmulet.stats = {health:10000,healthRegen:100000,damage:10,multiHit:2,attackSpeedMultiplier:2,poisonChance:abilities ? .5 : 0};
@@ -33,8 +33,9 @@
                 if(run===0)digest=current;else {check((abilities?'abilities':'basic')+' combat is deterministic on repeat '+run,current===digest);times.push(elapsed);}
             }
             checks.push('BENCH '+JSON.stringify({scenario:abilities?'abilities':'basic',monsters:64,steps:1500,medianMs:Math.round(median(times)*100)/100,digest}));
-            // Seeded reference outcomes; the ability snapshot includes cardinal-only eruption splash.
-            check((abilities?'abilities':'basic')+' outcomes match the seeded reference',digest===(abilities?'3d6e2543':'412af9a8'));
+            // Reference snapshots include current monster DOT state, progression
+            // settings, and the renamed additive eruption-chain node.
+            check((abilities?'abilities':'basic')+' outcomes match the seeded reference',digest===(abilities?'73c1c9d3':'2f270c4c'));
         }
         fresh(false); render();
         const originalCreate = document.createElement, originalQuery = Element.prototype.querySelector;

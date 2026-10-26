@@ -75,7 +75,7 @@ function renderDamageBreakdown() {
         const style = Object.hasOwn(damageBreakdownStyles, row.source)
             ? damageBreakdownStyles[row.source] : [row.source, '#a9bac8'];
         const label = row.source === 'attacks' || row.source === 'poison' || row.source === 'bleed'
-            ? style[0] : skillNodeById[row.source]?.name || style[0];
+            ? style[0] : skillNodeDefinition(row.source)?.name || style[0];
         const percentage = row.units ? combatStatFormatter.format(row.units / 100) + '%' : '<0.01%';
         updateCombatText(view.label, label);
         updateCombatText(view.percentage, percentage);

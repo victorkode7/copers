@@ -137,7 +137,7 @@
         await importFile('\uFEFF' + JSON.stringify(legacy));
         check('raw legacy saves migrate, including equipment slots and unique ownership', !status.classList.contains('is-error') &&
             state.ownedItemIds.includes('testDropHelm') && state.gear.helmet === 'testDropHelm' && Object.hasOwn(state.gear, 'chest') &&
-            !Object.hasOwn(state.gear, 'armor') && JSON.parse(localStorage.getItem(saveKey)).version === 3);
+            !Object.hasOwn(state.gear, 'armor') && JSON.parse(localStorage.getItem(saveKey)).version === SaveCompatibility.version);
         const versionOne = clone(legacy); versionOne.version = 1; versionOne.level++;
         await importFile(JSON.stringify(versionOne));
         check('version one backups preserve the migrated level and skill points', state.level === expected.level &&

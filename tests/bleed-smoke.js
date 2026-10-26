@@ -43,7 +43,7 @@
             const directHit=(monster,damage)=>{applyDamageToMonster(monster,damage);tryApplyBleed(monster,damage);};
             try {
                 let [a]=fresh({bleed:1});itemById.testAmulet.stats={bleedChance:.1,bleedChanceMultiplier:2,bleedDamage:4,bleedDamageMultiplier:2,bleedTickRate:1,bleedTickRateMultiplier:2};
-                check('skill and equipment Bleed stats combine correctly',near(getBleedChance(),.7)&&getBleedDamage(10)===10&&getBleedTickInterval()===.25);
+                check('skill and equipment Bleed stats combine correctly',near(getBleedChance(),.4)&&getBleedDamage(10)===10&&getBleedTickInterval()===.25);
                 [a]=fresh();directHit(a,100);directHit(a,200);
                 check('100 and 200 damage hits add ten and twenty damage to the shared DOT',a.hp===700&&a.bleed.stacks===2&&near(a.bleed.baseDamagePerTick,30)&&near(getRemainingBleedDamage(a),60));
                 tickMonsterBleed(a,1);check('mixed-strength applications tick for their combined damage',near(a.hp,670)&&a.bleed.stacks===2);

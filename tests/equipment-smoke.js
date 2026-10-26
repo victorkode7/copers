@@ -7,12 +7,17 @@
     }
     const near = (actual, expected) => Math.abs(actual - expected) < 0.000001;
     try {
+        // Stable historical balance values isolate equipment math from later
+        // catalogue tuning; this never changes the shipped item definitions.
+        itemById.slimyNecklace.stats={damage:10,attackSpeedMultiplier:1/.9};
+        itemById.slimyNecklace.sprite='';
         check('catalogue validates', Equipment.validate(itemData).length === 0);
         state.currentView = 'upgrades'; render();
-        const skillSprite = document.querySelector('[data-skill-node="quickHands"] .skill-node-icon img');
+        const spriteNode = skillNodeById.quickHands || skillNodeById.attackSpeedNode;
+        const spriteSelector = '[data-skill-node="' + spriteNode.id + '"]';
+        const skillSprite = document.querySelector(spriteSelector + ' .skill-node-icon img');
         check('game skill nodes inherit their sprite paths', skillSprite?.getAttribute('src') === 'tests/fixtures/equipment-sprite.svg');
         check('game skill sprites use pixel rendering', getComputedStyle(skillSprite).imageRendering === 'pixelated');
-        const spriteNode = skillNodeById.quickHands;
         const oldNodeSize = spriteNode.size;
         function checkCircularSprite(button) {
             const icon = button.querySelector('.skill-node-icon');
@@ -24,7 +29,7 @@
         }
         for (const size of [1, 1.25, 1.5]) {
             spriteNode.size = size; renderUpgrades();
-            check('skill sprite fills circular node at size ' + size, checkCircularSprite(document.querySelector('[data-skill-node="quickHands"]')));
+            check('skill sprite fills circular node at size ' + size, checkCircularSprite(document.querySelector(spriteSelector)));
         }
         spriteNode.size = oldNodeSize;
         check('skill nodes without sprites retain symbols', !document.querySelector('[data-skill-node="origin"] img') && document.querySelector('[data-skill-node="origin"] .skill-node-icon').textContent === skillNodeById.origin.icon);
@@ -65,6 +70,11 @@
         check('base stats preserved', getDamage() === 2 && near(getAttackSpeed(), 1.2) && getPlayerEvasion() === 25);
         render();
         check('base attack speed displays zero bonus', elements.speed.textContent === '+0%');
+        // These historical skills were removed from the authored tree. Keep the
+        // known timing fixture independent of whichever skills the editor contains.
+        const oldSpeedNodes={quickHands:skillNodeById.quickHands,fleetFooted:skillNodeById.fleetFooted};
+        skillNodeById.quickHands={id:'quickHands',stats:{attackSpeedMultiplier:1/.99}};
+        skillNodeById.fleetFooted={id:'fleetFooted',stats:{attackSpeedPerLevel:.005}};
         state.skillRanks = {quickHands: 1, fleetFooted: 1}; state.level = 5;
         check('existing skill attack timing preserved', near(getAttackSpeed(), 1.2 * 0.99 / Math.pow(1.005, 5)));
         render();
@@ -88,6 +98,7 @@
         render();
         check('attack speed includes equipment, skills, level scaling and haste', near(getAttackSpeedMultiplier(), combinedSpeed) && elements.speed.textContent === '+' + Math.round((combinedSpeed - 1) * 10000) / 100 + '%');
         state.skillRanks = {}; state.level = 0; state.upgrades.haste = 0;
+        for(const [id,node] of Object.entries(oldSpeedNodes)){if(node)skillNodeById[id]=node;else delete skillNodeById[id];}
         // New content must work without adding an item-specific runtime branch.
         const extra = itemById.testAmulet;
         check('new necklace recipe appears automatically', recipes.some(recipe => recipe.id === extra.id) && craftingCategories.some(category => category.recipes.includes(extra.id)));
@@ -149,7 +160,7 @@
         check('equipping another item refreshes the slot sprite', document.querySelector('[data-gear-slot="necklace"] img')?.getAttribute('src') === extra.sprite);
         saveGame();
         const modern = JSON.parse(localStorage.getItem(saveKey));
-        check('version 3 saves persist ownership', modern.version === 3 && modern.ownedItemIds.includes(extra.id));
+        check('current saves persist ownership', modern.version === SaveCompatibility.version && modern.ownedItemIds.includes(extra.id));
         check('new equipment survives reload', loadGame() && state.gear.necklace === extra.id);
         const legacy = {...modern, version: 2, crafted: ['trailblazerBlade'], uniqueItems: {slimyNecklace: true}, gear: {...createEmptyGear(), weapon: 'trailblazerBlade', necklace: 'slimyNecklace', ring: 'adminRing'}};
         delete legacy.ownedItemIds; delete legacy.developerItemsEnabled;

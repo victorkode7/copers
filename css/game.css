@@ -1649,6 +1649,22 @@ html {
     color: var(--adventure-coral);
 }
 
+.idle-adventure .save-recovery {
+    width: min(620px, calc(100vw - 2rem)); max-height: 85vh; box-sizing: border-box;
+    padding: 1.25rem; overflow: auto; border: 1px solid var(--adventure-border); border-radius: 14px;
+    background: var(--adventure-panel); color: var(--adventure-text); font: inherit;
+}
+.idle-adventure .save-recovery::backdrop { background: #040b12cc; }
+.idle-adventure .save-recovery h2 { font-size: 1rem; line-height: 1.5; }
+.idle-adventure .save-recovery p { font-size: .75rem; line-height: 1.7; overflow-wrap: anywhere; }
+.idle-adventure .save-recovery-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.idle-adventure .save-recovery button { padding: .55rem .7rem; border: 1px solid var(--adventure-border); border-radius: 6px; background: var(--adventure-raised); color: var(--adventure-text); font: inherit; font-size: .7rem; cursor: pointer; }
+.idle-adventure .save-recovery button:disabled { opacity: .5; cursor: default; }
+.idle-adventure .save-backups-list { display: grid; gap: .75rem; margin: 1rem 0; padding: 0; list-style: none; }
+.idle-adventure .save-backups-list li { display: flex; align-items: center; justify-content: space-between; gap: .75rem; font-size: .7rem; line-height: 1.6; }
+.idle-adventure .save-backups-list span { min-width: 0; overflow-wrap: anywhere; }
+.idle-adventure .save-backups-list button { flex: 0 0 auto; }
+
 .idle-adventure .combat-catchup-notice {
     margin: 0.75rem 1.5rem;
     color: var(--adventure-muted);
