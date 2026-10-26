@@ -1,6 +1,11 @@
 (function() {
     'use strict';
     const nodeIdAliases = Object.freeze({
+        "skillNode4": "voidBolt",
+        "thunderstorm": "voidBolt",
+        "thunderbolt": "voidBolt",
+        "thunderBolt": "voidBolt",
+        "saltWaterBolt": "voidVolley",
         "multiHit1_copy": "multiHit2",
         "attackSpeedNode5_copy": "arrowSpeed2",
         "eruptionChain_copy": "eruptionChain2",
@@ -92,6 +97,17 @@
         ];
         return oldDescriptions.includes(effect) ? '25% on hit: 10% hit damage/s.\nSingle target. +1s (max 5s).' : effect;
     }
+    const spellNodeDefaults = {
+        baseMana1:{name:'Mana Reserve',stats:{mana:100}},
+        baseSpellDamage1:{name:'Arcane Power',stats:{spellDamage:10}},
+        multiSpellDamage1:{name:'Spell Amplification',stats:{spellDamageMultiplier:1.2}},
+        baseManaRegen:{name:'Mana Regeneration',stats:{manaRegen:10}},
+        multiManaRegen:{name:'Flowing Mana',stats:{manaRegenIncrease:.25}},
+        multMana1:{name:'Expanded Reserves',stats:{manaMultiplier:1.25}},
+        maxManaRegen:{name:'Deep Wells',stats:{manaRegenPercent:.05}},
+        voidBolt:{name:'Void Bolt',icon:'◈',targeting:'singleTarget',effect:'On attack: 100% spell damage to your target, affected by multihit.\nGain 1 Void Charge per hit. Costs 5 mana per cast.'},
+        voidVolley:{name:'Void Volley',icon:'✺',targeting:'aoe',effect:'At 5 Void Charges, consume them to fire 10 missiles at random enemies.\nEach deals 100% spell damage. Costs 10 mana per volley.'}
+    };
     // Older skill files used attackSpeedMultiplier for interval reduction and
     // attackSpeedRateMultiplier for faster attacks. Normalize both on import.
     function normalize(tree) {
@@ -101,11 +117,21 @@
         const legacyChains = tree.eruptionChainSchemaVersion !== 1;
         const legacyShields = tree.shieldSchemaVersion !== 1;
         const legacyFire = tree.righteousFireSchemaVersion !== 1;
+        const legacySpells = tree.spellSchemaVersion !== 2;
         for (const node of tree.nodes) {
             if (node?.id === 'shieldSlam') node.effect = normalizeShieldSlamDescription(node.effect);
             if (node?.id === 'bleed') node.effect = normalizeBleedDescription(node.effect);
             const stats = node && node.stats;
             if (!stats || typeof stats !== 'object' || Array.isArray(stats)) continue;
+            const spell = spellNodeDefaults[resolveNodeId(node.id)];
+            const replacedSpell=['thunderstorm','thunderbolt','thunderBolt','saltWaterBolt','skillNode4'].includes(node.id);
+            if (legacySpells && spell && (replacedSpell || !Object.keys(stats).length || Object.keys(stats).length===1 && stats.damage===1)) {
+                if (stats.damage===1) delete stats.damage;
+                Object.assign(stats,spell.stats || {});
+                node.name=spell.name;node.type='mana';node.customDescription=Boolean(spell.effect);
+                if (spell.icon && (replacedSpell || !node.icon || node.icon==='✦')) node.icon=spell.icon;
+                if (spell.effect) {node.effect=spell.effect;node.abilityTargeting=spell.targeting;}
+            }
             // Replace old Fire placeholders in saved editor drafts once,
             // while preserving positions, connections, sprites and later edits.
             if (legacyFire && ['righteousFire', 'fireOfTheRighteous'].includes(node.id)) {
@@ -156,6 +182,7 @@
         tree.eruptionChainSchemaVersion = 1;
         tree.shieldSchemaVersion = 1;
         tree.righteousFireSchemaVersion = 1;
+        tree.spellSchemaVersion = 2;
         return normalizeNodeIds(tree);
     }
     window.SkillStatCompat = {normalize, normalizeShieldSlamDescription, normalizeBleedDescription,

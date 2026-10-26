@@ -140,9 +140,13 @@ const state = {
     enemyRespawnRemaining: 0,
     monsterStates: [],
     pendingEruptions: [],
+    pendingVoidMissiles: [],
     monsterColumns: 1,
     targetMonsterId: null,
     playerHp: basePlayerMaxHealth,
+    playerMana: 0,
+    manaCapacity: 0,
+    voidCharges: 0,
     furyStacks: 0,
     furyRemaining: 0,
     furyDecaying: false,
@@ -233,6 +237,7 @@ let combatPoisonForecasts = null;
 let combatAnimationRestarts = null;
 let combatEffectLayout = null;
 const combatBuffViews = new Map();
+let voidVolleyBuffProc = null;
 const detailedStatViews = new Map();
 let resolvingShieldSlam = false;
 elements.detailedStats.addEventListener('toggle', renderDetailedStats);
@@ -510,9 +515,12 @@ function createMonsterStates(map, savedStates, legacyHp, legacyRespawn) {
 }
 
 function resetMonsterStates(map = currentMap()) {
+    voidVolleyBuffProc = null;
+    elements.playerHealthPanel.querySelector('.void-volley-player-glow')?.remove();
     resetDamageBreakdown(map.id);
     monsterDefinitionCache.delete(map);
     state.pendingEruptions = [];
+    state.pendingVoidMissiles = [];
     state.monsterStates = createMonsterStates(map);
     state.targetMonsterId = monsterDefinitions(map)[0].id;
     syncLegacyEnemyState();
@@ -846,7 +854,6 @@ function tryShieldSlam() {
                 const damageMultiplier = getMonsterDamageTakenMultiplier(slamTarget);
                 hitIds.push(slamTarget.id);
                 applyDamageToMonster(slamTarget, remainingDamage, 'physical', hitIds.length === 1 ? 'shieldSlam' : 'overflowingSlam');
-                tryApplyPoison(slamTarget);
                 // Only unused physical damage carries on. Poison executions
                 // and newly gained Fury cannot increase this slam's budget.
                 remainingDamage = Math.max(0, remainingDamage - healthBefore / damageMultiplier);
@@ -926,8 +933,10 @@ function renderBuffs(buffs) {
             view.iconGlyph = buff.icon;
             view.element.prepend(view.icon);
         }
-        updateCombatText(view.stacks, formatBuffAmount(buff.stacks));
+        updateCombatText(view.stacks, buff.stackLabel ?? formatBuffAmount(buff.stacks));
         updateCombatText(view.value, buff.value);
+        updateCombatHidden(view.value, !buff.value);
+        view.element.classList.toggle('is-proccing', buff.proccing === true);
         updateCombatHidden(view.duration, buff.duration === undefined);
         updateCombatText(view.duration, buff.duration === undefined ? '' : combatStatFormatter.format(buff.duration) + 's');
         updateCombatAttribute(view.element, 'title', buff.description);
@@ -942,7 +951,17 @@ function renderBuffs(buffs) {
 function renderCombatBuffs() {
     normalizeFury();
     normalizeShields();
+    normalizeVoidCharges();
     const buffs = [];
+    const volleyProccing=voidVolleyBuffProc && voidVolleyBuffProc.mapId===state.selectedMap &&
+        getSkillNodeRank('voidBolt')>0 && performance.now()<voidVolleyBuffProc.until;
+    if(state.voidCharges>0||volleyProccing){
+        const node=skillNodeDefinition('voidBolt'),unlocked=getSkillNodeRank('voidVolley')>0;
+        const shownCharges=volleyProccing?spellSettings.voidVolley.charges:state.voidCharges;
+        buffs.push({id:'voidCharges',name:'Void Charge',sprite:SkillSprites.safePath(node?.sprite),icon:node?.icon||'◈',
+            stacks:shownCharges,stackLabel:shownCharges+'/'+spellSettings.voidVolley.charges,value:'',proccing:Boolean(volleyProccing),
+            description:volleyProccing?'Void Volley released.':state.voidCharges+' / 5 Void Charges. '+(unlocked?'At 5 charges, spend 10 mana to fire 10 Void Volley missiles.':'Unlock Void Volley to consume these charges.')+' Charges do not expire.'});
+    }
     if (state.shieldStacks > 0) {
         const node = skillNodeDefinition(getSkillNodeRank('shieldGenerator') > 0 ? 'shieldGenerator' : 'resonantGuard');
         buffs.push({id:'shields',name:'Shields',sprite:SkillSprites.safePath(node?.sprite),icon:'🛡',
@@ -968,6 +987,30 @@ function renderCombatBuffs() {
     renderBuffs(buffs);
     updateCombatText(elements.damage, formatAmount(getDamage()));
     renderDetailedStats();
+}
+
+function showVoidVolleyBuffProc() {
+    const mapId=state.selectedMap;
+    presentCombatEffect(()=>{
+        if(state.currentView!=='map'||state.selectedMap!==mapId)return;
+        const proc={mapId,until:performance.now()+650};
+        voidVolleyBuffProc=proc;
+        // Keep its slot until the release finishes, including when the fifth
+        // charge was gained and consumed before the next combat render.
+        renderCombatBuffs();
+        const element=combatBuffViews.get('voidCharges')?.element;
+        if(!element)return;
+        const finish=event=>{
+            if(event&&event.target!==element)return;
+            element.removeEventListener('animationend',finish);
+            if(voidVolleyBuffProc!==proc)return;
+            voidVolleyBuffProc=null;
+            renderCombatBuffs();
+        };
+        element.addEventListener('animationend',finish);
+        window.setTimeout(finish,700);
+        restartCombatAnimation(element,'is-proccing');
+    });
 }
 
 function getPlayerHealthRegen() {
@@ -1114,6 +1157,14 @@ function renderDetailedStats() {
     const flat = stat => getSkillStat(stat) + getGearStat(stat);
     const combinedMultiplier = stat => getSkillMultiplier(stat) * getGearStat(stat);
     const groups = [
+        {id:'spellDamage',name:'Spell damage',total:number(getSpellDamage()),rows:[
+            ['Flat spell damage',number(flat('spellDamage'))],['Spell damage multiplier',multiplier(combinedMultiplier('spellDamageMultiplier'))],
+            ['Fury damage bonus',percent(state.furyStacks*furyDamagePerStack)]]},
+        {id:'mana',name:'Maximum mana',total:formatAmount(getPlayerMaxMana()),rows:[
+            ['Flat mana',number(flat('mana'))],['Maximum mana multiplier',multiplier(combinedMultiplier('manaMultiplier'))]]},
+        {id:'manaRegen',name:'Mana regeneration',total:number(getPlayerManaRegen())+' mana/s',rows:[
+            ['Flat mana regen',number(flat('manaRegen'))],['Maximum mana regen',percent(flat('manaRegenPercent'))+'/s'],
+            ['Increased mana regen',percent(flat('manaRegenIncrease'))]]},
         {id:'damage', name:'Damage', total:formatAmount(getDamage()), rows:[
             ['Flat damage', number(2 + state.upgrades.strength * 2 + flat('damage'))],
             ['Damage multiplier', multiplier(combinedMultiplier('damageMultiplier'))],
@@ -1403,9 +1454,12 @@ function createGameSave() {
         enemyRespawnRemaining: state.enemyRespawnRemaining,
         monsterStates: state.monsterStates,
         pendingEruptions: state.pendingEruptions,
+        pendingVoidMissiles: state.pendingVoidMissiles,
         monsterColumns: state.monsterColumns,
         targetMonsterId: state.targetMonsterId,
         playerHp: state.playerHp,
+        playerMana: state.playerMana,
+        voidCharges: state.voidCharges,
         furyStacks: state.furyStacks,
         furyRemaining: state.furyRemaining,
         furyDecaying: state.furyDecaying,
@@ -1634,7 +1688,12 @@ function parseGameSave(rawSave) {
                         stack.timeUntilTick > 0 && stack.timeUntilTick <= 10))))) ||
         (saved.targetMonsterId !== undefined && saved.targetMonsterId !== null && typeof saved.targetMonsterId !== 'string') ||
         (saved.playerHp !== undefined && (!Number.isFinite(saved.playerHp) || saved.playerHp < 0)) ||
+        (saved.playerMana !== undefined && (!Number.isFinite(saved.playerMana) || saved.playerMana < 0)) ||
+        (!Number.isSafeInteger(saved.voidCharges) || saved.voidCharges<0 || saved.voidCharges>spellSettings.voidVolley.charges) ||
         (saved.combatPaused !== undefined && typeof saved.combatPaused !== 'boolean') ||
+        (!Array.isArray(saved.pendingVoidMissiles) || !saved.pendingVoidMissiles.every(hit => hit &&
+            typeof hit.targetId === 'string' && Number.isFinite(hit.damage) && hit.damage > 0 &&
+            Number.isFinite(hit.remaining) && hit.remaining > 0)) ||
         (saved.pendingEruptions !== undefined && (!Array.isArray(saved.pendingEruptions) ||
             !saved.pendingEruptions.every(hit => hit && typeof hit.targetId === 'string' &&
                 Number.isFinite(hit.damage) && hit.damage > 0 &&
@@ -1669,10 +1728,13 @@ function parseGameSave(rawSave) {
         throw new Error('Save data has an invalid format.');
     }
 
+    if(saved.playerMana===undefined)saved.playerMana=getProfileMaxMana(saved);
     return saved;
 }
 
 function applyGameSave(saved) {
+    voidVolleyBuffProc=null;
+    elements.playerHealthPanel.querySelector('.void-volley-player-glow')?.remove();
     preservedSaveFields = JSON.parse(JSON.stringify(saved));
     state.gold = saved.gold;
     state.kills = saved.kills;
@@ -1730,6 +1792,9 @@ function applyGameSave(saved) {
     state.pendingEruptions = selectedMapChanged ? [] : (saved.pendingEruptions || [])
         .filter(hit => state.monsterStates.some(monster => monster.id === hit.targetId))
         .map(hit => ({...hit}));
+    state.pendingVoidMissiles = selectedMapChanged ? [] : saved.pendingVoidMissiles
+        .filter(hit => state.monsterStates.some(monster => monster.id === hit.targetId))
+        .map(hit => ({...hit}));
     state.targetMonsterId = !selectedMapChanged && monsterDefinitions(currentMap())
         .some(definition => definition.id === saved.targetMonsterId)
         ? saved.targetMonsterId
@@ -1740,6 +1805,9 @@ function applyGameSave(saved) {
         ? getPlayerMaxHealth()
         : Math.min(saved.playerHp, getPlayerMaxHealth());
     state.combatPaused = saved.combatPaused === true || state.playerHp === 0;
+    state.manaCapacity=getPlayerMaxMana();
+    state.playerMana=saved.playerMana === undefined ? state.manaCapacity : Math.min(saved.playerMana,state.manaCapacity);
+    state.voidCharges=saved.voidCharges;normalizeVoidCharges();
     state.furyStacks = saved.furyStacks || 0;
     state.furyRemaining = saved.furyRemaining || 0;
     state.furyDecaying = saved.furyDecaying === true;
@@ -2107,7 +2175,7 @@ function renderUpgrades() {
         }
         button.className = 'skill-node' +
             (node.start ? ' is-origin is-allocated' : '') +
-            (['health', 'attackSpeed', 'accuracy', 'damage'].includes(node.type) ? ' is-base-' + node.type : '') +
+            (['health', 'attackSpeed', 'accuracy', 'damage','mana'].includes(node.type) ? ' is-base-' + node.type : '') +
             (committedRank > 0 && !node.start ? ' is-allocated' : '') +
             (refundMode && committedRank > 0 ? ' is-refundable' : '') +
             (rank > committedRank && !node.start ? ' is-pending' : '') +
@@ -2917,7 +2985,7 @@ function renderCombatContent() {
     // map changes so creation-time sprites and health labels cannot carry over.
     if (elements.enemyRoster.dataset.mapId !== map.id ||
         ids.length !== renderedIds.length || ids.some((id, index) => id !== renderedIds[index])) {
-        elements.combatPanel.querySelectorAll('.poison-transfer, .combat-arrow, .eruption-chain, .shield-slam-wave').forEach(effect => effect.remove());
+        elements.combatPanel.querySelectorAll('.poison-transfer, .combat-arrow, .eruption-chain, .shield-slam-wave, .spell-effect').forEach(effect => effect.remove());
         renderedCards = definitions.map(createEnemyCard);
         elements.enemyRoster.replaceChildren(...renderedCards);
         elements.enemyRoster.dataset.mapId = map.id;
@@ -3035,7 +3103,7 @@ function renderCombatContent() {
         updateCombatHidden(freezeStatus, !frozen);
         updateCombatText(freezeStatus, frozen ? 'Frozen ' + monster.freezeRemaining.toFixed(1) + 's' : '');
         updateCombatAttribute(freezeStatus, 'title', 'Attacks take 3 seconds longer. Further arrow hits refresh the 9-second duration.');
-        updateCombatText(view.damageValue, String(definition.attackDamage));
+        updateCombatText(view.damageValue,combatStatFormatter.format(definition.attackDamage));
         const dotStatus = view.dotStatus;
         const poisonStackCount = monster.poisonStacks ? monster.poisonStacks.length : 0;
         updateCombatHidden(dotStatus, poisonStackCount === 0);
@@ -3058,6 +3126,7 @@ function renderCombatContent() {
     const displayedPlayerHp = state.playerHp > 0 && state.playerHp < 1 ? '<1' : Math.floor(state.playerHp + 1e-8);
     updateCombatText(elements.playerHealthText, displayedPlayerHp + ' / ' + maxHealth + ' HP');
     renderCombatBuffs();
+    renderPlayerMana();
     updateCombatText(elements.combatStatusLabel, state.combatPaused ? 'Dead' : target ? 'Auto-battling' : 'Waiting for respawn');
     elements.combatStatus.classList.toggle('combat-dead', state.combatPaused);
     elements.combatStatus.classList.toggle('is-fighting', !state.combatPaused && Boolean(target));
@@ -3081,6 +3150,9 @@ function render() {
     elements.experienceTrack.setAttribute('aria-valuetext', state.experience + ' of ' +
         experienceRequired + ' XP to level ' + (state.level + 1));
     elements.damage.textContent = formatAmount(getDamage());
+    document.getElementById('spellDamageDisplay').textContent=combatStatFormatter.format(getSpellDamage());
+    document.getElementById('maxManaDisplay').textContent=formatAmount(getPlayerMaxMana());
+    document.getElementById('manaRegenDisplay').textContent=combatStatFormatter.format(getPlayerManaRegen())+' mana/s';
     elements.multiHit.textContent = combatStatFormatter.format(getMultiHit());
     elements.poisonChance.textContent = combatStatFormatter.format(getPoisonChance() * 100) + '%';
     elements.bleedChance.textContent = combatStatFormatter.format(getBleedChance() * 100) + '%';
@@ -3330,11 +3402,16 @@ function applyDamageToMonster(monster, damage, damageType = 'physical', abilityI
     // Non-poison damage can bring an already-poisoned enemy into execute range.
     // Poison ticks check after updating every stack's remaining lifetime.
     if (damageType !== 'poison' && tryExecutePoison(monster)) return true;
-    if (damageType === 'physical' && abilityId &&
-        SkillDescriptions.getAbilityTargeting(skillNodeDefinition(abilityId)) === 'singleTarget') {
-        // Bleed stores the hit before target modifiers; its ticks apply the
-        // current vulnerability once, just like Poison and burning damage.
-        tryApplyBleed(monster, damage);
+    if ((damageType === 'physical' || damageType === 'spell') && abilityId) {
+        if (SkillDescriptions.getAbilityTargeting(skillNodeDefinition(abilityId)) === 'singleTarget') {
+            // Bleed stores the hit before target modifiers; its ticks apply the
+            // current vulnerability once, just like Poison and burning damage.
+            tryApplyBleed(monster, damage);
+        }
+        // Every direct ability hit rolls Poison once, regardless of its targeting
+        // tag. DOTs cannot apply Poison; basic attacks roll it in the attack loop.
+        tryApplyPoison(monster);
+        if (monster.hp <= 0) return true; // The new stack can trigger Poison Execute.
     }
 
     const damageDealt = previousHp - monster.hp;
@@ -3462,7 +3539,6 @@ function triggerShockwaveSlash(hitMonster, hitDamage) {
         flashShockwaveCard(monster.id);
         flashShockwaveHealthBar(monster.id);
         applyDamageToMonster(monster, splashDamage, 'physical', 'shockwaveSlash');
-        tryApplyPoison(monster);
     });
     // One shield per activation, independently of the number of splash hits.
     // A proc against a lone boss still grants its shield.
@@ -3541,6 +3617,7 @@ document.querySelector('#resetGame').addEventListener('click', function() {
     state.experience = 0;
     state.skillPoints = 0;
     state.skillRanks = {};
+    state.playerMana=0;state.manaCapacity=0;state.voidCharges=0;
     clearFury();
     state.shieldStacks = 0;
     state.gear = createEmptyGear();
@@ -3908,7 +3985,9 @@ function simulateCombatStep(elapsed, collectEffects = false) {
             }
         });
         tickPendingEruptions(elapsed);
+        tickPendingVoidMissiles(elapsed);
         tryShieldSlam();
+        tickPlayerMana(elapsed);
         if (!state.combatPaused) {
             state.monsterStates.forEach(monster => {
                 if (monster.hp > 0) {
@@ -3970,6 +4049,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                         triggerVolcanicEruption(arrowTarget, arrowDamage);
                         extraEruptionTargets.forEach(hit => triggerVolcanicEruption(hit.target, hit.damage));
                         triggerAttackArrowSkills(arrowTarget, arrowDamage);
+                        triggerAttackSpells();
                     }
                 }
             }
@@ -4033,8 +4113,8 @@ function processCombatBacklog() {
         // retained and continued in another task so input and painting can run.
         for (let steps = 0; pendingCombatSeconds + 1e-8 >= gameTickSeconds && steps < 250; steps++) {
             let elapsed = gameTickSeconds;
-            if (state.combatPaused && !state.furyStacks && !state.pendingEruptions.length && state.monsterStates.every(monster => !monster.poisonStacks.length && !monster.bleed)) {
-                // Once Fury, damage over time and travelling eruptions finish, only respawns
+            if (state.combatPaused && !state.furyStacks && !state.pendingEruptions.length && !state.pendingVoidMissiles.length && state.monsterStates.every(monster => !monster.poisonStacks.length && !monster.bleed)) {
+                // Once Fury, DOTs, travelling eruptions and missiles finish, only respawns
                 // can change a dead player's state. Preserve 100 ms boundaries.
                 const nextRespawn = Math.min(...state.monsterStates
                     .filter(monster => monster.hp <= 0 && monster.respawnRemaining > 0)

@@ -4,7 +4,7 @@
     const object = value => value && typeof value === 'object' && !Array.isArray(value);
     const idPattern = /^[A-Za-z_][A-Za-z0-9_-]*$/;
     const statFields = ['health', 'accuracy', 'evasion', 'attackDamage', 'attackInterval', 'respawnSeconds', 'experience'];
-    const defaults = {health: 10, accuracy: 50, evasion: 0, attackDamage: 1, attackInterval: 2, respawnSeconds: 5, experience: 10, gold: [1, 2], drops: [], itemDrops: [], sprite: ''};
+    const defaults = {health: 10, accuracy: 50, evasion: 0, attackDamage: 1, attackInterval: 2, respawnSeconds: 5, experience: 10, gold: [1, 2], drops: [], itemDrops: [], sprite: '',element:'physical'};
     const appliedBackgrounds = new WeakMap();
     function safePath(value) {
         return typeof value === 'string' && /^(?![\/\\]|.*(?:[:\\?#]|\.\.))[a-z0-9_ ./-]+\.(png|jpe?g|webp|gif|svg)$/i.test(value) ? value : '';
@@ -114,6 +114,7 @@
             }
         };
         const checkStats = (entry, label, overrides = false) => {
+            if (entry.element !== undefined && !['physical','fire','cold','water','lightning'].includes(entry.element)) add(label,'invalid damage element.');
             if (overrides && entry.name !== undefined && (typeof entry.name !== 'string' || !entry.name.trim())) add(label, 'invalid name override.');
             statFields.forEach(key => {
                 if (overrides && entry[key] === undefined) return;

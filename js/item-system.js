@@ -8,6 +8,13 @@
         stats[id + 'Multiplier'] = { label: label + ' multiplier', mode: 'multiply', default: 1, min: 0.000001, display: {label: displayLabel, type: 'percentBonus'} };
     }
     Object.assign(stats, {
+        mana: {label:'Maximum mana',mode:'add',default:0,display:{label:'Maximum mana',type:'flat'}},
+        manaMultiplier: {label:'Maximum mana multiplier',mode:'multiply',default:1,min:0.000001,display:{label:'Maximum mana',type:'percentBonus'}},
+        spellDamage: {label:'Spell damage',mode:'add',default:0,display:{label:'Spell damage',type:'flat'}},
+        spellDamageMultiplier: {label:'Spell damage multiplier',mode:'multiply',default:1,min:0.000001,display:{label:'Spell damage',type:'percentBonus'}},
+        manaRegen: {label:'Flat mana regeneration (mana/s)',mode:'add',default:0,display:{label:'Flat mana regeneration per second',type:'flat'}},
+        manaRegenIncrease: {label:'Increased mana regeneration (%)',mode:'add',default:0,display:{label:'Increased mana regeneration',type:'percent'}},
+        manaRegenPercent: {label:'Maximum mana regeneration (%/s)',mode:'add',default:0,display:{label:'Maximum mana regenerated per second',type:'percent'}},
         healthRegen: { label: 'Flat health regeneration (HP/s)', mode: 'add', default: 0, display: {label: 'Flat health regeneration per second', type: 'flat'} },
         healthRegenIncrease: { label: 'Increased health regeneration (%)', mode: 'add', default: 0, display: {label: 'Increased health regeneration', type: 'percent'} },
         healthRegenPercent: { label: 'Maximum health regeneration (%/s)', mode: 'add', default: 0, display: {label: 'Maximum health regenerated per second', type: 'percent'} },
@@ -23,6 +30,7 @@
     });
 
     const statOrder = [
+        'mana','manaMultiplier','manaRegen','manaRegenIncrease','manaRegenPercent','spellDamage','spellDamageMultiplier',
         'health', 'healthMultiplier', 'healthRegen', 'healthRegenIncrease', 'healthRegenPercent', 'maxFury', 'maxFuryMultiplier', 'maxShields', 'maxShieldsMultiplier', 'damage', 'damageMultiplier',
         'accuracy', 'accuracyMultiplier', 'evasion', 'evasionMultiplier',
         'multiHit', 'multiHitMultiplier', 'attackSpeedMultiplier',

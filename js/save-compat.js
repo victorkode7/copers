@@ -18,6 +18,11 @@
             skills:{aliases:{...SkillStatCompat.nodeIdAliases, fireOfTheRighteous:'righteousFire'}, removed:[]},
             items:{aliases:{}, removed:[]}, materials:{aliases:{}, removed:[]},
             maps:{aliases:{}, removed:[]}, worlds:{aliases:{}, removed:[]}
+        },
+        {
+            version:2, description:'Replace Thunderstorm/Thunderbolt with Void Bolt and Saltwater Bolt with Void Volley; retire the Wet debuff.',
+            skills:{aliases:{skillNode4:'voidBolt',thunderstorm:'voidBolt',thunderbolt:'voidBolt',thunderBolt:'voidBolt',saltWaterBolt:'voidVolley'},removed:[]},
+            removedMonsterFields:['wetRemaining']
         }
     ]);
     const reports = new WeakMap();
@@ -110,7 +115,7 @@
     function migrate(saved, context, migrations = contentMigrations) {
         assertCollections(saved);
         for (const [key,value] of Object.entries({furyStacks:0,furyRemaining:0,furyDecaying:false,shieldStacks:0,
-            attackTimer:0,monsterColumns:1,pendingEruptions:[],combatPaused:false,lootLog:[]})) {
+            attackTimer:0,monsterColumns:1,pendingEruptions:[],pendingVoidMissiles:[],combatPaused:false,lootLog:[],voidCharges:0})) {
             if (saved[key] === undefined) saved[key] = value;
         }
         if (saved.currentView === undefined) saved.currentView = saved.isInTown === false ? 'map' : 'town';
@@ -187,8 +192,11 @@
             saved.selectedWorld=world.id;
             saved.selectedMap=world.mapIds.includes(remembered) && saved.unlockedMapIds.includes(remembered) ? remembered : world.mapIds.filter(id => saved.unlockedMapIds.includes(id)).at(-1) || world.mapIds[0];
             saved.enemyHp=context.maps[saved.selectedMap].health;saved.enemyRespawnRemaining=0;
-            saved.monsterStates=[];saved.pendingEruptions=[];saved.targetMonsterId=null;saved.attackTimer=0;
+            saved.monsterStates=[];saved.pendingEruptions=[];saved.pendingVoidMissiles=[];saved.targetMonsterId=null;saved.attackTimer=0;
             report.destinationChanged=true;
+        }
+        for (const migration of migrations) for (const field of migration.removedMonsterFields || []) {
+            if (Array.isArray(saved.monsterStates)) saved.monsterStates.forEach(monster => {if(record(monster))delete monster[field];});
         }
         saved.version=version;saved.contentMigrationVersion=migrations.at(-1)?.version || 0;
         reports.set(saved,report);return saved;

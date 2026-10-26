@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/nav.css">
     <link rel="stylesheet" href="css/app-nav.css">
-    <link rel="stylesheet" href="css/game.css?v=20261026-4">
+    <link rel="stylesheet" href="css/game.css?v=20261026-11">
     <link rel="stylesheet" href="css/equipment-effects.css?v=1">
     <link rel="stylesheet" href="css/world-game.css?v=33">
     <link rel="stylesheet" href="css/skill-tree-background.css?v=20261021-18">
@@ -78,7 +78,8 @@
                       <h3 id="damageStatsHeading">Damage stats</h3>
                       <div class="stat-list">
                           <div class="combat-stat"><span>Damage</span><strong id="damageDisplay">2</strong></div>
-                          <div class="combat-stat"><span title="Number of monsters hit with each attack">Multi-hit</span><strong id="multiHitDisplay">1</strong></div>
+                          <div class="combat-stat"><span>Spell damage</span><strong id="spellDamageDisplay">0</strong></div>
+                          <div class="combat-stat"><span title="Number of monsters hit with each attack or Void Bolt cast">Multi-hit</span><strong id="multiHitDisplay">1</strong></div>
                           <div class="combat-stat"><span title="Combined attack speed bonus from equipment, skills, and upgrades. Bonuses multiply together, before the attack-speed limit.">Attack speed</span><strong id="speedDisplay">+0%</strong></div>
                           <div class="combat-stat"><span>Accuracy</span><strong id="accuracyDisplay">100</strong></div>
                       </div>
@@ -89,9 +90,14 @@
                       <div class="combat-stat"><span title="Total maximum health after flat bonuses and maximum-health multipliers.">Max HP</span><strong id="maxHealthDisplay">100</strong></div>
                       <div class="combat-stat"><span title="Health restored each second while alive, including offline progress.">Health regen</span><strong id="healthRegenDisplay">0 HP/s</strong></div>
                   </section>
+                  <section class="combat-stat-group" aria-labelledby="manaStatsHeading">
+                      <h3 id="manaStatsHeading">Mana</h3>
+                      <div class="combat-stat"><span>Maximum mana</span><strong id="maxManaDisplay">0</strong></div>
+                      <div class="combat-stat"><span>Mana regen</span><strong id="manaRegenDisplay">0 mana/s</strong></div>
+                  </section>
                   <section class="combat-stat-group" aria-labelledby="miscStatsHeading">
                       <h3 id="miscStatsHeading">Misc stats</h3>
-                      <div class="combat-stat"><span title="Chance to apply a poison stack on each successful hit">Poison chance</span><strong id="poisonChanceDisplay">0%</strong></div>
+                      <div class="combat-stat"><span title="Chance to apply poison on each successful attack or direct ability hit, including single-target and AOE abilities. DOT ticks cannot apply poison.">Poison chance</span><strong id="poisonChanceDisplay">0%</strong></div>
                       <div class="combat-stat"><span title="Chance to add Bleed on basic attacks, multihits, and single-target ability hits">Bleed chance</span><strong id="bleedChanceDisplay">0%</strong></div>
                       <div class="combat-stat"><span title="Each Fury stack grants 2% damage. Successful non-DOT hits add a stack and 0.1 seconds to the shared timer, capped at 0.1 seconds per stack. When time runs out, lose one stack every 0.5 seconds.">Maximum fury</span><strong id="maxFuryDisplay">0</strong></div>
                   </section>
@@ -133,6 +139,12 @@
                             <div id="combatStatus" class="combat-status is-fighting" role="status">
                                 <span id="combatStatusLabel">Auto-battling</span>
                                 <button id="resumeCombat" class="action-button resume-button" type="button" hidden>Revive</button>
+                            </div>
+                        </div>
+                        <div id="playerMana" class="player-mana" hidden>
+                            <div class="health-heading"><strong>Mana</strong><span id="playerManaText">0 / 0 Mana</span></div>
+                            <div id="playerManaTrack" class="health-track player-mana-track" role="progressbar" aria-label="Player mana" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
+                                <div id="playerManaBar" class="health-fill player-mana-fill"></div>
                             </div>
                         </div>
                         <section class="combat-buffs" aria-label="Active buffs">
@@ -298,22 +310,23 @@
     <p id="profileStatus" class="profile-status" role="status" aria-live="polite" hidden></p>
     <footer class="developer-options"><details><summary>Developer options</summary><label><input id="developerItems" type="checkbox"> Enable developer equipment</label><label><input id="developerTravel" type="checkbox"> Skip kill requirements — unlock all maps and worlds</label></details></footer>
     <script src="js/items.js?v=20261021-2"></script>
-    <script src="js/item-system.js?v=20261026-1"></script>
-    <script src="js/skill-tree.js?v=20261026-9"></script>
-    <script src="js/skill-stat-compat.js?v=20261026-5"></script>
-    <script src="js/skill-descriptions.js?v=20261026-6"></script>
+    <script src="js/item-system.js?v=20261026-2"></script>
+    <script src="js/skill-tree.js?v=20261026-11"></script>
+    <script src="js/skill-stat-compat.js?v=20261026-7"></script>
+    <script src="js/skill-descriptions.js?v=20261026-8"></script>
     <script src="js/skill-sprites.js?v=20261021-13"></script>
     <script src="js/equipment-effects.js?v=1"></script>
-    <script src="js/world-content.js?v=20261024-2"></script>
-    <script src="js/world-system.js?v=20261025-1"></script>
+    <script src="js/world-content.js?v=20261026-1"></script>
+    <script src="js/world-system.js?v=20261026-1"></script>
     <script src="js/loot-effects.js?v=6"></script>
-    <script src="js/arrow-skills.js?v=20261026-1"></script>
-    <script src="js/eruption-skills.js?v=20261026-1"></script>
+    <script src="js/arrow-skills.js?v=20261026-2"></script>
+    <script src="js/eruption-skills.js?v=20261026-2"></script>
     <script src="js/shield-effects.js?v=20261026-2"></script>
     <script src="js/bleed.js?v=20261026-5"></script>
-    <script src="js/damage-breakdown.js?v=20261026-2"></script>
-    <script src="js/save-compat.js?v=20261026-1"></script>
-    <script src="js/game.js?v=20261026-12"></script>
+    <script src="js/spell-skills.js?v=20261026-8"></script>
+    <script src="js/damage-breakdown.js?v=20261026-4"></script>
+    <script src="js/save-compat.js?v=20261026-3"></script>
+    <script src="js/game.js?v=20261026-18"></script>
     <script src="js/game-profiles.js?v=20261026-1"></script>
     <script src="js/offline-play.js?v=20261025-1"></script>
 </body>

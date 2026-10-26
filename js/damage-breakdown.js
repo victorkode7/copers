@@ -5,7 +5,8 @@ const damageBreakdownStyles = Object.freeze({
     burning:['Burning', '#ff9459'], shieldSlam:['Shield Slam', '#b3e9ff'],
     overflowingSlam:['Overflowing Slam', '#e6ca86'], shockwaveSlash:['Shockwave Slash', '#67d7c6'],
     volcanicEruption:['Volcanic Eruption', '#eea04f'], piercingArrow:['Piercing Arrow', '#e8efff'],
-    forkingArrow:['Forking Arrow', '#88b5ff'], multiShot:['Multishot', '#c2a5ee']
+    forkingArrow:['Forking Arrow', '#88b5ff'], multiShot:['Multishot', '#c2a5ee'],
+    voidBolt:['Void Bolt','#b99aff'],voidVolley:['Void Volley','#e49aff']
 });
 const damageBreakdownViews = new Map();
 let renderedDamageBreakdownRevision = -1;

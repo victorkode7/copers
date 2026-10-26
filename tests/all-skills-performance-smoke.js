@@ -1,6 +1,7 @@
 // Run with tests/run-equipment-smoke.ps1 -TestScript tests/all-skills-performance-smoke.js -TimeoutSeconds 120.
-// Fixed digests include 93 allocatable nodes, cleaned IDs, Bleederer, Deep Wounds, Singled Off, Fury,
-// Fire of the Righteous, and the shield skills. Intentional tree or
+// Fixed digests include 102 allocatable nodes, cleaned IDs, Bleederer, Deep Wounds, Singled Off, Fury,
+// Fire of the Righteous, shield skills, mana, Void Bolt and travelling Void Volley missiles
+// (including Poison on spell hits). Intentional tree or
 // combat balance changes require reviewing and updating the reference outcomes.
 (function () {
     const checks = [], originalRandom = Math.random, originalStats = itemById.testAmulet.stats;
@@ -9,15 +10,17 @@
     let visibleArrows = 0, visibleCracks = 0, advancedSteps = 0;
     const check = (label, ok) => { checks.push((ok ? 'PASS ' : 'FAIL ') + label); if (!ok) throw new Error(label); };
     const median = values => values.sort((a, b) => a - b)[Math.floor(values.length / 2)];
-    const snapshot = () => JSON.stringify({hp:state.playerHp,paused:state.combatPaused,attack:state.attackTimer,monsters:state.monsterStates,pending:state.pendingEruptions,kills:state.kills,gold:state.gold,materials:state.materials,level:state.level,xp:state.experience,target:state.targetMonsterId,loot:state.lootLog,fury:state.furyStacks,furyTime:state.furyRemaining,shields:state.shieldStacks});
+    const snapshot = () => JSON.stringify({hp:state.playerHp,mana:state.playerMana,voidCharges:state.voidCharges,missiles:state.pendingVoidMissiles,paused:state.combatPaused,attack:state.attackTimer,monsters:state.monsterStates,pending:state.pendingEruptions,kills:state.kills,gold:state.gold,materials:state.materials,level:state.level,xp:state.experience,target:state.targetMonsterId,loot:state.lootLog,fury:state.furyStacks,furyTime:state.furyRemaining,shields:state.shieldStacks});
     function hash(value) { let result = 2166136261; for (const char of value) result = Math.imul(result ^ char.charCodeAt(0), 16777619); return (result >>> 0).toString(16); }
     function fresh(count, durable = false, stress = false) {
         clearFury();
         state.shieldStacks = 0;
+        state.voidCharges = 0;
         state.skillRanks = {...ranks}; state.level = Object.values(ranks).reduce((sum, rank) => sum + rank, 0); state.skillPoints = 0; state.experience = 0;
         state.upgrades = {strength:0,haste:0,evasion:0}; state.gear = createEmptyGear(); state.gear.necklace = 'testAmulet'; state.ownedItemIds = ['testAmulet']; state.crafted = [];
         // Sustain eruption self-cost so the benchmark measures ongoing combat, not a dead player.
         itemById.testAmulet.stats = {health:10000,healthRegen:100000,...(stress ? {multiHit:4,attackSpeedMultiplier:4} : {})};
+        state.manaCapacity=getPlayerMaxMana();state.playerMana=state.manaCapacity;
         state.kills = Object.fromEntries(mapData.map(entry => [entry.id, 0])); state.materials = Object.fromEntries(Object.keys(materialNames).map(id => [id, 0]));
         state.gold = 0; state.lootLog = []; state.lastLoot = null; state.tutorials = createTutorialState();
         state.selectedMap = map.id; state.selectedWorld = worldForMap(map.id).id; state.currentView = 'map'; state.isInTown = false;
@@ -58,11 +61,11 @@
     try {
         fresh(64);
         check('every allocatable skill node is maxed', skillNodes.every(node => node.start || getSkillNodeRank(node.id) === node.maxRank));
-        checks.push('BUILD ' + JSON.stringify({nodes:Object.keys(ranks).length,level:state.level,damage:getDamage(),attackInterval:getAttackSpeed(),multiHit:getMultiHit(),poisonChance:getPoisonChance(),chains:getMaxEruptionChains()}));
+        checks.push('BUILD ' + JSON.stringify({nodes:Object.keys(ranks).length,level:state.level,damage:getDamage(),spellDamage:getSpellDamage(),mana:getPlayerMaxMana(),manaRegen:getPlayerManaRegen(),attackInterval:getAttackSpeed(),multiHit:getMultiHit(),poisonChance:getPoisonChance(),chains:getMaxEruptionChains()}));
         // The extreme multi-hit build can kill itself through stacked eruption
         // costs while Fire caps healing at 30% HP. Stop timing at death so the
         // benchmark never reports idle simulation as fast combat.
-        const scenarios = [{count:9,digest:'4b61c8ad'},{count:64,digest:'ee8b92ca'},{count:128,digest:'35c66775'},{count:64,durable:true,digest:'c3050a2c'},{count:64,durable:true,stress:true,digest:'f1326294'}];
+        const scenarios = [{count:9,digest:'c66621d9'},{count:64,digest:'d880dd88'},{count:128,digest:'d471f033'},{count:64,durable:true,digest:'b31aae6e'},{count:64,durable:true,stress:true,digest:'40f56db7'}];
         for (const scenario of scenarios) {
             const times = []; let reference;
             for (let run = 0; run < 4; run++) {

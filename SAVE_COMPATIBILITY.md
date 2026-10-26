@@ -45,6 +45,15 @@ when the editor changes a tree without a release version bump.
   unlocked map and resets its encounter, leaving character progression intact.
 - Earned map/world unlocks are stored independently of current kill requirements.
   Older profiles infer unlocks from kills and non-developer visited destinations.
+- Content migration 2 replaces Thunderstorm (including historical Thunderbolt
+  and `skillNode4` IDs) with Void Bolt, and Saltwater Bolt with Void Volley.
+  Allocations, connections and spent points move to the replacements. The retired
+  Wet debuff is explicitly removed from saved monsters. Void Charges default to
+  zero and persist in subsequent saves; unrelated progression is retained.
+- Travelling Void Volley missiles retain their snapshotted damage, destination
+  and remaining travel time across saves/imports and offline progress. Older
+  profiles default to an empty missile queue. Invalid missile records reject
+  loading through the existing recovery flow; changing maps clears the queue.
 
 ## Recovery
 

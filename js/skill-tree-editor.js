@@ -3,6 +3,7 @@
     const draftKey = 'idleAdventureSkillEditorDraft';
 
     const statNames = [
+        'mana','manaMultiplier','spellDamage','spellDamageMultiplier','manaRegen','manaRegenIncrease','manaRegenPercent',
         'damage',
         'evasion',
         'goldBonus', 'goldBonusMultiplier', 'attackSpeedMultiplier', 'attackSpeedBonus', 'attackSpeedPerLevel', 'health', 'healthMultiplier', 'accuracy', 'accuracyMultiplier', 'damageMultiplier', 'evasionMultiplier', 'multiHit', 'multiHitMultiplier',
@@ -44,8 +45,13 @@
             stats: { damage: 1 }
         }
     };
-    const nodeTypes = ['health', 'attackSpeed', 'accuracy', 'damage'];
+    const nodeTypes = ['health', 'attackSpeed', 'accuracy', 'damage','mana'];
     const bonusStats = [
+        {id:'mana',label:'Maximum mana',additive:'mana',multiplier:'manaMultiplier'},
+        {id:'spellDamage',label:'Spell damage',additive:'spellDamage',multiplier:'spellDamageMultiplier'},
+        {id:'manaRegen',label:'Flat mana regeneration (mana/s)',additive:'manaRegen'},
+        {id:'manaRegenIncrease',label:'Increased mana regeneration (%)',additive:'manaRegenIncrease'},
+        {id:'manaRegenPercent',label:'Maximum mana regeneration (%/s)',additive:'manaRegenPercent'},
         { id: 'damage', label: 'Damage', additive: 'damage', multiplier: 'damageMultiplier' },
         { id: 'health', label: 'Maximum health', additive: 'health', multiplier: 'healthMultiplier' },
         { id: 'healthRegen', label: 'Flat health regeneration (HP/s)', additive: 'healthRegen' },
@@ -690,7 +696,7 @@
                 issues.push({ type: 'error', message: label + ': size must be 1, 1.25, or 1.5.' });
             }
             if (node.type !== undefined && node.type !== null && !nodeTypes.includes(node.type)) {
-                issues.push({ type: 'error', message: label + ': base node color must be health, attackSpeed, accuracy, or damage.' });
+                issues.push({ type: 'error', message: label + ': base node color must be health, attackSpeed, accuracy, damage, or mana.' });
             }
             if (node.abilityTargeting !== undefined && node.abilityTargeting !== null &&
                 !['singleTarget', 'aoe'].includes(node.abilityTargeting)) {

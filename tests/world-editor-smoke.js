@@ -23,6 +23,7 @@
         if (savedPhase) {
             check('selected monster and search resume after reload', $('entryId').value === savedPhase.monsterId && $('entryName').value === 'Test Blob' && $('search').value === 'Test');
             check('monster numerical edits survive reload', $('monster-health').value === '77');
+            check('monster damage elements survive reload', $('monster-element').value === 'fire');
             await until(() => document.querySelector('.image-choice img')?.src.startsWith('blob:'));
             check('imported sprites return from browser storage', document.querySelector('.image-choice img').src.startsWith('blob:'));
             check('world background image also persists', draft().assets.some(asset => asset.kind === 'background' && asset.path.includes('area-')));
@@ -38,8 +39,10 @@
             $('undo').click();
             check('undo restores map identity and progression list', $('entryId').value === mapId && draft().maps.length === window.adventureWorld.maps.length);
             $('addSpawn').click(); input($('spawn-1-count'), '2'); input($('override-1-health'), '123');
+            select($('override-1-element'),'fire');
             const placed = WorldContent.definitions(draft(), draft().maps.find(map => map.id === mapId));
             check('spawn counts and per-placement overrides are independent', placed.length === 3 && placed.filter(monster => monster.health === 123).length === 2 && placed[0].health !== 123);
+            check('placements can override inherited damage elements',placed.filter(monster=>monster.element==='fire').length===2);
             tab('worlds'); $('moveDown').click();
             check('world order is editable', draft().worlds[1].id === window.adventureWorld.worlds[0].id);
             $('undo').click();
@@ -49,6 +52,7 @@
             await until(() => !$('assetDialog').open);
             check('world background import creates a reusable library image', draft().worlds[0].background.sprite.startsWith('assets/backgrounds/area-') && draft().assets.some(asset => asset.kind === 'background' && asset.name === 'area'));
             tab('maps');
+            select($('backgroundMode'),'inherit');
             check('maps inherit the world background', $('backgroundMode').value === 'inherit' && document.querySelector('.background-preview').style.backgroundImage.includes('blob:'));
             select($('backgroundMode'), 'custom'); document.querySelector('.image-choice button').click();
             [...$('assetLibrary').querySelectorAll('button')].find(button => button.textContent === 'area').click();
@@ -57,6 +61,7 @@
             select($('backgroundMode'), 'inherit');
             tab('monsters'); const monsterId = $('entryId').value;
             input($('entryName'), 'Test Blob'); input($('monster-health'), '77');
+            select($('monster-element'),'fire');
             input($('monster-attackInterval'), '0');
             check('invalid combat values prevent export', $('exportGame').disabled);
             input($('monster-attackInterval'), '2');

@@ -3252,6 +3252,55 @@ html {
 }
 
 .idle-adventure .skill-node.is-base-accuracy .skill-node-icon { color: #78baff; }
+.idle-adventure .skill-node.is-base-mana { border-color:#b99aff; background:linear-gradient(145deg,#3f315e,#162d40); }
+.idle-adventure .skill-node.is-base-mana .skill-node-icon { color:#d2bbff; }
+.idle-adventure .player-mana { width:min(100%,320px); margin-top:.55rem; font-size:.7rem; }
+.idle-adventure .player-mana .health-heading { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+.idle-adventure #playerManaText { white-space:nowrap; font-variant-numeric:tabular-nums; color:#b9d7ff; }
+.idle-adventure .player-mana-track { height:9px; margin-top:.25rem; }
+.idle-adventure .player-mana-fill { background:linear-gradient(90deg,#6074cf,#a39aff); box-shadow:0 0 9px #927fff66; }
+.idle-adventure .combat-buff[data-buff-id="voidCharges"] { border-color:#b99aff; background:radial-gradient(circle,#503071,#172632); color:#dfc7ff; }
+.idle-adventure .combat-buff[data-buff-id="voidCharges"] .buff-stacks { color:#f0ddff; }
+.idle-adventure .combat-buff[data-buff-id="voidCharges"].is-proccing { z-index:2; pointer-events:none; animation:void-buff-release 650ms ease-out both; }
+@keyframes void-buff-release {
+    0% { opacity:1; transform:scale(1); box-shadow:0 0 7px #c178ff; }
+    25% { opacity:1; transform:scale(1.12); filter:brightness(1.8); box-shadow:0 0 9px #f7ddff,0 0 24px #bb65ff; }
+    100% { opacity:0; transform:scale(1.2); filter:brightness(1); box-shadow:0 0 3px #bc70ff00; }
+}
+@media (prefers-reduced-motion:reduce) {
+    .idle-adventure .combat-buff[data-buff-id="voidCharges"].is-proccing { animation-name:void-buff-release-reduced; }
+}
+@keyframes void-buff-release-reduced {
+    0%,25% { opacity:1; box-shadow:0 0 9px #f7ddff,0 0 24px #bb65ff; }
+    100% { opacity:0; box-shadow:0 0 3px #bc70ff00; }
+}
+.idle-adventure .void-volley-player-glow {
+    position:absolute; inset:-2px; z-index:3; border:1px solid #e3b5ff;
+    border-radius:inherit; pointer-events:none;
+    background:radial-gradient(ellipse at 50% 100%,#ad50f522,transparent 75%);
+    box-shadow:inset 0 0 10px #c178ff66,0 0 9px #f7ddff,0 0 24px #bb65ff;
+}
+.idle-adventure .void-volley-player-glow.is-releasing {
+    animation:void-volley-player-release 160ms ease-out var(--void-volley-glow-hold,0ms) both,
+        void-volley-player-charge var(--void-volley-glow-windup,0ms) ease-in both;
+}
+@keyframes void-volley-player-release { from {opacity:1;} to {opacity:0;} }
+@keyframes void-volley-player-charge { from {filter:opacity(.25);} 75% {filter:opacity(.4);} to {filter:opacity(1);} }
+.idle-adventure .spell-effect { position:absolute; inset:0; width:100%; height:100%; overflow:hidden; pointer-events:none; z-index:7; }
+.idle-adventure .spell-effect path { fill:none; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:.14 1.1; animation:void-projectile-flight 400ms linear both; }
+.idle-adventure .spell-effect circle { fill:none; stroke-width:2; transform-box:fill-box; transform-origin:center; animation:void-impact 450ms ease-out both; }
+.idle-adventure .spell-effect .void-impact { opacity:0; animation-fill-mode:forwards; }
+.idle-adventure .spell-effect .void-missile { fill:#f7d9ff; stroke:#c99aff; stroke-width:1; filter:drop-shadow(0 0 6px #b56cff); animation:void-missile-glow 400ms linear both; }
+.idle-adventure .spell-void-bolt path { stroke:#d9bbff; stroke-width:5; filter:drop-shadow(0 0 6px #9655ff); }
+.idle-adventure .spell-void-bolt circle { stroke:#c39aff; }
+.idle-adventure .spell-void-volley path { stroke:#f0c2ff; stroke-width:4; filter:drop-shadow(0 0 6px #c15bff); }
+.idle-adventure .spell-void-volley circle { stroke:#e39aff; }
+@keyframes void-projectile-flight { from {stroke-dashoffset:.14;opacity:0;} 8%,99% {opacity:1;} to {stroke-dashoffset:-.86;opacity:0;} }
+@keyframes void-impact { from {transform:scale(.55);opacity:1;} to {transform:scale(1.8);opacity:0;} }
+@keyframes void-missile-glow { from {opacity:0;} 8%,90% {opacity:1;} to {opacity:0;} }
+@media (prefers-reduced-motion:reduce) { .idle-adventure .spell-effect path { opacity:0;animation:void-contact-flash 180ms ease-out forwards;stroke-dasharray:none; } .idle-adventure .spell-effect .void-impact { animation:void-contact-flash 180ms ease-out forwards; } }
+@keyframes void-contact-flash { from {opacity:1;} to {opacity:0;} }
+@media (prefers-reduced-motion:reduce) { .idle-adventure .spell-effect .void-missile { display:none; } }
 
 .idle-adventure .skill-node.is-base-damage,
 .idle-adventure .skill-node.is-origin.is-base-damage {

@@ -27,7 +27,6 @@ function detonateEruption(center, damage) {
     showVolcanicEruption(center.id, targets.map(monster => monster.id));
     targets.forEach(monster => {
         applyDamageToMonster(monster, damage * eruptionSkillSettings.damageMultiplier, 'physical', 'volcanicEruption');
-        tryApplyPoison(monster);
     });
 }
 

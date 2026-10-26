@@ -502,7 +502,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_7febce5ed2e4d886cc363ea2",
                     "monsterId": "monster_365f8e73c6121c5189836468",
-                    "count": 50,
+                    "count": 21,
                     "overrides": {}
                 }
             ]
@@ -680,6 +680,7 @@ window.adventureWorld = {
         {
             "id": "cinderPaddockMonster",
             "name": "Cindersnake",
+            "element": "fire",
             "sprite": "assets/monsters/lavasnake_96px-a53213be.png",
             "health": 110,
             "respawnSeconds": 5,

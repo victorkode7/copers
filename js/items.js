@@ -504,17 +504,17 @@ window.adventureItems = {
         },
         {
             "id": "item_9e83e3705d8ed822691e528bb795a64c",
-            "name": "Admin Ring Copy",
+            "name": "testing ring",
             "slot": "ring",
             "rarity": "unique",
-            "description": "The ring to rule them all!\nDeveloper equipment.",
+            "description": "Test \"regular w2 stats\"\nDeveloper equipment.",
             "sprite": "",
             "developerOnly": true,
             "stats": {
-                "accuracy": 9999999,
-                "evasionMultiplier": 100000.99,
-                "minimumEnemyHitChance": 0,
-                "healthRegen": 999999
+                "accuracy": 50,
+                "damage": 60,
+                "attackSpeedMultiplier": 1.25,
+                "evasion": 120
             },
             "recipe": null
         }

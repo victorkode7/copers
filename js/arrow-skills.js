@@ -81,7 +81,6 @@ function shootAbilityArrow(targets, damage, kind, direction = 0) {
         }
         if (shot.kind === 'multiShot') showMonsterHitBadge(target.id, 'MULTISHOT');
         applyDamageToMonster(target, damage, 'physical', shot.kind);
-        tryApplyPoison(target);
         applyArrowFreeze(target);
         // Only Multishot's original arrow rolls attack procs. Generated arrows
         // still poison, freeze and fork, but cannot recursively cast Multishot.

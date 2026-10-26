@@ -20,6 +20,7 @@
     URL.createObjectURL = blob => { const url = originalObjectUrl(blob); blobs.set(url, blob); return url; };
     HTMLAnchorElement.prototype.click = function() { downloads.push({name: this.download, blob: blobs.get(this.href)}); };
     try {
+        check('mana and spell stats include editable definitions and help',['mana','manaMultiplier','spellDamage','spellDamageMultiplier','manaRegen','manaRegenIncrease','manaRegenPercent'].every(id=>Equipment.stats[id]&&ItemStatGuides.get(id)?.formula));
         const initialCount = count();
         check('drop controls reserved for future map editor', !$('addDrop') && !$('dropRows'));
         check('editor loads catalogue', initialCount === window.adventureItems.items.length && !$('exportGame').disabled);

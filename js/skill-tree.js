@@ -971,7 +971,7 @@ window.adventureSkillTree = {
                 "accuracyNode14"
             ],
             "requiresMode": "all",
-            "column": 2,
+            "column": 0,
             "row": -6,
             "maxRank": 1,
             "stats": {
@@ -993,7 +993,7 @@ window.adventureSkillTree = {
                 "volcanicEruption"
             ],
             "requiresMode": "all",
-            "column": 2,
+            "column": 0,
             "row": -7,
             "maxRank": 1,
             "stats": {
@@ -1036,7 +1036,7 @@ window.adventureSkillTree = {
                 "eruptionChain"
             ],
             "requiresMode": "all",
-            "column": 2,
+            "column": 0,
             "row": -8,
             "maxRank": 1,
             "stats": {
@@ -1057,7 +1057,7 @@ window.adventureSkillTree = {
                 "eruptionChain"
             ],
             "requiresMode": "all",
-            "column": 3,
+            "column": 1,
             "row": -7,
             "maxRank": 1,
             "stats": {
@@ -1493,8 +1493,8 @@ window.adventureSkillTree = {
             "effect": "Bleed: 50% hit damage/s.\nKeeps your 3 strongest stacks.",
             "requires": [],
             "requiresMode": "all",
-            "column": -7,
-            "row": -4,
+            "column": -6,
+            "row": -5,
             "maxRank": 1,
             "stats": {},
             "size": 1.25,
@@ -1627,46 +1627,6 @@ window.adventureSkillTree = {
             "requiresMode": "all",
             "column": -7,
             "row": -1,
-            "maxRank": 1,
-            "stats": {
-                "bleedChance": 0.1
-            },
-            "size": 1.25,
-            "start": false,
-            "customDescription": false,
-            "sprite": "",
-            "type": "health",
-            "abilityTargeting": null
-        },
-        {
-            "id": "bleedChance3",
-            "name": "Bleed Chance",
-            "icon": "🩸",
-            "effect": "+10% bleed chance",
-            "requires": [],
-            "requiresMode": "all",
-            "column": -10,
-            "row": -3,
-            "maxRank": 1,
-            "stats": {
-                "bleedChance": 0.1
-            },
-            "size": 1.25,
-            "start": false,
-            "customDescription": false,
-            "sprite": "",
-            "type": "health",
-            "abilityTargeting": null
-        },
-        {
-            "id": "bleedChance4",
-            "name": "Bleed Chance",
-            "icon": "🩸",
-            "effect": "+10% bleed chance",
-            "requires": [],
-            "requiresMode": "all",
-            "column": -10,
-            "row": -4,
             "maxRank": 1,
             "stats": {
                 "bleedChance": 0.1
@@ -1858,7 +1818,7 @@ window.adventureSkillTree = {
                 "accuracy": 5
             },
             "size": 1,
-            "column": 1,
+            "column": 0,
             "row": -4,
             "maxRank": 1,
             "requires": [
@@ -1974,6 +1934,284 @@ window.adventureSkillTree = {
             "sprite": "",
             "size": 1,
             "abilityTargeting": null
+        },
+        {
+            "id": "accuracyNode15",
+            "name": "Accuracy",
+            "icon": "◎",
+            "effect": "+5 accuracy",
+            "type": "accuracy",
+            "stats": {
+                "accuracy": 5
+            },
+            "size": 1,
+            "column": 5,
+            "row": -2,
+            "maxRank": 1,
+            "requires": [
+                "attackSpeedNode2"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false
+        },
+        {
+            "id": "accuracyNode16",
+            "name": "Accuracy",
+            "icon": "◎",
+            "effect": "+5 accuracy",
+            "type": "accuracy",
+            "stats": {
+                "accuracy": 5
+            },
+            "size": 1,
+            "column": 5,
+            "row": -4,
+            "maxRank": 1,
+            "requires": [
+                "accuracyNode15"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false
+        },
+        {
+            "id": "baseMana1",
+            "name": "Mana Reserve",
+            "icon": "✦",
+            "effect": "+100 maximum mana",
+            "requires": [
+                "accuracyNode16"
+            ],
+            "requiresMode": "all",
+            "column": 5,
+            "row": -6,
+            "maxRank": 1,
+            "stats": {
+                "mana": 100
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null,
+            "type": "mana"
+        },
+        {
+            "id": "baseSpellDamage1",
+            "name": "Arcane Power",
+            "icon": "✦",
+            "effect": "+10 spell damage",
+            "requires": [
+                "baseMana1"
+            ],
+            "requiresMode": "all",
+            "column": 6,
+            "row": -6,
+            "maxRank": 1,
+            "stats": {
+                "spellDamage": 10
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null,
+            "type": "mana"
+        },
+        {
+            "id": "multiSpellDamage1",
+            "name": "Spell Amplification",
+            "icon": "✦",
+            "effect": "+20% spell damage",
+            "requires": [
+                "baseSpellDamage1"
+            ],
+            "requiresMode": "all",
+            "column": 7,
+            "row": -6,
+            "maxRank": 1,
+            "stats": {
+                "spellDamageMultiplier": 1.2
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null,
+            "type": "mana"
+        },
+        {
+            "id": "voidBolt",
+            "name": "Void Bolt",
+            "icon": "◈",
+            "effect": "On attack: 100% spell damage to your target, affected by multihit.\nGain 1 Void Charge per hit. Costs 5 mana per cast.",
+            "requires": [
+                "multiSpellDamage1"
+            ],
+            "requiresMode": "all",
+            "column": 8,
+            "row": -6,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1.5,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "abilityTargeting": "singleTarget",
+            "type": "mana"
+        },
+        {
+            "id": "voidVolley",
+            "name": "Void Volley",
+            "icon": "✺",
+            "effect": "At 5 Void Charges, consume them to fire 10 missiles at random enemies.\nEach deals 100% spell damage. Costs 10 mana per volley.",
+            "requires": [
+                "voidBolt"
+            ],
+            "requiresMode": "all",
+            "column": 8,
+            "row": -7,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "abilityTargeting": "aoe",
+            "type": "mana"
+        },
+        {
+            "id": "baseManaRegen",
+            "name": "Mana Regeneration",
+            "icon": "✦",
+            "effect": "+10 flat mana regeneration per second",
+            "requires": [
+                "baseMana1"
+            ],
+            "requiresMode": "all",
+            "column": 5,
+            "row": -7,
+            "maxRank": 1,
+            "stats": {
+                "manaRegen": 10
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null,
+            "type": "mana"
+        },
+        {
+            "id": "multiManaRegen",
+            "name": "Flowing Mana",
+            "icon": "✦",
+            "effect": "+25% increased mana regeneration",
+            "requires": [
+                "baseManaRegen"
+            ],
+            "requiresMode": "all",
+            "column": 6,
+            "row": -7,
+            "maxRank": 1,
+            "stats": {
+                "manaRegenIncrease": 0.25
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null,
+            "type": "mana"
+        },
+        {
+            "id": "multMana1",
+            "name": "Expanded Reserves",
+            "icon": "✦",
+            "effect": "+25% maximum mana",
+            "requires": [
+                "baseMana1"
+            ],
+            "requiresMode": "all",
+            "column": 4,
+            "row": -7,
+            "maxRank": 1,
+            "stats": {
+                "manaMultiplier": 1.25
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null,
+            "type": "mana"
+        },
+        {
+            "id": "maxManaRegen",
+            "name": "Deep Wells",
+            "icon": "✦",
+            "effect": "+5% maximum mana regenerated per second",
+            "requires": [
+                "baseManaRegen"
+            ],
+            "requiresMode": "all",
+            "column": 5,
+            "row": -8,
+            "maxRank": 1,
+            "stats": {
+                "manaRegenPercent": 0.05
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null,
+            "type": "mana"
+        },
+        {
+            "id": "spellAmplification",
+            "name": "Spell Amplification",
+            "icon": "✦",
+            "effect": "+100% spell damage",
+            "requires": [
+                "multiSpellDamage1"
+            ],
+            "requiresMode": "all",
+            "column": 7,
+            "row": -5,
+            "maxRank": 1,
+            "stats": {
+                "spellDamageMultiplier": 2
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null,
+            "type": "mana"
+        },
+        {
+            "id": "arcanePower",
+            "name": "Arcane Power",
+            "icon": "✦",
+            "effect": "+50 spell damage",
+            "requires": [
+                "baseSpellDamage1"
+            ],
+            "requiresMode": "all",
+            "column": 6,
+            "row": -5,
+            "maxRank": 1,
+            "stats": {
+                "spellDamage": 50
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null,
+            "type": "mana"
         }
     ],
     "statSchemaVersion": 2,
@@ -1984,5 +2222,170 @@ window.adventureSkillTree = {
     "shieldExpansionSchemaVersion": 1,
     "bleedSchemaVersion": 1,
     "deepWoundsSchemaVersion": 1,
-    "nodeIdSchemaVersion": 1
+    "nodeIdSchemaVersion": 1,
+    "removedNodes": [
+        {
+            "id": "bleedChance3",
+            "name": "Bleed Chance",
+            "reason": "Removed in skill tree editor"
+        },
+        {
+            "id": "bleedChance4",
+            "name": "Bleed Chance",
+            "reason": "Removed in skill tree editor"
+        },
+        {
+            "id": "damageNode10",
+            "name": "Damage",
+            "reason": "Removed in skill tree editor"
+        },
+        {
+            "id": "mana2",
+            "name": "Mana",
+            "reason": "Removed in skill tree editor"
+        },
+        {
+            "id": "spellDamage2",
+            "name": "spell damage",
+            "reason": "Removed in skill tree editor"
+        },
+        {
+            "id": "skillNode5",
+            "name": "New Skill",
+            "reason": "Removed in skill tree editor"
+        }
+    ],
+    "nodeIdAliases": {
+        "skillNode": "baseMana1",
+        "m": "baseMana1",
+        "ma": "baseMana1",
+        "man": "baseMana1",
+        "mana": "baseMana1",
+        "skillNode2": "baseSpellDamage1",
+        "s": "baseSpellDamage1",
+        "sp": "baseSpellDamage1",
+        "spe": "baseSpellDamage1",
+        "spel": "baseSpellDamage1",
+        "spell": "baseSpellDamage1",
+        "spellD": "baseSpellDamage1",
+        "spellDa": "baseSpellDamage1",
+        "spellDam": "baseSpellDamage1",
+        "spellDama": "baseSpellDamage1",
+        "spellDamag": "baseSpellDamage1",
+        "spellDamage": "baseSpellDamage1",
+        "bspellDamage": "baseSpellDamage1",
+        "baspellDamage": "baseSpellDamage1",
+        "basspellDamage": "baseSpellDamage1",
+        "basespellDamage": "baseSpellDamage1",
+        "b": "baseSpellDamage1",
+        "ba": "baseSpellDamage1",
+        "bas": "baseSpellDamage1",
+        "base": "baseSpellDamage1",
+        "baseSope": "baseSpellDamage1",
+        "baseSop": "baseSpellDamage1",
+        "baseSo": "baseSpellDamage1",
+        "baseS": "baseSpellDamage1",
+        "baseSp": "baseSpellDamage1",
+        "baseSpe": "baseSpellDamage1",
+        "baseSpel": "baseSpellDamage1",
+        "baseSpell": "baseSpellDamage1",
+        "baseSpellD": "baseSpellDamage1",
+        "baseSpellDa": "baseSpellDamage1",
+        "baseSpellDamaga": "baseSpellDamage1",
+        "baseSpellDam": "baseSpellDamage1",
+        "baseSpellDama": "baseSpellDamage1",
+        "baseSpellDamag": "baseSpellDamage1",
+        "baseSpellDamage": "baseSpellDamage1",
+        "skillNode3": "multiSpellDamage1",
+        "spellDamageM": "multiSpellDamage1",
+        "spellDamageMu": "multiSpellDamage1",
+        "spellDamageMul": "multiSpellDamage1",
+        "spellDamageMult": "multiSpellDamage1",
+        "spellDamageMulti": "multiSpellDamage1",
+        "spellDamageMulti1": "multiSpellDamage1",
+        "mu": "multiSpellDamage1",
+        "mul": "multiSpellDamage1",
+        "mult": "multiSpellDamage1",
+        "multi": "multiSpellDamage1",
+        "multiS": "multiSpellDamage1",
+        "multiSp": "multiSpellDamage1",
+        "multiSpe": "multiSpellDamage1",
+        "multiSpel": "multiSpellDamage1",
+        "multiSpell": "multiSpellDamage1",
+        "multiSpellD": "multiSpellDamage1",
+        "multiSpellDa": "multiSpellDamage1",
+        "multiSpellDam": "multiSpellDamage1",
+        "multiSpellDama": "multiSpellDamage1",
+        "multiSpellDamag": "multiSpellDamage1",
+        "multiSpellDamage": "multiSpellDamage1",
+        "skillNode6": "saltWaterBolt",
+        "sa": "saltWaterBolt",
+        "sal": "saltWaterBolt",
+        "salt": "saltWaterBolt",
+        "saltW": "saltWaterBolt",
+        "saltWa": "saltWaterBolt",
+        "saltWat": "saltWaterBolt",
+        "saltWate": "saltWaterBolt",
+        "saltWater": "saltWaterBolt",
+        "saltWaterB": "saltWaterBolt",
+        "saltWaterBo": "saltWaterBolt",
+        "saltWaterBol": "saltWaterBolt",
+        "skillNode7": "baseManaRegen",
+        "baseM": "baseManaRegen",
+        "baseMa": "baseManaRegen",
+        "baseMan": "baseManaRegen",
+        "baseMana": "baseManaRegen",
+        "baseManaR": "baseManaRegen",
+        "baseManaRe": "baseManaRegen",
+        "baseManaReg": "baseManaRegen",
+        "baseManaRege": "baseManaRegen",
+        "skillNode8": "multiManaRegen",
+        "M": "multiManaRegen",
+        "Mu": "multiManaRegen",
+        "Mul": "multiManaRegen",
+        "Mult": "multiManaRegen",
+        "Multi": "multiManaRegen",
+        "multiM": "multiManaRegen",
+        "multiMa": "multiManaRegen",
+        "multiMan": "multiManaRegen",
+        "multiMana": "multiManaRegen",
+        "multiManaR": "multiManaRegen",
+        "multiManaRe": "multiManaRegen",
+        "multiManaReg": "multiManaRegen",
+        "multiManaRege": "multiManaRegen",
+        "skillNode9": "multMana1",
+        "incr": "multMana1",
+        "inc": "multMana1",
+        "in": "multMana1",
+        "i": "multMana1",
+        "I": "multMana1",
+        "In": "multMana1",
+        "Inc": "multMana1",
+        "Incr": "multMana1",
+        "Incre": "multMana1",
+        "Increa": "multMana1",
+        "Increas": "multMana1",
+        "Increase": "multMana1",
+        "multM": "multMana1",
+        "multMa": "multMana1",
+        "multMan": "multMana1",
+        "mana1": "baseMana1",
+        "bmana1": "baseMana1",
+        "bamana1": "baseMana1",
+        "basmana1": "baseMana1",
+        "basemana1": "baseMana1",
+        "baseana1": "baseMana1",
+        "multMana": "multMana1",
+        "skillNode10": "maxManaRegen",
+        "max": "maxManaRegen",
+        "maxM": "maxManaRegen",
+        "maxMa": "maxManaRegen",
+        "maxMan": "maxManaRegen",
+        "maxMana": "maxManaRegen",
+        "maxManaR": "maxManaRegen",
+        "maxManaRe": "maxManaRegen",
+        "maxManaReg": "maxManaRegen",
+        "maxManaRege": "maxManaRegen"
+    },
+    "spellSchemaVersion": 2
 };

@@ -1,6 +1,11 @@
 (function() {
     'use strict';
     const definitions = {
+        mana:{affects:'Maximum mana available for attack-triggered spells.',formula:'Maximum mana = (flat skill mana + flat equipment mana) × skill multipliers × equipment multipliers',notes:'Starts at 0. The first mana reserve starts full. Mana is shared by all spells and persists through saves and map changes.',example:100},
+        spellDamage:{affects:'Damage dealt by spells, independently of physical attack damage.',formula:'Spell damage = (flat skill spell damage + flat equipment spell damage) × skill multipliers × equipment multipliers × Fury damage bonus',notes:'Starts at 0. Spell hits build Fury. AOE spells cannot apply Bleed or trigger attack skills.',example:10},
+        manaRegen:{affects:'Mana restored each second while alive, including offline combat.',formula:'Mana/s = (flat regeneration + maximum mana × maximum-mana regeneration rate) × max(0, 1 + increased regeneration)',notes:'Starts at 0 and stops at maximum mana. Does not revive the character.',example:10},
+        manaRegenIncrease:{affects:'All mana regeneration, including regeneration based on maximum mana.',formula:'Mana/s = (flat regeneration + maximum mana × maximum-mana regeneration rate) × max(0, 1 + increased regeneration)',notes:'Increased regeneration adds together. It does not generate mana regeneration on its own.',example:.25},
+        manaRegenPercent:{affects:'Mana regeneration based on maximum mana.',formula:'Mana/s = (flat regeneration + maximum mana × maximum-mana regeneration rate) × max(0, 1 + increased regeneration)',notes:'At 5% per second, 100 maximum mana adds 5 mana/s before increased regeneration.',example:.05},
         damage: {
             affects: 'Physical damage dealt by each successful hit.',
             formula: 'Damage = (2 + Strength × 2 + flat item bonuses + flat skill bonuses) × item multipliers × skill multipliers',
@@ -47,9 +52,9 @@
             notes: 'Enemy hit chance (%) = enemy accuracy − Evasion, normally limited to 5–95%. Evasion is rounded and cannot be negative.', example: 10
         },
         multiHit: {
-            affects: 'The number of living enemies targeted by each attack.',
+            affects: 'The number of living enemies targeted by each attack or Void Bolt cast.',
             formula: 'Multi-hit = (1 + flat item bonuses + flat skill bonuses) × item multipliers × skill multipliers',
-            notes: 'Minimum 1; rounded to two decimals. A final value of 1.25 hits one target and has a 25% chance to target a second. It cannot hit more enemies than are alive.', example: 1
+            notes: 'Minimum 1; rounded to two decimals. A final value of 1.25 hits one target and has a 25% chance to target a second. It cannot hit more enemies than are alive. Extra Void Bolt targets grant their own charges without increasing the 5 mana cast cost.', example: 1
         },
         bleedDamage: {
             affects: 'Damage each Bleed application contributes to the shared DOT, based on the basic attack, multihit, or single-target ability hit that triggered it.',
@@ -82,7 +87,7 @@
             notes: 'The gold reward is rounded down and cannot be negative.', example: 0.5
         },
         poisonChance: {
-            affects: 'The chance to apply a poison stack after a successful hit.',
+            affects: 'The chance to apply a poison stack on each successful attack or direct ability hit, including single-target and AOE abilities. DOT ticks cannot apply poison.',
             formula: 'Poison chance = (item chance bonuses + skill chance bonuses) × item multipliers × skill multipliers',
             notes: 'The final chance is limited to 0–100%. Chance multipliers need an existing chance: multiplying 0% still gives 0%.', example: 0.05
         },
@@ -123,7 +128,7 @@
             formula: definition.formula,
             example,
             notes: (multiplier ? 'Multipliers multiply together: 1.5 × 1.5 = 2.25 (+125%), not +100%. '
-                : key.startsWith('healthRegen') ? '' : 'Flat bonuses add together before multipliers are applied. ') + definition.notes
+                : /^(?:health|mana)Regen/.test(key) ? '' : 'Flat bonuses add together before multipliers are applied. ') + definition.notes
         };
     }
     window.ItemStatGuides = {get};

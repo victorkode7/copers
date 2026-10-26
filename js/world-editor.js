@@ -147,6 +147,11 @@
     const statLabels = {health: 'Maximum health', accuracy: 'Accuracy', evasion: 'Evasion', attackDamage: 'Damage per attack', attackInterval: 'Attack interval (seconds)', respawnSeconds: 'Respawn time (seconds)', experience: 'Experience per defeat'};
     function stats(target, defaults, prefix, overrides = false) {
         const grid = element('div', 'field-grid');
+        const elements=[['physical','Physical'],['fire','Fire'],['cold','Cold'],['water','Water'],['lightning','Lightning']];
+        if(overrides)elements.unshift(['','Inherit: '+(defaults.element||'physical')]);
+        grid.append(select('Damage element'+(overrides?' override':''),target.element??(overrides?'':'physical'),elements,value=>{
+            if(overrides&&!value)delete target.element;else target.element=value;
+        },prefix+'-element'));
         WorldContent.statFields.forEach(key => {
             const positive = ['health', 'attackInterval', 'respawnSeconds'].includes(key);
             grid.append(field(statLabels[key] + (overrides ? ' override' : ''), target[key], value => {

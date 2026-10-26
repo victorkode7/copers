@@ -34,6 +34,7 @@ try {
     $realtime = $TestScript -in @('tests/editor-persistence-smoke.js', 'tests/skill-sprites-smoke.js', 'tests/item-editor-smoke.js', 'tests/material-editor-smoke.js', 'tests/inventory-categories-smoke.js', 'tests/loot-effects-smoke.js', 'tests/crowded-background-smoke.js', 'tests/world-editor-smoke.js', 'tests/world-quick-save-smoke.js', 'tests/editor-quick-save-smoke.js')
     $realtime = $realtime -or $TestScript -in @('tests/background-reload-smoke.js', 'tests/game-profiles-smoke.js', 'tests/skill-editor-selection-smoke.js')
     $realtime = $realtime -or $TestScript -eq 'tests/save-compat-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/spell-skills-smoke.js'
     $realtime = $realtime -or ($Page -eq 'skill-tree-editor.html' -and $TestScript -eq 'tests/shield-expansion-smoke.js')
     if ($realtime) {
         $processInfo.Arguments = '--headless --disable-gpu --no-first-run --allow-file-access-from-files --remote-debugging-port=0 --user-data-dir="' + $profilePath + '" "' + ([uri]$fixturePath).AbsoluteUri + '"'

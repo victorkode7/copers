@@ -224,6 +224,8 @@ h1, h2, h3, p { margin-top: 0; }
 .graph-node.type-attackSpeed { border-color: #60c98a; background: linear-gradient(145deg, #254c3a, #172535); }
 .graph-node.type-accuracy { border-color: #64a8ef; background: linear-gradient(145deg, #263f60, #172535); }
 .graph-node.type-damage { border-color: #e6b84e; background: linear-gradient(145deg, #53452a, #172535); }
+.graph-node.type-mana { border-color:#b99aff; background:linear-gradient(145deg,#3f315e,#162d40); }
+.graph-node.type-mana .graph-node-icon { color:#d2bbff; }
 .graph-node.type-health .graph-node-icon { color: #ff7777; }
 .graph-node.type-attackSpeed .graph-node-icon { color: #70df9b; }
 .graph-node.type-accuracy .graph-node-icon { color: #72b7ff; }

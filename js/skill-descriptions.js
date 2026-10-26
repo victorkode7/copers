@@ -1,11 +1,11 @@
 (function () {
     'use strict';
     const uniqueEffects = new Set(['shockwaveSlash', 'poisonExecute', 'bloomingFlower',
-        'piercingArrow', 'forkingArrow', 'multiShot', 'freezingArrows', 'volcanicEruption', 'eruptionChain', 'shieldGenerator', 'shieldSlam', 'overflowingSlam', 'resonantGuard', 'righteousFire', 'fireOfTheRighteous', 'bleed', 'singledOff', 'deepWounds', 'bleederer']);
+        'piercingArrow', 'forkingArrow', 'multiShot', 'freezingArrows', 'volcanicEruption', 'eruptionChain', 'shieldGenerator', 'shieldSlam', 'overflowingSlam', 'resonantGuard', 'righteousFire', 'fireOfTheRighteous', 'bleed', 'singledOff', 'deepWounds', 'bleederer','voidBolt','voidVolley']);
     const abilityTargetingDefaults = Object.freeze({
         shockwaveSlash:'aoe', piercingArrow:'aoe', forkingArrow:'aoe', multiShot:'singleTarget',
         volcanicEruption:'aoe', shieldSlam:'singleTarget', overflowingSlam:'aoe',
-        righteousFire:'aoe', fireOfTheRighteous:'aoe'
+        righteousFire:'aoe', fireOfTheRighteous:'aoe',voidBolt:'singleTarget',voidVolley:'aoe'
     });
 
     function getAbilityTargeting(node) {
@@ -20,6 +20,10 @@
         return targeting === 'singleTarget' ? 'Single target' : targeting === 'aoe' ? 'AOE' : '';
     }
     const statDescriptions = [
+        ['mana','maximum mana','flat'],['manaMultiplier','maximum mana','multiplier'],
+        ['spellDamage','spell damage','flat'],['spellDamageMultiplier','spell damage','multiplier'],
+        ['manaRegen','flat mana regeneration per second','flat'],['manaRegenIncrease','increased mana regeneration','percent'],
+        ['manaRegenPercent','maximum mana regenerated per second','percent'],
         ['health', 'maximum health', 'flat'], ['healthMultiplier', 'maximum health', 'multiplier'],
         ['healthRegen', 'flat health regeneration per second', 'flat'],
         ['healthRegenIncrease', 'increased health regeneration', 'percent'],
