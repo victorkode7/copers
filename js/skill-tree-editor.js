@@ -7,7 +7,8 @@
         'evasion',
         'goldBonus', 'goldBonusMultiplier', 'attackSpeedMultiplier', 'attackSpeedBonus', 'attackSpeedPerLevel', 'health', 'healthMultiplier', 'accuracy', 'accuracyMultiplier', 'damageMultiplier', 'evasionMultiplier', 'multiHit', 'multiHitMultiplier',
         'poisonChance', 'poisonChanceMultiplier', 'poisonDamage', 'poisonDamageMultiplier',
-        'poisonTickRate', 'poisonTickRateMultiplier', 'maxFury', 'maxFuryMultiplier', 'healthRegen', 'healthRegenMultiplier', 'eruptionChains'
+        'bleedChance', 'bleedChanceMultiplier', 'bleedDamage', 'bleedDamageMultiplier', 'bleedTickRate', 'bleedTickRateMultiplier',
+        'poisonTickRate', 'poisonTickRateMultiplier', 'maxFury', 'maxFuryMultiplier', 'maxShields', 'maxShieldsMultiplier', 'healthRegen', 'healthRegenIncrease', 'healthRegenPercent', 'eruptionChains'
     ];
     const baseNodeTemplates = {
         health: {
@@ -47,8 +48,11 @@
     const bonusStats = [
         { id: 'damage', label: 'Damage', additive: 'damage', multiplier: 'damageMultiplier' },
         { id: 'health', label: 'Maximum health', additive: 'health', multiplier: 'healthMultiplier' },
-        { id: 'healthRegen', label: 'Health regeneration (HP/s)', additive: 'healthRegen', multiplier: 'healthRegenMultiplier' },
+        { id: 'healthRegen', label: 'Flat health regeneration (HP/s)', additive: 'healthRegen' },
+        { id: 'healthRegenIncrease', label: 'Increased health regeneration (%)', additive: 'healthRegenIncrease' },
+        { id: 'healthRegenPercent', label: 'Maximum health regeneration (%/s)', additive: 'healthRegenPercent' },
         { id: 'maxFury', label: 'Maximum fury', additive: 'maxFury', multiplier: 'maxFuryMultiplier' },
+        { id: 'maxShields', label: 'Maximum shields', additive: 'maxShields', multiplier: 'maxShieldsMultiplier' },
         { id: 'eruptionChains', label: 'Maximum eruption chains', additive: 'eruptionChains' },
         { id: 'accuracy', label: 'Accuracy', additive: 'accuracy', multiplier: 'accuracyMultiplier' },
         { id: 'evasion', label: 'Evasion', additive: 'evasion', multiplier: 'evasionMultiplier' },
@@ -56,6 +60,9 @@
         { id: 'poisonChance', label: 'Poison chance', additive: 'poisonChance', multiplier: 'poisonChanceMultiplier' },
         { id: 'poisonDamage', label: 'Poison damage', additive: 'poisonDamage', multiplier: 'poisonDamageMultiplier' },
         { id: 'poisonTickRate', label: 'Poison tick rate', additive: 'poisonTickRate', multiplier: 'poisonTickRateMultiplier' },
+        { id: 'bleedChance', label: 'Bleed chance', additive: 'bleedChance', multiplier: 'bleedChanceMultiplier' },
+        { id: 'bleedDamage', label: 'Bleed damage', additive: 'bleedDamage', multiplier: 'bleedDamageMultiplier' },
+        { id: 'bleedTickRate', label: 'Bleed tick rate', additive: 'bleedTickRate', multiplier: 'bleedTickRateMultiplier' },
         { id: 'goldBonus', label: 'Gold from battles', additive: 'goldBonus', multiplier: 'goldBonusMultiplier' },
         { id: 'attackSpeed', label: 'Attack speed', additive: 'attackSpeedBonus', multiplier: 'attackSpeedMultiplier' }
     ];
@@ -115,6 +122,7 @@
         nodeCustomDescription: document.querySelector('#nodeCustomDescription'),
         nodeSize: document.querySelector('#nodeSize'),
         nodeType: document.querySelector('#nodeType'),
+        nodeAbilityTargeting: document.querySelector('#nodeAbilityTargeting'),
         nodeMaxRank: document.querySelector('#nodeMaxRank'),
         nodeColumn: document.querySelector('#nodeColumn'),
         nodeRow: document.querySelector('#nodeRow'),
@@ -238,6 +246,8 @@
         });
         elements.nodeEffect.readOnly = !elements.nodeCustomDescription.checked;
         if (elements.nodeEffect.readOnly) elements.nodeEffect.value = SkillDescriptions.describe(selectedNode());
+        else if (selectedNode().id === 'shieldSlam') elements.nodeEffect.value = SkillStatCompat.normalizeShieldSlamDescription(elements.nodeEffect.value);
+        else if (selectedNode().id === 'bleed') elements.nodeEffect.value = SkillStatCompat.normalizeBleedDescription(elements.nodeEffect.value);
     }
 
     function markChanged() {
@@ -368,7 +378,7 @@
             card.dataset.nodeId = node.id;
             card.setAttribute('aria-pressed', String(selectedIds.has(node.id) && !selectedConnection));
             card.setAttribute('aria-label',
-                (node.name || node.id || '(unnamed)') + '. ' + description);
+                (node.name || node.id || '(unnamed)') + '. ' + [SkillDescriptions.abilityTagLabel(node), description].filter(Boolean).join('. '));
             const dimensions = graphNodeDimensions(node);
             const center = graphNodeCenter(node, minColumn, minRow);
             card.style.left = (center.x - dimensions.width / 2) + 'px';
@@ -387,7 +397,7 @@
             rank.className = 'graph-node-rank';
             rank.textContent = node.start ? 'START' : 'ONE-TIME';
             card.append(icon, name, effect, rank);
-            card.title = (node.name || node.id || '(unnamed)') + ' — ' + description;
+            card.title = (node.name || node.id || '(unnamed)') + ' — ' + [SkillDescriptions.abilityTagLabel(node), description].filter(Boolean).join(' · ');
             elements.graphNodes.appendChild(card);
             nodeElements.set(node.id, card);
         });
@@ -436,7 +446,7 @@
         const query = elements.nodeSearch.value.trim().toLowerCase();
         elements.nodeList.innerHTML = '';
         const visibleNodes = tree.nodes.filter(node =>
-            !query || [node.name, node.id, SkillDescriptions.describe(node)].some(value =>
+            !query || [node.name, node.id, SkillDescriptions.abilityTagLabel(node), SkillDescriptions.describe(node)].some(value =>
                 String(value || '').toLowerCase().includes(query)));
         visibleNodes.forEach(node => {
             const button = document.createElement('button');
@@ -459,6 +469,8 @@
             });
             meta.textContent = node.start ? 'Starting point' :
                 connections.size + ' connection' + (connections.size === 1 ? '' : 's');
+            const tag = SkillDescriptions.abilityTagLabel(node);
+            if (tag) meta.textContent += ' · ' + tag;
             copy.append(name, meta);
             button.append(icon, copy);
             elements.nodeList.appendChild(button);
@@ -574,6 +586,7 @@
         elements.nodeEffect.value = SkillDescriptions.describe(node);
         elements.nodeSize.value = String(nodeSize(node));
         elements.nodeType.value = nodeTypes.includes(node.type) ? node.type : '';
+        elements.nodeAbilityTargeting.value = SkillDescriptions.getAbilityTargeting(node) || '';
         elements.nodeMaxRank.value = node.start ? '0' : '1';
         elements.nodeMaxRank.disabled = true;
         elements.nodeColumn.value = String(node.column ?? 1);
@@ -660,6 +673,10 @@
             if (node.type !== undefined && node.type !== null && !nodeTypes.includes(node.type)) {
                 issues.push({ type: 'error', message: label + ': base node color must be health, attackSpeed, accuracy, or damage.' });
             }
+            if (node.abilityTargeting !== undefined && node.abilityTargeting !== null &&
+                !['singleTarget', 'aoe'].includes(node.abilityTargeting)) {
+                issues.push({ type: 'error', message: label + ': ability tag must be single target, AOE, or none.' });
+            }
             if (!Array.isArray(node.requires)) {
                 issues.push({ type: 'error', message: label + ': connections must be a list.' });
             } else {
@@ -687,7 +704,7 @@
                         issues.push({ type: 'error', message: label + ': multiplier values must be greater than zero.' });
                     }
                 });
-                if (!node.start && !Object.keys(node.stats).length) {
+                if (!node.start && !Object.keys(node.stats).length && !SkillDescriptions.usesCustomDescription(node)) {
                     issues.push({ type: 'warning', message: label + ': this filler node has no stat bonus.' });
                 }
             }
@@ -902,6 +919,7 @@
         node.size = Number(elements.nodeSize.value);
         if (elements.nodeType.value) node.type = elements.nodeType.value;
         else delete node.type;
+        node.abilityTargeting = elements.nodeAbilityTargeting.value || null;
         node.maxRank = elements.nodeStart.checked ? 0 : 1;
         node.column = Number(elements.nodeColumn.value);
         node.row = Number(elements.nodeRow.value);
@@ -1445,6 +1463,20 @@
                 throw new Error('Invalid saved skill draft');
             }
             tree = SkillDescriptions.normalize(SkillStatCompat.normalize(draft.tree));
+            if (tree.shieldExpansionSchemaVersion !== 1 && originalTree.shieldExpansionSchemaVersion === 1) {
+                // Add these new skills to older drafts once, keeping existing
+                // nodes, positions, connections and later intentional deletions.
+                ['overflowingSlam', 'resonantGuard'].forEach(id => {
+                    const added = originalTree.nodes.find(node => node.id === id);
+                    if (added && !tree.nodes.some(node => node.id === id)) tree.nodes.push(JSON.parse(JSON.stringify(added)));
+                });
+                tree.shieldExpansionSchemaVersion = 1;
+            }
+            if (tree.bleedSchemaVersion !== 1 && originalTree.bleedSchemaVersion === 1) {
+                const added = originalTree.nodes.find(node => node.id === 'bleed');
+                if (added && !tree.nodes.some(node => node.id === added.id)) tree.nodes.push(JSON.parse(JSON.stringify(added)));
+                tree.bleedSchemaVersion = 1;
+            }
             historySnapshot = JSON.stringify(tree);
             const restoredIds = Array.isArray(draft.selectedIds) ? draft.selectedIds : [draft.selectedId || tree.nodes[0]?.id];
             setSelection(restoredIds, draft.selectedId, draft.selectionAnchorId || draft.selectedId);

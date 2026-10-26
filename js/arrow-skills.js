@@ -80,7 +80,7 @@ function shootAbilityArrow(targets, damage, kind, direction = 0) {
             continue;
         }
         if (shot.kind === 'multiShot') showMonsterHitBadge(target.id, 'MULTISHOT');
-        applyDamageToMonster(target, damage, 'physical');
+        applyDamageToMonster(target, damage, 'physical', shot.kind);
         tryApplyPoison(target);
         applyArrowFreeze(target);
         // Only Multishot's original arrow rolls attack procs. Generated arrows

@@ -12,14 +12,29 @@
             notes: 'Rounded to a whole number, with a minimum of 1. Increasing maximum health through equipment does not heal the character.', example: 50
         },
         healthRegen: {
-            affects: 'Health restored each second while the character is alive.',
-            formula: 'Health regeneration per second = (flat item bonuses + flat skill bonuses) × item multipliers × skill multipliers',
+            affects: 'A flat amount of health restored each second while the character is alive.',
+            formula: 'HP/s = (flat regeneration + maximum health × maximum-health regeneration rate) × max(0, 1 + increased regeneration)',
             notes: 'Starts at 0 HP/s. Regeneration also works during background and offline progress, stops at maximum health, and does not revive the character.', example: 1
+        },
+        healthRegenIncrease: {
+            affects: 'All health regeneration, including flat HP/s and regeneration based on maximum health.',
+            formula: 'HP/s = (flat regeneration + maximum health × maximum-health regeneration rate) × max(0, 1 + increased regeneration)',
+            notes: 'Increased regeneration from items and skill nodes adds together. Two +50% bonuses give +100% total. It does not generate regeneration on its own.', example: .5
+        },
+        healthRegenPercent: {
+            affects: 'Health restored each second based on maximum health.',
+            formula: 'HP/s = (flat regeneration + maximum health × maximum-health regeneration rate) × max(0, 1 + increased regeneration)',
+            notes: 'At 1% maximum health per second, 100 maximum HP gives 1 HP/s and 1000 maximum HP gives 10 HP/s. Add this to flat regeneration, then apply increased regeneration.', example: .01
         },
         maxFury: {
             affects: 'The character’s maximum Fury capacity.',
             formula: 'Maximum fury = (base maximum fury + flat item bonuses + flat skill bonuses) × item multipliers × skill multipliers',
-            notes: 'Rounded to a whole number, with a minimum of 0. Reserved for future Fury mechanics; this stat does not generate or spend Fury yet.', example: 10
+            notes: 'Rounded to a whole number, with a minimum of 0. Each successful non-DOT hit grants one Fury stack and adds 0.1 seconds to its shared timer. Each stack grants 2% damage. Ten stacks allow up to 1 second. When the timer runs out, lose one stack every 0.5 seconds until another hit adds time.', example: 10
+        },
+        maxShields: {
+            affects: 'How many one-hit shields the character can hold with Shield Generator or Resonant Guard.',
+            formula: 'Maximum shields = (10 + flat item bonuses + flat skill bonuses) × item multipliers × skill multipliers',
+            notes: 'Rounded to a whole number, with a minimum of 0. Shield Generator grants one shield per kill. Resonant Guard grants one shield per Shockwave Slash activation, including single-enemy fights. Each shield blocks one enemy hit, regardless of damage. Self-damage and health drain bypass shields. Capacity bonuses alone do not generate shields.', example: 3
         },
         accuracy: {
             affects: 'The chance for your attacks to hit an enemy.',
@@ -35,6 +50,21 @@
             affects: 'The number of living enemies targeted by each attack.',
             formula: 'Multi-hit = (1 + flat item bonuses + flat skill bonuses) × item multipliers × skill multipliers',
             notes: 'Minimum 1; rounded to two decimals. A final value of 1.25 hits one target and has a 25% chance to target a second. It cannot hit more enemies than are alive.', example: 1
+        },
+        bleedDamage: {
+            affects: 'Damage each Bleed application contributes to the shared DOT, based on the basic attack, multihit, or single-target ability hit that triggered it.',
+            formula: 'Bleed damage added per tick = (10% of triggering hit damage + flat item bonuses + flat skill bonuses) × item multipliers × skill multipliers',
+            notes: 'A 100-damage hit adds 10 base damage per tick; a later 200-damage hit adds another 20. Fractional damage is retained. Hit values are preserved while Bleed bonuses and multipliers apply to the combined DOT. Applications add one second to a shared timer, up to five seconds, and all stacks expire together. DOT ticks cannot apply Bleed or build Fury.', example: 1
+        },
+        bleedChance: {
+            affects: 'The chance to apply Bleed after a successful basic attack, multihit, or ability hit tagged Single target. Hits tagged AOE and DOT ticks cannot apply Bleed.',
+            formula: 'Bleed chance = (item chance bonuses + skill chance bonuses) × item multipliers × skill multipliers',
+            notes: 'Limited to 0–100%. Each application adds one stack and one second without resetting the tick timer. Chance multipliers need an existing chance.', example: .25
+        },
+        bleedTickRate: {
+            affects: 'How frequently all Bleed stacks deal damage together.',
+            formula: 'Tick interval (seconds) = 1 ÷ max(0.1, (1 + item rate bonuses + skill rate bonuses) × item multipliers × skill multipliers)',
+            notes: 'Affects tick speed, not the shared duration or time added by an application. Starts at one tick per second.', example: .5
         },
         poisonDamage: {
             affects: 'Damage dealt by each poison stack on each tick.',
@@ -93,7 +123,7 @@
             formula: definition.formula,
             example,
             notes: (multiplier ? 'Multipliers multiply together: 1.5 × 1.5 = 2.25 (+125%), not +100%. '
-                : 'Flat bonuses add together before multipliers are applied. ') + definition.notes
+                : key.startsWith('healthRegen') ? '' : 'Flat bonuses add together before multipliers are applied. ') + definition.notes
         };
     }
     window.ItemStatGuides = {get};

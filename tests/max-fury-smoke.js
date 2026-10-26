@@ -37,7 +37,7 @@
             $('addItem').click();$('addStat').click();change($('statRows').querySelector('select'),'maxFury');
             change($('statRows').querySelector('input'),'10');
             check('the item editor offers flat Maximum Fury and previews its value', $('preview').textContent.includes('+10 Maximum fury'));
-            check('the Fury value guide explains future capacity without activating a resource', $('statRows').querySelector('.stat-guide').textContent.includes('Reserved for future Fury mechanics'));
+            check('the Fury value guide explains shared duration and non-DOT hits', $('statRows').querySelector('.stat-guide').textContent.includes('shared timer')&&$('statRows').querySelector('.stat-guide').textContent.includes('non-DOT'));
             $('addStat').click();let row=$('statRows').lastElementChild;change(row.querySelector('select'),'maxFuryMultiplier');
             row=$('statRows').lastElementChild;change(row.querySelector('input'),'1.5');
             check('items also support Maximum Fury multipliers', $('preview').textContent.includes('+50% Maximum fury'));
@@ -58,7 +58,7 @@
                 state.skillRanks={maxFury:1,healthNode:1};state.level=2;state.ownedItemIds=['testAmulet'];state.gear.necklace='testAmulet';render();
                 check('node and item capacity bonuses add before their multipliers',getPlayerMaxFury()===45&&elements.maxFury.textContent==='45');
                 check('Fury gear has readable tooltips and comparison values',Equipment.describe(itemById.testAmulet)==='+5 Maximum fury\n+50% Maximum fury'&&Equipment.compare(itemById.testAmulet,null).every(line=>line.status==='new'));
-                check('Maximum Fury changes do not grant damage or activate Fury spending',getDamage()===2);
+                check('capacity alone does not grant damage before Fury stacks are built',getDamage()===2);
                 const pathTo=id=>{
                     const queue=skillNodes.filter(node=>node.start).map(node=>[node.id]),seen=new Set(queue.flat());
                     for(let index=0;index<queue.length;index++){

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Skill Tree Editor | Idle Adventure</title>
-    <link rel="stylesheet" href="css/skill-tree-editor.css?v=20261025-2">
+    <link rel="stylesheet" href="css/skill-tree-editor.css?v=20261026-1">
     <link rel="stylesheet" href="css/skill-tree-background.css?v=20261023-1">
     <link rel="stylesheet" href="css/app-nav.css">
     <link rel="stylesheet" href="css/editor-quick-save.css?v=1">
@@ -185,6 +185,15 @@
                         </select>
                     </label>
                 </div>
+                <label>
+                    <span>Ability tag</span>
+                    <select id="nodeAbilityTargeting" name="abilityTargeting">
+                        <option value="">None (stat or passive)</option>
+                        <option value="singleTarget">Single target</option>
+                        <option value="aoe">AOE</option>
+                    </select>
+                    <small>Basic attacks and single-target ability hits can apply Bleed. DOT ticks cannot.</small>
+                </label>
                 <label class="check-row">
                     <input id="nodeCustomDescription" type="checkbox">
                     <span>Custom description for a unique effect</span>
@@ -227,6 +236,7 @@
                 <fieldset class="bonus-editor">
                     <legend>Stat bonuses</legend>
                     <p class="field-help">Add a flat amount or scale the final stat with a multiplier (1.10 is +10%). For attack speed, a multiplier above 1 is faster; an additive value of 0.1 is +10%.</p>
+                    <p class="field-help">Regeneration has three separate stats: flat HP/s, increased total regeneration (0.5 = +50%), and maximum health regenerated per second (0.01 = 1%).</p>
                     <div class="stat-bonus-heading" aria-hidden="true"><span>Stat</span><span>Type</span><span>Value</span><span></span></div>
                     <div id="statBonusRows" class="stat-bonus-rows"></div>
                     <button id="addStatBonus" class="button secondary" type="button">Add stat bonus</button>
@@ -261,13 +271,13 @@
         </form>
     </dialog>
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-    <script src="js/skill-tree.js?v=20261025-9"></script>
-    <script src="js/skill-stat-compat.js?v=20261025-2"></script>
-    <script src="js/skill-descriptions.js?v=20261025-4"></script>
+    <script src="js/skill-tree.js?v=20261026-6"></script>
+    <script src="js/skill-stat-compat.js?v=20261026-4"></script>
+    <script src="js/skill-descriptions.js?v=20261026-3"></script>
     <script src="js/item-package.js?v=20261021-2"></script>
     <script src="js/skill-sprites.js?v=20261021-13"></script>
     <script src="js/editor-file-save.js?v=2"></script>
     <script src="js/editor-quick-save.js?v=2"></script>
-    <script src="js/skill-tree-editor.js?v=20261025-5"></script>
+    <script src="js/skill-tree-editor.js?v=20261026-6"></script>
 </body>
 </html>

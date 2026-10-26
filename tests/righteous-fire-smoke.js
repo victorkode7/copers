@@ -1,0 +1,125 @@
+(async function () {
+    const checks = [], originalRandom = Math.random, originalStats = itemById.testAmulet.stats;
+    const map = currentMap(), near = (a,b) => Math.abs(a-b) < 1e-6;
+    const fireNode = skillNodeById.righteousFire || skillNodeById.fireOfTheRighteous;
+    const check = (label, ok) => { checks.push((ok ? 'PASS ' : 'FAIL ') + label); if (!ok) throw new Error(label); };
+    const settle = () => new Promise(resolve => setTimeout(resolve,0));
+    function fresh(regen=20, hp=30, count=1, ranks={fireOfTheRighteous:1}, monsterHealth=1000) {
+        combatStatCache=null; clearFury(); state.skillRanks={...ranks}; state.level=Object.keys(ranks).length; state.skillPoints=0; state.experience=0;
+        if (state.skillRanks.fireOfTheRighteous && fireNode.id !== 'fireOfTheRighteous') {
+            state.skillRanks[fireNode.id] = state.skillRanks.fireOfTheRighteous;
+            delete state.skillRanks.fireOfTheRighteous;
+        }
+        state.gear=createEmptyGear(); state.gear.necklace='testAmulet'; state.ownedItemIds=['testAmulet']; state.crafted=[];
+        itemById.testAmulet.stats={healthRegen:regen}; state.upgrades={strength:0,haste:0,evasion:0};
+        state.gold=0; state.kills=Object.fromEntries(mapData.map(entry=>[entry.id,0])); state.materials=Object.fromEntries(Object.keys(materialNames).map(id=>[id,0]));
+        state.lootLog=[]; state.lastLoot=null; state.tutorials=createTutorialState();
+        state.selectedMap=map.id; state.selectedWorld=worldForMap(map.id).id; state.currentView='map'; state.isInTown=false;
+        map.drops=[]; map.itemDrops=[];
+        map.spawns=[{id:'fireTarget',monsterId:worldContent.monsters[0].id,count,overrides:{health:monsterHealth,attackDamage:0,attackInterval:1000,accuracy:100,evasion:0,respawnSeconds:2,gold:[1,1],experience:0,drops:[],itemDrops:[]}}];
+        resetMonsterStates(map); state.playerHp=hp; state.combatPaused=false; state.attackTimer=-100; resetCombatClock(); clearOfflineRecap();
+        Math.random=()=>.999;
+        return state.monsterStates;
+    }
+    const advance = steps => { for(let index=0;index<steps;index++) simulateCombatStep(.1); };
+    try {
+        const node=fireNode;
+        const legacyFire={nodes:[{id:'righteousFire',name:'Fire of the righteous',icon:'✦',effect:'Drain',stats:{damage:1},column:-2,row:5,size:1.5,requires:['healthNode4'],sprite:'assets/skills/custom-fire.png'}]};
+        SkillStatCompat.normalize(legacyFire);
+        const migratedFire=legacyFire.nodes[0];
+        check('old Fire editor drafts gain the proper flame, name and full description',migratedFire.name==='Fire of the Righteous'&&migratedFire.icon==='🔥'&&migratedFire.effect.includes('30%')&&migratedFire.effect.includes('10%')&&migratedFire.customDescription&&!Object.keys(migratedFire.stats).length);
+        check('repairing Fire preserves the user layout, sprite and connections',migratedFire.column===-2&&migratedFire.row===5&&migratedFire.size===1.5&&migratedFire.requires.join()==='healthNode4'&&migratedFire.sprite==='assets/skills/custom-fire.png');
+        migratedFire.effect='My custom description';migratedFire.stats={damage:1};migratedFire.icon='F';SkillStatCompat.normalize(legacyFire);
+        check('the Fire repair runs once and preserves later custom edits',migratedFire.effect==='My custom description'&&migratedFire.stats.damage===1&&migratedFire.icon==='F');
+        check('the new unique skill connects to the regeneration branch',node && node.requires.includes('healthNode4') && node.customDescription && SkillDescriptions.describe(node).includes('30%') && SkillDescriptions.describe(node).includes('10%'));
+        fresh(20,30,1,{}); simulateCombatStep(1);
+        check('unallocated Fire leaves ordinary regeneration and enemy health unchanged',state.playerHp===50 && state.monsterStates[0].hp===1000);
+        fresh(20,20); simulateCombatStep(.1);
+        check('below the cap regeneration first sustains and heals the player',near(state.playerHp,21) && state.monsterStates[0].hp===1000);
+        fresh(20,29.5); simulateCombatStep(.1);
+        check('crossing thirty percent converts only unused healing',near(state.playerHp,30) && near(state.monsterStates[0].hp,999.5));
+        fresh(); simulateCombatStep(1);
+        check('at the cap twenty regen offsets ten drain and burns for ten damage per second',near(state.playerHp,30) && near(state.monsterStates[0].hp,990));
+        fresh(20,30,5); simulateCombatStep(1);
+        check('five enemies split the same damage budget equally',state.monsterStates.every(monster=>near(monster.hp,998)));
+        fresh(20,30,3); state.monsterStates[0].hp=0; state.monsterStates[0].respawnRemaining=100; simulateCombatStep(1);
+        check('only living targets count in the damage split',state.monsterStates[0].hp===0 && state.monsterStates.slice(1).every(monster=>near(monster.hp,995)));
+        fresh(20,30,2); state.monsterStates[0].hp=1; simulateCombatStep(1);
+        check('a lethal share awards one kill without redistributing overkill',state.monsterStates[0].hp===0 && near(state.monsterStates[1].hp,995) && state.kills[map.id]===1 && state.gold===1);
+        fresh(20,80); simulateCombatStep(1);
+        check('existing health above thirty percent drains normally rather than being clamped away',near(state.playerHp,70) && near(state.monsterStates[0].hp,980));
+        fresh(5,30); simulateCombatStep(1);
+        check('insufficient regeneration loses health and produces no excess damage',near(state.playerHp,25) && state.monsterStates[0].hp===1000);
+        fresh(10,30); simulateCombatStep(1);
+        check('regeneration equal to the drain sustains health without free damage',near(state.playerHp,30) && state.monsterStates[0].hp===1000);
+        fresh(0,100); advance(10); check('the health drain is ten percent of maximum health per second',near(state.playerHp,90));
+        advance(90); check('the drain can kill the player and pauses combat',state.playerHp===0 && state.combatPaused);
+        itemById.testAmulet.stats.healthRegen=100; advance(10); check('Fire cannot regenerate a dead player back to life',state.playerHp===0);
+        fresh(20,.5); simulateCombatStep(.1);
+        check('simultaneous regeneration can sustain low health without an artificial drain-first death',near(state.playerHp,1.5) && !state.combatPaused);
+        fresh(40,60); itemById.testAmulet.stats.health=100; simulateCombatStep(1);
+        check('health bonuses scale the healing cap and health drain',getPlayerMaxHealth()===200 && near(state.playerHp,60) && near(state.monsterStates[0].hp,980));
+        fresh(0,30); itemById.testAmulet.stats.healthRegenPercent=.2; itemById.testAmulet.stats.healthRegenIncrease=1; simulateCombatStep(.1);
+        check('Fire uses maximum-health regeneration after increased regeneration bonuses',near(state.playerHp,30) && near(state.monsterStates[0].hp,997));
+        itemById.testAmulet.stats.health=100; state.playerHp=60; simulateCombatStep(.1);
+        check('higher maximum health also scales percentage-regeneration burning',near(state.playerHp,60) && near(state.monsterStates[0].hp,991));
+        fresh(1000,1); itemById.testAmulet.stats.health=1; itemById.testAmulet.stats.healthRegenPercent=.5; itemById.testAmulet.stats.healthRegenIncrease=2;
+        advance(10); render();
+        const displayedHp=Number(elements.playerHealthText.textContent.split(' / ')[0]);
+        check('all regeneration sources respect a fractional thirty-percent cap',state.playerHp<=getPlayerMaxHealth()*.3+1e-8 && near(state.playerHp,30.3));
+        check('whole-number health does not round regeneration above the thirty-percent cap',displayedHp<=getPlayerMaxHealth()*.3+1e-8 && displayedHp===30);
+        fresh(.25,80,3); simulateCombatStep(.1);
+        check('fractional burning damage is split without rounding up each target',near(state.monsterStates.reduce((sum,monster)=>sum+1000-monster.hp,0),.025));
+        fresh(0,80); state.monsterStates[0].hp=0; state.monsterStates[0].respawnRemaining=100; simulateCombatStep(1);
+        check('the drain continues safely while all enemies are respawning',near(state.playerHp,70) && state.monsterStates[0].hp===0);
+        fresh(); state.currentView='inventory'; simulateCombatStep(1);
+        check('Fire continues on other game pages',near(state.playerHp,30) && near(state.monsterStates[0].hp,990));
+        fresh(); state.combatPaused=true; simulateCombatStep(1);
+        check('paused combat applies neither regeneration, drain nor burning',state.playerHp===30 && state.monsterStates[0].hp===1000);
+        fresh(20,30,2,{fireOfTheRighteous:1,snakeBite:1,freezingArrows:1,volcanicEruption:1,multiShot:1,shockwaveSlash:1});
+        itemById.testAmulet.stats.maxFury=10; itemById.testAmulet.stats.poisonChance=1;
+        Math.random=()=>{throw new Error('Burning should not roll hit chances or attack procs');}; simulateCombatStep(.1);
+        check('burning bypasses accuracy and cannot build Fury, poison, freeze or attack procs',state.furyStacks===0 && !state.pendingEruptions.length && state.monsterStates.every(monster=>near(monster.hp,999.5) && !monster.poisonStacks.length && !monster.freezeRemaining));
+        fresh(20,30,1,{fireOfTheRighteous:1,poisonExecute:1});
+        state.monsterStates[0].hp=5.5; state.monsterStates[0].poisonStacks=[{remainingDuration:5,timeUntilTick:1}]; simulateCombatStep(.1);
+        check('burning can bring existing poison into execute range without awarding duplicate kills',state.monsterStates[0].hp===0 && state.kills[map.id]===1 && state.gold===1);
+        fresh(); render(); const observer=new MutationObserver(()=>{}); observer.observe(document.body,{subtree:true,childList:true,attributes:true,characterData:true});
+        const fireIcon=elements.buffList.querySelector('[data-buff-id="fireOfTheRighteous"]');
+        check('the buff section identifies Fire and its per-target burn damage',fireIcon && fireIcon.querySelector('.buff-value').textContent==='10/s' && fireIcon.title.includes('30%') && fireIcon.title.includes('10%'));
+        const result=simulateCombatStep(.1,true);
+        check('simulation collects burning effects without touching the DOM',!observer.takeRecords().length && result.effects.length>0); observer.disconnect();
+        state.skillRanks={}; state.level=0; simulateCombatStep(.1);
+        check('removing the skill restores healing above thirty percent',near(state.playerHp,32));
+        fresh(); simulateCombatStep(1); const large={hp:state.playerHp,enemy:state.monsterStates[0].hp};
+        fresh(); advance(10); check('steady regeneration and split damage agree across elapsed step sizes',near(state.playerHp,large.hp) && near(state.monsterStates[0].hp,large.enemy));
+        const snapshot=()=>JSON.stringify({hp:state.playerHp,paused:state.combatPaused,monsters:state.monsterStates,gold:state.gold,kills:state.kills,fury:state.furyStacks,pending:state.pendingEruptions});
+        fresh(20,30,4); advance(100); const reference=snapshot();
+        fresh(20,30,4); resetCombatClock(Date.now()-10000); processCombatBacklog();
+        for(let index=0;pendingCombatSeconds+1e-8>=gameTickSeconds && index<100;index++) await settle();
+        check('offline catch-up matches foreground health, damage and rewards',pendingCombatSeconds<gameTickSeconds && snapshot()===reference);
+        fresh();
+        const queue=skillNodes.filter(entry=>entry.start).map(entry=>[entry.id]),seen=new Set(queue.flat()); let path;
+        for(let index=0;index<queue.length;index++) { const current=queue[index],id=current.at(-1); if(id===node.id){path=current;break;} skillNodeConnections[id].forEach(next=>{if(!seen.has(next)){seen.add(next);queue.push([...current,next]);}}); }
+        state.skillRanks=Object.fromEntries(path.filter(id=>!skillNodeById[id].start).map(id=>[id,1])); state.level=Object.keys(state.skillRanks).length;
+        state.playerHp=getPlayerMaxHealth()*.3; state.attackTimer=0;
+        const saved=parseGameSave(JSON.stringify(createGameSave())); state.skillRanks={}; applyGameSave(saved);
+        state.attackTimer=-100; const expected=Math.max(0,getPlayerHealthRegen()-getPlayerMaxHealth()*.1)*.1, before=state.monsterStates[0].hp; simulateCombatStep(.1);
+        check('the connected skill saves, loads and still converts excess regeneration',hasFireOfTheRighteous() && near(state.playerHp,getPlayerMaxHealth()*.3) && near(before-state.monsterStates[0].hp,expected));
+        const previousId=node.id==='righteousFire'?'fireOfTheRighteous':'righteousFire';
+        const legacySave={...saved,skillRanks:{...saved.skillRanks,[previousId]:saved.skillRanks[node.id]}}; delete legacySave.skillRanks[node.id];
+        const migrated=parseGameSave(JSON.stringify(legacySave));
+        check('profiles using the previous Fire node ID retain their allocation',migrated.skillRanks[node.id]===1&&!Object.hasOwn(migrated.skillRanks,previousId));
+        const upgrade=skillNodes.find(entry=>!entry.start && !state.skillRanks[entry.id] && skillNodeRequirementsMet(entry,id=>skillNodeById[id].start || state.skillRanks[id]>0));
+        const originalUpgradeStats=upgrade.stats;
+        try {
+            upgrade.stats={health:100}; state.playerHp=getPlayerMaxHealth()*.3;
+            const previousMaximum=getPlayerMaxHealth();
+            state.level++; state.skillPoints=1; pendingSkillRanks={[upgrade.id]:1}; renderUpgrades();
+            document.getElementById('confirmSkillSelection').click();
+            check('allocating a health node cannot heal past the Fire limit',getSkillNodeRank(upgrade.id)===1 && getPlayerMaxHealth()>previousMaximum && state.playerHp<=getPlayerMaxHealth()*.3+1e-8);
+        } finally { upgrade.stats=originalUpgradeStats; pendingSkillRanks={}; }
+        check('no runtime errors',!window.smokeErrors.length); checks.push('SMOKE PASSED');
+    } catch(error) { checks.push('ERROR '+error.stack); }
+    finally { Math.random=originalRandom; itemById.testAmulet.stats=originalStats; combatStatCache=null; resetCombatClock(); clearOfflineRecap(); }
+    const report=document.createElement('pre'); report.id='smoke-results'; report.textContent=checks.join('\n'); document.body.append(report);
+}());

@@ -16,6 +16,17 @@
         } finally { URL.createObjectURL = originalUrl; HTMLAnchorElement.prototype.click = originalClick; }
     }
     try {
+        if(typeof SkillStatCompat!=='undefined') {
+            const legacy={statSchemaVersion:2,furySchemaVersion:1,eruptionChainSchemaVersion:1,nodes:[{id:'legacyRegen',stats:{healthRegen:2,healthRegenMultiplier:1.5}}]};
+            SkillStatCompat.normalize(legacy); SkillStatCompat.normalize(legacy);
+            check('legacy skill regeneration bonuses migrate once to increased regeneration',legacy.nodes[0].stats.healthRegen===2&&legacy.nodes[0].stats.healthRegenIncrease===.5&&!Object.hasOwn(legacy.nodes[0].stats,'healthRegenMultiplier'));
+        }
+        if(typeof Equipment!=='undefined') {
+            const legacy={schemaVersion:2,items:[{stats:{healthRegen:2,healthRegenMultiplier:1.5}}]};
+            Equipment.normalizeData(legacy); Equipment.normalizeData(legacy);
+            check('legacy item regeneration bonuses migrate once to increased regeneration',legacy.items[0].stats.healthRegen===2&&legacy.items[0].stats.healthRegenIncrease===.5&&!Object.hasOwn(legacy.items[0].stats,'healthRegenMultiplier'));
+            check('items expose exactly three distinct regeneration stats',Object.keys(Equipment.stats).filter(key=>key.startsWith('healthRegen')).length===3);
+        }
         if ($('nodeForm')) {
             $('nodeList').querySelector('[data-node-id="healthNode"]').click();
             // Replace the existing health bonus, keeping this test independent of its value.
@@ -24,25 +35,31 @@
             row.querySelectorAll('select')[0].value = 'healthRegen';
             row.querySelectorAll('select')[1].value = 'additive';
             change(row.querySelector('input'), '1.25', 'input'); await settle();
-            check('skill editor offers health regeneration with an automatic description', $('nodeEffect').value.includes('+1.25 health regeneration per second'));
+            check('skill editor offers flat regeneration with an automatic description', $('nodeEffect').value.includes('+1.25 flat health regeneration per second'));
             $('addStatBonus').click(); row = $('statBonusRows').lastElementChild;
-            row.querySelectorAll('select')[0].value = 'healthRegen';
-            row.querySelectorAll('select')[1].value = 'multiplier';
-            change(row.querySelector('input'), '1.5', 'input'); await settle();
-            check('skill regeneration multipliers describe their percentage bonus', $('nodeEffect').value.includes('+50% health regeneration per second') && $('statsError').hidden);
+            change(row.querySelectorAll('select')[0], 'healthRegenIncrease');
+            change(row.querySelector('input'), '0.5', 'input'); await settle();
+            check('skill editor offers increased total regeneration as a separate percentage', $('nodeEffect').value.includes('+50% increased health regeneration') && $('statsError').hidden);
+            $('addStatBonus').click(); row = $('statBonusRows').lastElementChild;
+            change(row.querySelectorAll('select')[0], 'healthRegenPercent');
+            change(row.querySelector('input'), '0.01', 'input'); await settle();
+            check('skill editor offers maximum-health regeneration as a separate percentage', $('nodeEffect').value.includes('+1% maximum health regenerated per second') && row.querySelectorAll('select')[1].disabled);
             const exported = await exportData(), node = exported.nodes.find(node => node.id === 'healthNode');
-            check('skill exports preserve both regeneration bonuses', node.stats.healthRegen === 1.25 && node.stats.healthRegenMultiplier === 1.5 && !$('validationList').textContent.includes('unsupported stat "healthRegen'));
+            check('skill exports preserve all three regeneration bonuses', node.stats.healthRegen === 1.25 && node.stats.healthRegenIncrease === .5 && node.stats.healthRegenPercent === .01 && !$('validationList').textContent.includes('unsupported stat "healthRegen'));
         } else if ($('itemForm')) {
             $('addItem').click(); $('addStat').click();
             change($('statRows').querySelector('select'), 'healthRegen');
             change($('statRows').querySelector('input'), '0.25');
-            check('items preview fractional HP per second', $('preview').textContent.includes('+0.25 Health regeneration per second'));
+            check('items preview fractional flat HP per second', $('preview').textContent.includes('+0.25 Flat health regeneration per second'));
             check('regeneration guides explain offline healing and death', $('statRows').querySelector('.stat-guide').textContent.includes('does not revive'));
-            $('addStat').click(); change($('statRows').lastElementChild.querySelector('select'), 'healthRegenMultiplier');
-            change($('statRows').lastElementChild.querySelector('input'), '1.5');
-            check('items support regeneration multipliers and value guides', $('preview').textContent.includes('+50% Health regeneration per second') && ItemStatGuides.get('healthRegenMultiplier'));
+            $('addStat').click(); change($('statRows').lastElementChild.querySelector('select'), 'healthRegenIncrease');
+            change($('statRows').lastElementChild.querySelector('input'), '0.5');
+            check('items support increased regeneration with an additive percentage guide', $('preview').textContent.includes('+50% Increased health regeneration') && $('statRows').lastElementChild.querySelector('.stat-guide').textContent.includes('adds together'));
+            $('addStat').click(); change($('statRows').lastElementChild.querySelector('select'), 'healthRegenPercent');
+            change($('statRows').lastElementChild.querySelector('input'), '0.01');
+            check('items support maximum-health regeneration with a scaling guide', $('preview').textContent.includes('+1% Maximum health regenerated per second') && ItemStatGuides.get('healthRegenPercent').notes.includes('1000 maximum HP'));
             const exported = await exportData(), item = exported.items.find(item => item.id === $('itemId').value);
-            check('item exports retain regeneration and pass validation', item.stats.healthRegen === 0.25 && item.stats.healthRegenMultiplier === 1.5 && Equipment.validate(exported).length === 0);
+            check('item exports retain all regeneration stats and pass validation', item.stats.healthRegen === 0.25 && item.stats.healthRegenIncrease === .5 && item.stats.healthRegenPercent === .01 && Equipment.validate(exported).length === 0);
         } else {
             const originalRandom = Math.random, originalNode = skillNodeById.healthNode.stats, originalItem = itemById.testAmulet.stats;
             const map = currentMap();
@@ -58,24 +75,31 @@
             try {
                 fresh(); simulateCombatStep(.1);
                 check('regeneration starts at zero', getPlayerHealthRegen() === 0 && state.playerHp === 50);
-                skillNodeById.healthNode.stats = {healthRegen: 1, healthRegenMultiplier: 2};
-                itemById.testAmulet.stats = {healthRegen: .25, healthRegenMultiplier: 1.5};
+                skillNodeById.healthNode.stats = {healthRegen: 1, healthRegenIncrease: 1};
+                itemById.testAmulet.stats = {healthRegen: .25, healthRegenIncrease: .5};
                 fresh({healthNode: 1}); equip(); render();
-                check('flat node and item regeneration add before their multipliers', getPlayerHealthRegen() === 3.75 && elements.healthRegen.textContent === '3.75 HP/s');
+                check('flat sources add before increased regeneration bonuses add together', getPlayerHealthRegen() === 3.125 && elements.healthRegen.textContent === '3.13 HP/s');
                 for (let index = 0; index < 10; index++) simulateCombatStep(.1);
-                check('fractional regeneration accumulates accurately each second', near(state.playerHp, 53.75));
-                check('regeneration appears in gear tooltips and comparisons', Equipment.describe(itemById.testAmulet) === '+0.25 Health regeneration per second\n+50% Health regeneration per second' && Equipment.compare(itemById.testAmulet, null).every(line => line.status === 'new'));
+                check('fractional regeneration accumulates accurately each second', near(state.playerHp, 53.125));
+                check('regeneration appears in gear tooltips and comparisons', Equipment.describe(itemById.testAmulet) === '+0.25 Flat health regeneration per second\n+50% Increased health regeneration' && Equipment.compare(itemById.testAmulet, null).every(line => line.status === 'new'));
+                skillNodeById.healthNode.stats.healthRegenPercent=.01; itemById.testAmulet.stats.healthRegenPercent=.02;
+                check('maximum-health rates add and increased regeneration scales both base sources',near(getPlayerHealthRegen(),10.625));
+                itemById.testAmulet.stats.health=100;
+                check('increasing maximum health raises percentage-based regeneration',getPlayerMaxHealth()===200&&near(getPlayerHealthRegen(),18.125));
+                itemById.testAmulet.stats.healthMultiplier=1.5;
+                check('maximum-health multipliers also increase regeneration',getPlayerMaxHealth()===300&&near(getPlayerHealthRegen(),25.625));
+                skillNodeById.healthNode.stats={healthRegen:1,healthRegenIncrease:1}; itemById.testAmulet.stats={healthRegen:.25,healthRegenIncrease:.5};
                 state.playerHp = getPlayerMaxHealth() - .1; simulateCombatStep(.1);
                 check('healing never exceeds maximum health', state.playerHp === getPlayerMaxHealth());
                 state.playerHp = 50; state.monsterStates[0].hp = 0; state.monsterStates[0].respawnRemaining = 5; simulateCombatStep(.1);
-                check('healing continues while waiting for enemies to respawn', near(state.playerHp, 50.375));
+                check('healing continues while waiting for enemies to respawn', near(state.playerHp, 50.3125));
                 state.currentView = 'upgrades'; simulateCombatStep(.1);
-                check('healing continues on other game pages', near(state.playerHp, 50.75));
+                check('healing continues on other game pages', near(state.playerHp, 50.625));
                 state.playerHp = 0; state.combatPaused = true; simulateCombatStep(10);
                 check('regeneration cannot revive a dead character', state.playerHp === 0 && state.combatPaused);
                 skillNodeById.healthNode.stats = {healthRegen: -1}; state.gear = createEmptyGear();
                 check('penalties cannot make regeneration damage the player', getPlayerHealthRegen() === 0);
-                skillNodeById.healthNode.stats = {healthRegen: 1, healthRegenMultiplier: 2};
+                skillNodeById.healthNode.stats = {healthRegen: 1, healthRegenIncrease: 1,healthRegenPercent:.01};
                 fresh({healthNode: 1}); equip();
                 const queue = skillNodes.filter(node => node.start).map(node => [node.id]), seen = new Set(queue.flat());
                 let path;

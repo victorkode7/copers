@@ -228,6 +228,13 @@ h1, h2, h3, p { margin-top: 0; }
 .graph-node.type-attackSpeed .graph-node-icon { color: #70df9b; }
 .graph-node.type-accuracy .graph-node-icon { color: #72b7ff; }
 .graph-node.type-damage .graph-node-icon { color: #f2c77b; }
+.graph-node[data-node-id="bleed"] { border-color: #bd5969; background: radial-gradient(circle at 50% 35%, #602637, #221d29 80%); }
+.graph-node[data-node-id="bleed"] .graph-node-icon { color: #ff909f; }
+.graph-node:is([data-node-id="righteousFire"], [data-node-id="fireOfTheRighteous"]) {
+    border-color: #ed783b;
+    background: radial-gradient(circle at 50% 35%, #8c3d23, #361b1d 76%);
+}
+.graph-node:is([data-node-id="righteousFire"], [data-node-id="fireOfTheRighteous"]) .graph-node-icon { color: #ffb360; }
 .graph-node-icon { margin-bottom: 0.18rem; color: var(--amber); font-size: 1rem; line-height: 1; }
 .graph-node.is-start .graph-node-icon { color: var(--green); }
 .graph-node strong { overflow: hidden; font-size: 0.78rem; text-overflow: ellipsis; white-space: nowrap; }

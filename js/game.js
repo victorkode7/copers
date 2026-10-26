@@ -78,12 +78,20 @@ const experienceForNextLevel = level =>
 
 const basePlayerMaxHealth = 100;
 const basePlayerMaxFury = 0;
+const basePlayerMaxShields = 10;
+const shieldSlamDamagePerStack = 1;
+const furySecondsPerStack = 0.1;
+const furyStackDecaySeconds = 0.5;
+const furyDamagePerStack = 0.02;
+const righteousFireSettings = Object.freeze({regenHealthCap: 0.3, healthDrainPerSecond: 0.1});
+const righteousFireNodeIds = Object.freeze(['fireOfTheRighteous', 'righteousFire']);
 const playerAccuracy = 100;
 const basePlayerEvasion = 25;
 const baseMultiHit = 1;
 const gameTickMilliseconds = 100;
 const gameTickSeconds = gameTickMilliseconds / 1000;
 const combatStatFormatter = new Intl.NumberFormat('en-US', {maximumFractionDigits: 2});
+const buffAmountFormatter = new Intl.NumberFormat('en-US', {notation: 'compact', maximumFractionDigits: 1});
 
 let skillTreeZoom = 1;
 let skillTreePanX = 0;
@@ -125,6 +133,10 @@ const state = {
     monsterColumns: 1,
     targetMonsterId: null,
     playerHp: basePlayerMaxHealth,
+    furyStacks: 0,
+    furyRemaining: 0,
+    furyDecaying: false,
+    shieldStacks: 0,
     combatPaused: false,
     attackTimer: 0,
     lootLog: [],
@@ -143,9 +155,13 @@ const elements = {
     damage: document.querySelector('#damageDisplay'),
     multiHit: document.querySelector('#multiHitDisplay'),
     poisonChance: document.querySelector('#poisonChanceDisplay'),
+    bleedChance: document.querySelector('#bleedChanceDisplay'),
     speed: document.querySelector('#speedDisplay'),
     accuracy: document.querySelector('#accuracyDisplay'),
     evasion: document.querySelector('#evasionDisplay'),
+    maxHealth: document.querySelector('#maxHealthDisplay'),
+    detailedStats: document.querySelector('#detailedStats'),
+    detailedStatsList: document.querySelector('#detailedStatsList'),
     maxFury: document.querySelector('#maxFuryDisplay'),
     healthRegen: document.querySelector('#healthRegenDisplay'),
     worldPanel: document.querySelector('.world-panel'),
@@ -165,7 +181,10 @@ const elements = {
     playerHealthBar: document.querySelector('#playerHealthBar'),
     playerHealthDamage: document.querySelector('#playerHealthDamage'),
     playerHealthTrack: document.querySelector('.player-health-track'),
+    playerHealthPanel: document.querySelector('.player-health'),
     playerHealthText: document.querySelector('#playerHealthText'),
+    buffList: document.querySelector('#buffList'),
+    buffEmpty: document.querySelector('#buffEmpty'),
     resumeCombat: document.querySelector('#resumeCombat'),
     combatStatus: document.querySelector('#combatStatus'),
     combatStatusLabel: document.querySelector('#combatStatusLabel'),
@@ -203,6 +222,12 @@ let combatStatCache = null;
 let combatPoisonForecasts = null;
 let combatAnimationRestarts = null;
 let combatEffectLayout = null;
+const combatBuffViews = new Map();
+const detailedStatViews = new Map();
+let resolvingShieldSlam = false;
+elements.detailedStats.addEventListener('toggle', renderDetailedStats);
+// Presentation-only hit times; never saved or advanced by offline simulation.
+const righteousFireHitUntil = new WeakMap();
 let lastSave = Date.now();
 let pendingOfflineRecap = null;
 let offlineRecapReport = null;
@@ -467,12 +492,15 @@ function createMonsterStates(map, savedStates, legacyHp, legacyRespawn) {
                         remainingDuration: stack.remainingDuration,
                         timeUntilTick: stack.timeUntilTick
                     }))
-                : []
+                : [],
+            bleed: hp > 0 && saved?.bleed && isValidBleedState(saved.bleed)
+                ? {...saved.bleed, baseDamagePerTick:saved.bleed.baseDamagePerTick ?? saved.bleed.stacks} : null
         };
     });
 }
 
 function resetMonsterStates(map = currentMap()) {
+    resetDamageBreakdown(map.id);
     monsterDefinitionCache.delete(map);
     state.pendingEruptions = [];
     state.monsterStates = createMonsterStates(map);
@@ -526,6 +554,10 @@ function setInitialMonsterTarget() {
 }
 
 function selectNextMonsterTarget(defeatedMonster) {
+    // Splash, poison and burning kills must not interrupt a different target.
+    if (defeatedMonster.id !== state.targetMonsterId) return;
+    state.attackTimer = 0;
+    clearEnemyDamageIndicator();
     const monsters = state.monsterStates;
     const defeatedIndex = monsters.findIndex(monster => monster.id === defeatedMonster.id);
     for (let offset = 1; offset < monsters.length; offset++) {
@@ -641,7 +673,7 @@ function flashShockwaveCard(monsterId) {
     });
 }
 
-function nudgePlayerHealthBar() {
+function flashPlayerHealthBar() {
     presentCombatEffect(() => {
         restartCombatAnimation(elements.playerHealthTrack, 'is-damaged');
     });
@@ -730,13 +762,248 @@ function getPlayerMaxHealth() {
 }
 
 function getPlayerMaxFury() {
-    return Math.max(0, Math.round((basePlayerMaxFury + getSkillStat('maxFury') + getGearStat('maxFury')) *
-        getSkillMultiplier('maxFuryMultiplier') * getGearStat('maxFuryMultiplier')));
+    return cachedCombatStat('getPlayerMaxFury', () => Math.max(0, Math.round((basePlayerMaxFury + getSkillStat('maxFury') + getGearStat('maxFury')) *
+        getSkillMultiplier('maxFuryMultiplier') * getGearStat('maxFuryMultiplier'))));
+}
+
+function clearFury() {
+    state.furyStacks = 0;
+    state.furyRemaining = 0;
+    state.furyDecaying = false;
+}
+
+function getPlayerMaxShields() {
+    return cachedCombatStat('getPlayerMaxShields', () => Math.max(0, Math.round(
+        (basePlayerMaxShields + getSkillStat('maxShields') + getGearStat('maxShields')) *
+        getSkillMultiplier('maxShieldsMultiplier') * getGearStat('maxShieldsMultiplier'))));
+}
+
+function hasShieldGeneration() {
+    return getSkillNodeRank('shieldGenerator') > 0 || getSkillNodeRank('resonantGuard') > 0;
+}
+
+function normalizeShields() {
+    state.shieldStacks = hasShieldGeneration()
+        ? Math.min(getPlayerMaxShields(), Math.max(0, Math.floor(state.shieldStacks))) : 0;
+}
+
+function gainShields() {
+    if (!hasShieldGeneration() || state.playerHp <= 0 || state.combatPaused) return;
+    normalizeShields();
+    state.shieldStacks = Math.min(getPlayerMaxShields(), state.shieldStacks + 1);
+    tryShieldSlam();
+}
+
+function gainShieldFromKill() {
+    if (getSkillNodeRank('shieldGenerator') > 0) gainShields();
+}
+
+function tryShieldSlam() {
+    if (resolvingShieldSlam || getSkillNodeRank('shieldSlam') <= 0 || state.playerHp <= 0 || state.combatPaused) return;
+    normalizeShields();
+    const maximum = getPlayerMaxShields();
+    if (!maximum || state.shieldStacks < maximum) return;
+    // A slam kill can grant another shield. Resolve those triggers iteratively,
+    // including a capacity of one, without recursively overflowing the stack.
+    resolvingShieldSlam = true;
+    try {
+        while (state.shieldStacks >= maximum) {
+            const target = activeMonster() || state.monsterStates.find(monster => monster.hp > 0);
+            if (!target) break; // Keep shields until there is a target to slam.
+            const consumed = Math.max(1, Math.floor(state.shieldStacks / 2));
+            state.shieldStacks -= consumed;
+            let remainingDamage = getDamage() * shieldSlamDamagePerStack * consumed;
+            const overflowing = getSkillNodeRank('overflowingSlam') > 0;
+            const hitIds = [];
+            let slamTarget = target;
+            while (slamTarget && remainingDamage > 1e-8) {
+                const healthBefore = slamTarget.hp;
+                hitIds.push(slamTarget.id);
+                applyDamageToMonster(slamTarget, remainingDamage, 'physical', hitIds.length === 1 ? 'shieldSlam' : 'overflowingSlam');
+                tryApplyPoison(slamTarget);
+                // Only unused physical damage carries on. Poison executions
+                // and newly gained Fury cannot increase this slam's budget.
+                remainingDamage = Math.max(0, remainingDamage - healthBefore);
+                if (!overflowing || slamTarget.hp > 0 || remainingDamage <= 1e-8) break;
+                slamTarget = activeMonster();
+            }
+            showShieldSlamWave(hitIds);
+        }
+    } finally {
+        resolvingShieldSlam = false;
+    }
+}
+
+function normalizeFury() {
+    const maximum = getPlayerMaxFury();
+    state.furyStacks = Math.min(maximum, Math.max(0, state.furyStacks));
+    // The countdown between lost stacks keeps its own interval, even when
+    // a low stack count has a shorter maximum duration from hits.
+    const durationCap = state.furyDecaying ? furyStackDecaySeconds : state.furyStacks * furySecondsPerStack;
+    state.furyRemaining = Math.min(state.furyRemaining, durationCap);
+    if (state.furyStacks === 0) clearFury();
+}
+
+function gainFuryFromHit() {
+    if (state.playerHp <= 0 || state.combatPaused) return;
+    normalizeFury();
+    const maximum = getPlayerMaxFury();
+    if (!maximum) return;
+    state.furyStacks = Math.min(maximum, state.furyStacks + 1);
+    state.furyRemaining = Math.min(state.furyStacks * furySecondsPerStack, state.furyRemaining + furySecondsPerStack);
+    state.furyDecaying = false;
+}
+
+function tickFury(elapsed) {
+    normalizeFury();
+    if (!state.furyStacks) return;
+    state.furyRemaining -= elapsed;
+    // After the shared timer expires, lose one stack per half second.
+    // Preserve elapsed overshoot so offline and foreground steps agree.
+    if (state.furyRemaining < 1e-8) {
+        const lostStacks = Math.min(state.furyStacks, 1 + Math.floor((1e-8 - state.furyRemaining) / furyStackDecaySeconds));
+        state.furyStacks -= lostStacks;
+        state.furyRemaining += lostStacks * furyStackDecaySeconds;
+        state.furyDecaying = state.furyStacks > 0;
+        if (!state.furyStacks) clearFury();
+    }
+}
+
+function formatBuffAmount(amount) {
+    const rounded = Math.round(amount);
+    return rounded < 1000 ? String(rounded) : buffAmountFormatter.format(rounded).toLowerCase();
+}
+
+function renderBuffs(buffs) {
+    const activeIds = new Set(buffs.map(buff => buff.id));
+    combatBuffViews.forEach((view, id) => {
+        if (!activeIds.has(id)) { view.element.remove(); combatBuffViews.delete(id); }
+    });
+    buffs.forEach((buff, index) => {
+        let view = combatBuffViews.get(buff.id);
+        if (!view) {
+            const element = document.createElement('li');
+            element.className = 'combat-buff';
+            element.dataset.buffId = buff.id;
+            element.tabIndex = 0;
+            const stacks = document.createElement('span'); stacks.className = 'buff-stacks';
+            const value = document.createElement('span'); value.className = 'buff-value';
+            const duration = document.createElement('span'); duration.className = 'buff-duration';
+            element.append(stacks, value, duration);
+            view = {element, stacks, value, duration, icon:null, sprite:null};
+            combatBuffViews.set(buff.id, view);
+        }
+        if (!view.icon || view.sprite !== buff.sprite || view.iconGlyph !== buff.icon) {
+            view.icon?.remove();
+            view.icon = SkillSprites.icon({sprite:buff.sprite,icon:buff.icon}, 'buff-icon');
+            view.sprite = buff.sprite;
+            view.iconGlyph = buff.icon;
+            view.element.prepend(view.icon);
+        }
+        updateCombatText(view.stacks, formatBuffAmount(buff.stacks));
+        updateCombatText(view.value, buff.value);
+        updateCombatHidden(view.duration, buff.duration === undefined);
+        updateCombatText(view.duration, buff.duration === undefined ? '' : combatStatFormatter.format(buff.duration) + 's');
+        updateCombatAttribute(view.element, 'title', buff.description);
+        updateCombatAttribute(view.element, 'aria-label', buff.name + ': ' + buff.stacks + ' stacks, ' + buff.description);
+        if (elements.buffList.children[index] !== view.element) {
+            elements.buffList.insertBefore(view.element, elements.buffList.children[index] || null);
+        }
+    });
+    updateCombatHidden(elements.buffEmpty, buffs.length > 0);
+}
+
+function renderCombatBuffs() {
+    normalizeFury();
+    normalizeShields();
+    const buffs = [];
+    if (state.shieldStacks > 0) {
+        const node = getSkillNodeRank('shieldGenerator') > 0 ? skillNodeById.shieldGenerator : skillNodeById.resonantGuard;
+        buffs.push({id:'shields',name:'Shields',sprite:SkillSprites.safePath(node?.sprite),icon:'🛡',
+            stacks:state.shieldStacks,value:'1 hit',
+            description:state.shieldStacks + ' / ' + getPlayerMaxShields() + ' shields. Each shield blocks one enemy hit. Self-damage and health drain bypass shields.'});
+    }
+    if (state.furyStacks > 0) {
+        const bonus = formatBuffAmount(state.furyStacks * furyDamagePerStack * 100) + '%';
+        buffs.push({id:'fury',name:'Fury',sprite:SkillSprites.safePath(skillNodeById.maxFury?.sprite) || 'assets/ui/icon-sword.png',
+            stacks:state.furyStacks,value:bonus,duration:state.furyRemaining,
+            description:'+' + bonus + ' damage. ' + combatStatFormatter.format(state.furyRemaining) + 's until the next stack is lost. Hits add ' + furySecondsPerStack + ' seconds.'});
+    }
+    const righteousFireNode = getRighteousFireNode();
+    if (righteousFireNode && state.playerHp > 0 && !state.combatPaused) {
+        const targets = state.monsterStates.filter(monster => monster.hp > 0).length;
+        const excess = getRighteousFireRegeneration(gameTickSeconds).excess;
+        const damage = targets ? excess / gameTickSeconds / targets : 0;
+        buffs.push({id:'fireOfTheRighteous',name:'Fire of the Righteous',
+            sprite:SkillSprites.safePath(righteousFireNode.sprite),icon:righteousFireNode.icon,
+            stacks:1,value:formatBuffAmount(damage) + '/s',
+            description:combatStatFormatter.format(damage) + ' burning damage per second per enemy.\n' + SkillDescriptions.describe(righteousFireNode)});
+    }
+    renderBuffs(buffs);
+    updateCombatText(elements.damage, formatAmount(getDamage()));
+    renderDetailedStats();
 }
 
 function getPlayerHealthRegen() {
-    return Math.max(0, (getSkillStat('healthRegen') + getGearStat('healthRegen')) *
-        getSkillMultiplier('healthRegenMultiplier') * getGearStat('healthRegenMultiplier'));
+    const flat = getSkillStat('healthRegen') + getGearStat('healthRegen');
+    const maximumHealthRate = getSkillStat('healthRegenPercent') + getGearStat('healthRegenPercent');
+    const increase = getSkillStat('healthRegenIncrease') + getGearStat('healthRegenIncrease');
+    return Math.max(0, flat + getPlayerMaxHealth() * maximumHealthRate) * Math.max(0, 1 + increase);
+}
+
+function hasFireOfTheRighteous() {
+    return Boolean(getRighteousFireNode());
+}
+
+function getRighteousFireNode() {
+    for (const id of righteousFireNodeIds) {
+        if (skillNodeById[id] && getSkillNodeRank(id) > 0) return skillNodeById[id];
+    }
+    return null;
+}
+
+function getRighteousFireRegeneration(elapsed) {
+    const maxHealth = getPlayerMaxHealth(), regeneration = getPlayerHealthRegen() * elapsed;
+    const drain = maxHealth * righteousFireSettings.healthDrainPerSecond * elapsed;
+    const healing = Math.min(regeneration, Math.max(0,
+        maxHealth * righteousFireSettings.regenHealthCap - state.playerHp + drain));
+    return {drain, healing, excess: regeneration - healing};
+}
+
+function applyPlayerHealing(amount) {
+    if (!Number.isFinite(amount) || amount <= 0) return 0;
+    const maxHealth = getPlayerMaxHealth();
+    const limit = hasFireOfTheRighteous() ? maxHealth * righteousFireSettings.regenHealthCap : maxHealth;
+    const previousHp = state.playerHp;
+    // Existing health above the cap drains normally; healing cannot add to it.
+    if (previousHp >= limit) return 0;
+    state.playerHp = Math.min(limit, previousHp + amount);
+    return state.playerHp - previousHp;
+}
+
+function tickPlayerRegeneration(elapsed) {
+    if (state.combatPaused || state.playerHp <= 0) return;
+    if (!hasFireOfTheRighteous()) {
+        applyPlayerHealing(getPlayerHealthRegen() * elapsed);
+        return;
+    }
+
+    // Resolve regeneration and drain together. Reserve healing to offset the
+    // drain and reach 30% health; convert only the regeneration left over.
+    const {drain, healing, excess} = getRighteousFireRegeneration(elapsed);
+    if (healing >= drain) applyPlayerHealing(healing - drain);
+    else applyDamageToPlayer(drain - healing, 'self');
+
+    if (excess <= 0 || state.playerHp <= 0) return;
+    // Snapshot living targets so kills cannot redistribute this tick's damage.
+    const targets = state.monsterStates.filter(monster => monster.hp > 0);
+    if (!targets.length) return;
+    const damage = excess / targets.length;
+    targets.forEach(monster => applyDamageToMonster(monster, damage, 'dot', 'righteousFire'));
+    presentCombatEffect(() => {
+        const until = performance.now() + 350;
+        targets.forEach(monster => righteousFireHitUntil.set(monster, until));
+    });
 }
 
 function getSkillMultiplier(stat) {
@@ -754,7 +1021,8 @@ function getSkillMultiplier(stat) {
 
 function getDamage() {
     return Math.max(1, Math.round((2 + state.upgrades.strength * 2 + getGearStat('damage') +
-        getSkillStat('damage')) * getSkillMultiplier('damageMultiplier') * getGearStat('damageMultiplier')));
+        getSkillStat('damage')) * getSkillMultiplier('damageMultiplier') * getGearStat('damageMultiplier') *
+        (1 + state.furyStacks * furyDamagePerStack)));
 }
 
 function getMultiHit() {
@@ -808,6 +1076,125 @@ function setAccuracyClass(element, hitChance, isPlayerAttack) {
 function getGoldMultiplier() {
     return Math.max(0, (1 + getGearStat('goldBonus') + getSkillStat('goldBonus')) *
         getSkillMultiplier('goldBonusMultiplier') * getGearStat('goldBonusMultiplier'));
+}
+
+function renderDetailedStats() {
+    // Closed details cost no stat calculations or DOM updates during combat.
+    if (!elements.detailedStats.open) return;
+    const number = value => combatStatFormatter.format(value);
+    const percent = value => number(value * 100) + '%';
+    const signedPercent = value => (value >= 0 ? '+' : '') + percent(value);
+    const multiplier = value => '×' + number(value);
+    const flat = stat => getSkillStat(stat) + getGearStat(stat);
+    const combinedMultiplier = stat => getSkillMultiplier(stat) * getGearStat(stat);
+    const groups = [
+        {id:'damage', name:'Damage', total:formatAmount(getDamage()), rows:[
+            ['Flat damage', number(2 + state.upgrades.strength * 2 + flat('damage'))],
+            ['Damage multiplier', multiplier(combinedMultiplier('damageMultiplier'))],
+            ['Fury damage bonus', percent(state.furyStacks * furyDamagePerStack)]
+        ]},
+        {id:'multiHit', name:'Multi-hit', total:number(getMultiHit()), rows:[
+            ['Flat multi-hit', number(baseMultiHit + flat('multiHit'))],
+            ['Multi-hit multiplier', multiplier(combinedMultiplier('multiHitMultiplier'))]
+        ]},
+        {id:'attackSpeed', name:'Attack speed', total:multiplier(getAttackSpeedMultiplier()), rows:[
+            ['Skill tree multi', multiplier(getSkillMultiplier('attackSpeedMultiplier'))],
+            ['Equipment', multiplier(getGearStat('attackSpeedMultiplier'))],
+            ['Skill tree additive', signedPercent(getSkillStat('attackSpeedBonus'))],
+            ['Upgrade multiplier', multiplier(1 / Math.pow(.92, state.upgrades.haste))],
+            ['Attack interval', number(getAttackSpeed()) + 's'],
+            ['Minimum interval', number(getGearStat('minimumAttackInterval')) + 's']
+        ]},
+        {id:'accuracy', name:'Accuracy', total:formatAmount(getPlayerAccuracy()), rows:[
+            ['Flat accuracy', number(playerAccuracy + flat('accuracy'))],
+            ['Accuracy multiplier', multiplier(combinedMultiplier('accuracyMultiplier'))]
+        ]},
+        {id:'evasion', name:'Evasion', total:formatAmount(getPlayerEvasion()), rows:[
+            ['Flat evasion', number(basePlayerEvasion + state.upgrades.evasion * 5 + flat('evasion'))],
+            ['Evasion multiplier', multiplier(combinedMultiplier('evasionMultiplier'))],
+            ['Minimum enemy hit chance', number(getGearStat('minimumEnemyHitChance')) + '%']
+        ]},
+        {id:'health', name:'Max HP', total:formatAmount(getPlayerMaxHealth()), rows:[
+            ['Flat HP (including base)', number(basePlayerMaxHealth + flat('health'))],
+            ['Max HP multiplier', multiplier(combinedMultiplier('healthMultiplier'))]
+        ]},
+        {id:'healthRegen', name:'Health regen', total:number(getPlayerHealthRegen()) + ' HP/s', rows:[
+            ['Flat HP regen', number(flat('healthRegen')) + ' HP/s'],
+            ['Maximum HP regen', percent(flat('healthRegenPercent')) + '/s'],
+            ['Regen from maximum HP', number(getPlayerMaxHealth() * flat('healthRegenPercent')) + ' HP/s'],
+            ['Increased health regen', percent(flat('healthRegenIncrease'))],
+            ['Regen healing limit', hasFireOfTheRighteous() ? '30% HP' : '100% HP']
+        ]},
+        {id:'poisonChance', name:'Poison chance', total:percent(getPoisonChance()), rows:[
+            ['Flat poison chance', percent(flat('poisonChance'))],
+            ['Chance multiplier', multiplier(combinedMultiplier('poisonChanceMultiplier'))]
+        ]},
+        {id:'poisonDamage', name:'Poison damage per tick', total:formatAmount(getPoisonDamage()), rows:[
+            ['Flat poison damage', number(poisonDamageType.baseDamage + flat('poisonDamage'))],
+            ['Poison damage multiplier', multiplier(combinedMultiplier('poisonDamageMultiplier'))]
+        ]},
+        {id:'poisonTickRate', name:'Poison tick speed', total:number(1 / getPoisonTickInterval()) + ' ticks/s', rows:[
+            ['Tick speed bonus', percent(flat('poisonTickRate'))],
+            ['Tick speed multiplier', multiplier(combinedMultiplier('poisonTickRateMultiplier'))],
+            ['Tick interval', number(getPoisonTickInterval()) + 's'],
+            ['Stack duration', number(poisonDamageType.durationSeconds) + 's']
+        ]},
+        {id:'bleedChance', name:'Bleed chance', total:percent(getBleedChance()), rows:[
+            ['Flat bleed chance', percent(flat('bleedChance'))],
+            ['Chance multiplier', multiplier(combinedMultiplier('bleedChanceMultiplier'))]
+        ]},
+        {id:'bleedDamage', name:'Bleed from a normal hit', total:number(getBleedDamage()) + ' / tick', rows:[
+            ['Triggering hit damage', number(getDamage())],
+            ['Damage taken from hit', percent(bleedDamageType.hitDamageRatio)],
+            ['Flat bonus per application', number(flat('bleedDamage'))],
+            ['Bleed damage multiplier', multiplier(combinedMultiplier('bleedDamageMultiplier'))]
+        ]},
+        {id:'bleedTickRate', name:'Bleed tick speed', total:number(1 / getBleedTickInterval()) + ' ticks/s', rows:[
+            ['Tick speed bonus', percent(flat('bleedTickRate'))],
+            ['Tick speed multiplier', multiplier(combinedMultiplier('bleedTickRateMultiplier'))],
+            ['Tick interval', number(getBleedTickInterval()) + 's'],
+            ['Time per application', number(bleedDamageType.secondsPerApplication) + 's'],
+            ['Maximum shared duration', number(bleedDamageType.maximumDuration) + 's']
+        ]},
+        {id:'maxFury', name:'Maximum fury', total:formatAmount(getPlayerMaxFury()), rows:[
+            ['Flat maximum fury', number(basePlayerMaxFury + flat('maxFury'))],
+            ['Maximum fury multiplier', multiplier(combinedMultiplier('maxFuryMultiplier'))]
+        ]},
+        {id:'maxShields', name:'Maximum shields', total:formatAmount(getPlayerMaxShields()), rows:[
+            ['Flat maximum shields', number(basePlayerMaxShields + flat('maxShields'))],
+            ['Maximum shields multiplier', multiplier(combinedMultiplier('maxShieldsMultiplier'))],
+            ['Current shields', number(state.shieldStacks)]
+        ]},
+        {id:'gold', name:'Gold gained', total:multiplier(getGoldMultiplier()), rows:[
+            ['Gold bonus', percent(flat('goldBonus'))],
+            ['Gold multiplier', multiplier(combinedMultiplier('goldBonusMultiplier'))]
+        ]}
+    ];
+    groups.forEach(group => {
+        let view = detailedStatViews.get(group.id);
+        if (!view) {
+            const section = document.createElement('section');
+            section.className = 'detailed-stat-group';
+            section.dataset.stat = group.id;
+            const heading = document.createElement('h4'); heading.className = 'detailed-stat-heading';
+            const name = document.createElement('span'); name.textContent = group.name;
+            const total = document.createElement('strong');
+            heading.append(name, total);
+            const list = document.createElement('dl');
+            const values = group.rows.map(([label]) => {
+                const row = document.createElement('div'); row.className = 'detailed-stat-row';
+                const term = document.createElement('dt'); term.textContent = label;
+                const value = document.createElement('dd');
+                row.append(term, value); list.append(row);
+                return value;
+            });
+            section.append(heading, list);
+            elements.detailedStatsList.append(section);
+            view = {total, values}; detailedStatViews.set(group.id, view);
+        }
+        updateCombatText(view.total, group.total);
+        group.rows.forEach(([, value], index) => updateCombatText(view.values[index], value));
+    });
 }
 
 function skillNodeIsAllocated(id) {
@@ -986,6 +1373,10 @@ function createGameSave() {
         monsterColumns: state.monsterColumns,
         targetMonsterId: state.targetMonsterId,
         playerHp: state.playerHp,
+        furyStacks: state.furyStacks,
+        furyRemaining: state.furyRemaining,
+        furyDecaying: state.furyDecaying,
+        shieldStacks: state.shieldStacks,
         combatPaused: state.combatPaused,
         lootLog: state.lootLog.slice(0, 12),
         lastDrop: state.lastDrop,
@@ -1126,6 +1517,14 @@ function parseGameSave(rawSave) {
     }
     if (saved) delete saved.skillNodes;
     if (saved && saved.skillRanks && typeof saved.skillRanks === 'object' && !Array.isArray(saved.skillRanks)) {
+        // Keep allocated Fire when an editor export switches between its IDs.
+        const fireNodeId = righteousFireNodeIds.find(id => skillNodeById[id]);
+        righteousFireNodeIds.forEach(id => {
+            if (fireNodeId && !skillNodeById[id] && Object.hasOwn(saved.skillRanks, id) && !Object.hasOwn(saved.skillRanks, fireNodeId)) {
+                saved.skillRanks[fireNodeId] = saved.skillRanks[id];
+                delete saved.skillRanks[id];
+            }
+        });
         let refundedRanks = 0;
         Object.entries(saved.skillRanks).forEach(([id, rank]) => {
             if (!skillNodeById[id] || skillNodeById[id].start || !Number.isInteger(rank) || rank <= 1) return;
@@ -1225,6 +1624,10 @@ function parseGameSave(rawSave) {
         (saved.enemyRespawnRemaining !== undefined &&
             (!Number.isFinite(saved.enemyRespawnRemaining) || saved.enemyRespawnRemaining < 0)) ||
         (saved.monsterColumns !== undefined && (!Number.isInteger(saved.monsterColumns) || saved.monsterColumns < 1 || saved.monsterColumns > 100)) ||
+        (saved.furyStacks !== undefined && (!Number.isSafeInteger(saved.furyStacks) || saved.furyStacks < 0)) ||
+        (saved.furyRemaining !== undefined && (!Number.isFinite(saved.furyRemaining) || saved.furyRemaining < 0)) ||
+        (saved.furyDecaying !== undefined && typeof saved.furyDecaying !== 'boolean') ||
+        (saved.shieldStacks !== undefined && (!Number.isSafeInteger(saved.shieldStacks) || saved.shieldStacks < 0)) ||
         (saved.monsterStates !== undefined && (!Array.isArray(saved.monsterStates) ||
             !saved.monsterStates.every(monster => monster && typeof monster.id === 'string' &&
                 Number.isFinite(monster.hp) && monster.hp >= 0 &&
@@ -1233,6 +1636,7 @@ function parseGameSave(rawSave) {
                     Number.isFinite(monster.attackTimer) && monster.attackTimer >= 0) &&
                 (monster.freezeRemaining === undefined || Number.isFinite(monster.freezeRemaining) &&
                     monster.freezeRemaining >= 0 && monster.freezeRemaining <= arrowSkillSettings.freezeDuration) &&
+                isValidBleedState(monster.bleed) &&
                 (monster.poisonStacks === undefined || Array.isArray(monster.poisonStacks) &&
                     monster.poisonStacks.every(stack => stack &&
                         Number.isFinite(stack.remainingDuration) && stack.remainingDuration > 0 &&
@@ -1343,6 +1747,12 @@ function applyGameSave(saved) {
         ? getPlayerMaxHealth()
         : Math.min(saved.playerHp, getPlayerMaxHealth());
     state.combatPaused = saved.combatPaused === true || state.playerHp === 0;
+    state.furyStacks = saved.furyStacks || 0;
+    state.furyRemaining = saved.furyRemaining || 0;
+    state.furyDecaying = saved.furyDecaying === true;
+    normalizeFury();
+    state.shieldStacks = saved.shieldStacks || 0;
+    normalizeShields();
     state.lootLog = Array.isArray(saved.lootLog)
         ? saved.lootLog.filter(entry => typeof entry === 'string').slice(0, 12)
         : [];
@@ -1353,6 +1763,7 @@ function applyGameSave(saved) {
         ? Math.min(saved.lastSimulatedAt, Date.now()) : Date.now());
     clearOfflineRecap();
     pendingOfflineRecap = normalizeOfflineRecap(saved.offlineRecap);
+    resetDamageBreakdown(state.selectedMap);
 }
 
 function loadGame() {
@@ -1573,7 +1984,7 @@ function renderUpgrades() {
         tooltip.className = 'skill-node-tooltip';
         tooltip.setAttribute('role', 'tooltip');
         tooltip.hidden = true;
-        tooltip.innerHTML = '<strong></strong><span></span>';
+        tooltip.innerHTML = '<strong></strong><small class="ability-tag" hidden></small><span></span>';
         viewport.appendChild(tooltip);
         elements.upgrades.appendChild(viewport);
     }
@@ -1654,7 +2065,7 @@ function renderUpgrades() {
         const description = SkillDescriptions.describe(node);
         const effect = button.querySelector('.skill-node-effect');
         if (effect) effect.textContent = description;
-        const labelParts = [node.name, description];
+        const labelParts = [node.name, SkillDescriptions.abilityTagLabel(node), description];
         if (node.start) {
             labelParts.push('Starting node');
         } else {
@@ -2238,7 +2649,19 @@ function createEnemyCard(definition) {
     freezeStatus.className = 'enemy-freeze-status';
     freezeStatus.dataset.enemyFreezeStatus = '';
     freezeStatus.hidden = true;
-    effectRow.append(procNotice, freezeStatus, dotStatus);
+    effectRow.append(procNotice, freezeStatus);
+    const dotRow = document.createElement('div');
+    dotRow.className = 'enemy-dot-row';
+    const bleedStatus = document.createElement('span');
+    bleedStatus.className = 'enemy-dot-status enemy-bleed-status';
+    bleedStatus.dataset.enemyBleedStatus = '';
+    bleedStatus.hidden = true;
+    const bleedCount = document.createElement('strong');
+    bleedCount.dataset.enemyBleedCount = '';
+    const bleedDuration = document.createElement('span');
+    bleedDuration.dataset.enemyBleedDuration = '';
+    bleedStatus.append(droplet.cloneNode(true), bleedCount, bleedDuration);
+    dotRow.append(dotStatus, bleedStatus);
     const healthTrack = document.createElement('div');
     healthTrack.className = 'health-track';
     healthTrack.setAttribute('role', 'progressbar');
@@ -2253,7 +2676,10 @@ function createEnemyCard(definition) {
     const poisonDamageBar = document.createElement('div');
     poisonDamageBar.className = 'enemy-health-poison-damage';
     poisonDamageBar.setAttribute('aria-hidden', 'true');
-    healthTrack.append(poisonDamageBar, healthBar, damageBar);
+    const bleedDamageBar = document.createElement('div');
+    bleedDamageBar.className = 'enemy-health-poison-damage enemy-health-bleed-damage';
+    bleedDamageBar.setAttribute('aria-hidden', 'true');
+    healthTrack.append(poisonDamageBar, bleedDamageBar, healthBar, damageBar);
     const summary = document.createElement('div');
     summary.className = 'enemy-health-summary';
     const hp = document.createElement('span');
@@ -2295,14 +2721,14 @@ function createEnemyCard(definition) {
     respawn.setAttribute('aria-live', 'off');
     status.appendChild(respawn);
     title.append(name, status);
-    details.append(playerAccuracy, enemyAccuracy, effectRow, healthTrack, summary);
+    details.append(playerAccuracy, enemyAccuracy, effectRow, dotRow, healthTrack, summary);
     card.append(title, mark, details, shockwaveNotice);
     enemyCardViews.set(card, {name, targetLabel, playerAccuracyValue, enemyAccuracyValue,
-        healthBar, healthTrack, poisonDamageBar, hpText, intervalValue, damageValue,
-        dotStatus, dotCount, respawn, freezeStatus});
+        healthBar, healthTrack, poisonDamageBar, bleedDamageBar, hpText, intervalValue, damageValue,
+        dotStatus, dotCount, bleedStatus, respawn, freezeStatus});
     card.addEventListener('animationend', event => {
         if (event.animationName === 'enemy-death-shake') card.classList.remove('is-defeating');
-        if (event.animationName === 'poison-stack-proc') event.target.classList.remove('is-applying');
+        if (event.animationName === 'poison-stack-proc' || event.animationName === 'bleed-stack-proc') event.target.classList.remove('is-applying');
         if (event.animationName === 'shockwave-card-hit') event.target.classList.remove('is-shockwave-splashed');
         if (event.animationName === 'shockwave-health-impact' && event.target.classList.contains('is-shockwave-hit')) {
             event.target.classList.remove('is-shockwave-hit');
@@ -2437,7 +2863,7 @@ function renderCombatContent() {
     // map changes so creation-time sprites and health labels cannot carry over.
     if (elements.enemyRoster.dataset.mapId !== map.id ||
         ids.length !== renderedIds.length || ids.some((id, index) => id !== renderedIds[index])) {
-        elements.combatPanel.querySelectorAll('.poison-transfer, .combat-arrow, .eruption-chain').forEach(effect => effect.remove());
+        elements.combatPanel.querySelectorAll('.poison-transfer, .combat-arrow, .eruption-chain, .shield-slam-wave').forEach(effect => effect.remove());
         renderedCards = definitions.map(createEnemyCard);
         elements.enemyRoster.replaceChildren(...renderedCards);
         elements.enemyRoster.dataset.mapId = map.id;
@@ -2452,6 +2878,9 @@ function renderCombatContent() {
     const completed = progress >= map.goal;
     const maxHealth = getPlayerMaxHealth();
     const playerHpPercent = Math.max(0, Math.min(100, state.playerHp / maxHealth * 100));
+    const righteousFireActive = hasFireOfTheRighteous() && state.playerHp > 0 && !state.combatPaused;
+    const visualNow = performance.now();
+    elements.playerHealthPanel.classList.toggle('is-righteous-fire', righteousFireActive);
     updateCombatText(elements.mapName, map.name);
     updateCombatText(elements.mapDescription, map.description);
     updateCombatText(elements.killProgress, completed ? progress + ' kills' : Math.min(progress, map.goal) + ' / ' + map.goal);
@@ -2514,6 +2943,7 @@ function renderCombatContent() {
         const hpPercent = Math.max(0, Math.min(100, monster.hp / definition.health * 100));
         card.classList.toggle('is-target', Boolean(target && target.id === monster.id));
         card.classList.toggle('is-respawning', monster.hp <= 0);
+        card.classList.toggle('is-righteous-fire', righteousFireActive && (righteousFireHitUntil.get(monster) || 0) > visualNow);
         updateCombatText(view.name, definition.name);
         if (view.name.title !== definition.name) view.name.title = definition.name;
         updateCombatHidden(view.targetLabel, !target || target.id !== monster.id);
@@ -2535,6 +2965,14 @@ function renderCombatContent() {
         updateCombatAttribute(poisonIndicator, 'title', remainingPoisonDamage > 0
             ? 'Poison will deal ' + remainingPoisonDamage + ' more damage'
             : '');
+        const remainingBleedDamage = Math.min(Math.max(0, monster.hp - remainingPoisonDamage), getRemainingBleedDamage(monster));
+        const bleedPercent = remainingBleedDamage / definition.health * 100;
+        view.bleedDamageBar.style.left = Math.max(0, hpPercent - poisonPercent - bleedPercent) + '%';
+        view.bleedDamageBar.style.width = bleedPercent + '%';
+        view.bleedDamageBar.classList.toggle('is-visible', monster.hp > 0 && remainingBleedDamage > 0);
+        updateCombatAttribute(view.bleedDamageBar, 'title', remainingBleedDamage > 0
+            ? 'Bleed will deal ' + combatStatFormatter.format(getRemainingBleedDamage(monster)) + ' more damage' : '');
+        updateBleedStatus(view.bleedStatus, monster);
         updateCombatText(view.hpText, Math.ceil(monster.hp) + ' / ' + definition.health + ' HP');
         updateCombatText(view.intervalValue, getMonsterAttackInterval(monster).toFixed(1) + 's');
         const freezeStatus = view.freezeStatus;
@@ -2562,12 +3000,16 @@ function renderCombatContent() {
     elements.playerHealthDamage.style.left = playerHpPercent + '%';
     elements.playerHealthDamage.style.width = damagePercent + '%';
     updateCombatAttribute(elements.playerHealthTrack, 'aria-valuenow', Math.round(playerHpPercent));
-    updateCombatText(elements.playerHealthText, Math.ceil(state.playerHp) + ' / ' + maxHealth + ' HP');
+    // Keep fractional combat health, but do not round the displayed HP above a healing cap.
+    const displayedPlayerHp = state.playerHp > 0 && state.playerHp < 1 ? '<1' : Math.floor(state.playerHp + 1e-8);
+    updateCombatText(elements.playerHealthText, displayedPlayerHp + ' / ' + maxHealth + ' HP');
+    renderCombatBuffs();
     updateCombatText(elements.combatStatusLabel, state.combatPaused ? 'Dead' : target ? 'Auto-battling' : 'Waiting for respawn');
     elements.combatStatus.classList.toggle('combat-dead', state.combatPaused);
     elements.combatStatus.classList.toggle('is-fighting', !state.combatPaused && Boolean(target));
     updateCombatHidden(elements.resumeCombat, !state.combatPaused || state.currentView !== 'map');
     renderLootNotice();
+    renderDamageBreakdown();
     window.LootEffects?.sync(state.currentView === 'map', map.id);
 }
 
@@ -2587,9 +3029,11 @@ function render() {
     elements.damage.textContent = formatAmount(getDamage());
     elements.multiHit.textContent = combatStatFormatter.format(getMultiHit());
     elements.poisonChance.textContent = combatStatFormatter.format(getPoisonChance() * 100) + '%';
+    elements.bleedChance.textContent = combatStatFormatter.format(getBleedChance() * 100) + '%';
     elements.speed.textContent = (speedBonus >= 0 ? '+' : '') + combatStatFormatter.format(speedBonus) + '%';
     elements.accuracy.textContent = formatAmount(getPlayerAccuracy());
     elements.evasion.textContent = formatAmount(getPlayerEvasion());
+    elements.maxHealth.textContent = formatAmount(getPlayerMaxHealth());
     elements.maxFury.textContent = formatAmount(getPlayerMaxFury());
     elements.healthRegen.textContent = combatStatFormatter.format(getPlayerHealthRegen()) + ' HP/s';
     elements.townView.hidden = state.currentView !== 'town';
@@ -2727,14 +3171,14 @@ function defeatEnemy(monster) {
 
     monster.hp = 0;
     monster.poisonStacks = [];
+    monster.bleed = null;
     monster.respawnRemaining = definition.respawnSeconds;
     monster.attackTimer = 0;
     monster.freezeRemaining = 0;
     selectNextMonsterTarget(monster);
     syncLegacyEnemyState();
-    state.attackTimer = 0;
-    clearEnemyDamageIndicator();
     transferPoisonOnDeath(monster, remainingPoison);
+    gainShieldFromKill();
     saveGame();
 }
 
@@ -2779,15 +3223,23 @@ function showPoisonTransfer(sourceId, targetId) {
     });
 }
 
-function applyDamageToPlayer(damage) {
+function applyDamageToPlayer(damage, source = 'enemy') {
     if (!Number.isFinite(damage) || damage <= 0 || state.playerHp <= 0) return;
+    if (source === 'enemy') {
+        normalizeShields();
+        if (state.shieldStacks > 0) {
+            state.shieldStacks--;
+            presentCombatEffect(() => restartCombatAnimation(elements.playerHealthPanel, 'is-shield-blocking'));
+            return;
+        }
+    }
     const previousHp = state.playerHp;
     state.playerHp = Math.max(0, state.playerHp - damage);
     if (state.playerHp < 1e-8) state.playerHp = 0;
     const damageDealt = previousHp - state.playerHp;
     presentCombatEffect(() => {
         recentPlayerDamage = damageDealt;
-        nudgePlayerHealthBar();
+        flashPlayerHealthBar();
         restartCombatAnimation(elements.playerHealthDamage, 'is-visible');
         window.clearTimeout(damageFadeTimeout);
         damageFadeTimeout = window.setTimeout(() => {
@@ -2800,18 +3252,26 @@ function applyDamageToPlayer(damage) {
     }
 }
 
-function applyDamageToMonster(monster, damage, damageType = 'physical') {
+function applyDamageToMonster(monster, damage, damageType = 'physical', abilityId = null) {
     if (!monster || monster.hp <= 0 || !Number.isFinite(damage) || damage <= 0) return false;
+    // Every successful hit builds Fury, including splash and generated arrows.
+    // Damage over time and poison executions never build or extend Fury.
+    if (damageType !== 'poison' && damageType !== 'bleed' && damageType !== 'dot') gainFuryFromHit();
     const previousHp = monster.hp;
     monster.hp = Math.max(0, monster.hp - damage);
+    recordMonsterDamage(previousHp - monster.hp, damageType, abilityId);
     syncLegacyEnemyState();
     if (monster.hp <= 0) {
         defeatEnemy(monster);
         return true;
     }
-    // Physical hits can bring an already-poisoned enemy into execute range.
+    // Non-poison damage can bring an already-poisoned enemy into execute range.
     // Poison ticks check after updating every stack's remaining lifetime.
     if (damageType !== 'poison' && tryExecutePoison(monster)) return true;
+    if (damageType === 'physical' && abilityId &&
+        SkillDescriptions.getAbilityTargeting(skillNodeById[abilityId]) === 'singleTarget') {
+        tryApplyBleed(monster, damage);
+    }
 
     const damageDealt = previousHp - monster.hp;
     presentCombatEffect(() => {
@@ -2885,7 +3345,7 @@ function tryExecutePoison(monster) {
     if (getSkillNodeRank('poisonExecute') <= 0 || !monster || monster.hp <= 0 ||
         getRemainingPoisonDamage(monster) < monster.hp) return false;
     showMonsterProc(monster.id, 'POISON EXECUTE');
-    return applyDamageToMonster(monster, monster.hp, 'poison');
+    return applyDamageToMonster(monster, monster.hp, 'poison', 'poisonExecute');
 }
 
 function tryApplyPoison(monster) {
@@ -2932,14 +3392,16 @@ function triggerShockwaveSlash(hitMonster, hitDamage) {
     const splashDamage = hitDamage * 0.33;
     const splashTargets = state.monsterStates
         .filter(monster => monster.hp > 0 && monster.id !== hitMonster.id);
-    if (!splashTargets.length) return;
     splashTargets.forEach(monster => {
         showMonsterProc(monster.id, 'SHOCKWAVE HIT');
         flashShockwaveCard(monster.id);
         flashShockwaveHealthBar(monster.id);
-        applyDamageToMonster(monster, splashDamage, 'physical');
+        applyDamageToMonster(monster, splashDamage, 'physical', 'shockwaveSlash');
         tryApplyPoison(monster);
     });
+    // One shield per activation, independently of the number of splash hits.
+    // A proc against a lone boss still grants its shield.
+    if (getSkillNodeRank('resonantGuard') > 0) gainShields();
 }
 
 function craftGear(id) {
@@ -2977,8 +3439,10 @@ document.querySelector('#mapButton').addEventListener('click', function() {
     state.tutorials.firstNextMapPending = false;
     state.currentView = 'map';
     state.isInTown = false;
-    setInitialMonsterTarget();
-    state.attackTimer = 0;
+    if (!activeMonster()) {
+        ensureLiveMonsterTarget();
+        state.attackTimer = 0;
+    }
     if (state.tutorials.firstNextMapPending) state.mapListExpanded = true;
     render();
     saveGame();
@@ -3009,6 +3473,8 @@ document.querySelector('#resetGame').addEventListener('click', function() {
     state.experience = 0;
     state.skillPoints = 0;
     state.skillRanks = {};
+    clearFury();
+    state.shieldStacks = 0;
     state.gear = createEmptyGear();
     state.ownedItemIds = [];
     state.developerItemsEnabled = false;
@@ -3108,7 +3574,8 @@ elements.upgrades.addEventListener('click', function(event) {
             });
             state.skillPoints -= pendingCount;
             const maxHealth = getPlayerMaxHealth();
-            state.playerHp = Math.min(maxHealth, state.playerHp + Math.max(0, maxHealth - previousMaxHealth));
+            state.playerHp = Math.min(maxHealth, state.playerHp);
+            applyPlayerHealing(Math.max(0, maxHealth - previousMaxHealth));
             if (state.tutorials.firstSkillPointPending) {
                 state.tutorials.firstSkillPointPending = false;
                 state.tutorials.firstSkillPointDismissed = false;
@@ -3343,11 +3810,11 @@ function simulateCombatStep(elapsed, collectEffects = false) {
     simulatingCombat = true;
     try {
         const map = currentMap();
+        tickFury(elapsed);
+        normalizeShields();
         const killsBeforeTick = state.kills[map.id];
         const wasPaused = state.combatPaused;
-        if (!state.combatPaused && state.playerHp > 0) {
-            state.playerHp = Math.min(getPlayerMaxHealth(), state.playerHp + getPlayerHealthRegen() * elapsed);
-        }
+        tickPlayerRegeneration(elapsed);
         ensureLiveMonsterTarget();
         const previousTarget = activeMonster();
         let anyRespawned = false;
@@ -3367,13 +3834,18 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                 monster.hp = monsterDefinition(monster, map).health;
                 monster.attackTimer = 0;
                 monster.freezeRemaining = 0;
+                monster.bleed = null;
                 anyRespawned = true;
             }
         });
         tickPendingEruptions(elapsed);
+        tryShieldSlam();
         if (!state.combatPaused) {
             state.monsterStates.forEach(monster => {
-                if (monster.hp > 0) tickMonsterPoison(monster, elapsed);
+                if (monster.hp > 0) {
+                    tickMonsterPoison(monster, elapsed);
+                    if (monster.hp > 0) tickMonsterBleed(monster, elapsed);
+                }
             });
             ensureLiveMonsterTarget();
             syncLegacyEnemyState();
@@ -3385,7 +3857,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                 while (monster.attackTimer >= definition.attackInterval && !state.combatPaused) {
                     monster.attackTimer -= definition.attackInterval;
                     if (Math.random() * 100 < getEnemyHitChance(monster)) {
-                        applyDamageToPlayer(definition.attackDamage);
+                        applyDamageToPlayer(definition.attackDamage, 'enemy');
                     } else {
                         flashDodge(elements.playerHealthTrack);
                     }
@@ -3412,6 +3884,8 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                             const hitDamage = getDamage();
                             if (attackIndex > 0) showMonsterHitBadge(attackTarget.id, 'MULTI-HIT', true);
                             applyDamageToMonster(attackTarget, hitDamage, 'physical');
+                            // Basic attacks also roll Bleed, including multihits.
+                            tryApplyBleed(attackTarget, hitDamage);
                             tryApplyPoison(attackTarget);
                             triggerShockwaveSlash(attackTarget, hitDamage);
                             if (attackIndex > 0) extraEruptionTargets.push({target: attackTarget, damage: hitDamage});
@@ -3432,7 +3906,10 @@ function simulateCombatStep(elapsed, collectEffects = false) {
             }
         } else {
             state.monsterStates.forEach(monster => {
-                if (monster.hp > 0) tickMonsterPoison(monster, elapsed);
+                if (monster.hp > 0) {
+                    tickMonsterPoison(monster, elapsed);
+                    if (monster.hp > 0) tickMonsterBleed(monster, elapsed);
+                }
             });
             ensureLiveMonsterTarget();
             syncLegacyEnemyState();
@@ -3486,8 +3963,8 @@ function processCombatBacklog() {
         // retained and continued in another task so input and painting can run.
         for (let steps = 0; pendingCombatSeconds + 1e-8 >= gameTickSeconds && steps < 250; steps++) {
             let elapsed = gameTickSeconds;
-            if (state.combatPaused && !state.pendingEruptions.length && state.monsterStates.every(monster => !monster.poisonStacks.length)) {
-                // Once poison and travelling eruptions finish, only respawns
+            if (state.combatPaused && !state.furyStacks && !state.pendingEruptions.length && state.monsterStates.every(monster => !monster.poisonStacks.length && !monster.bleed)) {
+                // Once Fury, damage over time and travelling eruptions finish, only respawns
                 // can change a dead player's state. Preserve 100 ms boundaries.
                 const nextRespawn = Math.min(...state.monsterStates
                     .filter(monster => monster.hp <= 0 && monster.respawnRemaining > 0)
@@ -3584,11 +4061,17 @@ function initSkillTreePan(viewport) {
     const tooltip = viewport.querySelector('#skillNodeTooltip');
     const tooltipTitle = tooltip.querySelector('strong');
     const tooltipDescription = tooltip.querySelector('span');
+    const tooltipTag = tooltip.querySelector('.ability-tag');
     function showNodeTooltip(button) {
         const node = skillNodeById[button.dataset.skillNode];
         if (!node) return;
         tooltipTitle.textContent = node.name;
         tooltipDescription.textContent = SkillDescriptions.describe(node);
+        const tag = SkillDescriptions.abilityTagLabel(node);
+        tooltipTag.textContent = tag;
+        tooltipTag.dataset.targeting = SkillDescriptions.getAbilityTargeting(node) || '';
+        tooltipTag.hidden = !tag;
+        tooltip.classList.toggle('is-righteous-fire', righteousFireNodeIds.includes(node.id));
         tooltip.hidden = false;
         tooltip.style.left = '0px';
         tooltip.style.top = '0px';

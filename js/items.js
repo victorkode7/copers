@@ -108,7 +108,9 @@ window.adventureItems = {
             "rarity": "common",
             "sprite": "assets/items/Wolf-Fang-Helm-7b1d28ad.png",
             "stats": {
-                "evasion": 10
+                "evasion": 10,
+                "health": 15,
+                "damageMultiplier": 1.05
             },
             "recipe": {
                 "materials": {
@@ -125,7 +127,8 @@ window.adventureItems = {
             "sprite": "assets/items/slimeboundCoat-b5f6ea93.png",
             "stats": {
                 "evasion": 10,
-                "goldBonus": 0.2
+                "goldBonus": 0.2,
+                "health": 25
             },
             "recipe": {
                 "materials": {
@@ -141,7 +144,8 @@ window.adventureItems = {
             "rarity": "common",
             "sprite": "assets/items/woodlandGreaves-ddaf5be3.png",
             "stats": {
-                "evasion": 5
+                "evasion": 10,
+                "health": 20
             },
             "recipe": {
                 "materials": {
@@ -157,8 +161,9 @@ window.adventureItems = {
             "rarity": "common",
             "sprite": "assets/items/blobhopperBoots-ed0b213e.png",
             "stats": {
-                "evasion": 3,
-                "attackSpeedMultiplier": 1.05
+                "evasion": 10,
+                "attackSpeedMultiplier": 1.05,
+                "health": 10
             },
             "recipe": {
                 "materials": {
@@ -174,8 +179,9 @@ window.adventureItems = {
             "rarity": "common",
             "sprite": "assets/items/Cinderstep-Boots-fd3af7bb.png",
             "stats": {
-                "evasion": 5,
-                "attackSpeedMultiplier": 1.087
+                "evasion": 15,
+                "attackSpeedMultiplier": 1.087,
+                "health": 25
             },
             "recipe": {
                 "materials": {
@@ -395,7 +401,7 @@ window.adventureItems = {
             "sprite": "assets/items/Turtle-Shield-0887bf06.png",
             "stats": {
                 "healthMultiplier": 2.5,
-                "health": 50
+                "health": 75
             },
             "recipe": {
                 "materials": {
@@ -413,7 +419,8 @@ window.adventureItems = {
             "sprite": "assets/items/Ice-helmet-d34a7251.png",
             "stats": {
                 "evasion": 30,
-                "health": 40
+                "health": 40,
+                "damageMultiplier": 1.1
             },
             "recipe": {
                 "materials": {
@@ -432,7 +439,8 @@ window.adventureItems = {
             "sprite": "assets/items/Ice-body-73d507ba.png",
             "stats": {
                 "health": 80,
-                "evasion": 30
+                "evasion": 30,
+                "healthRegenIncrease": 0.5
             },
             "recipe": {
                 "materials": {
@@ -451,7 +459,8 @@ window.adventureItems = {
             "sprite": "assets/items/Ice-legs-65730862.png",
             "stats": {
                 "health": 75,
-                "evasion": 30
+                "evasion": 30,
+                "goldBonusMultiplier": 1.25
             },
             "recipe": {
                 "materials": {
@@ -488,7 +497,8 @@ window.adventureItems = {
             "sprite": "assets/items/Blood-cloak-14bcfbfd.png",
             "stats": {
                 "healthMultiplier": 1.2,
-                "damageMultiplier": 1.25
+                "damageMultiplier": 1.25,
+                "health": 40
             },
             "recipe": null
         },

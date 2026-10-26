@@ -15,11 +15,16 @@
     Storage.prototype.setItem = function (...args) { if (args[0] === saveKey) writes++; return originalStorageWrite.apply(this, args); };
     let observer;
     const map = mapData.find(entry => entry.id === worldData[0].mapIds[0]);
+    const originalConnections = Object.fromEntries(Object.entries(skillNodeConnections).map(([id, links]) => [id, new Set(links)]));
     const ranks = ['damageNode', 'mightyBlows', 'shockwaveSlash', 'accuracyNode', 'multiHit1',
         'attackSpeedNode', 'attackSpeedNode2', 'snakeBite', 'poisonDMG_3', 'poisonDMG_2',
         'basicallySnake', 'bigAttackSpeed_1', 'bigAttackSpeed_4', 'bigAttackSpeed_3',
         'poisonExecute', 'bloomingFlower', 'healthNode', 'thickHide', 'untouchable', 'quickHands', 'fleetFooted',
-        'accuracyNode2', 'piercingArrow', 'forkingArrow', 'multiShot', 'freezingArrows'];
+        'accuracyNode2', 'piercingArrow', 'forkingArrow', 'multiShot', 'freezingArrows'].filter(id => skillNodeById[id]);
+    // This synthetic combat loadout tests clock/save behavior independently of
+    // the user's changing editor layout and prerequisite paths.
+    const rootId = skillNodes.find(node => node.start).id;
+    ranks.forEach(id => { skillNodeConnections[rootId].add(id); skillNodeConnections[id].add(rootId); });
     function seedRandom(seed = 48271) {
         Math.random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
     }
@@ -150,6 +155,7 @@
     } catch (error) { checks.push('ERROR ' + error.stack); }
     finally {
         observer?.disconnect(); hidden = false; resetCombatClock();
+        Object.entries(originalConnections).forEach(([id, links]) => { skillNodeConnections[id] = links; });
         Math.random = originalRandom; Date.now = originalDateNow;
         Storage.prototype.setItem = originalStorageWrite;
         for (const [target, name, descriptor] of [[performance, 'now', performanceDescriptor], [document, 'hidden', hiddenDescriptor], [document, 'visibilityState', visibilityDescriptor]]) {

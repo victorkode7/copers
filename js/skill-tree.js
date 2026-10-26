@@ -51,11 +51,13 @@ window.adventureSkillTree = {
             "row": 2,
             "maxRank": 1,
             "stats": {},
-            "size": 1.25,
+            "size": 1.5,
             "start": false,
             "requiresMode": "all",
             "type": "damage",
-            "customDescription": true
+            "customDescription": true,
+            "sprite": "",
+            "abilityTargeting": "aoe"
         },
         {
             "id": "fleetFooted",
@@ -94,7 +96,7 @@ window.adventureSkillTree = {
             "id": "untouchable",
             "name": "Untouchable",
             "icon": "◈",
-            "effect": "+50% evasion",
+            "effect": "+25% evasion",
             "requires": [
                 "thickHide"
             ],
@@ -102,12 +104,13 @@ window.adventureSkillTree = {
             "row": 6,
             "maxRank": 1,
             "stats": {
-                "evasionMultiplier": 1.5
+                "evasionMultiplier": 1.25
             },
             "size": 1,
             "start": false,
             "requiresMode": "all",
-            "customDescription": false
+            "customDescription": false,
+            "sprite": ""
         },
         {
             "id": "healthNode",
@@ -132,10 +135,10 @@ window.adventureSkillTree = {
             "id": "healthNode2",
             "name": "Health",
             "icon": "♥",
-            "effect": "+20% maximum health",
+            "effect": "+10% maximum health",
             "type": "health",
             "stats": {
-                "healthMultiplier": 1.2
+                "healthMultiplier": 1.1
             },
             "size": 1,
             "column": 1,
@@ -537,7 +540,8 @@ window.adventureSkillTree = {
             "start": false,
             "sprite": "assets/skills/piercingArrow-326f0945.png",
             "type": "accuracy",
-            "customDescription": true
+            "customDescription": true,
+            "abilityTargeting": "aoe"
         },
         {
             "id": "forkingArrow",
@@ -559,7 +563,8 @@ window.adventureSkillTree = {
             "start": false,
             "sprite": "assets/skills/forkingArrow-bb264a82.png",
             "type": "accuracy",
-            "customDescription": true
+            "customDescription": true,
+            "abilityTargeting": "aoe"
         },
         {
             "id": "multiShot",
@@ -580,7 +585,8 @@ window.adventureSkillTree = {
             "start": false,
             "sprite": "assets/skills/piercingArrow_copy_copy-efdf2623.png",
             "type": "accuracy",
-            "customDescription": true
+            "customDescription": true,
+            "abilityTargeting": "singleTarget"
         },
         {
             "id": "freezingArrows",
@@ -989,22 +995,23 @@ window.adventureSkillTree = {
             "id": "volcanicEruption",
             "name": "Volcanic Eruption",
             "icon": "✦",
-            "effect": "Every attack erupts the ground beneath the target, hitting it and enemies directly above, below, left, and right. You are hit as well, losing 5% health.",
+            "effect": "Every attack erupts the ground beneath the target, hitting all adjacent enemies. You are hit as well, losing 5% health.",
             "requires": [
-                "damageNode2"
+                "damageNode7"
             ],
             "requiresMode": "all",
-            "column": 0,
-            "row": 0,
+            "column": -3,
+            "row": -3,
             "maxRank": 1,
             "stats": {
                 "damage": 1
             },
-            "size": 1,
+            "size": 1.5,
             "start": false,
             "customDescription": true,
             "sprite": "",
-            "type": "damage"
+            "type": "damage",
+            "abilityTargeting": "aoe"
         },
         {
             "id": "eruptionChain",
@@ -1012,16 +1019,16 @@ window.adventureSkillTree = {
             "icon": "✦",
             "effect": "+1 maximum eruption chains",
             "requires": [
-                "damageNode2"
+                "volcanicEruption"
             ],
             "requiresMode": "all",
-            "column": 1,
-            "row": 0,
+            "column": -2,
+            "row": -4,
             "maxRank": 1,
             "stats": {
                 "eruptionChains": 1
             },
-            "size": 1,
+            "size": 1.25,
             "start": false,
             "customDescription": false,
             "sprite": "",
@@ -1031,16 +1038,16 @@ window.adventureSkillTree = {
             "id": "maxFury",
             "name": "Fury",
             "icon": "✦",
-            "effect": "+1 maximum fury",
+            "effect": "+10 maximum fury",
             "requires": [
                 "healthNode2"
             ],
             "requiresMode": "all",
             "column": 1,
-            "row": 6,
+            "row": 8,
             "maxRank": 1,
             "stats": {
-                "maxFury": 1
+                "maxFury": 10
             },
             "size": 1,
             "start": false,
@@ -1053,16 +1060,16 @@ window.adventureSkillTree = {
             "icon": "✦",
             "effect": "+1 maximum eruption chains",
             "requires": [
-                "damageNode2"
+                "eruptionChain"
             ],
             "requiresMode": "all",
-            "column": 1,
-            "row": -1,
+            "column": -2,
+            "row": -5,
             "maxRank": 1,
             "stats": {
                 "eruptionChains": 1
             },
-            "size": 1,
+            "size": 1.25,
             "start": false,
             "customDescription": false,
             "sprite": "",
@@ -1077,20 +1084,379 @@ window.adventureSkillTree = {
                 "eruptionChain"
             ],
             "requiresMode": "all",
-            "column": 2,
-            "row": 0,
+            "column": -1,
+            "row": -4,
             "maxRank": 1,
             "stats": {
                 "eruptionChains": 1
+            },
+            "size": 1.25,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "type": "damage"
+        },
+        {
+            "id": "healthNode4",
+            "name": "Health",
+            "icon": "♥",
+            "effect": "+10 flat health regeneration per second",
+            "type": "health",
+            "stats": {
+                "healthRegen": 10
+            },
+            "size": 1,
+            "column": -1,
+            "row": 4,
+            "maxRank": 1,
+            "requires": [
+                "healthNode5"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": ""
+        },
+        {
+            "id": "righteousFire",
+            "name": "Fire of the Righteous",
+            "icon": "🔥",
+            "effect": "Regeneration heals only up to 30% of maximum HP.\nDrain 10% of maximum HP per second.\nDeal unused regeneration as burning damage, split evenly among all living enemies.",
+            "requires": [
+                "healthNode4",
+                "healthNode5_copy"
+            ],
+            "requiresMode": "all",
+            "column": -2,
+            "row": 5,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1.5,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "abilityTargeting": "aoe"
+        },
+        {
+            "id": "healthNode5",
+            "name": "Health",
+            "icon": "♥",
+            "effect": "+15% maximum health regenerated per second",
+            "type": "health",
+            "stats": {
+                "healthRegenPercent": 0.15
+            },
+            "size": 1,
+            "column": 0,
+            "row": 5,
+            "maxRank": 1,
+            "requires": [
+                "healthNode2"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": ""
+        },
+        {
+            "id": "healthNode5_copy",
+            "name": "Health Copy",
+            "icon": "♥",
+            "effect": "+15% maximum health regenerated per second",
+            "type": "health",
+            "stats": {
+                "healthRegenPercent": 0.15
+            },
+            "size": 1,
+            "column": -1,
+            "row": 5,
+            "maxRank": 1,
+            "requires": [
+                "healthNode5"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": ""
+        },
+        {
+            "id": "shieldGenerator",
+            "name": "Shield generator",
+            "icon": "✦",
+            "effect": "Kills give the player a shield that protects the player from one hit",
+            "requires": [
+                "healthNode2",
+                "shieldSlam"
+            ],
+            "requiresMode": "all",
+            "column": -1,
+            "row": 7,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1.5,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "type": "health"
+        },
+        {
+            "id": "shieldSlam",
+            "name": "Shield slam",
+            "icon": "✦",
+            "effect": "At maximum shields, consume half your shields. Deal 100% of your physical damage per shield consumed to the target.",
+            "requires": [],
+            "requiresMode": "all",
+            "column": -3,
+            "row": 7,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1.25,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "type": "health",
+            "abilityTargeting": "singleTarget"
+        },
+        {
+            "id": "addedShields",
+            "name": "Added shields",
+            "icon": "✦",
+            "effect": "+2 maximum shields\n+5 damage",
+            "requires": [
+                "shieldSlam"
+            ],
+            "requiresMode": "all",
+            "column": -4,
+            "row": 8,
+            "maxRank": 1,
+            "stats": {
+                "maxShields": 2,
+                "damage": 5
             },
             "size": 1,
             "start": false,
             "customDescription": false,
             "sprite": "",
+            "type": "health"
+        },
+        {
+            "id": "overflowingSlam",
+            "name": "Overflowing Slam",
+            "icon": "🛡",
+            "effect": "Shield Slam carries excess physical damage from a kill into the next living enemy. Continues until the damage is spent.",
+            "requires": [
+                "addedShields_copy"
+            ],
+            "requiresMode": "all",
+            "column": -5,
+            "row": 5,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1.25,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "type": "damage",
+            "abilityTargeting": "aoe"
+        },
+        {
+            "id": "resonantGuard",
+            "name": "Resonant Guard",
+            "icon": "🛡",
+            "effect": "Each Shockwave Slash activation grants 1 shield, up to your maximum (10 by default). Works even against a single enemy.",
+            "requires": [
+                "addedShields"
+            ],
+            "requiresMode": "all",
+            "column": -5,
+            "row": 9,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1.25,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "type": "health"
+        },
+        {
+            "id": "addedShields_copy",
+            "name": "Added shields Copy",
+            "icon": "✦",
+            "effect": "+2 maximum shields\n+5 damage",
+            "requires": [
+                "shieldSlam"
+            ],
+            "requiresMode": "all",
+            "column": -4,
+            "row": 6,
+            "maxRank": 1,
+            "stats": {
+                "maxShields": 2,
+                "damage": 5
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "type": "health"
+        },
+        {
+            "id": "damageNode7",
+            "name": "Damage Path Node",
+            "icon": "⚔",
+            "effect": "+10% damage",
+            "type": "damage",
+            "stats": {
+                "damageMultiplier": 1.1
+            },
+            "maxRank": 1,
+            "start": false,
+            "requires": [
+                "damageNode2"
+            ],
+            "requiresMode": "all",
+            "customDescription": false,
+            "column": -1,
+            "row": -1,
+            "sprite": "",
+            "size": 1
+        },
+        {
+            "id": "addedShields_copy2",
+            "name": "Added shields Copy",
+            "icon": "✦",
+            "effect": "+5 maximum health\n+25% maximum health",
+            "requires": [
+                "resonantGuard"
+            ],
+            "requiresMode": "all",
+            "column": -6,
+            "row": 8,
+            "maxRank": 1,
+            "stats": {
+                "health": 5,
+                "healthMultiplier": 1.25
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "type": "health"
+        },
+        {
+            "id": "addedShields_copy2_copy",
+            "name": "Added shields Copy Copy",
+            "icon": "✦",
+            "effect": "+2 maximum shields\n+25% evasion",
+            "requires": [
+                "overflowingSlam"
+            ],
+            "requiresMode": "all",
+            "column": -6,
+            "row": 6,
+            "maxRank": 1,
+            "stats": {
+                "evasionMultiplier": 1.25,
+                "maxShields": 2
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "type": "health"
+        },
+        {
+            "id": "singledOff",
+            "name": "Singled off",
+            "icon": "✦",
+            "effect": "Enemies become vulnerable. taking 30% more damage when they are alone.",
+            "requires": [
+                "volcanicEruption"
+            ],
+            "requiresMode": "all",
+            "column": -5,
+            "row": -1,
+            "maxRank": 1,
+            "stats": {
+                "damage": 1
+            },
+            "size": 1.25,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "type": "accuracy"
+        },
+        {
+            "id": "bleed",
+            "name": "Bleed",
+            "icon": "🩸",
+            "effect": "25% on hit: 10% hit damage/s.\nSingle target. +1s (max 5s).",
+            "requires": [
+                "singledOff"
+            ],
+            "requiresMode": "all",
+            "column": -6,
+            "row": -2,
+            "maxRank": 1,
+            "stats": {
+                "bleedChance": 0.25
+            },
+            "size": 1.25,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
             "type": "damage"
+        },
+        {
+            "id": "bleed_copy",
+            "name": "Bleed Copy",
+            "icon": "🩸",
+            "effect": "25% on hit: 10% hit damage/s.\nSingle target. +1s (max 5s).",
+            "requires": [
+                "singledOff"
+            ],
+            "requiresMode": "all",
+            "column": -6,
+            "row": 0,
+            "maxRank": 1,
+            "stats": {
+                "bleedChance": 0.25
+            },
+            "size": 1.25,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "type": "health",
+            "abilityTargeting": null
+        },
+        {
+            "id": "bleed_copy_copy",
+            "name": "Bleed Copy Copy",
+            "icon": "🩸",
+            "effect": "+100% bleed damage",
+            "requires": [
+                "singledOff"
+            ],
+            "requiresMode": "all",
+            "column": -5,
+            "row": 0,
+            "maxRank": 1,
+            "stats": {
+                "bleedDamageMultiplier": 2
+            },
+            "size": 1.25,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "type": "health",
+            "abilityTargeting": null
         }
     ],
     "statSchemaVersion": 2,
     "furySchemaVersion": 1,
-    "eruptionChainSchemaVersion": 1
+    "eruptionChainSchemaVersion": 1,
+    "shieldSchemaVersion": 1,
+    "righteousFireSchemaVersion": 1,
+    "shieldExpansionSchemaVersion": 1,
+    "bleedSchemaVersion": 1
 };

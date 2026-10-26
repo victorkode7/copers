@@ -2,27 +2,33 @@
     'use strict';
     // This registry is shared by the game, item tooltips, and editor controls.
     const stats = Object.create(null);
-    for (const [id, label] of Object.entries({damage: 'Damage', health: 'Maximum health', healthRegen: 'Health regeneration', maxFury: 'Maximum fury', accuracy: 'Accuracy', evasion: 'Evasion', multiHit: 'Multi-hit', poisonDamage: 'Poison damage', poisonTickRate: 'Poison tick rate'})) {
-        const displayLabel = id === 'poisonTickRate' ? 'Poison tick speed' : id === 'healthRegen' ? 'Health regeneration per second' : label;
-        stats[id] = { label, mode: 'add', default: 0, display: {label: displayLabel, type: id === 'poisonTickRate' ? 'percent' : 'flat'} };
+    for (const [id, label] of Object.entries({damage: 'Damage', health: 'Maximum health', maxFury: 'Maximum fury', maxShields: 'Maximum shields', accuracy: 'Accuracy', evasion: 'Evasion', multiHit: 'Multi-hit', poisonDamage: 'Poison damage', poisonTickRate: 'Poison tick rate', bleedDamage: 'Bleed damage', bleedTickRate: 'Bleed tick rate'})) {
+        const displayLabel = id.endsWith('TickRate') ? label.replace('rate', 'speed') : label;
+        stats[id] = { label, mode: 'add', default: 0, display: {label: displayLabel, type: id.endsWith('TickRate') ? 'percent' : 'flat'} };
         stats[id + 'Multiplier'] = { label: label + ' multiplier', mode: 'multiply', default: 1, min: 0.000001, display: {label: displayLabel, type: 'percentBonus'} };
     }
     Object.assign(stats, {
+        healthRegen: { label: 'Flat health regeneration (HP/s)', mode: 'add', default: 0, display: {label: 'Flat health regeneration per second', type: 'flat'} },
+        healthRegenIncrease: { label: 'Increased health regeneration (%)', mode: 'add', default: 0, display: {label: 'Increased health regeneration', type: 'percent'} },
+        healthRegenPercent: { label: 'Maximum health regeneration (%/s)', mode: 'add', default: 0, display: {label: 'Maximum health regenerated per second', type: 'percent'} },
         goldBonus: { label: 'Gold bonus', mode: 'add', default: 0, display: {label: 'Gold gained', type: 'percent'} },
         goldBonusMultiplier: { label: 'Gold multiplier', mode: 'multiply', default: 1, min: 0.000001, display: {label: 'Gold gained', type: 'percentBonus'} },
         poisonChance: { label: 'Poison chance', mode: 'add', default: 0, display: {label: 'Poison chance', type: 'percent'} },
         poisonChanceMultiplier: { label: 'Poison chance multiplier', mode: 'multiply', default: 1, min: 0.000001, display: {label: 'Poison chance', type: 'percentBonus'} },
+        bleedChance: { label: 'Bleed chance', mode: 'add', default: 0, display: {label: 'Bleed chance', type: 'percent'} },
+        bleedChanceMultiplier: { label: 'Bleed chance multiplier', mode: 'multiply', default: 1, min: 0.000001, display: {label: 'Bleed chance', type: 'percentBonus'} },
         attackSpeedMultiplier: { label: 'Attack speed multiplier (1.1 = 10% faster)', mode: 'multiply', default: 1, min: 0.000001, display: {label: 'Attack speed', type: 'percentBonus'} },
         minimumAttackInterval: { label: 'Minimum attack interval (seconds)', mode: 'min', default: 0.25, min: 0.001, max: 0.25, developer: true, display: {label: 'Minimum attack interval', type: 'limit', unit: 's'} },
         minimumEnemyHitChance: { label: 'Minimum enemy hit chance (%)', mode: 'min', default: 5, min: 0, max: 5, developer: true, display: {label: 'Minimum enemy hit chance', type: 'limit', unit: '%'} }
     });
 
     const statOrder = [
-        'health', 'healthMultiplier', 'healthRegen', 'healthRegenMultiplier', 'maxFury', 'maxFuryMultiplier', 'damage', 'damageMultiplier',
+        'health', 'healthMultiplier', 'healthRegen', 'healthRegenIncrease', 'healthRegenPercent', 'maxFury', 'maxFuryMultiplier', 'maxShields', 'maxShieldsMultiplier', 'damage', 'damageMultiplier',
         'accuracy', 'accuracyMultiplier', 'evasion', 'evasionMultiplier',
         'multiHit', 'multiHitMultiplier', 'attackSpeedMultiplier',
         'poisonChance', 'poisonChanceMultiplier', 'poisonDamage', 'poisonDamageMultiplier',
-        'poisonTickRate', 'poisonTickRateMultiplier', 'goldBonus', 'goldBonusMultiplier',
+        'poisonTickRate', 'poisonTickRateMultiplier', 'bleedChance', 'bleedChanceMultiplier',
+        'bleedDamage', 'bleedDamageMultiplier', 'bleedTickRate', 'bleedTickRateMultiplier', 'goldBonus', 'goldBonusMultiplier',
         'minimumAttackInterval', 'minimumEnemyHitChance'
     ];
     const statRank = Object.fromEntries(statOrder.map((key, index) => [key, index]));
@@ -103,6 +109,13 @@
         const legacySpeed = data.schemaVersion === 1;
         for (const item of data.items) {
             const values = item && item.stats;
+            if (values && typeof values === 'object' && !Array.isArray(values) && Object.hasOwn(values, 'healthRegenMultiplier')) {
+                const multiplier = values.healthRegenMultiplier;
+                const increase = values.healthRegenIncrease ?? 0;
+                values.healthRegenIncrease = Number.isFinite(multiplier) && multiplier > 0 && Number.isFinite(increase)
+                    ? increase + multiplier - 1 : NaN;
+                delete values.healthRegenMultiplier;
+            }
             if (legacySpeed && values && typeof values === 'object' && !Array.isArray(values) &&
                 (Object.hasOwn(values, 'attackSpeedMultiplier') || Object.hasOwn(values, 'attackSpeedRateMultiplier'))) {
                 const interval = values.attackSpeedMultiplier ?? 1;

@@ -19,14 +19,14 @@ function triggerVolcanicEruption(target, damage) {
     detonateEruption(target, damage);
     queueEruptionChain(target.id, damage, getMaxEruptionChains());
     // Each triggering hit pays once, regardless of splash targets or chains.
-    applyDamageToPlayer(getPlayerMaxHealth() * eruptionSkillSettings.healthCost);
+    applyDamageToPlayer(getPlayerMaxHealth() * eruptionSkillSettings.healthCost, 'self');
 }
 
 function detonateEruption(center, damage) {
     const targets = getEruptionTargets(center);
     showVolcanicEruption(center.id, targets.map(monster => monster.id));
     targets.forEach(monster => {
-        applyDamageToMonster(monster, damage * eruptionSkillSettings.damageMultiplier, 'physical');
+        applyDamageToMonster(monster, damage * eruptionSkillSettings.damageMultiplier, 'physical', 'volcanicEruption');
         tryApplyPoison(monster);
     });
 }
