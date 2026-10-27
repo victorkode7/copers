@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/skill-tree-background.css?v=20261023-1">
     <link rel="stylesheet" href="css/app-nav.css">
     <link rel="stylesheet" href="css/editor-quick-save.css?v=1">
+    <link rel="stylesheet" href="css/stat-picker.css?v=20261027-1">
 </head>
 <body>
     <nav class="app-nav" aria-label="Main navigation">
@@ -65,7 +66,7 @@
                     <button type="button" data-base-node="health"><span aria-hidden="true">♥</span> Health</button>
                     <button type="button" data-base-node="attackSpeed"><span aria-hidden="true">⚡</span> Attack speed</button>
                     <button type="button" data-base-node="accuracy"><span aria-hidden="true">◎</span> Accuracy</button>
-                    <button type="button" data-base-node="damage"><span aria-hidden="true">⚔</span> Damage</button>
+                    <button type="button" data-base-node="damage"><span aria-hidden="true">⚔</span> Physical damage</button>
                 </div>
             </div>
             <div id="nodeList" class="node-list" role="listbox" aria-label="Skill tree nodes" aria-multiselectable="true"></div>
@@ -135,6 +136,7 @@
             <p id="emptyInspector" class="empty-inspector">Select a node on the map or from the list to edit its properties.</p>
             <details class="quick-save-settings">
                 <summary>Quick-save file</summary>
+                <p class="quick-save-help">New project nodes merge into your draft on reload. Choose js/skill-tree.js once to also check for new nodes when you return to this tab and before saving. Your existing node edits and deletions are preserved.</p>
                 <p id="quickSaveTarget" class="quick-save-help">Checking quick-save availability…</p>
                 <button id="chooseQuickSaveFile" class="button secondary" type="button" hidden>Choose project file</button>
             </details>
@@ -182,7 +184,7 @@
                             <option value="health">Health · red</option>
                             <option value="attackSpeed">Attack speed · green</option>
                             <option value="accuracy">Accuracy · blue</option>
-                            <option value="damage">Damage · yellow</option>
+                            <option value="damage">Physical damage · yellow</option>
                         </select>
                     </label>
                 </div>
@@ -272,13 +274,15 @@
         </form>
     </dialog>
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-    <script src="js/skill-tree.js?v=20261026-11"></script>
+    <script src="js/skill-tree.js?v=20261027-11"></script>
     <script src="js/skill-stat-compat.js?v=20261026-7"></script>
-    <script src="js/skill-descriptions.js?v=20261026-8"></script>
+    <script src="js/skill-descriptions.js?v=20261027-6"></script>
     <script src="js/item-package.js?v=20261021-2"></script>
     <script src="js/skill-sprites.js?v=20261021-13"></script>
-    <script src="js/editor-file-save.js?v=2"></script>
-    <script src="js/editor-quick-save.js?v=2"></script>
-    <script src="js/skill-tree-editor.js?v=20261026-10"></script>
+    <script src="js/editor-file-save.js?v=20261027-5"></script>
+    <script src="js/editor-quick-save.js?v=20261027-5"></script>
+    <script src="js/skill-tree-sync.js?v=20261027-1"></script>
+    <script src="js/stat-picker.js?v=20261027-1"></script>
+    <script src="js/skill-tree-editor.js?v=20261027-5"></script>
 </body>
 </html>

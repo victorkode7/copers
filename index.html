@@ -7,8 +7,9 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/nav.css">
     <link rel="stylesheet" href="css/app-nav.css">
-    <link rel="stylesheet" href="css/game.css?v=20261026-11">
+    <link rel="stylesheet" href="css/game.css?v=20261027-18">
     <link rel="stylesheet" href="css/equipment-effects.css?v=1">
+    <link rel="stylesheet" href="css/elemental-skills.css?v=20261027-10">
     <link rel="stylesheet" href="css/world-game.css?v=33">
     <link rel="stylesheet" href="css/skill-tree-background.css?v=20261021-18">
     <link rel="stylesheet" href="css/inventory-categories.css?v=2">
@@ -77,7 +78,7 @@
                   <section class="combat-stat-group" aria-labelledby="damageStatsHeading">
                       <h3 id="damageStatsHeading">Damage stats</h3>
                       <div class="stat-list">
-                          <div class="combat-stat"><span>Damage</span><strong id="damageDisplay">2</strong></div>
+                          <div class="combat-stat"><span>Physical damage</span><strong id="damageDisplay">2</strong></div>
                           <div class="combat-stat"><span>Spell damage</span><strong id="spellDamageDisplay">0</strong></div>
                           <div class="combat-stat"><span title="Number of monsters hit with each attack or Void Bolt cast">Multi-hit</span><strong id="multiHitDisplay">1</strong></div>
                           <div class="combat-stat"><span title="Combined attack speed bonus from equipment, skills, and upgrades. Bonuses multiply together, before the attack-speed limit.">Attack speed</span><strong id="speedDisplay">+0%</strong></div>
@@ -206,6 +207,34 @@
                 <span id="skillPointsDisplay">Skill points: 0</span>
             </div>
             <div id="upgradeList" class="item-list"></div>
+            <div class="skill-build-file-controls">
+                <button id="importSkillBuild" class="skill-tree-control" type="button">Import build</button>
+                <button id="exportSkillBuild" class="skill-tree-control" type="button">Export build</button>
+                <div id="skillPresetControls" class="skill-preset-controls" role="group" aria-label="Skill tree presets">
+                    <div class="skill-preset-selection">
+                        <select id="skillPresetSlot" aria-label="Preset slot"></select>
+                        <input id="skillPresetName" type="text" maxlength="60" placeholder="Preset name" aria-label="Preset name" hidden>
+                    </div>
+                    <button id="renameSkillPreset" class="skill-tree-control skill-preset-rename" type="button" aria-label="Rename selected preset" title="Rename selected preset" aria-expanded="false">
+                        <svg class="preset-pencil" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5 4 4M4 20l5-1L20 8a2.8 2.8 0 0 0-4-4L5 15l-1 5Z"/></svg>
+                        <svg class="preset-check" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
+                    </button>
+                    <button id="saveSkillPreset" class="skill-tree-control" type="button">Save</button>
+                    <button id="loadSkillPreset" class="skill-tree-control" type="button">Load</button>
+                </div>
+                <span class="subtle">Preset slots are saved in this browser. Saving a preset costs no skill points.</span>
+            </div>
+            <p id="skillBuildStatus" class="subtle" role="status"></p>
+            <input id="importSkillBuildFile" type="file" accept=".json,application/json" hidden>
+            <dialog id="skillBuildDialog" class="skill-build-dialog" aria-labelledby="skillBuildTitle">
+                <h2 id="skillBuildTitle">Import skill build</h2>
+                <p id="skillBuildSummary"></p>
+                <p id="skillBuildDescription" class="subtle"></p>
+                <p class="subtle">Your gear and progression stay the same. Builds above your point budget open for editing before they can be applied. An original profile backup is kept when applying.</p>
+                <details><summary>Included skills</summary><ul id="skillBuildNodes"></ul></details>
+                <p id="skillBuildError" role="status"></p>
+                <div class="skill-build-actions"><button id="applySkillBuild" type="button">Apply build</button><button id="cancelSkillBuild" type="button">Cancel</button></div>
+            </dialog>
         </section>
 
         <section id="inventoryView" class="game-panel inventory-view page-view" hidden>
@@ -310,23 +339,25 @@
     <p id="profileStatus" class="profile-status" role="status" aria-live="polite" hidden></p>
     <footer class="developer-options"><details><summary>Developer options</summary><label><input id="developerItems" type="checkbox"> Enable developer equipment</label><label><input id="developerTravel" type="checkbox"> Skip kill requirements — unlock all maps and worlds</label></details></footer>
     <script src="js/items.js?v=20261021-2"></script>
-    <script src="js/item-system.js?v=20261026-2"></script>
-    <script src="js/skill-tree.js?v=20261026-11"></script>
+    <script src="js/item-system.js?v=20261027-3"></script>
+    <script src="js/skill-tree.js?v=20261027-11"></script>
     <script src="js/skill-stat-compat.js?v=20261026-7"></script>
-    <script src="js/skill-descriptions.js?v=20261026-8"></script>
+    <script src="js/skill-descriptions.js?v=20261027-6"></script>
     <script src="js/skill-sprites.js?v=20261021-13"></script>
     <script src="js/equipment-effects.js?v=1"></script>
-    <script src="js/world-content.js?v=20261026-1"></script>
+    <script src="js/world-content.js?v=20261027-18"></script>
     <script src="js/world-system.js?v=20261026-1"></script>
     <script src="js/loot-effects.js?v=6"></script>
     <script src="js/arrow-skills.js?v=20261026-2"></script>
     <script src="js/eruption-skills.js?v=20261026-2"></script>
     <script src="js/shield-effects.js?v=20261026-2"></script>
     <script src="js/bleed.js?v=20261026-5"></script>
-    <script src="js/spell-skills.js?v=20261026-8"></script>
-    <script src="js/damage-breakdown.js?v=20261026-4"></script>
+    <script src="js/spell-skills.js?v=20261027-7"></script>
+    <script src="js/elemental-skills.js?v=20261027-11"></script>
+    <script src="js/damage-breakdown.js?v=20261027-6"></script>
     <script src="js/save-compat.js?v=20261026-3"></script>
-    <script src="js/game.js?v=20261026-18"></script>
+    <script src="js/game.js?v=20261027-13"></script>
+    <script src="js/skill-builds.js?v=20261027-14"></script>
     <script src="js/game-profiles.js?v=20261026-1"></script>
     <script src="js/offline-play.js?v=20261025-1"></script>
 </body>

@@ -38,9 +38,9 @@
         $('addStat').click();
         check('only one attack speed multiplier option', [...$('statRows').querySelectorAll('option')].filter(option => /attack (speed|interval).*multiplier/i.test(option.textContent)).length === 1);
         change($('statRows').querySelector('input'), '12');
-        check('stat bonus preview uses edited values', $('preview').textContent.includes('+12 Damage'));
+        check('stat bonus preview uses edited values', $('preview').textContent.includes('+12 Physical damage'));
         check('every supported stat has a value guide', Object.keys(Equipment.stats).every(key => ItemStatGuides.get(key)?.formula));
-        check('guide reflects current input', $('statRows').querySelector('.stat-guide summary').textContent.includes('+12 Damage'));
+        check('guide reflects current input', $('statRows').querySelector('.stat-guide summary').textContent.includes('+12 Physical damage'));
         change($('statRows').querySelector('select'), 'healthMultiplier');
         change($('statRows').querySelector('input'), '1.5');
         check('multiplier guide shows input formula and live effect', $('statRows').querySelector('.stat-guide').textContent.includes('1 + desired bonus (%) ÷ 100') && $('statRows').querySelector('.stat-guide summary').textContent.includes('+50% Maximum health'));

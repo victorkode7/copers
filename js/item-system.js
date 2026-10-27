@@ -2,7 +2,7 @@
     'use strict';
     // This registry is shared by the game, item tooltips, and editor controls.
     const stats = Object.create(null);
-    for (const [id, label] of Object.entries({damage: 'Damage', health: 'Maximum health', maxFury: 'Maximum fury', maxShields: 'Maximum shields', accuracy: 'Accuracy', evasion: 'Evasion', multiHit: 'Multi-hit', poisonDamage: 'Poison damage', poisonTickRate: 'Poison tick rate', bleedDamage: 'Bleed damage', bleedTickRate: 'Bleed tick rate'})) {
+    for (const [id, label] of Object.entries({damage: 'Physical damage', health: 'Maximum health', maxFury: 'Maximum fury', maxShields: 'Maximum shields', accuracy: 'Accuracy', evasion: 'Evasion', multiHit: 'Multi-hit', poisonDamage: 'Poison damage', poisonTickRate: 'Poison tick rate', bleedDamage: 'Bleed damage', bleedTickRate: 'Bleed tick rate'})) {
         const displayLabel = id.endsWith('TickRate') ? label.replace('rate', 'speed') : label;
         stats[id] = { label, mode: 'add', default: 0, display: {label: displayLabel, type: id.endsWith('TickRate') ? 'percent' : 'flat'} };
         stats[id + 'Multiplier'] = { label: label + ' multiplier', mode: 'multiply', default: 1, min: 0.000001, display: {label: displayLabel, type: 'percentBonus'} };

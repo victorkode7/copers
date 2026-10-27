@@ -35,7 +35,8 @@
             go('.skill-editor-smoke.html', 'skillEdit'); return;
         }
         if (state.phase === 'skillEdit') {
-            document.querySelector('[data-node-id="quickHands"]').click();
+            const node = window.adventureSkillTree.nodes.find(node => !node.start && node.stats.attackSpeedMultiplier);
+            document.querySelector('[data-node-id="' + node.id + '"]').click();
             input('nodeName', 'Saved skill name'); input('zoomRange', '125'); input('nodeSearch', 'Saved skill');
             document.querySelector('[data-view-mode="player"]').click();
             input('nodeStats', '{'); // Incomplete JSON must survive even though it cannot be applied yet.
@@ -58,7 +59,7 @@
             await new Promise(resolve => setTimeout(resolve, 150));
             window.dispatchEvent(new Event('focus'));
             check('repainting does not discard unfinished fields', $('nodeStats').value === '{');
-            check('saved skill data remains independent of unfinished JSON', JSON.parse(localStorage.getItem('idleAdventureSkillEditorDraft')).tree.nodes.find(node => node.id === 'quickHands').name === 'Saved skill name');
+            check('saved skill data remains independent of unfinished JSON', JSON.parse(localStorage.getItem('idleAdventureSkillEditorDraft')).tree.nodes.some(node => node.name === 'Saved skill name'));
             go('.equipment-smoke.html', 'itemFinal'); return;
         }
         check('further edits survive another round trip', $('itemName').value === 'Updated after return');

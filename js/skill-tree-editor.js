@@ -38,9 +38,9 @@
         },
         damage: {
             id: 'damageNode',
-            name: 'Damage',
+            name: 'Physical Damage',
             icon: '⚔',
-            effect: '+1 damage',
+            effect: '+1 physical damage',
             type: 'damage',
             stats: { damage: 1 }
         }
@@ -52,7 +52,7 @@
         {id:'manaRegen',label:'Flat mana regeneration (mana/s)',additive:'manaRegen'},
         {id:'manaRegenIncrease',label:'Increased mana regeneration (%)',additive:'manaRegenIncrease'},
         {id:'manaRegenPercent',label:'Maximum mana regeneration (%/s)',additive:'manaRegenPercent'},
-        { id: 'damage', label: 'Damage', additive: 'damage', multiplier: 'damageMultiplier' },
+        { id: 'damage', label: 'Physical damage', additive: 'damage', multiplier: 'damageMultiplier' },
         { id: 'health', label: 'Maximum health', additive: 'health', multiplier: 'healthMultiplier' },
         { id: 'healthRegen', label: 'Flat health regeneration (HP/s)', additive: 'healthRegen' },
         { id: 'healthRegenIncrease', label: 'Increased health regeneration (%)', additive: 'healthRegenIncrease' },
@@ -77,6 +77,7 @@
     const nodeSizes = [1, 1.25, 1.5];
     const originalTree = SkillDescriptions.normalize(SkillStatCompat.normalize(JSON.parse(JSON.stringify(window.adventureSkillTree))));
     let tree = JSON.parse(JSON.stringify(originalTree));
+    let sourceNodeIds = originalTree.nodes.map(node => node.id);
     let selectedId = tree.nodes[0] ? tree.nodes[0].id : null;
     let selectedIds = new Set(selectedId ? [selectedId] : []);
     let selectionAnchorId = selectedId;
@@ -239,7 +240,7 @@
 
     function saveDraft() {
         try {
-            localStorage.setItem(draftKey, JSON.stringify({version: 1, tree, selectedId, selectedIds: [...selectedIds], selectionAnchorId, zoom, graphViewMode, panX, panY,
+            localStorage.setItem(draftKey, JSON.stringify({version: 1, tree, sourceNodeIds, selectedId, selectedIds: [...selectedIds], selectionAnchorId, zoom, graphViewMode, panX, panY,
                 search: elements.nodeSearch.value, budget: elements.skillPointBudget?.value,
                 inspector: inspectorDraft()}));
         } catch {
@@ -516,18 +517,20 @@
         return { rows, advanced };
     }
 
-    function addStatBonusRow(bonus = { stat: 'damage', mode: 'additive', value: 1 }) {
+    const bonusFilter = StatPicker.createFilter(elements.statBonusRows, bonusStats, refreshBonusChoices);
+    function refreshBonusChoices() {
+        elements.statBonusRows.querySelectorAll('.stat-bonus-row').forEach(row => {
+            const select = row.querySelector('select');
+            bonusFilter.populate(select, bonusStats, select.value);
+        });
+        elements.addStatBonus.disabled = !bonusFilter.filtered().length;
+    }
+    function addStatBonusRow(bonus = { stat: (bonusFilter.filtered().find(stat => stat.id === 'damage') || bonusFilter.filtered()[0])?.id || 'damage', mode: 'additive', value: 1 }) {
         const row = document.createElement('div');
         row.className = 'stat-bonus-row';
         const statSelect = document.createElement('select');
         statSelect.setAttribute('aria-label', 'Bonus stat');
-        bonusStats.forEach(stat => {
-            const option = document.createElement('option');
-            option.value = stat.id;
-            option.textContent = stat.label;
-            statSelect.appendChild(option);
-        });
-        statSelect.value = bonus.stat;
+        bonusFilter.populate(statSelect, bonusStats, bonus.stat);
         const modeSelect = document.createElement('select');
         modeSelect.setAttribute('aria-label', 'Bonus type');
         [['additive', 'Additive'], ['multiplier', 'Multiplier']].forEach(([value, label]) => {
@@ -1105,6 +1108,22 @@
         renderValidation();
     }
 
+    function reconcileProject(source) {
+        const incoming = SkillTreeSync.parse(source);
+        if (!incoming) return;
+        SkillDescriptions.normalize(SkillStatCompat.normalize(incoming));
+        const result = SkillTreeSync.merge(tree, incoming, sourceNodeIds);
+        sourceNodeIds = result.knownIds;
+        if (result.added.length) {
+            // Repaint the graph without touching unfinished inspector input.
+            markChanged(); renderNodeList(); renderGraph(); renderValidation();
+            SkillSprites.restore(tree.nodes).then(repaintSprites);
+            const message = 'Added ' + result.added.length + ' new project nodes to your draft. Your existing edits are preserved.';
+            elements.saveStatus.textContent = message; showToast(message);
+        }
+        saveDraft();
+    }
+
     async function exportJs() {
         const issues = validateTree();
         const errors = issues.filter(issue => issue.type === 'error');
@@ -1521,6 +1540,8 @@
                 throw new Error('Invalid saved skill draft');
             }
             tree = SkillDescriptions.normalize(SkillStatCompat.normalize(draft.tree));
+            const merged = SkillTreeSync.merge(tree, originalTree, Array.isArray(draft.sourceNodeIds) ? draft.sourceNodeIds : []);
+            sourceNodeIds = merged.knownIds;
             if (tree.shieldExpansionSchemaVersion !== 1 && originalTree.shieldExpansionSchemaVersion === 1) {
                 // Add these new skills to older drafts once, keeping existing
                 // nodes, positions, connections and later intentional deletions.
@@ -1555,7 +1576,9 @@
             if (typeof draft.search === 'string') elements.nodeSearch.value = draft.search;
             if (elements.skillPointBudget && typeof draft.budget === 'string') elements.skillPointBudget.value = draft.budget;
             restoredDraft = draft;
-            elements.saveStatus.textContent = 'Resumed your local draft - quick save or export to update the game';
+            elements.saveStatus.textContent = merged.added.length
+                ? 'Resumed your draft and added ' + merged.added.length + ' new project nodes. Existing edits are preserved.'
+                : 'Resumed your local draft - quick save or export to update the game';
         }
     } catch (error) { elements.saveStatus.textContent = 'Could not resume saved draft: ' + error.message; }
 
@@ -1572,6 +1595,7 @@
         getPaths: () => tree.nodes.map(node => node.sprite).filter(SkillSprites.safePath),
         getSource: () => 'window.adventureSkillTree = ' + JSON.stringify(tree, null, 4) + ';\n',
         validate: quickSaveIssues, beforeSave: prepareQuickSave,
+        reconcileProject,
         status: message => { elements.saveStatus.textContent = message; showToast(message); },
         download: (name, source) => download(name, source, 'text/javascript')
     });

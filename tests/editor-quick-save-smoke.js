@@ -29,21 +29,44 @@
         window.showSaveFilePicker = async () => { throw new Error('Quick save must not create a new file.'); };
         window.showOpenFilePicker = async options => { pickerCalls++; check('picker selects an existing ' + filename, options.multiple === false && options.types[0].description.includes(filename)); return [file]; };
         async function savedData() { const target = {}; new Function('window', await (await file.getFile()).text())(target); return target[namespace]; }
-        async function save() { $('quickSave').click(); await until(() => currentStatus().startsWith('Quick-saved')); }
+        async function save() { await until(available); $('quickSave').click(); await until(() => currentStatus().startsWith('Quick-saved')); }
         await until(available);
         if (!phase) {
             check('project file selection is visible before the first save', !$('chooseQuickSaveFile').hidden && $('chooseQuickSaveFile').textContent === 'Choose project file');
             const beforeSelection = await (await file.getFile()).text();
             $('chooseQuickSaveFile').click(); await until(() => currentStatus().startsWith('Quick-save file selected'));
             check('choosing the existing file does not write or download data', await (await file.getFile()).text() === beforeSelection && downloads.length === 0);
-            if (!itemEditor) document.querySelector('[data-node-id="quickHands"]').click();
+            if (!itemEditor) {
+                const node = window.adventureSkillTree.nodes.find(node => !node.start && node.stats.attackSpeedMultiplier);
+                document.querySelector('[data-node-id="' + node.id + '"]').click();
+            }
             const internalId = $(itemEditor ? 'itemId' : 'nodeId').value;
             input($(nameField), 'Quick Save Test'); await save();
             check('direct save writes the full current catalogue', (itemEditor ? (await savedData()).items : (await savedData()).nodes).some(entry => entry.id === internalId && entry.name === 'Quick Save Test'));
+            if (!itemEditor) {
+                const external = await savedData();
+                const parent = external.nodes.find(node => node.id === internalId);
+                external.nodes.push({...parent, id:'externalSkillBeforeSave', name:'New project skill', requires:[internalId], column:90, row:90, sprite:''});
+                const writer = await file.createWritable();
+                await writer.write('window.adventureSkillTree = ' + JSON.stringify(external) + ';\n'); await writer.close();
+            }
             input($(nameField), 'Quick Save Again');
             document.dispatchEvent(new KeyboardEvent('keydown', {key: 's', ctrlKey: true, bubbles: true, cancelable: true}));
             await until(() => currentStatus().startsWith('Quick-saved'));
             check('Ctrl+S reuses the file without exporting a ZIP', pickerCalls === 1 && downloads.length === 0 && (itemEditor ? (await savedData()).items : (await savedData()).nodes).some(entry => entry.id === internalId && entry.name === 'Quick Save Again'));
+            if (!itemEditor) {
+                check('saving an older open draft preserves a node added externally', (await savedData()).nodes.some(node => node.id === 'externalSkillBeforeSave') && Boolean(document.querySelector('[data-node-id="externalSkillBeforeSave"]')));
+                const external = await savedData();
+                const parent = external.nodes.find(node => node.id === internalId);
+                external.nodes.push({...parent, id:'externalSkillOnFocus', name:'Focus project skill', requires:[internalId], column:91, row:90, sprite:''});
+                const writer = await file.createWritable();
+                await writer.write('window.adventureSkillTree = ' + JSON.stringify(external) + ';\n'); await writer.close();
+                const previous = $('nodeStats').value;
+                input($('nodeStats'), '{unfinished'); window.dispatchEvent(new Event('focus'));
+                await until(() => Boolean(document.querySelector('[data-node-id="externalSkillOnFocus"]')));
+                check('returning to the tab imports new nodes without replacing unfinished fields', $('nodeStats').value === '{unfinished' && $('nodeName').value === 'Quick Save Again');
+                input($('nodeStats'), previous);
+            }
             check('quick save has only the styled tooltip', !$('quickSave').hasAttribute('title'));
             const beforeInvalid = await (await file.getFile()).text();
             const oldAdvanced = itemEditor ? null : $('nodeStats').value;
@@ -68,8 +91,16 @@
             check('package download does not bypass image installation', !available());
             installedPath = $(spriteField).value; window.dispatchEvent(new Event('focus')); await until(available); await save();
             check('installing the sprite enables subsequent data-only saves', (await (await file.getFile()).text()).includes(installedPath));
+            if (!itemEditor) {
+                // Simulate a draft created before the project gained Echoing Void.
+                const draft = JSON.parse(localStorage.getItem('idleAdventureSkillEditorDraft'));
+                draft.tree.nodes = draft.tree.nodes.filter(node => node.id !== 'echoingVoid');
+                draft.sourceNodeIds = draft.sourceNodeIds.filter(id => id !== 'echoingVoid');
+                localStorage.setItem('idleAdventureSkillEditorDraft', JSON.stringify(draft));
+            }
             localStorage.setItem(phaseKey, JSON.stringify({checks, installedPath})); location.reload(); return;
         }
+        if (!itemEditor) check('reload merges new shipped nodes into an older draft', Boolean(document.querySelector('[data-node-id="echoingVoid"]')) && $('nodeName').value === 'Quick Save Again');
         input($(nameField), 'Saved After Reload'); await save();
         check('each editor remembers its own file after reload', pickerCalls === 0 && (itemEditor ? (await savedData()).items : (await savedData()).nodes).some(entry => entry.name === 'Saved After Reload'));
         window.showOpenFilePicker = undefined; $('quickSave').click(); await until(() => downloads.some(download => download.name === filename));

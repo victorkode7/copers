@@ -60,7 +60,13 @@
             try { await writable.write(source); await writable.close(); }
             catch (error) { try { await writable.abort(); } catch { /* Preserve the original write error. */ } throw error; }
         }
-        return {ready, supported, unavailableReason, choose, prepare, write, targetName: () => handle?.name || ''};
+        async function readSource() {
+            await ready;
+            if (!handle || typeof handle.getFile !== 'function') return null;
+            if (typeof handle.queryPermission === 'function' && await handle.queryPermission({mode:'read'}) !== 'granted') return null;
+            return (await handle.getFile()).text();
+        }
+        return {ready, supported, unavailableReason, choose, prepare, write, readSource, targetName: () => handle?.name || ''};
     }
     window.EditorFileSave = {create};
 }());

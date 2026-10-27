@@ -147,6 +147,7 @@ const state = {
     playerMana: 0,
     manaCapacity: 0,
     voidCharges: 0,
+    gatheringPower: {stacks:0,progress:0,remaining:0},
     furyStacks: 0,
     furyRemaining: 0,
     furyDecaying: false,
@@ -499,6 +500,9 @@ function createMonsterStates(map, savedStates, legacyHp, legacyRespawn) {
             attackTimer: saved && Number.isFinite(saved.attackTimer) ? Math.max(0, saved.attackTimer) : 0,
             freezeRemaining: saved && Number.isFinite(saved.freezeRemaining)
                 ? Math.max(0, Math.min(arrowSkillSettings.freezeDuration, saved.freezeRemaining)) : 0,
+            rimeBrand: hp>0 && saved?.rimeBrand && isValidBrandState(saved.rimeBrand) ? {...saved.rimeBrand} : null,
+            emberBrand: hp>0 && saved?.emberBrand && isValidBrandState(saved.emberBrand) ? {...saved.emberBrand} : null,
+            scorched: hp>0 && saved?.scorched===true,
             poisonStacks: saved && Array.isArray(saved.poisonStacks)
                 ? saved.poisonStacks.filter(stack => stack &&
                     Number.isFinite(stack.remainingDuration) && stack.remainingDuration > 0 &&
@@ -515,8 +519,8 @@ function createMonsterStates(map, savedStates, legacyHp, legacyRespawn) {
 }
 
 function resetMonsterStates(map = currentMap()) {
-    voidVolleyBuffProc = null;
-    elements.playerHealthPanel.querySelector('.void-volley-player-glow')?.remove();
+    clearPlayerCombatBuffs();
+    elements.combatPanel.querySelectorAll('.elemental-effect-layer').forEach(layer=>layer.remove());
     resetDamageBreakdown(map.id);
     monsterDefinitionCache.delete(map);
     state.pendingEruptions = [];
@@ -731,6 +735,7 @@ function getPendingSkillPointCount() {
 }
 
 function getPlannedSkillRanks() {
+    if(window.SkillBuilds?.isEditing())return SkillBuilds.getEditingRanks();
     return Object.fromEntries(skillNodes.map(node => [
         node.id,
         getSkillNodeRank(node.id) + getSkillNodeRank(node.id, pendingSkillRanks)
@@ -738,6 +743,7 @@ function getPlannedSkillRanks() {
 }
 
 function canDeselectPendingSkillNode(nodeId) {
+    if(window.SkillBuilds?.isEditing())return (SkillBuilds.getEditingRanks()[nodeId]||0)>0;
     if (!pendingSkillRanks[nodeId]) return false;
     const plannedRanks = getPlannedSkillRanks();
     plannedRanks[nodeId] = getSkillNodeRank(nodeId);
@@ -803,6 +809,14 @@ function clearFury() {
     state.furyStacks = 0;
     state.furyRemaining = 0;
     state.furyDecaying = false;
+}
+
+function clearPlayerCombatBuffs() {
+    clearFury();clearGatheringPower();state.voidCharges=0;state.shieldStacks=0;voidVolleyBuffProc=null;
+    presentCombatEffect(()=>{
+        elements.playerHealthPanel.querySelector('.void-volley-player-glow')?.remove();
+        renderCombatBuffs();
+    });
 }
 
 function getPlayerMaxShields() {
@@ -949,18 +963,19 @@ function renderBuffs(buffs) {
 }
 
 function renderCombatBuffs() {
+    if (state.playerHp<=0) {renderBuffs([]);return;}
     normalizeFury();
     normalizeShields();
     normalizeVoidCharges();
     const buffs = [];
     const volleyProccing=voidVolleyBuffProc && voidVolleyBuffProc.mapId===state.selectedMap &&
-        getSkillNodeRank('voidBolt')>0 && performance.now()<voidVolleyBuffProc.until;
+        (getSkillNodeRank('voidBolt')>0 || getSkillNodeRank('voidVortex')>0) && performance.now()<voidVolleyBuffProc.until;
     if(state.voidCharges>0||volleyProccing){
         const node=skillNodeDefinition('voidBolt'),unlocked=getSkillNodeRank('voidVolley')>0;
         const shownCharges=volleyProccing?spellSettings.voidVolley.charges:state.voidCharges;
         buffs.push({id:'voidCharges',name:'Void Charge',sprite:SkillSprites.safePath(node?.sprite),icon:node?.icon||'◈',
             stacks:shownCharges,stackLabel:shownCharges+'/'+spellSettings.voidVolley.charges,value:'',proccing:Boolean(volleyProccing),
-            description:volleyProccing?'Void Volley released.':state.voidCharges+' / 5 Void Charges. '+(unlocked?'At 5 charges, spend 10 mana to fire 10 Void Volley missiles.':'Unlock Void Volley to consume these charges.')+' Charges do not expire.'});
+            description:volleyProccing?'Void Volley released.':state.voidCharges+' / 5 Void Charges. '+(unlocked?'At 5 charges, spend 10 mana to fire 10 Void Volley missiles.':'Unlock Void Volley to consume these charges.')+' Charges last until death or a map change.'});
     }
     if (state.shieldStacks > 0) {
         const node = skillNodeDefinition(getSkillNodeRank('shieldGenerator') > 0 ? 'shieldGenerator' : 'resonantGuard');
@@ -973,6 +988,12 @@ function renderCombatBuffs() {
         buffs.push({id:'fury',name:'Fury',sprite:SkillSprites.safePath(skillNodeDefinition('maxFury')?.sprite) || 'assets/ui/icon-sword.png',
             stacks:state.furyStacks,value:bonus,duration:state.furyRemaining,
             description:'+' + bonus + ' damage. ' + combatStatFormatter.format(state.furyRemaining) + 's until the next stack is lost. Hits add ' + furySecondsPerStack + ' seconds.'});
+    }
+    if (getGatheringPowerMultiplier()>1) {
+        const power=state.gatheringPower;
+        buffs.push({id:'gatheringPower',name:'Gathering Power',icon:'✦',stacks:power.stacks,
+            value:'+'+formatBuffAmount(power.stacks*2)+'% dmg',duration:power.remaining,
+            description:'+2% damage per stack. Gain one stack each second in combat, up to 50 stacks (+100% damage, double damage). All stacks expire after 1 second out of combat, on death, or when changing maps.'});
     }
     const righteousFireNode = getRighteousFireNode();
     if (righteousFireNode && state.playerHp > 0 && !state.combatPaused) {
@@ -992,7 +1013,7 @@ function renderCombatBuffs() {
 function showVoidVolleyBuffProc() {
     const mapId=state.selectedMap;
     presentCombatEffect(()=>{
-        if(state.currentView!=='map'||state.selectedMap!==mapId)return;
+        if(state.currentView!=='map'||state.selectedMap!==mapId||state.playerHp<=0)return;
         const proc={mapId,until:performance.now()+650};
         voidVolleyBuffProc=proc;
         // Keep its slot until the release finishes, including when the fifth
@@ -1157,18 +1178,19 @@ function renderDetailedStats() {
     const flat = stat => getSkillStat(stat) + getGearStat(stat);
     const combinedMultiplier = stat => getSkillMultiplier(stat) * getGearStat(stat);
     const groups = [
-        {id:'spellDamage',name:'Spell damage',total:number(getSpellDamage()),rows:[
+        {id:'spellDamage',name:'Spell damage',total:number(getSpellDamage()*getGatheringPowerMultiplier()),rows:[
             ['Flat spell damage',number(flat('spellDamage'))],['Spell damage multiplier',multiplier(combinedMultiplier('spellDamageMultiplier'))],
-            ['Fury damage bonus',percent(state.furyStacks*furyDamagePerStack)]]},
+            ['Fury damage bonus',percent(state.furyStacks*furyDamagePerStack)],['Gathering Power',multiplier(getGatheringPowerMultiplier())]]},
         {id:'mana',name:'Maximum mana',total:formatAmount(getPlayerMaxMana()),rows:[
             ['Flat mana',number(flat('mana'))],['Maximum mana multiplier',multiplier(combinedMultiplier('manaMultiplier'))]]},
         {id:'manaRegen',name:'Mana regeneration',total:number(getPlayerManaRegen())+' mana/s',rows:[
             ['Flat mana regen',number(flat('manaRegen'))],['Maximum mana regen',percent(flat('manaRegenPercent'))+'/s'],
             ['Increased mana regen',percent(flat('manaRegenIncrease'))]]},
-        {id:'damage', name:'Damage', total:formatAmount(getDamage()), rows:[
-            ['Flat damage', number(2 + state.upgrades.strength * 2 + flat('damage'))],
-            ['Damage multiplier', multiplier(combinedMultiplier('damageMultiplier'))],
-            ['Fury damage bonus', percent(state.furyStacks * furyDamagePerStack)]
+        {id:'damage', name:'Physical damage', total:formatAmount(getDamage()*getGatheringPowerMultiplier()), rows:[
+            ['Flat physical damage', number(2 + state.upgrades.strength * 2 + flat('damage'))],
+            ['Physical damage multiplier', multiplier(combinedMultiplier('damageMultiplier'))],
+            ['Fury damage bonus', percent(state.furyStacks * furyDamagePerStack)],
+            ['Gathering Power',multiplier(getGatheringPowerMultiplier())]
         ]},
         {id:'multiHit', name:'Multi-hit', total:number(getMultiHit()), rows:[
             ['Flat multi-hit', number(baseMultiHit + flat('multiHit'))],
@@ -1206,9 +1228,10 @@ function renderDetailedStats() {
             ['Flat poison chance', percent(flat('poisonChance'))],
             ['Chance multiplier', multiplier(combinedMultiplier('poisonChanceMultiplier'))]
         ]},
-        {id:'poisonDamage', name:'Poison damage per tick', total:formatAmount(getPoisonDamage()), rows:[
+        {id:'poisonDamage', name:'Poison damage per tick', total:formatAmount(getPoisonDamage()*getGatheringPowerMultiplier()), rows:[
             ['Flat poison damage', number(poisonDamageType.baseDamage + flat('poisonDamage'))],
-            ['Poison damage multiplier', multiplier(combinedMultiplier('poisonDamageMultiplier'))]
+            ['Poison damage multiplier', multiplier(combinedMultiplier('poisonDamageMultiplier'))],
+            ['Gathering Power',multiplier(getGatheringPowerMultiplier())]
         ]},
         {id:'poisonTickRate', name:'Poison tick speed', total:number(1 / getPoisonTickInterval()) + ' ticks/s', rows:[
             ['Tick speed bonus', percent(flat('poisonTickRate'))],
@@ -1220,11 +1243,12 @@ function renderDetailedStats() {
             ['Flat bleed chance', percent(flat('bleedChance'))],
             ['Chance multiplier', multiplier(combinedMultiplier('bleedChanceMultiplier'))]
         ]},
-        {id:'bleedDamage', name:'Bleed from a normal hit', total:number(getBleedDamage()) + ' / tick', rows:[
+        {id:'bleedDamage', name:'Bleed from a normal hit', total:number(getBleedDamage()*getGatheringPowerMultiplier()) + ' / tick', rows:[
             ['Triggering hit damage', number(getDamage())],
             ['Damage taken from hit', percent(getBleedHitDamageRatio())],
             ['Flat bonus per stack', number(flat('bleedDamage'))],
             ['Bleed damage multiplier', multiplier(combinedMultiplier('bleedDamageMultiplier'))],
+            ['Gathering Power',multiplier(getGatheringPowerMultiplier())],
             ['Maximum stacks', hasDeepWounds() ? number(getBleedMaximumStacks()) : 'Unlimited'],
             ['Stacks per successful application', number(getBleedStacksPerApplication())]
         ]},
@@ -1460,6 +1484,7 @@ function createGameSave() {
         playerHp: state.playerHp,
         playerMana: state.playerMana,
         voidCharges: state.voidCharges,
+        gatheringPower: {...state.gatheringPower},
         furyStacks: state.furyStacks,
         furyRemaining: state.furyRemaining,
         furyDecaying: state.furyDecaying,
@@ -1611,6 +1636,7 @@ function parseGameSave(rawSave) {
     if (saved.tutorials && typeof saved.tutorials === 'object' && !Array.isArray(saved.tutorials)) saved.tutorials = {...createTutorialState(),...saved.tutorials};
     if (saved.upgrades && typeof saved.upgrades === 'object' && !Array.isArray(saved.upgrades)) legacyUpgradeIds.forEach(id=>{if(saved.upgrades[id]===undefined)saved.upgrades[id]=0;});
     SaveCompatibility.migrate(saved,saveCompatibilityContext());
+    normalizeElementalSaveTimers(saved);
     if (
         saved === null ||
         saved.version !== SaveCompatibility.version ||
@@ -1670,6 +1696,7 @@ function parseGameSave(rawSave) {
         (saved.monsterColumns !== undefined && (!Number.isInteger(saved.monsterColumns) || saved.monsterColumns < 1 || saved.monsterColumns > 100)) ||
         (saved.furyStacks !== undefined && (!Number.isSafeInteger(saved.furyStacks) || saved.furyStacks < 0)) ||
         (saved.furyRemaining !== undefined && (!Number.isFinite(saved.furyRemaining) || saved.furyRemaining < 0)) ||
+        !isValidGatheringPower(saved.gatheringPower) ||
         (saved.furyDecaying !== undefined && typeof saved.furyDecaying !== 'boolean') ||
         (saved.shieldStacks !== undefined && (!Number.isSafeInteger(saved.shieldStacks) || saved.shieldStacks < 0)) ||
         (saved.monsterStates !== undefined && (!Array.isArray(saved.monsterStates) ||
@@ -1681,6 +1708,8 @@ function parseGameSave(rawSave) {
                 (monster.freezeRemaining === undefined || Number.isFinite(monster.freezeRemaining) &&
                     monster.freezeRemaining >= 0 && monster.freezeRemaining <= arrowSkillSettings.freezeDuration) &&
                 isValidBleedState(monster.bleed) &&
+                isValidBrandState(monster.rimeBrand) && isValidBrandState(monster.emberBrand) &&
+                (monster.scorched===undefined || typeof monster.scorched==='boolean') &&
                 (monster.poisonStacks === undefined || Array.isArray(monster.poisonStacks) &&
                     monster.poisonStacks.every(stack => stack &&
                         Number.isFinite(stack.remainingDuration) && stack.remainingDuration > 0 &&
@@ -1733,6 +1762,7 @@ function parseGameSave(rawSave) {
 }
 
 function applyGameSave(saved) {
+    window.SkillBuilds?.cancelEditing(false);
     voidVolleyBuffProc=null;
     elements.playerHealthPanel.querySelector('.void-volley-player-glow')?.remove();
     preservedSaveFields = JSON.parse(JSON.stringify(saved));
@@ -1808,12 +1838,14 @@ function applyGameSave(saved) {
     state.manaCapacity=getPlayerMaxMana();
     state.playerMana=saved.playerMana === undefined ? state.manaCapacity : Math.min(saved.playerMana,state.manaCapacity);
     state.voidCharges=saved.voidCharges;normalizeVoidCharges();
+    state.gatheringPower=saved.gatheringPower ? {...saved.gatheringPower} : {stacks:0,progress:0,remaining:0};
     state.furyStacks = saved.furyStacks || 0;
     state.furyRemaining = saved.furyRemaining || 0;
     state.furyDecaying = saved.furyDecaying === true;
     normalizeFury();
     state.shieldStacks = saved.shieldStacks || 0;
     normalizeShields();
+    if (state.playerHp<=0 || selectedMapChanged) clearPlayerCombatBuffs();
     state.lootLog = Array.isArray(saved.lootLog)
         ? saved.lootLog.filter(entry => typeof entry === 'string').slice(0, 12)
         : [];
@@ -2052,6 +2084,14 @@ function renderUpgrades() {
                 button.textContent = label;
                 skillPointsBar.appendChild(button);
             });
+            const pointOverlay=document.createElement('div');pointOverlay.id='skillTreePointOverlay';
+            pointOverlay.className='skill-tree-point-overlay';
+            pointOverlay.append(skillPointsBar.querySelector('#skillPointsDisplay'));
+            const budgetWarning=document.createElement('p');budgetWarning.id='skillBuildBudgetWarning';budgetWarning.hidden=true;budgetWarning.setAttribute('role','status');
+            pointOverlay.append(budgetWarning);viewport.append(pointOverlay);
+            const positionPoints=()=>{pointOverlay.style.top=(skillPointsBar.offsetTop+skillPointsBar.offsetHeight+8)+'px';};
+            if(typeof ResizeObserver==='function')new ResizeObserver(positionPoints).observe(skillPointsBar);
+            positionPoints();
         }
         const links = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         links.classList.add('skill-tree-links');
@@ -2121,6 +2161,7 @@ function renderUpgrades() {
     // Update the skill points display bar
     const skillPointsDisplay = document.querySelector('#skillPointsDisplay');
     const pendingPointCount = getPendingSkillPointCount();
+    const editingBuild=Boolean(window.SkillBuilds?.isEditing());
     const plannedRanks = getPlannedSkillRanks();
     const committedPoints = Object.values(state.skillRanks).reduce((total, rank) => total + rank, 0);
     const totalPointsDisplay = document.querySelector('#skillPointsTotalDisplay');
@@ -2150,14 +2191,17 @@ function renderUpgrades() {
     }
     if (resetTreeButton) resetTreeButton.disabled =
         Object.values(state.skillRanks).every(rank => rank === 0) && pendingPointCount === 0;
+    if(confirmButton)confirmButton.textContent='Confirm';
+    if(clearButton)clearButton.textContent='Clear';
+    if(refundButton)refundButton.disabled=editingBuild;
 
     skillNodes.forEach(node => {
-        const committedRank = getSkillNodeRank(node.id);
+        const committedRank = editingBuild?0:getSkillNodeRank(node.id);
         const rank = plannedRanks[node.id] || 0;
         const allocatedForPlan = id => Boolean(skillNodeById[id] && skillNodeById[id].start) ||
             (plannedRanks[id] || 0) > 0;
         const available = node.start || skillNodeRequirementsMet(node, allocatedForPlan);
-        const canAllocate = !node.start && available && rank < node.maxRank && pendingPointCount < state.skillPoints;
+        const canAllocate = !node.start && available && rank < node.maxRank && (editingBuild || pendingPointCount < state.skillPoints);
         const canDeselect = !node.start && canDeselectPendingSkillNode(node.id);
         const button = board.querySelector('[data-skill-node="' + node.id + '"]');
         const nodeSize = [1, 1.25, 1.5].includes(Number(node.size)) ? Number(node.size) : 1;
@@ -2181,7 +2225,7 @@ function renderUpgrades() {
             (rank > committedRank && !node.start ? ' is-pending' : '') +
             (!node.start && !available && rank === 0 ? ' is-locked' : '') +
             (canAllocate ? ' is-available' : '') +
-            (!node.start && available && pendingPointCount >= state.skillPoints && rank < node.maxRank ? ' needs-point' : '');
+            (!editingBuild && !node.start && available && pendingPointCount >= state.skillPoints && rank < node.maxRank ? ' needs-point' : '');
         // The origin is interactive only to recenter the skill tree camera.
         button.disabled = !node.start && committedRank === 0 && !canAllocate && !canDeselect;
         const description = SkillDescriptions.describe(node);
@@ -2195,7 +2239,7 @@ function renderUpgrades() {
                 rank > 0 ? 'Selected, pending confirmation' : 'Not selected');
             labelParts.push(canDeselect ? 'Click to deselect' :
                 pendingSkillRanks[node.id] ? 'Keeps selected nodes connected to the center' :
-                    available && pendingPointCount < state.skillPoints && rank < node.maxRank ? 'Click to select' :
+                    canAllocate ? 'Click to select' :
                         available && rank < node.maxRank ? 'No unspent skill points available' :
                             rank >= node.maxRank ? 'Already selected' : 'Locked');
         }
@@ -2216,15 +2260,16 @@ function renderUpgrades() {
         const targetId = link.dataset.skillNodeLink;
         const isPlanned = id => Boolean(skillNodeById[id] && skillNodeById[id].start) ||
             (plannedRanks[id] || 0) > 0;
-        link.classList.toggle('is-active', skillNodeIsAllocated(sourceId) && skillNodeIsAllocated(targetId));
+        link.classList.toggle('is-active', !editingBuild&&skillNodeIsAllocated(sourceId) && skillNodeIsAllocated(targetId));
         link.classList.toggle('is-pending', isPlanned(sourceId) && isPlanned(targetId) &&
-            Boolean(pendingSkillRanks[sourceId] || pendingSkillRanks[targetId]));
+            (editingBuild||Boolean(pendingSkillRanks[sourceId] || pendingSkillRanks[targetId])));
         link.classList.toggle('tutorial-skill-link',
             state.tutorials.firstSkillPointPending &&
             state.skillPoints > 0 &&
             pendingPointCount === 0 &&
             link.dataset.skillNodeSource === 'origin');
     });
+    window.SkillBuilds?.updateEditingUi();
 }
 
 function recipeIsUnlocked(recipe) {
@@ -2714,9 +2759,14 @@ function createEnemyCard(definition) {
         const image = document.createElement('img');
         image.alt = '';
         image.src = spritePath;
-        image.addEventListener('error', () => { mark.textContent = '✦'; });
+        image.addEventListener('error', () => { image.replaceWith(document.createTextNode('✦'));mark.classList.remove('has-monster-sprite'); });
         mark.replaceChildren(image);
         mark.classList.add('has-monster-sprite');
+    }
+    for (const kind of ['poison','bleed']) {
+        const overlay=document.createElement('span');overlay.className='enemy-dot-sprite-effect is-'+kind;
+        for(let particle=0;particle<3;particle++) overlay.append(document.createElement('i'));
+        mark.append(overlay);
     }
     const details = document.createElement('div');
     details.className = 'enemy-details';
@@ -2771,7 +2821,9 @@ function createEnemyCard(definition) {
     freezeStatus.className = 'enemy-freeze-status';
     freezeStatus.dataset.enemyFreezeStatus = '';
     freezeStatus.hidden = true;
-    effectRow.append(procNotice, freezeStatus);
+    const freezeCount=document.createElement('strong');
+    freezeStatus.append(createElementalIcon('rimeBrand'),freezeCount);
+    effectRow.append(procNotice);
     const dotRow = document.createElement('div');
     dotRow.className = 'enemy-dot-row';
     const bleedStatus = document.createElement('span');
@@ -2784,6 +2836,14 @@ function createEnemyCard(definition) {
     bleedDuration.dataset.enemyBleedDuration = '';
     bleedStatus.append(droplet.cloneNode(true), bleedCount, bleedDuration);
     dotRow.append(dotStatus, bleedStatus);
+    const elementalRow=document.createElement('span');elementalRow.className='enemy-elemental-row';
+    const brandStatuses=Object.fromEntries(['rimeBrand','emberBrand','scorched'].map(id=>{
+        const badge=document.createElement('span');badge.className='enemy-elemental-status is-'+id;
+        badge.dataset.elementalStatus=id;badge.hidden=true;badge.tabIndex=0;
+        badge.append(createElementalIcon(id),document.createElement('strong'));
+        elementalRow.append(badge);return [id+'Status',badge];
+    }));
+    dotRow.append(freezeStatus,elementalRow);
     const healthTrack = document.createElement('div');
     healthTrack.className = 'health-track';
     healthTrack.setAttribute('role', 'progressbar');
@@ -2847,7 +2907,7 @@ function createEnemyCard(definition) {
     card.append(title, mark, details, shockwaveNotice);
     enemyCardViews.set(card, {name, targetLabel, playerAccuracyValue, enemyAccuracyValue,
         healthBar, healthTrack, poisonDamageBar, bleedDamageBar, hpText, intervalValue, damageValue,
-        dotStatus, dotCount, bleedStatus, respawn, freezeStatus});
+        dotStatus, dotCount, bleedStatus, respawn, freezeStatus,freezeCount,card,elementalRow,...brandStatuses});
     card.addEventListener('animationend', event => {
         if (event.animationName === 'enemy-death-shake') card.classList.remove('is-defeating');
         if (event.animationName === 'poison-stack-proc' || event.animationName === 'bleed-stack-proc') event.target.classList.remove('is-applying');
@@ -3095,14 +3155,18 @@ function renderCombatContent() {
         updateCombatAttribute(view.bleedDamageBar, 'title', remainingBleedDamage > 0
             ? 'Bleed will deal ' + combatStatFormatter.format(getRemainingBleedDamage(monster)) + ' more damage' : '');
         updateBleedStatus(view.bleedStatus, monster);
+        card.classList.toggle('is-poisoned',monster.hp>0 && monster.poisonStacks.some(stack=>stack.remainingDuration>0));
+        card.classList.toggle('is-bleeding',monster.hp>0 && Boolean(monster.bleed?.stacks>0 && monster.bleed.remainingDuration>0));
+        renderElementalStatuses(view,monster);
         updateCombatText(view.hpText, Math.ceil(monster.hp) + ' / ' + definition.health + ' HP');
         updateCombatText(view.intervalValue, getMonsterAttackInterval(monster).toFixed(1) + 's');
         const freezeStatus = view.freezeStatus;
         const frozen = monster.hp > 0 && monster.freezeRemaining > 0;
         card.classList.toggle('is-frozen', frozen);
         updateCombatHidden(freezeStatus, !frozen);
-        updateCombatText(freezeStatus, frozen ? 'Frozen ' + monster.freezeRemaining.toFixed(1) + 's' : '');
-        updateCombatAttribute(freezeStatus, 'title', 'Attacks take 3 seconds longer. Further arrow hits refresh the 9-second duration.');
+        updateCombatText(view.freezeCount, frozen ? combatStatFormatter.format(monster.freezeRemaining)+'s' : '');
+        updateCombatAttribute(freezeStatus,'aria-label','Frozen: '+combatStatFormatter.format(monster.freezeRemaining)+' seconds remaining');
+        updateCombatAttribute(freezeStatus, 'title', 'Attacks take 3 seconds longer. Freezing Arrows and Glacial Rupture refresh the 9-second duration.');
         updateCombatText(view.damageValue,combatStatFormatter.format(definition.attackDamage));
         const dotStatus = view.dotStatus;
         const poisonStackCount = monster.poisonStacks ? monster.poisonStacks.length : 0;
@@ -3149,8 +3213,8 @@ function render() {
     elements.experienceTrack.setAttribute('aria-valuemax', String(experienceRequired));
     elements.experienceTrack.setAttribute('aria-valuetext', state.experience + ' of ' +
         experienceRequired + ' XP to level ' + (state.level + 1));
-    elements.damage.textContent = formatAmount(getDamage());
-    document.getElementById('spellDamageDisplay').textContent=combatStatFormatter.format(getSpellDamage());
+    elements.damage.textContent = formatAmount(getDamage()*getGatheringPowerMultiplier());
+    document.getElementById('spellDamageDisplay').textContent=combatStatFormatter.format(getSpellDamage()*getGatheringPowerMultiplier());
     document.getElementById('maxManaDisplay').textContent=formatAmount(getPlayerMaxMana());
     document.getElementById('manaRegenDisplay').textContent=combatStatFormatter.format(getPlayerManaRegen())+' mana/s';
     elements.multiHit.textContent = combatStatFormatter.format(getMultiHit());
@@ -3301,6 +3365,7 @@ function defeatEnemy(monster) {
     monster.respawnRemaining = definition.respawnSeconds;
     monster.attackTimer = 0;
     monster.freezeRemaining = 0;
+    clearElementalDebuffs(monster);
     selectNextMonsterTarget(monster);
     syncLegacyEnemyState();
     transferPoisonOnDeath(monster, remainingPoison);
@@ -3375,14 +3440,16 @@ function applyDamageToPlayer(damage, source = 'enemy') {
     if (state.playerHp === 0) {
         state.combatPaused = true;
         state.attackTimer = 0;
+        clearPlayerCombatBuffs();
     }
 }
 
 function getMonsterDamageTakenMultiplier(monster) {
-    if (!monster || monster.hp <= 0 || getSkillNodeRank('singledOff') <= 0) return 1;
+    const power=getGatheringPowerMultiplier();
+    if (!monster || monster.hp <= 0 || getSkillNodeRank('singledOff') <= 0) return power;
     // Check current HP each time: kills and respawns can change isolation within
     // the same combat step. Dead enemies waiting to respawn do not count.
-    return state.monsterStates.some(other => other !== monster && other.hp > 0) ? 1 : 1.3;
+    return power*(state.monsterStates.some(other => other !== monster && other.hp > 0) ? 1 : 1.3);
 }
 
 function applyDamageToMonster(monster, damage, damageType = 'physical', abilityId = null) {
@@ -3391,7 +3458,7 @@ function applyDamageToMonster(monster, damage, damageType = 'physical', abilityI
     // Damage over time and poison executions never build or extend Fury.
     if (damageType !== 'poison' && damageType !== 'bleed' && damageType !== 'dot') gainFuryFromHit();
     const previousHp = monster.hp;
-    const receivedDamage = damage * (abilityId === 'poisonExecute' ? 1 : getMonsterDamageTakenMultiplier(monster));
+    const receivedDamage = damage * (abilityId === 'poisonExecute' ? 1 : getMonsterDamageTakenMultiplier(monster)*getFireDamageTakenMultiplier(monster,abilityId));
     monster.hp = Math.max(0, monster.hp - receivedDamage);
     recordMonsterDamage(previousHp - monster.hp, damageType, abilityId);
     syncLegacyEnemyState();
@@ -3618,6 +3685,7 @@ document.querySelector('#resetGame').addEventListener('click', function() {
     state.skillPoints = 0;
     state.skillRanks = {};
     state.playerMana=0;state.manaCapacity=0;state.voidCharges=0;
+    clearGatheringPower();
     clearFury();
     state.shieldStacks = 0;
     state.gear = createEmptyGear();
@@ -3694,6 +3762,11 @@ elements.mapList.addEventListener('click', function(event) {
 elements.upgrades.addEventListener('click', function(event) {
     const control = event.target.closest('[data-skill-tree-control]');
     if (control) {
+        if(window.SkillBuilds?.isEditing()) {
+            if(control.id==='confirmSkillSelection'){SkillBuilds.applyEditing();return;}
+            if(control.id==='clearSkillSelection'){SkillBuilds.cancelEditing();return;}
+            if(control.id==='resetSkillTree'){SkillBuilds.clearEditing();return;}
+        }
         if (control.id === 'clearSkillSelection') {
             pendingSkillRanks = {};
             renderUpgrades();
@@ -3757,6 +3830,7 @@ elements.upgrades.addEventListener('click', function(event) {
         renderUpgrades();
         return;
     }
+    if(window.SkillBuilds?.isEditing()){SkillBuilds.editNode(node.id);return;}
     if (refundMode) {
         if (getPendingSkillPointCount() > 0 || getSkillNodeRank(node.id) === 0 || pendingSkillRanks[node.id] ||
             !canRefundSkillRank(node.id)) return;
@@ -3957,6 +4031,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
     try {
         const map = currentMap();
         tickFury(elapsed);
+        tickGatheringPower(elapsed);
         normalizeShields();
         const killsBeforeTick = state.kills[map.id];
         const wasPaused = state.combatPaused;
@@ -3981,6 +4056,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                 monster.attackTimer = 0;
                 monster.freezeRemaining = 0;
                 monster.bleed = null;
+                clearElementalDebuffs(monster);
                 anyRespawned = true;
             }
         });
@@ -3993,6 +4069,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                 if (monster.hp > 0) {
                     tickMonsterPoison(monster, elapsed);
                     if (monster.hp > 0) tickMonsterBleed(monster, elapsed);
+                    if (monster.hp > 0) tickElementalBrands(monster, elapsed);
                 }
             });
             ensureLiveMonsterTarget();
@@ -4058,6 +4135,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                 if (monster.hp > 0) {
                     tickMonsterPoison(monster, elapsed);
                     if (monster.hp > 0) tickMonsterBleed(monster, elapsed);
+                    if (monster.hp > 0) tickElementalBrands(monster, elapsed);
                 }
             });
             ensureLiveMonsterTarget();
@@ -4113,7 +4191,7 @@ function processCombatBacklog() {
         // retained and continued in another task so input and painting can run.
         for (let steps = 0; pendingCombatSeconds + 1e-8 >= gameTickSeconds && steps < 250; steps++) {
             let elapsed = gameTickSeconds;
-            if (state.combatPaused && !state.furyStacks && !state.pendingEruptions.length && !state.pendingVoidMissiles.length && state.monsterStates.every(monster => !monster.poisonStacks.length && !monster.bleed)) {
+            if (state.combatPaused && !state.furyStacks && !state.gatheringPower?.stacks && !state.pendingEruptions.length && !state.pendingVoidMissiles.length && state.monsterStates.every(monster => !monster.poisonStacks.length && !monster.bleed && !monster.rimeBrand && !monster.emberBrand)) {
                 // Once Fury, DOTs, travelling eruptions and missiles finish, only respawns
                 // can change a dead player's state. Preserve 100 ms boundaries.
                 const nextRespawn = Math.min(...state.monsterStates
@@ -4258,7 +4336,7 @@ function initSkillTreePan(viewport) {
     });
     viewport.addEventListener('pointerdown', function(event) {
         if (event.button !== 0) return;
-        if (event.target.closest('[data-skill-node], [data-skill-tree-control]')) return;
+        if (event.target.closest('[data-skill-node], [data-skill-tree-control], .skill-points-bar')) return;
         skillTreePanning = true;
         skillTreePanStartX = event.clientX;
         skillTreePanStartY = event.clientY;

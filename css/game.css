@@ -2967,6 +2967,22 @@ html {
     font-weight: 700;
     white-space: nowrap;
 }
+.idle-adventure .skill-preset-controls { display:flex; align-items:center; justify-content:flex-start; flex:1 1 24rem; gap:.35rem; min-width:0; flex-wrap:wrap; }
+.idle-adventure .skill-preset-controls select,.idle-adventure .skill-preset-controls input { min-width:0; height:2rem; box-sizing:border-box; padding:.3rem .45rem; border:1px solid var(--adventure-border); border-radius:6px; color:var(--adventure-text); background:var(--adventure-raised); font:inherit; font-size:.8rem; }
+.idle-adventure .skill-preset-selection { flex:1 1 10rem; max-width:17rem; min-width:0; }
+.idle-adventure .skill-preset-selection select,.idle-adventure .skill-preset-selection input { width:100%; }
+.idle-adventure .skill-preset-selection [hidden] { display:none; }
+.idle-adventure .skill-preset-rename { display:grid; place-items:center; width:2rem; height:2rem; padding:.35rem; }
+.idle-adventure .skill-preset-rename svg { width:1rem; height:1rem; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.idle-adventure .skill-preset-rename .preset-check,.idle-adventure .skill-preset-rename.is-renaming .preset-pencil { display:none; }
+.idle-adventure .skill-preset-rename.is-renaming .preset-check { display:block; }
+.idle-adventure .skill-tree-point-overlay { position:absolute; z-index:3; left:1rem; right:1rem; text-align:center; pointer-events:none; border:0; outline:0; background:transparent; padding:0; text-shadow:1px 1px 2px #000; }
+.idle-adventure .skill-tree-point-overlay #skillPointsDisplay { display:block; font-size:1rem; line-height:1.4; background:transparent; border:0; outline:0; }
+.idle-adventure #skillBuildBudgetWarning { margin:.25rem 0 0; color:var(--adventure-green); font-size:.95rem; font-weight:800; }
+.idle-adventure #skillBuildBudgetWarning.is-over-budget { color:#ff697b; }
+.idle-adventure #skillBuildBudgetWarning[hidden] { display:none; }
+.idle-adventure .skill-build-file-controls { display:flex; align-items:center; flex-wrap:wrap; gap:.6rem; margin-top:.75rem; }
+.idle-adventure .skill-build-file-controls .subtle { font-size:.75rem; }
 
 .idle-adventure #skillPointsDisplay {
     flex: 1 1 14rem;
@@ -3286,10 +3302,19 @@ html {
 }
 @keyframes void-volley-player-release { from {opacity:1;} to {opacity:0;} }
 @keyframes void-volley-player-charge { from {filter:opacity(.25);} 75% {filter:opacity(.4);} to {filter:opacity(1);} }
+.idle-adventure .skill-build-dialog { width:min(620px,90vw); max-height:80vh; overflow:auto; padding:1.2rem; border:1px solid #577b86; border-radius:12px; background:#152832; color:#e5f3f6; }
+.idle-adventure #mapDescription { color:#dce8f2; text-shadow:0 1px 2px #000,0 0 5px #000b; }
+.idle-adventure .skill-build-dialog::backdrop { background:#050d15bb; }
+.idle-adventure .skill-build-dialog li { margin:.6rem 0; white-space:pre-line; font-size:.8rem; }
+.idle-adventure .skill-build-actions { display:flex; gap:.5rem; margin-top:1rem; }
+.idle-adventure #skillBuildError { color:#ffb58b; }
 .idle-adventure .spell-effect { position:absolute; inset:0; width:100%; height:100%; overflow:hidden; pointer-events:none; z-index:7; }
 .idle-adventure .spell-effect path { fill:none; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:.14 1.1; animation:void-projectile-flight 400ms linear both; }
 .idle-adventure .spell-effect circle { fill:none; stroke-width:2; transform-box:fill-box; transform-origin:center; animation:void-impact 450ms ease-out both; }
 .idle-adventure .spell-effect .void-impact { opacity:0; animation-fill-mode:forwards; }
+.idle-adventure .spell-void-vortex ellipse { fill:#280c4c44; stroke:#b489ff; stroke-width:3; filter:drop-shadow(0 0 7px #9855ff); transform-box:fill-box; transform-origin:center; animation:void-vortex-collapse 650ms ease-in both; }
+@keyframes void-vortex-collapse { from {transform:scale(1.15);opacity:0;} 25% {opacity:1;} to {transform:scale(.05) rotate(100deg);opacity:0;} }
+@media (prefers-reduced-motion:reduce) { .idle-adventure .spell-void-vortex ellipse {animation-name:void-impact;} }
 .idle-adventure .spell-effect .void-missile { fill:#f7d9ff; stroke:#c99aff; stroke-width:1; filter:drop-shadow(0 0 6px #b56cff); animation:void-missile-glow 400ms linear both; }
 .idle-adventure .spell-void-bolt path { stroke:#d9bbff; stroke-width:5; filter:drop-shadow(0 0 6px #9655ff); }
 .idle-adventure .spell-void-bolt circle { stroke:#c39aff; }

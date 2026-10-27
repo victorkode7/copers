@@ -95,8 +95,8 @@ window.adventureItems = {
             },
             "recipe": {
                 "materials": {
-                    "ore": 14,
-                    "crystal": 4
+                    "material_0e547cc411cb91fce7c30162": 100,
+                    "material_1b4e649727a05b3ad2ec7f8a": 50
                 }
             }
         },
@@ -268,7 +268,8 @@ window.adventureItems = {
             },
             "recipe": {
                 "materials": {
-                    "pearl": 50
+                    "fang": 150,
+                    "singedMane": 100
                 }
             }
         },
@@ -329,9 +330,9 @@ window.adventureItems = {
             "description": "Great for slaying monsters, even better for tilling your garden. Warranty void if used on soft dirt.",
             "sprite": "assets/items/Geobreaker-70b1ec4b.png",
             "stats": {
-                "damage": 15,
-                "attackSpeedMultiplier": 1.1,
-                "accuracy": 10
+                "damage": 21,
+                "attackSpeedMultiplier": 1.21,
+                "accuracy": 21
             },
             "recipe": null
         },
@@ -478,9 +479,9 @@ window.adventureItems = {
             "description": "Does not make you invisible.",
             "sprite": "assets/items/Wizard-Cloak-7b30a46d.png",
             "stats": {
-                "accuracy": 15,
-                "damageMultiplier": 1.25,
-                "evasion": 33
+                "evasion": 33,
+                "spellDamageMultiplier": 1.33,
+                "mana": 40
             },
             "recipe": {
                 "materials": {
@@ -517,6 +518,46 @@ window.adventureItems = {
                 "evasion": 120
             },
             "recipe": null
+        },
+        {
+            "id": "item_8b41545b9cb73491f80051684955b8fd",
+            "name": "Wand",
+            "slot": "weapon",
+            "rarity": "uncommon",
+            "description": "",
+            "sprite": "",
+            "stats": {
+                "spellDamage": 25,
+                "manaRegenPercent": 0.1,
+                "attackSpeedMultiplier": 1.15
+            },
+            "recipe": {
+                "materials": {
+                    "material_0e547cc411cb91fce7c30162": 100,
+                    "singedMane": 50,
+                    "material_1b4e649727a05b3ad2ec7f8a": 30
+                }
+            }
+        },
+        {
+            "id": "item_e1349b5585a77f308513c104a2784bc4",
+            "name": "Wand 2",
+            "slot": "weapon",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "",
+            "stats": {
+                "spellDamage": 50,
+                "manaRegenPercent": 0.1,
+                "attackSpeedMultiplier": 1.25,
+                "mana": 50
+            },
+            "recipe": {
+                "materials": {
+                    "material_c5b9f767dd84fce3cc950ab7": 500,
+                    "material_b1c43d6c0bc463c355442072": 500
+                }
+            }
         }
     ],
     "materialDetails": {

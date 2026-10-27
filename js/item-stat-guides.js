@@ -7,9 +7,9 @@
         manaRegenIncrease:{affects:'All mana regeneration, including regeneration based on maximum mana.',formula:'Mana/s = (flat regeneration + maximum mana × maximum-mana regeneration rate) × max(0, 1 + increased regeneration)',notes:'Increased regeneration adds together. It does not generate mana regeneration on its own.',example:.25},
         manaRegenPercent:{affects:'Mana regeneration based on maximum mana.',formula:'Mana/s = (flat regeneration + maximum mana × maximum-mana regeneration rate) × max(0, 1 + increased regeneration)',notes:'At 5% per second, 100 maximum mana adds 5 mana/s before increased regeneration.',example:.05},
         damage: {
-            affects: 'Physical damage dealt by each successful hit.',
-            formula: 'Damage = (2 + Strength × 2 + flat item bonuses + flat skill bonuses) × item multipliers × skill multipliers',
-            notes: 'Rounded to a whole number, with a minimum of 1 damage.', example: 5
+            affects: 'Physical damage dealt by basic attacks and abilities that scale with physical damage.',
+            formula: 'Physical damage = (2 + Strength × 2 + flat item bonuses + flat skill bonuses) × item multipliers × skill multipliers',
+            notes: 'Rounded to a whole number, with a minimum of 1 physical damage.', example: 5
         },
         health: {
             affects: 'The character’s maximum health.',

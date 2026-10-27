@@ -184,16 +184,19 @@
         }
         return details;
     }
+    const statDefinitions = Object.entries(Equipment.stats).map(([id, rule]) => ({id, label: rule.label}));
+    const bonusFilter = StatPicker.createFilter($('statRows'), statDefinitions, renderRows);
+    function availableStat(id) {
+        const rule = Equipment.stats[id];
+        return !Object.hasOwn(current().stats, id) && (!rule.developer || current().developerOnly);
+    }
     function renderRows() {
         const item = current();
         if (!item) return;
         $('statRows').replaceChildren();
         Equipment.orderedStats(item).forEach(([key, value]) => {
             const select = document.createElement('select');
-            for (const [id, rule] of Object.entries(Equipment.stats)) {
-                if (id === key || (!Object.hasOwn(item.stats, id) && (!rule.developer || item.developerOnly))) select.append(option(id, rule.label));
-            }
-            select.value = key;
+            bonusFilter.populate(select, statDefinitions.filter(stat => stat.id === key || availableStat(stat.id)), key);
             const rule = Equipment.stats[key];
             const input = numeric(value, rule?.min);
             if (rule?.max !== undefined) input.max = rule.max;
@@ -228,7 +231,7 @@
             $('materialRows').append(row('Material', select, 'Quantity', input, () => delete item.recipe.materials[key]));
         });
         $('addMaterial').disabled = !Object.keys(data.materials).some(id => !Object.hasOwn(item.recipe?.materials || {}, id));
-        $('addStat').disabled = !Object.entries(Equipment.stats).some(([id, rule]) => !Object.hasOwn(item.stats, id) && (!rule.developer || item.developerOnly));
+        $('addStat').disabled = !bonusFilter.filtered().some(stat => availableStat(stat.id));
     }
     function renderForm() {
         const item = current();
@@ -332,7 +335,8 @@
         changed(); renderForm(); status('Item deleted from this draft. Undo is available.');
     });
     $('addStat').addEventListener('click', () => {
-        const entry = Object.entries(Equipment.stats).find(([id, rule]) => !Object.hasOwn(current().stats, id) && (!rule.developer || current().developerOnly));
+        const match = bonusFilter.filtered().find(stat => availableStat(stat.id));
+        const entry = match && [match.id, Equipment.stats[match.id]];
         if (!entry) return;
         current().stats[entry[0]] = entry[1].default; changed(); renderRows();
     });

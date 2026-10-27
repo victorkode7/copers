@@ -1,6 +1,7 @@
 // Spells share the same fixed combat steps as attacks and offline progress.
 const spellSettings = Object.freeze({
-    voidBolt:{manaCost:5}, voidVolley:{manaCost:10,charges:5,missiles:10}
+    voidBolt:{manaCost:5}, voidVolley:{manaCost:10,charges:5,missiles:10},
+    voidVortex:{manaCost:20,damageMultiplier:.75,chargesPerHit:2,doubleChance:.33}
 });
 const voidMissileTiming = Object.freeze({flight:.4,stagger:.05,redirect:.2,windup:.2});
 // These Bezier controls make distance grow as time squared. SVG heads and CSS
@@ -57,7 +58,7 @@ function normalizePlayerMana() {
 }
 
 function normalizeVoidCharges() {
-    state.voidCharges=getSkillNodeRank('voidBolt')>0
+    state.voidCharges=(getSkillNodeRank('voidBolt')>0 || getSkillNodeRank('voidVortex')>0)
         ? Math.max(0,Math.min(spellSettings.voidVolley.charges,state.voidCharges||0)) : 0;
 }
 
@@ -146,6 +147,60 @@ function castVoidBolt() {
     return true;
 }
 
+function castVoidVortex() {
+    normalizeVoidCharges();
+    if (getSkillNodeRank('voidVortex')<=0 || state.combatPaused || state.playerHp<=0 ||
+        state.playerMana+1e-8<spellSettings.voidVortex.manaCost) return false;
+    const target=activeMonster(),damage=getSpellDamage()*spellSettings.voidVortex.damageMultiplier;
+    if (!target || damage<=0) return false;
+    const targets=getArrowRowTargets(target);
+    if (!targets.length) return false;
+    state.playerMana=Math.max(0,state.playerMana-spellSettings.voidVortex.manaCost);
+    // Roll once per paid cast. The repeat stays in the original row and cannot
+    // recursively repeat or generate charges from enemies killed by the first hit.
+    const triggers=getSkillNodeRank('echoingVoid')>0 && Math.random()<spellSettings.voidVortex.doubleChance ? 2 : 1;
+    for (let trigger=0;trigger<triggers;trigger++) {
+        const living=targets.filter(monster=>monster.hp>0);
+        if (!living.length) break;
+        showVoidVortex(living.map(monster=>monster.id),trigger*180);
+        for (const monster of living) {
+            applyDamageToMonster(monster,damage,'spell','voidVortex');
+            state.voidCharges=Math.min(spellSettings.voidVolley.charges,
+                state.voidCharges+spellSettings.voidVortex.chargesPerHit);
+            castVoidVolley();
+        }
+    }
+    return true;
+}
+
+function showVoidVortex(targetIds,visualDelay=0) {
+    const mapId=state.selectedMap;
+    presentCombatEffect(()=>{
+        if (state.currentView!=='map' || state.selectedMap!==mapId) return;
+        const cards=targetIds.map(id=>getCombatEffectCard(id)).filter(Boolean);
+        if (!cards.length) return;
+        const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+        svg.classList.add('spell-effect','spell-void-vortex');
+        svg.dataset.spell='voidVortex';svg.setAttribute('aria-hidden','true');
+        elements.combatPanel.append(svg);
+        const frame=getCombatOverlayBounds(svg);
+        if (!frame.width || !frame.height) {svg.remove();return;}
+        svg.setAttribute('viewBox','0 0 '+frame.width+' '+frame.height);
+        const bounds=cards.map(card=>getCombatEffectBounds(card));
+        const left=Math.min(...bounds.map(box=>box.left)),right=Math.max(...bounds.map(box=>box.right));
+        const top=Math.min(...bounds.map(box=>box.top)),bottom=Math.max(...bounds.map(box=>box.bottom));
+        for (let ring=0;ring<3;ring++) {
+            const ellipse=document.createElementNS(svg.namespaceURI,'ellipse');
+            ellipse.setAttribute('cx',(left+right)/2-frame.left);
+            ellipse.setAttribute('cy',(top+bottom)/2-frame.top);
+            ellipse.setAttribute('rx',Math.max(12,(right-left)/2)*(1-ring*.15));
+            ellipse.setAttribute('ry',Math.max(10,(bottom-top)/2)*(1-ring*.2));
+            ellipse.style.animationDelay=(visualDelay+ring*70)+'ms';svg.append(ellipse);
+        }
+        setTimeout(()=>svg.remove(),900+visualDelay);
+    });
+}
+
 function tickPlayerMana(elapsed) {
     const maximum=normalizePlayerMana();
     normalizeVoidCharges();
@@ -162,6 +217,9 @@ function triggerAttackSpells() {
     if (state.combatPaused || state.playerHp<=0 || getPlayerMaxMana()<=0) return;
     normalizePlayerMana();
     castVoidVolley();
+    castElementalBrand('rimeBrand');
+    castElementalBrand('emberBrand');
+    if (getSkillNodeRank('voidVortex')>0) castVoidVortex();
     if (getSkillNodeRank('voidBolt')>0) castVoidBolt();
 }
 
@@ -173,7 +231,7 @@ function renderPlayerMana() {
     document.getElementById('playerManaBar').style.width=(maximum?state.playerMana/maximum*100:0)+'%';
     updateCombatAttribute(track,'aria-valuemax',maximum);
     updateCombatAttribute(track,'aria-valuenow',Math.floor(state.playerMana));
-    panel.title=combatStatFormatter.format(getPlayerManaRegen())+' mana/s. Void Bolt: 5 mana per cast. Void Volley: 5 charges and 10 mana.';
+    panel.title=combatStatFormatter.format(getPlayerManaRegen())+' mana/s. Rime Brand and Ember Brand: 5 mana each. Void Bolt: 5 mana per cast. Void Vortex: 20 mana per cast. Void Volley: 5 charges and 10 mana.';
 }
 
 function getVoidVolleyCurve(start,target,index,count,noise,frame) {
@@ -195,7 +253,7 @@ function getVoidVolleyCurve(start,target,index,count,noise,frame) {
 }
 
 function showVoidVolleyPlayerGlow(holdSeconds,windupSeconds=0) {
-    if(holdSeconds<=0)return;
+    if(holdSeconds<=0 || state.playerHp<=0)return;
     const panel=elements.playerHealthPanel,now=performance.now();
     let glow=panel.querySelector('.void-volley-player-glow');
     const until=Math.max(Number(glow?.dataset.releaseAt)||0,now+holdSeconds*1000);

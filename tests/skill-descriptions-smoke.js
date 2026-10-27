@@ -12,9 +12,9 @@
         const sample = {id:'ordinary', effect:'Outdated hand-written description', stats:{health:12,healthMultiplier:1.123456,damage:2.5,attackSpeedPerLevel:.005,poisonChance:.123456,poisonTickRateMultiplier:1.25,goldBonus:.100001}};
         const originalStats = JSON.stringify(sample.stats);
         const description = SkillDescriptions.describe(sample);
-        check('ordinary descriptions come from flat bonuses, percentages, multipliers, and level scaling', description === '+12 maximum health\n+12.35% maximum health\n+2.5 damage\n+0.5% attack speed per character level\n+12.35% poison chance\n+25% poison tick speed\n+10% gold gained');
+        check('ordinary descriptions come from flat bonuses, percentages, multipliers, and level scaling', description === '+12 maximum health\n+12.35% maximum health\n+2.5 physical damage\n+0.5% attack speed per character level\n+12.35% poison chance\n+25% poison tick speed\n+10% gold gained');
         check('description formatting never changes stat precision', JSON.stringify(sample.stats)===originalStats && !hasLongPercentage(description));
-        check('penalties and neutral multipliers format correctly', SkillDescriptions.describe({customDescription:false,stats:{damageMultiplier:.87554,healthMultiplier:1}})==='-12.45% damage');
+        check('penalties and neutral multipliers format correctly', SkillDescriptions.describe({customDescription:false,stats:{damageMultiplier:.87554,healthMultiplier:1}})==='-12.45% physical damage');
         check('a custom unique effect overrides automatic stat text', SkillDescriptions.describe({id:'piercingArrow',effect:'Keep this unique arrow effect.',stats:{damage:1}})==='Keep this unique arrow effect.');
         check('new unique effects can explicitly keep custom descriptions alongside stat bonuses', SkillDescriptions.describe({customDescription:true,effect:'A new unique mechanic.',stats:{health:20}})==='A new unique mechanic.');
         const legacy={nodes:[{id:'plain',effect:'Wrong text',stats:{accuracy:7}},{id:'piercingArrow',effect:'Unique text',stats:{damage:1}},{id:'storyNode',effect:'A unique mechanic without stat bonuses.',stats:{}}]};
@@ -85,7 +85,7 @@
             for(const id of uniqueIds) check(id+' retains its unique game tooltip', showTooltip(id)===skillNodeById[id].effect);
             const node=skillNodeById.mightyBlows;
             node.stats={damage:2.345678,poisonChance:.123456789};node.effect='Stale description';renderUpgrades();
-            check('tooltips, node text, and accessible labels all use current bonuses', showTooltip(node.id)==='+2.35 damage\n+12.35% poison chance' && document.querySelector('[data-skill-node="'+node.id+'"] .skill-node-effect').textContent===SkillDescriptions.describe(node) && document.querySelector('[data-skill-node="'+node.id+'"]').getAttribute('aria-label').includes('+12.35% poison chance'));
+            check('tooltips, node text, and accessible labels all use current bonuses', showTooltip(node.id)==='+2.35 physical damage\n+12.35% poison chance' && document.querySelector('[data-skill-node="'+node.id+'"] .skill-node-effect').textContent===SkillDescriptions.describe(node) && document.querySelector('[data-skill-node="'+node.id+'"]').getAttribute('aria-label').includes('+12.35% poison chance'));
             check('game description generation keeps combat stats at full precision', node.stats.damage===2.345678 && node.stats.poisonChance===.123456789);
         }
         check('no runtime errors', !window.smokeErrors.length);

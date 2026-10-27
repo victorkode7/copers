@@ -10,10 +10,10 @@
     let visibleArrows = 0, visibleCracks = 0, advancedSteps = 0;
     const check = (label, ok) => { checks.push((ok ? 'PASS ' : 'FAIL ') + label); if (!ok) throw new Error(label); };
     const median = values => values.sort((a, b) => a - b)[Math.floor(values.length / 2)];
-    const snapshot = () => JSON.stringify({hp:state.playerHp,mana:state.playerMana,voidCharges:state.voidCharges,missiles:state.pendingVoidMissiles,paused:state.combatPaused,attack:state.attackTimer,monsters:state.monsterStates,pending:state.pendingEruptions,kills:state.kills,gold:state.gold,materials:state.materials,level:state.level,xp:state.experience,target:state.targetMonsterId,loot:state.lootLog,fury:state.furyStacks,furyTime:state.furyRemaining,shields:state.shieldStacks});
+    const snapshot = () => JSON.stringify({hp:state.playerHp,mana:state.playerMana,voidCharges:state.voidCharges,power:state.gatheringPower,missiles:state.pendingVoidMissiles,paused:state.combatPaused,attack:state.attackTimer,monsters:state.monsterStates,pending:state.pendingEruptions,kills:state.kills,gold:state.gold,materials:state.materials,level:state.level,xp:state.experience,target:state.targetMonsterId,loot:state.lootLog,fury:state.furyStacks,furyTime:state.furyRemaining,shields:state.shieldStacks});
     function hash(value) { let result = 2166136261; for (const char of value) result = Math.imul(result ^ char.charCodeAt(0), 16777619); return (result >>> 0).toString(16); }
     function fresh(count, durable = false, stress = false) {
-        clearFury();
+        clearFury();clearGatheringPower();
         state.shieldStacks = 0;
         state.voidCharges = 0;
         state.skillRanks = {...ranks}; state.level = Object.values(ranks).reduce((sum, rank) => sum + rank, 0); state.skillPoints = 0; state.experience = 0;
@@ -44,7 +44,7 @@
                     visibleCracks += elements.combatPanel.querySelectorAll('.eruption-chain').length;
                     // This synchronous benchmark has no animation clock. Retire effects
                     // between samples instead of accumulating ten seconds of live SVGs.
-                    elements.combatPanel.querySelectorAll('.combat-arrow,.eruption-chain,.eruption-burst,.shield-slam-wave').forEach(effect => effect.remove());
+                    elements.combatPanel.querySelectorAll('.combat-arrow,.eruption-chain,.eruption-burst,.shield-slam-wave,.elemental-effect-layer').forEach(effect => effect.remove());
                 }
             }
         } finally { combatStatCache = null; }
@@ -65,7 +65,7 @@
         // The extreme multi-hit build can kill itself through stacked eruption
         // costs while Fire caps healing at 30% HP. Stop timing at death so the
         // benchmark never reports idle simulation as fast combat.
-        const scenarios = [{count:9,digest:'c66621d9'},{count:64,digest:'d880dd88'},{count:128,digest:'d471f033'},{count:64,durable:true,digest:'b31aae6e'},{count:64,durable:true,stress:true,digest:'40f56db7'}];
+        const scenarios = [{count:9,digest:'4e17a348'},{count:64,digest:'8a1d6b19'},{count:128,digest:'a57b60e0'},{count:64,durable:true,digest:'2fb1b0e9'},{count:64,durable:true,stress:true,digest:'c7de05af'}];
         for (const scenario of scenarios) {
             const times = []; let reference;
             for (let run = 0; run < 4; run++) {
@@ -76,7 +76,8 @@
             check('all-skills fight stays finite and only pauses on death', Number.isFinite(state.playerHp) && state.monsterStates.every(monster => Number.isFinite(monster.hp)) && (!state.combatPaused || state.playerHp === 0));
             check('Deep Wounds keeps active Bleed pools within the three-stack cap', state.monsterStates.every(monster => !monster.bleed || monster.bleed.stacks <= 3));
             if (!scenario.stress) check('sustained benchmark completes all 1500 combat steps', advancedSteps === 1500 && !state.combatPaused);
-            check('all-skills outcomes match the expanded-tree combat reference', hash(reference) === scenario.digest);
+            if (scenario.stress) check('the stress build loses all stack buffs on death',state.furyStacks===0&&state.voidCharges===0&&state.shieldStacks===0&&state.gatheringPower.stacks===0);
+            check('all-skills outcomes match the expanded-tree combat reference '+hash(reference), hash(reference) === scenario.digest);
             checks.push('BENCH ' + JSON.stringify({...scenario,steps:advancedSteps,medianMs:Math.round(median(times)*100)/100,digest:hash(reference),kills:state.kills[map.id],stacks:state.monsterStates.reduce((sum,m) => sum+m.poisonStacks.length,0),pending:state.pendingEruptions.length}));
         }
         fresh(64, true); profile();

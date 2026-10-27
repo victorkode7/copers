@@ -23,7 +23,7 @@ window.adventureSkillTree = {
             "id": "mightyBlows",
             "name": "Mighty Blows",
             "icon": "⚔",
-            "effect": "+1 damage",
+            "effect": "+1 physical damage",
             "requires": [
                 "damageNode"
             ],
@@ -143,7 +143,7 @@ window.adventureSkillTree = {
             "id": "damageNode",
             "name": "Damage",
             "icon": "⚔",
-            "effect": "+2 damage",
+            "effect": "+2 physical damage",
             "type": "damage",
             "stats": {
                 "damage": 2
@@ -163,7 +163,7 @@ window.adventureSkillTree = {
             "id": "damageNode2",
             "name": "Damage",
             "icon": "⚔",
-            "effect": "+5% damage",
+            "effect": "+5% physical damage",
             "type": "damage",
             "stats": {
                 "damageMultiplier": 1.05
@@ -313,11 +313,11 @@ window.adventureSkillTree = {
                 "attackSpeedMultiplier": 1.1
             },
             "size": 1.25,
-            "column": 7,
-            "row": -1,
+            "column": 14,
+            "row": 3,
             "maxRank": 1,
             "requires": [
-                "attackSpeedNode2"
+                "accuracyNode6"
             ],
             "requiresMode": "all",
             "start": false,
@@ -333,30 +333,8 @@ window.adventureSkillTree = {
                 "accuracyMultiplier": 1.1
             },
             "size": 1,
-            "column": 8,
-            "row": -2,
-            "maxRank": 1,
-            "requires": [
-                "bigAttackSpeed_1"
-            ],
-            "requiresMode": "any",
-            "start": false,
-            "sprite": "",
-            "customDescription": false,
-            "abilityTargeting": null
-        },
-        {
-            "id": "damageBoost",
-            "name": "EVEN MORE SUPER SPEED",
-            "icon": "⚡",
-            "effect": "+25% damage",
-            "type": "damage",
-            "stats": {
-                "damageMultiplier": 1.25
-            },
-            "size": 1,
-            "column": 8,
-            "row": -1,
+            "column": 15,
+            "row": 2,
             "maxRank": 1,
             "requires": [
                 "bigAttackSpeed_1"
@@ -458,11 +436,11 @@ window.adventureSkillTree = {
             "icon": "✦",
             "effect": "Poison damage now executes!",
             "requires": [
-                "damageBoost"
+                "healthNode9"
             ],
             "requiresMode": "all",
-            "column": 9,
-            "row": -1,
+            "column": 16,
+            "row": 3,
             "maxRank": 1,
             "stats": {
                 "poisonTickRateMultiplier": 1.1
@@ -471,7 +449,8 @@ window.adventureSkillTree = {
             "start": false,
             "sprite": "assets/skills/poisonExecute-9a38ed77.png",
             "type": "attackSpeed",
-            "customDescription": true
+            "customDescription": true,
+            "abilityTargeting": null
         },
         {
             "id": "bloomingFlower",
@@ -482,8 +461,8 @@ window.adventureSkillTree = {
                 "accuracyBoost"
             ],
             "requiresMode": "all",
-            "column": 9,
-            "row": -2,
+            "column": 16,
+            "row": 2,
             "maxRank": 1,
             "stats": {},
             "size": 1.5,
@@ -606,7 +585,7 @@ window.adventureSkillTree = {
             "id": "damageNode3",
             "name": "Damage Path Node",
             "icon": "⚔",
-            "effect": "+5% damage",
+            "effect": "+5% physical damage",
             "type": "damage",
             "stats": {
                 "damageMultiplier": 1.05
@@ -627,7 +606,7 @@ window.adventureSkillTree = {
             "id": "damageNode4",
             "name": "Damage Path Node",
             "icon": "⚔",
-            "effect": "+5% damage",
+            "effect": "+5% physical damage",
             "type": "damage",
             "stats": {
                 "damageMultiplier": 1.05
@@ -689,7 +668,7 @@ window.adventureSkillTree = {
             "id": "attackSpeedNode5",
             "name": "Attack Speed",
             "icon": "⚡",
-            "effect": "+3 damage\n+5% attack speed",
+            "effect": "+3 physical damage\n+5% attack speed",
             "type": "attackSpeed",
             "stats": {
                 "damage": 3,
@@ -711,7 +690,7 @@ window.adventureSkillTree = {
             "id": "arrowSpeed2",
             "name": "Attack Speed",
             "icon": "⚡",
-            "effect": "+3 damage\n+5% attack speed",
+            "effect": "+3 physical damage\n+5% attack speed",
             "type": "attackSpeed",
             "stats": {
                 "damage": 3,
@@ -842,7 +821,7 @@ window.adventureSkillTree = {
             "id": "damageNode5",
             "name": "Damage",
             "icon": "⚔",
-            "effect": "+3 damage",
+            "effect": "+3 physical damage",
             "type": "damage",
             "stats": {
                 "damage": 3
@@ -852,7 +831,8 @@ window.adventureSkillTree = {
             "row": 1,
             "maxRank": 1,
             "requires": [
-                "basicallySnake"
+                "basicallySnake",
+                "attackSpeedNode10"
             ],
             "requiresMode": "all",
             "start": false,
@@ -863,7 +843,7 @@ window.adventureSkillTree = {
             "id": "damageNode6",
             "name": "Damage",
             "icon": "⚔",
-            "effect": "+15% damage",
+            "effect": "+15% physical damage",
             "type": "damage",
             "stats": {
                 "damageMultiplier": 1.15
@@ -884,10 +864,10 @@ window.adventureSkillTree = {
             "id": "attackSpeedNode4",
             "name": "Attack Speed",
             "icon": "⚡",
-            "effect": "+1.01% attack speed",
+            "effect": "+5% attack speed",
             "type": "attackSpeed",
             "stats": {
-                "attackSpeedMultiplier": 1.0101010101010102
+                "attackSpeedMultiplier": 1.05
             },
             "size": 1,
             "column": 8,
@@ -898,16 +878,18 @@ window.adventureSkillTree = {
             ],
             "requiresMode": "all",
             "start": false,
-            "customDescription": false
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
         },
         {
             "id": "attackSpeedNode6",
             "name": "Attack Speed",
             "icon": "⚡",
-            "effect": "+1.01% attack speed",
+            "effect": "+10% attack speed",
             "type": "attackSpeed",
             "stats": {
-                "attackSpeedMultiplier": 1.0101010101010102
+                "attackSpeedMultiplier": 1.1
             },
             "size": 1,
             "column": 7,
@@ -918,7 +900,9 @@ window.adventureSkillTree = {
             ],
             "requiresMode": "all",
             "start": false,
-            "customDescription": false
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
         },
         {
             "id": "accuracyNode9",
@@ -1193,7 +1177,7 @@ window.adventureSkillTree = {
             "id": "addedShields",
             "name": "Added shields",
             "icon": "✦",
-            "effect": "+2 maximum shields\n+5 damage",
+            "effect": "+2 maximum shields\n+5 physical damage",
             "requires": [
                 "shieldSlam"
             ],
@@ -1254,7 +1238,7 @@ window.adventureSkillTree = {
             "id": "addedShields2",
             "name": "Added shields",
             "icon": "✦",
-            "effect": "+2 maximum shields\n+5 damage",
+            "effect": "+2 maximum shields\n+5 physical damage",
             "requires": [
                 "shieldSlam"
             ],
@@ -1276,7 +1260,7 @@ window.adventureSkillTree = {
             "id": "damageNode7",
             "name": "Damage Path Node",
             "icon": "⚔",
-            "effect": "+10% damage",
+            "effect": "+10% physical damage",
             "type": "damage",
             "stats": {
                 "damageMultiplier": 1.1
@@ -1321,7 +1305,8 @@ window.adventureSkillTree = {
             "icon": "✦",
             "effect": "+2 maximum shields\n+25% evasion",
             "requires": [
-                "overflowingSlam"
+                "overflowingSlam",
+                "deepWounds"
             ],
             "requiresMode": "all",
             "column": -9,
@@ -1491,10 +1476,12 @@ window.adventureSkillTree = {
             "name": "Deep Wounds",
             "icon": "🩸",
             "effect": "Bleed: 50% hit damage/s.\nKeeps your 3 strongest stacks.",
-            "requires": [],
+            "requires": [
+                "healthNode8"
+            ],
             "requiresMode": "all",
-            "column": -6,
-            "row": -5,
+            "column": -11,
+            "row": 4,
             "maxRank": 1,
             "stats": {},
             "size": 1.25,
@@ -1575,7 +1562,7 @@ window.adventureSkillTree = {
             "id": "heavyBlows",
             "name": "Heavy Blows",
             "icon": "✦",
-            "effect": "+10 damage",
+            "effect": "+10 physical damage",
             "requires": [
                 "evasiveVitality",
                 "healthNode7"
@@ -1770,7 +1757,7 @@ window.adventureSkillTree = {
             "id": "damageNode8",
             "name": "Damage",
             "icon": "⚔",
-            "effect": "+10% damage",
+            "effect": "+10% physical damage",
             "type": "damage",
             "stats": {
                 "damageMultiplier": 1.1
@@ -1789,44 +1776,26 @@ window.adventureSkillTree = {
             "abilityTargeting": null
         },
         {
-            "id": "accuracyNode13",
-            "name": "Accuracy",
-            "icon": "◎",
-            "effect": "+5 accuracy",
-            "type": "accuracy",
-            "stats": {
-                "accuracy": 5
-            },
-            "size": 1,
-            "column": 0,
-            "row": -2,
-            "maxRank": 1,
-            "requires": [
-                "damageNode7"
-            ],
-            "requiresMode": "all",
-            "start": false,
-            "customDescription": false
-        },
-        {
             "id": "accuracyNode14",
             "name": "Accuracy",
             "icon": "◎",
-            "effect": "+5 accuracy",
+            "effect": "+20 accuracy",
             "type": "accuracy",
             "stats": {
-                "accuracy": 5
+                "accuracy": 20
             },
             "size": 1,
             "column": 0,
             "row": -4,
             "maxRank": 1,
             "requires": [
-                "accuracyNode13"
+                "health"
             ],
             "requiresMode": "all",
             "start": false,
-            "customDescription": false
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
         },
         {
             "id": "healthNode8",
@@ -1898,7 +1867,8 @@ window.adventureSkillTree = {
             "effect": "+25 evasion",
             "requires": [
                 "damageNode8",
-                "quickBleeding"
+                "quickBleeding",
+                "accuracyNode14"
             ],
             "column": -4,
             "row": -2,
@@ -1917,7 +1887,7 @@ window.adventureSkillTree = {
             "id": "damageNode9",
             "name": "Damage Path Node",
             "icon": "⚔",
-            "effect": "+5% damage",
+            "effect": "+5% physical damage",
             "type": "damage",
             "stats": {
                 "damageMultiplier": 1.05
@@ -1979,16 +1949,16 @@ window.adventureSkillTree = {
             "id": "baseMana1",
             "name": "Mana Reserve",
             "icon": "✦",
-            "effect": "+100 maximum mana",
+            "effect": "+50 maximum mana",
             "requires": [
                 "accuracyNode16"
             ],
             "requiresMode": "all",
             "column": 5,
-            "row": -6,
+            "row": -8,
             "maxRank": 1,
             "stats": {
-                "mana": 100
+                "mana": 50
             },
             "size": 1,
             "start": false,
@@ -2003,11 +1973,11 @@ window.adventureSkillTree = {
             "icon": "✦",
             "effect": "+10 spell damage",
             "requires": [
-                "baseMana1"
+                "untouchable4"
             ],
             "requiresMode": "all",
-            "column": 6,
-            "row": -6,
+            "column": 11,
+            "row": -5,
             "maxRank": 1,
             "stats": {
                 "spellDamage": 10
@@ -2023,16 +1993,16 @@ window.adventureSkillTree = {
             "id": "multiSpellDamage1",
             "name": "Spell Amplification",
             "icon": "✦",
-            "effect": "+20% spell damage",
+            "effect": "+50% spell damage",
             "requires": [
                 "baseSpellDamage1"
             ],
             "requiresMode": "all",
-            "column": 7,
-            "row": -6,
+            "column": 12,
+            "row": -5,
             "maxRank": 1,
             "stats": {
-                "spellDamageMultiplier": 1.2
+                "spellDamageMultiplier": 1.5
             },
             "size": 1,
             "start": false,
@@ -2047,11 +2017,11 @@ window.adventureSkillTree = {
             "icon": "◈",
             "effect": "On attack: 100% spell damage to your target, affected by multihit.\nGain 1 Void Charge per hit. Costs 5 mana per cast.",
             "requires": [
-                "multiSpellDamage1"
+                "expandedReserves"
             ],
             "requiresMode": "all",
             "column": 8,
-            "row": -6,
+            "row": -10,
             "maxRank": 1,
             "stats": {},
             "size": 1.5,
@@ -2067,11 +2037,11 @@ window.adventureSkillTree = {
             "icon": "✺",
             "effect": "At 5 Void Charges, consume them to fire 10 missiles at random enemies.\nEach deals 100% spell damage. Costs 10 mana per volley.",
             "requires": [
-                "voidBolt"
+                "expandedReserves3"
             ],
             "requiresMode": "all",
-            "column": 8,
-            "row": -7,
+            "column": 6,
+            "row": -12,
             "maxRank": 1,
             "stats": {},
             "size": 1,
@@ -2090,8 +2060,8 @@ window.adventureSkillTree = {
                 "baseMana1"
             ],
             "requiresMode": "all",
-            "column": 5,
-            "row": -7,
+            "column": 4,
+            "row": -8,
             "maxRank": 1,
             "stats": {
                 "manaRegen": 10
@@ -2112,7 +2082,7 @@ window.adventureSkillTree = {
                 "baseManaRegen"
             ],
             "requiresMode": "all",
-            "column": 6,
+            "column": 3,
             "row": -7,
             "maxRank": 1,
             "stats": {
@@ -2131,11 +2101,12 @@ window.adventureSkillTree = {
             "icon": "✦",
             "effect": "+25% maximum mana",
             "requires": [
-                "baseMana1"
+                "maxManaRegen",
+                "multiManaRegen"
             ],
             "requiresMode": "all",
-            "column": 4,
-            "row": -7,
+            "column": 2,
+            "row": -8,
             "maxRank": 1,
             "stats": {
                 "manaMultiplier": 1.25
@@ -2156,8 +2127,8 @@ window.adventureSkillTree = {
                 "baseManaRegen"
             ],
             "requiresMode": "all",
-            "column": 5,
-            "row": -8,
+            "column": 3,
+            "row": -9,
             "maxRank": 1,
             "stats": {
                 "manaRegenPercent": 0.05
@@ -2170,19 +2141,204 @@ window.adventureSkillTree = {
             "type": "mana"
         },
         {
-            "id": "spellAmplification",
-            "name": "Spell Amplification",
-            "icon": "✦",
-            "effect": "+100% spell damage",
+            "id": "healthNode9",
+            "name": "Health",
+            "icon": "♥",
+            "effect": "+10% maximum health",
+            "type": "health",
+            "stats": {
+                "healthMultiplier": 1.1
+            },
+            "size": 1,
+            "column": 15,
+            "row": 3,
+            "maxRank": 1,
             "requires": [
-                "multiSpellDamage1"
+                "bigAttackSpeed_1"
             ],
             "requiresMode": "all",
-            "column": 7,
-            "row": -5,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "attackSpeedNode10",
+            "name": "Attack Speed Path Node",
+            "icon": "⚡",
+            "effect": "+30% attack speed",
+            "type": "attackSpeed",
+            "stats": {
+                "attackSpeedMultiplier": 1.3
+            },
+            "maxRank": 1,
+            "start": false,
+            "requires": [
+                "attackSpeedNode2",
+                "untouchable6"
+            ],
+            "requiresMode": "all",
+            "customDescription": false,
+            "column": 9,
+            "row": -2,
+            "sprite": "",
+            "size": 1,
+            "abilityTargeting": null
+        },
+        {
+            "id": "voidVortex",
+            "name": "Void Vortex",
+            "icon": "◉",
+            "effect": "On attack: deal 75% spell damage to your target's row.\nGain 2 Void Charges per target hit. Costs 20 mana per cast.",
+            "requires": [
+                "expandedReserves4"
+            ],
+            "requiresMode": "all",
+            "column": 10,
+            "row": -12,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1.5,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "abilityTargeting": "aoe",
+            "type": "mana"
+        },
+        {
+            "id": "echoingVoid",
+            "name": "Echoing Void",
+            "icon": "◎",
+            "effect": "Void Vortex has a 33% chance to trigger twice.\nThe second trigger costs no mana and generates Void Charges on hit.",
+            "requires": [
+                "voidVortex"
+            ],
+            "requiresMode": "all",
+            "column": 11,
+            "row": -12,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1.25,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "abilityTargeting": null,
+            "type": "mana"
+        },
+        {
+            "id": "rimeBrand",
+            "name": "Rime Brand",
+            "icon": "❄",
+            "effect": "On attack: brand an enemy with cold, dealing 100% spell damage per second for 10 seconds.\nDoes not stack. Targets another enemy if already branded. Costs 5 mana.",
+            "requires": [
+                "expandedReserves2"
+            ],
+            "requiresMode": "all",
+            "column": 12,
+            "row": -8,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1.5,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "abilityTargeting": "singleTarget",
+            "type": "mana"
+        },
+        {
+            "id": "glacialRupture",
+            "name": "Glacial Rupture",
+            "icon": "✧",
+            "effect": "Rime Brand adds 1 Rime stack per tick. At 10 stacks, consume them and explode.\nDeal 500% spell damage to adjacent enemies and apply Frozen for 9 seconds (+3s attack interval).",
+            "requires": [
+                "rimeBrand"
+            ],
+            "requiresMode": "all",
+            "column": 13,
+            "row": -8,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1.25,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "abilityTargeting": "aoe",
+            "type": "mana"
+        },
+        {
+            "id": "gatheringPower",
+            "name": "Gathering Power",
+            "icon": "✦",
+            "effect": "In combat, gain 1 stack each second: +2% damage per stack, up to 50 stacks (+100%, double damage).\nAll stacks expire after 1 second out of combat, on death, or when changing maps.",
+            "requires": [
+                "multMana1"
+            ],
+            "requiresMode": "all",
+            "column": 2,
+            "row": -10,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1.5,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "abilityTargeting": null,
+            "type": "mana"
+        },
+        {
+            "id": "emberBrand",
+            "name": "Ember Brand",
+            "icon": "♨",
+            "effect": "On attack: brand an enemy with fire, dealing 100% spell damage per second for 10 seconds.\nDoes not stack. Targets another enemy if already branded. Costs 5 mana.",
+            "requires": [
+                "expandedReserves2"
+            ],
+            "requiresMode": "all",
+            "column": 11,
+            "row": -7,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1.5,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "abilityTargeting": "singleTarget",
+            "type": "mana"
+        },
+        {
+            "id": "cinderRupture",
+            "name": "Cinder Rupture",
+            "icon": "✹",
+            "effect": "Ember Brand adds 1 Cinder stack per tick. At 10 stacks, consume them and explode.\nDeal 500% spell damage to adjacent enemies and apply Scorched: +20% fire ability damage taken until death; does not stack.",
+            "requires": [
+                "emberBrand"
+            ],
+            "requiresMode": "all",
+            "column": 12,
+            "row": -6,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1.25,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "abilityTargeting": "aoe",
+            "type": "mana"
+        },
+        {
+            "id": "expandedReserves",
+            "name": "Expanded Reserves",
+            "icon": "✦",
+            "effect": "+25 maximum mana",
+            "requires": [
+                "baseMana1"
+            ],
+            "requiresMode": "all",
+            "column": 8,
+            "row": -8,
             "maxRank": 1,
             "stats": {
-                "spellDamageMultiplier": 2
+                "mana": 25
             },
             "size": 1,
             "start": false,
@@ -2192,19 +2348,86 @@ window.adventureSkillTree = {
             "type": "mana"
         },
         {
-            "id": "arcanePower",
-            "name": "Arcane Power",
-            "icon": "✦",
-            "effect": "+50 spell damage",
+            "id": "untouchable3",
+            "name": "Untouchable",
+            "icon": "◈",
+            "effect": "+10% maximum health\n+25% evasion",
             "requires": [
-                "baseSpellDamage1"
+                "expandedReserves"
             ],
+            "column": 8,
+            "row": -6,
+            "maxRank": 1,
+            "stats": {
+                "evasionMultiplier": 1.25,
+                "healthMultiplier": 1.1
+            },
+            "size": 1,
+            "start": false,
             "requiresMode": "all",
-            "column": 6,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "untouchable4",
+            "name": "Untouchable",
+            "icon": "◈",
+            "effect": "+10% maximum health\n+25% evasion",
+            "requires": [
+                "untouchable3"
+            ],
+            "column": 9,
             "row": -5,
             "maxRank": 1,
             "stats": {
-                "spellDamage": 50
+                "evasionMultiplier": 1.25,
+                "healthMultiplier": 1.1
+            },
+            "size": 1,
+            "start": false,
+            "requiresMode": "all",
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "untouchable5",
+            "name": "Untouchable",
+            "icon": "◈",
+            "effect": "+10% maximum health\n+25% evasion",
+            "requires": [
+                "untouchable3",
+                "accuracyNode16"
+            ],
+            "column": 7,
+            "row": -5,
+            "maxRank": 1,
+            "stats": {
+                "evasionMultiplier": 1.25,
+                "healthMultiplier": 1.1
+            },
+            "size": 1,
+            "start": false,
+            "requiresMode": "all",
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "expandedReserves2",
+            "name": "Expanded Reserves",
+            "icon": "✦",
+            "effect": "+25 maximum mana",
+            "requires": [
+                "expandedReserves"
+            ],
+            "requiresMode": "all",
+            "column": 10,
+            "row": -8,
+            "maxRank": 1,
+            "stats": {
+                "mana": 25
             },
             "size": 1,
             "start": false,
@@ -2212,6 +2435,255 @@ window.adventureSkillTree = {
             "sprite": "",
             "abilityTargeting": null,
             "type": "mana"
+        },
+        {
+            "id": "untouchable6",
+            "name": "Untouchable",
+            "icon": "◈",
+            "effect": "+10% maximum health\n+25% evasion",
+            "requires": [
+                "untouchable4",
+                "untouchable5"
+            ],
+            "column": 8,
+            "row": -4,
+            "maxRank": 1,
+            "stats": {
+                "evasionMultiplier": 1.25,
+                "healthMultiplier": 1.1
+            },
+            "size": 1,
+            "start": false,
+            "requiresMode": "all",
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "health",
+            "name": "Health",
+            "icon": "♥",
+            "effect": "+5% maximum health",
+            "type": "health",
+            "stats": {
+                "healthMultiplier": 1.05
+            },
+            "size": 1,
+            "column": 0,
+            "row": -2,
+            "maxRank": 1,
+            "requires": [
+                "damageNode7"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "accuracy",
+            "name": "Accuracy",
+            "icon": "◎",
+            "effect": "+20 accuracy",
+            "type": "accuracy",
+            "stats": {
+                "accuracy": 20
+            },
+            "size": 1,
+            "column": 2,
+            "row": -5,
+            "maxRank": 1,
+            "requires": [
+                "accuracyNode14",
+                "accuracy3"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "accuracy2",
+            "name": "Accuracy",
+            "icon": "◎",
+            "effect": "+25% spell damage\n+30% accuracy",
+            "type": "accuracy",
+            "stats": {
+                "spellDamageMultiplier": 1.25,
+                "accuracyMultiplier": 1.3
+            },
+            "size": 1,
+            "column": 2,
+            "row": -3,
+            "maxRank": 1,
+            "requires": [
+                "accuracyNode14",
+                "accuracy4"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "accuracy3",
+            "name": "Accuracy",
+            "icon": "◎",
+            "effect": "+25% physical damage\n+30% accuracy",
+            "type": "accuracy",
+            "stats": {
+                "accuracyMultiplier": 1.3,
+                "damageMultiplier": 1.25
+            },
+            "size": 1,
+            "column": 3,
+            "row": -5,
+            "maxRank": 1,
+            "requires": [
+                "accuracyNode16"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "accuracy4",
+            "name": "Accuracy",
+            "icon": "◎",
+            "effect": "+20 accuracy",
+            "type": "accuracy",
+            "stats": {
+                "accuracy": 20
+            },
+            "size": 1,
+            "column": 3,
+            "row": -3,
+            "maxRank": 1,
+            "requires": [
+                "accuracyNode16"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "untouchable7",
+            "name": "Untouchable",
+            "icon": "◈",
+            "effect": "+10% maximum health\n+25% evasion",
+            "requires": [
+                "bleed",
+                "healthNode8"
+            ],
+            "column": -11,
+            "row": -2,
+            "maxRank": 1,
+            "stats": {
+                "evasionMultiplier": 1.25,
+                "healthMultiplier": 1.1
+            },
+            "size": 1,
+            "start": false,
+            "requiresMode": "all",
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null
+        },
+        {
+            "id": "expandedReserves3",
+            "name": "Expanded Reserves+",
+            "icon": "✦",
+            "effect": "+25 maximum mana\n+10 spell damage",
+            "requires": [
+                "voidBolt"
+            ],
+            "requiresMode": "all",
+            "column": 7,
+            "row": -11,
+            "maxRank": 1,
+            "stats": {
+                "mana": 25,
+                "spellDamage": 10
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null,
+            "type": "mana"
+        },
+        {
+            "id": "expandedReserves4",
+            "name": "Expanded Reserves+",
+            "icon": "✦",
+            "effect": "+25 maximum mana\n+10 spell damage",
+            "requires": [
+                "voidBolt"
+            ],
+            "requiresMode": "all",
+            "column": 9,
+            "row": -11,
+            "maxRank": 1,
+            "stats": {
+                "mana": 25,
+                "spellDamage": 10
+            },
+            "size": 1,
+            "start": false,
+            "customDescription": false,
+            "sprite": "",
+            "abilityTargeting": null,
+            "type": "mana"
+        },
+        {
+            "id": "healthRegeneration2",
+            "name": "Health Regeneration",
+            "icon": "♥",
+            "effect": "+10 flat health regeneration per second",
+            "type": "health",
+            "stats": {
+                "healthRegen": 10
+            },
+            "size": 1,
+            "column": 2,
+            "row": 10,
+            "maxRank": 1,
+            "requires": [
+                "evasiveVitality"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "customDescription": false,
+            "sprite": ""
+        },
+        {
+            "id": "health2",
+            "name": "Health",
+            "icon": "♥",
+            "effect": "+50 maximum health",
+            "type": "health",
+            "stats": {
+                "health": 50
+            },
+            "column": 2,
+            "row": 11,
+            "requires": [
+                "healthRegeneration2"
+            ],
+            "requiresMode": "all",
+            "start": false,
+            "maxRank": 1,
+            "customDescription": false,
+            "sprite": "",
+            "size": 1.25,
+            "abilityTargeting": null
         }
     ],
     "statSchemaVersion": 2,
@@ -2252,6 +2724,46 @@ window.adventureSkillTree = {
         {
             "id": "skillNode5",
             "name": "New Skill",
+            "reason": "Removed in skill tree editor"
+        },
+        {
+            "id": "skillNode11",
+            "name": "New Skill",
+            "reason": "Removed in skill tree editor"
+        },
+        {
+            "id": "damageBoost",
+            "name": "EVEN MORE SUPER SPEED",
+            "reason": "Removed in skill tree editor"
+        },
+        {
+            "id": "spellAmplification",
+            "name": "Spell Amplification",
+            "reason": "Removed in skill tree editor"
+        },
+        {
+            "id": "arcanePower",
+            "name": "Arcane Power",
+            "reason": "Removed in skill tree editor"
+        },
+        {
+            "id": "accuracyNode13",
+            "name": "Accuracy",
+            "reason": "Removed in skill tree editor"
+        },
+        {
+            "id": "healthRegeneration",
+            "name": "Health Regeneration",
+            "reason": "Removed in skill tree editor"
+        },
+        {
+            "id": "skillNode12",
+            "name": "New Skill",
+            "reason": "Removed in skill tree editor"
+        },
+        {
+            "id": "spellAmplification2",
+            "name": "Spell Amplification",
             "reason": "Removed in skill tree editor"
         }
     ],

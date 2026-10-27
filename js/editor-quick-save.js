@@ -63,10 +63,16 @@
                 config.status(imageCheck.missing.length ? 'Quick save needs the new images in the project first. Download and extract the game package, then return here.' : 'Checking the project images. Try Quick save again when the check finishes.');
                 refresh(undefined, true); return;
             }
-            const source = config.getSource(), images = paths(); busy = true; updateAvailability();
+            busy = true; updateAvailability();
             try {
                 // Keep file-picker/permission requests inside the initiating user gesture.
                 const target = await saver.prepare();
+                if (config.reconcileProject && target) {
+                    config.reconcileProject(await (await target.getFile()).text());
+                    refresh();
+                    if (errors.length) { config.status('Fix the validation issues before quick-saving.'); return; }
+                }
+                const source = config.getSource(), images = paths();
                 const available = await Promise.all(images.map(path => imageAvailable(path, true)));
                 const missing = images.filter((path, index) => !available[index]);
                 if (missing.length) {
@@ -87,7 +93,11 @@
         changeFile.addEventListener('click', async () => {
             if (busy || !saver.supported()) return;
             busy = true; updateAvailability();
-            try { await saver.choose(); config.status('Quick-save file selected. Click Quick save to write your current changes.'); }
+            try {
+                await saver.choose();
+                if (config.reconcileProject) config.reconcileProject(await saver.readSource() || '');
+                config.status('Quick-save file selected. Click Quick save to write your current changes.');
+            }
             catch (error) { config.status(error.name === 'AbortError' ? 'File selection cancelled.' : 'Could not choose quick-save file: ' + error.message); }
             finally { busy = false; updateAvailability(); }
         });
@@ -98,9 +108,16 @@
         });
         // Recheck even unfinished inspector edits that have not entered the data model.
         ['input', 'change'].forEach(type => document.addEventListener(type, () => refresh()));
-        window.addEventListener('focus', () => refresh(undefined, true));
-        document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(undefined, true); });
-        saver.ready.then(() => { fileReady = true; updateAvailability(); });
+        async function checkProject() {
+            if (!config.reconcileProject || busy) return;
+            try {
+                const source = await saver.readSource();
+                if (source !== null && !busy) config.reconcileProject(source);
+            } catch (error) { config.status('Could not check project updates: ' + error.message); }
+        }
+        window.addEventListener('focus', () => { refresh(undefined, true); checkProject(); });
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) { refresh(undefined, true); checkProject(); } });
+        saver.ready.then(() => { fileReady = true; updateAvailability(); checkProject(); });
         refresh();
         return {refresh, save};
     }

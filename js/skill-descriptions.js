@@ -1,11 +1,12 @@
 (function () {
     'use strict';
     const uniqueEffects = new Set(['shockwaveSlash', 'poisonExecute', 'bloomingFlower',
-        'piercingArrow', 'forkingArrow', 'multiShot', 'freezingArrows', 'volcanicEruption', 'eruptionChain', 'shieldGenerator', 'shieldSlam', 'overflowingSlam', 'resonantGuard', 'righteousFire', 'fireOfTheRighteous', 'bleed', 'singledOff', 'deepWounds', 'bleederer','voidBolt','voidVolley']);
+        'piercingArrow', 'forkingArrow', 'multiShot', 'freezingArrows', 'volcanicEruption', 'eruptionChain', 'shieldGenerator', 'shieldSlam', 'overflowingSlam', 'resonantGuard', 'righteousFire', 'fireOfTheRighteous', 'bleed', 'singledOff', 'deepWounds', 'bleederer','voidBolt','voidVolley','voidVortex']);
     const abilityTargetingDefaults = Object.freeze({
         shockwaveSlash:'aoe', piercingArrow:'aoe', forkingArrow:'aoe', multiShot:'singleTarget',
         volcanicEruption:'aoe', shieldSlam:'singleTarget', overflowingSlam:'aoe',
-        righteousFire:'aoe', fireOfTheRighteous:'aoe',voidBolt:'singleTarget',voidVolley:'aoe'
+        righteousFire:'aoe', fireOfTheRighteous:'aoe',voidBolt:'singleTarget',voidVolley:'aoe',voidVortex:'aoe',
+        rimeBrand:'singleTarget',emberBrand:'singleTarget',glacialRupture:'aoe',cinderRupture:'aoe'
     });
 
     function getAbilityTargeting(node) {
@@ -31,7 +32,7 @@
         ['maxFury', 'maximum fury', 'flat'], ['maxFuryMultiplier', 'maximum fury', 'multiplier'],
         ['maxShields', 'maximum shields', 'flat'], ['maxShieldsMultiplier', 'maximum shields', 'multiplier'],
         ['eruptionChains', 'maximum eruption chains', 'flat'],
-        ['damage', 'damage', 'flat'], ['damageMultiplier', 'damage', 'multiplier'],
+        ['damage', 'physical damage', 'flat'], ['damageMultiplier', 'physical damage', 'multiplier'],
         ['accuracy', 'accuracy', 'flat'], ['accuracyMultiplier', 'accuracy', 'multiplier'],
         ['evasion', 'evasion', 'flat'], ['evasionMultiplier', 'evasion', 'multiplier'],
         ['multiHit', 'multi-hit', 'flat'], ['multiHitMultiplier', 'multi-hit', 'multiplier'],

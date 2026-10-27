@@ -4,6 +4,10 @@
     const clone = WorldContent.clone;
     const draftKey = 'idleAdventureWorldEditorDraft';
     const viewKey = 'idleAdventureWorldEditorView';
+    const projectTextKey='idleAdventureWorldEditorProjectText';
+    const projectContent=clone(window.adventureWorld);
+    let projectText=null;
+    try {projectText=JSON.parse(localStorage.getItem(projectTextKey)||'null');}catch { /* Older drafts have no project text baseline. */ }
     let data = clone(window.adventureWorld);
     let selection = {kind: 'maps', id: data.maps[0].id};
     let history = [], snapshot, snapshotSelection;
@@ -45,7 +49,7 @@
             history.push({data: snapshot, selection: snapshotSelection});
             if (history.length > 100) history.shift();
             snapshot = next; snapshotSelection = {...selection};
-            try { localStorage.setItem(draftKey, next); status(message || 'Draft saved in this browser. Quick save to test changes, or use the game package for new images.'); }
+            try { localStorage.setItem(draftKey, next);localStorage.setItem(projectTextKey,JSON.stringify(projectText)); status(message || 'Draft saved in this browser. Quick save to test changes, or use the game package for new images.'); }
             catch { status('Browser storage is full or unavailable. Export JSON and the game package to keep your work.'); }
         }
         $('undo').disabled = !history.length; $('restoreDraft').disabled = !hasDraft();
@@ -445,12 +449,15 @@
         } catch (error) { status('Could not export package: ' + error.message); }
         finally { renderValidation(); }
     });
+    let mergedProjectText=0;
     try {
         const draft = localStorage.getItem(draftKey);
         if (draft) {
             const restored = JSON.parse(draft);
             if (!editableDraft(restored)) throw new Error('Invalid draft structure.');
-            data = restored; status('Resumed your local world-editor draft. Quick save or apply the game package to test changes.');
+            data = restored;
+            mergedProjectText=WorldEditorSync.mergeMapText(data,projectContent,projectText).length;
+            status(mergedProjectText?'Resumed your draft and updated '+mergedProjectText+' map names/descriptions from the project. Other edits are preserved.':'Resumed your local world-editor draft. Quick save or apply the game package to test changes.');
         }
         const view = JSON.parse(localStorage.getItem(viewKey) || 'null');
         if (view && Object.hasOwn(labels, view.selection?.kind) && data[view.selection.kind].some(entry => entry.id === view.selection.id)) selection = view.selection;
@@ -463,12 +470,29 @@
     }
     if (!current()) selection = {kind: 'maps', id: data.maps[0].id};
     snapshot = JSON.stringify(data); snapshotSelection = {...selection};
+    projectText=WorldEditorSync.snapshot(projectContent);
+    try {
+        if(mergedProjectText)localStorage.setItem(draftKey,snapshot);
+        localStorage.setItem(projectTextKey,JSON.stringify(projectText));
+    }catch{status('Map text updated in this tab. Export JSON to keep it; browser storage is unavailable.');}
     $('restoreDraft').disabled = !hasDraft(); window.addEventListener('pagehide', saveView);
     quickSave = EditorQuickSave.create({
         key: 'world-content', filename: 'world-content.js',
         getPaths: () => allPaths().filter(WorldContent.safePath),
         getSource: () => 'window.adventureWorld = ' + JSON.stringify(data, null, 4) + ';\n',
         validate: () => WorldContent.validate(data, items), status,
+        reconcileProject: source=>{
+            const incoming=WorldEditorSync.parse(source);if(!incoming)return;
+            const changes=WorldEditorSync.mergeMapText(data,incoming,projectText);
+            projectText=WorldEditorSync.snapshot(incoming);
+            if(changes.length) {
+                for(const change of changes)if(selection.kind==='maps'&&selection.id===change.id) {
+                    const input=$(change.field==='name'?'entryName':'mapDescription');if(input)input.value=change.value;
+                }
+                commit('Updated '+changes.length+' map names/descriptions from the project. Other draft edits are preserved.');
+            }
+            try{localStorage.setItem(projectTextKey,JSON.stringify(projectText));}catch{ /* The current draft remains available in this tab. */ }
+        },
         download: (name, source) => download(name, new Blob([source], {type: 'text/javascript'}))
     });
     render(); restoreImages();

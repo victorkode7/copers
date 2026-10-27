@@ -48,8 +48,20 @@ window.adventureWorld = {
             "id": "tideglassCoast",
             "name": "Tideglass Coast",
             "mapIds": [
+                "brineAndPunishment",
+                "map_caec6733a002dbb1accf5fcb",
                 "salmen",
-                "brineAndPunishment"
+                "map_894ee94452fb5d427e5195ed",
+                "map_448b17234c96c80e0d4a8353",
+                "map_77ee4660a39fc4b8ce909c90",
+                "map_abcce1e4a9202de23ec2f319",
+                "map_7a96613a038175e1696bcb2b",
+                "map_4546b788610e0a73125a6ae3",
+                "map_c32d5eea6bd1eba2f96f3b67",
+                "map_f642a2500ad8cc2f48fc4d1c",
+                "map_65c14787bef2c5f65534e6e0",
+                "map_cba27111ebfbde089baa4414",
+                "map_77621366a9d7163e058a942d"
             ],
             "background": {
                 "sprite": "assets/backgrounds/water-7f1f6cde.png",
@@ -220,10 +232,10 @@ window.adventureWorld = {
             "description": "A bright shoreline patrolled by salmon-folk and rich with hidden pearls.",
             "goal": 7000,
             "background": {
-                "sprite": "assets/backgrounds/water_1-be737152.png",
+                "sprite": "assets/backgrounds/water_3-4872d695.png",
                 "color": "#172632",
                 "fit": "cover",
-                "dim": 0.55,
+                "dim": 0.12,
                 "tileSize": 256
             },
             "drops": [],
@@ -302,8 +314,8 @@ window.adventureWorld = {
         },
         {
             "id": "map_048c8ea9df2da62fe1bd3073",
-            "name": "1",
-            "description": "",
+            "name": "Shiverfin Shore",
+            "description": "A frozen shoreline where the sharks are too shy to say hello. They settle for biting you instead.",
             "goal": 300,
             "background": {
                 "sprite": "assets/backgrounds/ice1-e5dfc877.png",
@@ -325,8 +337,8 @@ window.adventureWorld = {
         },
         {
             "id": "map_f68402eddd52365a5ddd71d0",
-            "name": "2",
-            "description": "",
+            "name": "Shellshock Lagoon",
+            "description": "A peaceful glacial lagoon. The turtles have fitted themselves with siege armour, just in case you try relaxing.",
             "goal": 500,
             "background": {
                 "sprite": "assets/backgrounds/ice2-4e6817e5.png",
@@ -348,8 +360,8 @@ window.adventureWorld = {
         },
         {
             "id": "map_05b027e04704b6f33d4da8ee",
-            "name": "3",
-            "description": "",
+            "name": "Frostbite Foothills",
+            "description": "Lovely mountain views. Unfortunately, somebody gave the snowmen claws and left them unsupervised.",
             "goal": 800,
             "background": {
                 "sprite": "assets/backgrounds/ice3-cb7470c1.png",
@@ -371,8 +383,8 @@ window.adventureWorld = {
         },
         {
             "id": "map_d36b331dd838d14d34bb0365",
-            "name": "4",
-            "description": "",
+            "name": "Waddlewatch Grotto",
+            "description": "The grotto has a strict dress code: black tie, white belly, and absolutely no visitors.",
             "goal": 1200,
             "background": {
                 "sprite": "assets/backgrounds/ice4-ff191571.png",
@@ -394,8 +406,8 @@ window.adventureWorld = {
         },
         {
             "id": "map_63d7d9b7d7889514e0171a58",
-            "name": "5",
-            "description": "",
+            "name": "The Icebox",
+            "description": "A walk-in freezer where the ice cubes come with complimentary skeletons. Please do not put these in your drink.",
             "goal": 1800,
             "background": {
                 "sprite": "assets/backgrounds/ice5-d3a68e93.png",
@@ -417,8 +429,8 @@ window.adventureWorld = {
         },
         {
             "id": "map_d2d78cfa833108d1f3031f26",
-            "name": "6",
-            "description": "",
+            "name": "Bearly Lit Caverns",
+            "description": "The skylights are beautiful. The bears decorate with skulls. This is probably not the cave tour you booked.",
             "goal": 2500,
             "background": {
                 "sprite": "assets/backgrounds/ice6-a5ce48ae.png",
@@ -440,8 +452,8 @@ window.adventureWorld = {
         },
         {
             "id": "map_4c4be6ec759af00dc8f2ab5f",
-            "name": "7",
-            "description": "",
+            "name": "Guano Gorge",
+            "description": "The bats are Neapolitan ice cream. The gorge is bottomless. The health inspector is still missing.",
             "goal": 4500,
             "background": {
                 "sprite": "assets/backgrounds/ice7-8888abbc.png",
@@ -463,8 +475,8 @@ window.adventureWorld = {
         },
         {
             "id": "map_677bad2999da2215a99e5ef9",
-            "name": "8",
-            "description": "",
+            "name": "Flurry Tribunal",
+            "description": "Every snowflake in this crystal hall insists it is special. They have formed a committee to make that your problem.",
             "goal": 5000,
             "background": {
                 "sprite": "assets/backgrounds/ice8-8ad248e0.png",
@@ -486,8 +498,8 @@ window.adventureWorld = {
         },
         {
             "id": "map_251364409b26827581f151b0",
-            "name": "9",
-            "description": "",
+            "name": "Cold Stare Gallery",
+            "description": "A glittering gallery of ice and floating eyeballs. Admire the crystals, but remember: the crystals are admiring you back.",
             "goal": 12000,
             "background": {
                 "sprite": "assets/backgrounds/ice9-6473629d.png",
@@ -509,8 +521,8 @@ window.adventureWorld = {
         },
         {
             "id": "map_ec2f730a5baeceee738b2f15",
-            "name": "10",
-            "description": "",
+            "name": "Kevin's Cold Storage",
+            "description": "Beyond the crystal spires waits Kevin, Lord of Eternal Winter. He is furious you touched the thermostat.",
             "goal": 1,
             "background": {
                 "sprite": "assets/backgrounds/ice10-01e88d4d.png",
@@ -525,6 +537,270 @@ window.adventureWorld = {
                 {
                     "id": "spawn_3fdc0876e947f24592e13104",
                     "monsterId": "monster_f53770c6f3cb487158c3604f",
+                    "count": 1,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_caec6733a002dbb1accf5fcb",
+            "name": "New Map",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/water_2-316fc4e4.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.3,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_4f214bb96ce598662ffd103d",
+                    "monsterId": "greenfieldsMonster",
+                    "count": 1,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_894ee94452fb5d427e5195ed",
+            "name": "New Map",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/water_4-06bba5c2.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.55,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_fc4d468f58516e6872c732c0",
+                    "monsterId": "greenfieldsMonster",
+                    "count": 1,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_448b17234c96c80e0d4a8353",
+            "name": "New Map",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/water_5-fbf0d76f.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.55,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_796515699e8ba35e731d8b69",
+                    "monsterId": "greenfieldsMonster",
+                    "count": 1,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_77ee4660a39fc4b8ce909c90",
+            "name": "New Map",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/water_6-05e21b3b.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0.55,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_3d22e084a6ab4f222f0fd0ed",
+                    "monsterId": "greenfieldsMonster",
+                    "count": 1,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_abcce1e4a9202de23ec2f319",
+            "name": "New Map",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/water_7-547af170.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_c9a6caae19c5e8f910bd175a",
+                    "monsterId": "greenfieldsMonster",
+                    "count": 1,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_7a96613a038175e1696bcb2b",
+            "name": "New Map",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/water_8-cb5a742c.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_dc3d55d06e477aa5c13c0a03",
+                    "monsterId": "greenfieldsMonster",
+                    "count": 1,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_4546b788610e0a73125a6ae3",
+            "name": "New Map",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/water_9-4d008aca.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_021307438566142959e47e51",
+                    "monsterId": "greenfieldsMonster",
+                    "count": 1,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_c32d5eea6bd1eba2f96f3b67",
+            "name": "New Map",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/water_10-ede3eaf8.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_1ff5d9867a1d97c33c887f43",
+                    "monsterId": "greenfieldsMonster",
+                    "count": 1,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_f642a2500ad8cc2f48fc4d1c",
+            "name": "New Map",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/water_11-26a8f64a.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_197b011d377360f007f6086e",
+                    "monsterId": "greenfieldsMonster",
+                    "count": 1,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_65c14787bef2c5f65534e6e0",
+            "name": "New Map",
+            "description": "",
+            "goal": 10,
+            "background": {
+                "sprite": "assets/backgrounds/water_12-7679da78.png",
+                "color": "#172632",
+                "fit": "cover",
+                "dim": 0,
+                "tileSize": 256
+            },
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_967391b8fb9639ac2e01ad7b",
+                    "monsterId": "greenfieldsMonster",
+                    "count": 1,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_cba27111ebfbde089baa4414",
+            "name": "New Map",
+            "description": "",
+            "goal": 10,
+            "background": null,
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_818197d3894e73a654dc742e",
+                    "monsterId": "greenfieldsMonster",
+                    "count": 1,
+                    "overrides": {}
+                }
+            ]
+        },
+        {
+            "id": "map_77621366a9d7163e058a942d",
+            "name": "New Map",
+            "description": "",
+            "goal": 10,
+            "background": null,
+            "drops": [],
+            "itemDrops": [],
+            "spawns": [
+                {
+                    "id": "spawn_9f5871f7637c1d5808ad163b",
+                    "monsterId": "greenfieldsMonster",
                     "count": 1,
                     "overrides": {}
                 }
@@ -680,7 +956,6 @@ window.adventureWorld = {
         {
             "id": "cinderPaddockMonster",
             "name": "Cindersnake",
-            "element": "fire",
             "sprite": "assets/monsters/lavasnake_96px-a53213be.png",
             "health": 110,
             "respawnSeconds": 5,
@@ -1287,6 +1562,61 @@ window.adventureWorld = {
             "name": "iceboss3",
             "path": "assets/monsters/iceboss3-b95fcecc.png",
             "kind": "monster"
+        },
+        {
+            "name": "water_2",
+            "path": "assets/backgrounds/water_2-316fc4e4.png",
+            "kind": "background"
+        },
+        {
+            "name": "water_3",
+            "path": "assets/backgrounds/water_3-4872d695.png",
+            "kind": "background"
+        },
+        {
+            "name": "water_4",
+            "path": "assets/backgrounds/water_4-06bba5c2.png",
+            "kind": "background"
+        },
+        {
+            "name": "water_5",
+            "path": "assets/backgrounds/water_5-fbf0d76f.png",
+            "kind": "background"
+        },
+        {
+            "name": "water_6",
+            "path": "assets/backgrounds/water_6-05e21b3b.png",
+            "kind": "background"
+        },
+        {
+            "name": "water_7",
+            "path": "assets/backgrounds/water_7-547af170.png",
+            "kind": "background"
+        },
+        {
+            "name": "water_8",
+            "path": "assets/backgrounds/water_8-cb5a742c.png",
+            "kind": "background"
+        },
+        {
+            "name": "water_9",
+            "path": "assets/backgrounds/water_9-4d008aca.png",
+            "kind": "background"
+        },
+        {
+            "name": "water_10",
+            "path": "assets/backgrounds/water_10-ede3eaf8.png",
+            "kind": "background"
+        },
+        {
+            "name": "water_11",
+            "path": "assets/backgrounds/water_11-26a8f64a.png",
+            "kind": "background"
+        },
+        {
+            "name": "water_12",
+            "path": "assets/backgrounds/water_12-7679da78.png",
+            "kind": "background"
         }
     ]
 };
