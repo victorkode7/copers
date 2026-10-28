@@ -34,6 +34,17 @@
         edit(search, ''); edit(category, '', 'change');
         check('clearing filters restores all categories and adding', !add.disabled && rows.querySelectorAll('optgroup').length > 2);
         check('physical damage is explicit in bonus choices', [...rows.querySelector('select').options].some(option => option.value === 'damage' && option.textContent === 'Physical damage'));
+        edit(category, 'Physical damage', 'change'); edit(search, 'bow');
+        add.click();
+        const bowRow = [...rows.children].find(row => row.querySelector('select')?.value === 'bowDamageIncrease');
+        check('bow damage is searchable in the physical damage category', Boolean(bowRow));
+        edit(bowRow.querySelector('input'), '.25', skill ? 'input' : 'change'); await settle();
+        const bowDraft = JSON.parse(localStorage.getItem(storageKey));
+        const bowStats = skill ? bowDraft.tree.nodes.find(node => node.id === $('nodeId').value).stats : bowDraft.items.find(item => item.id === $('itemId').value).stats;
+        check('bow damage saves as an additive percentage', bowStats.bowDamageIncrease === .25);
+        if (!skill) check('bow damage has a value guide explaining its scope and input',
+            ItemStatGuides.get('bowDamageIncrease').input.includes('0.5 for +50%') &&
+            ItemStatGuides.get('bowDamageIncrease').affects.includes('Multishot'));
         check('no runtime errors', !window.smokeErrors?.length);
         checks.push('SMOKE PASSED');
     } catch (error) { checks.push('ERROR ' + error.stack); }

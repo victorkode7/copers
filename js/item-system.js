@@ -8,6 +8,7 @@
         stats[id + 'Multiplier'] = { label: label + ' multiplier', mode: 'multiply', default: 1, min: 0.000001, display: {label: displayLabel, type: 'percentBonus'} };
     }
     Object.assign(stats, {
+        bowDamageIncrease: {label:'Increased damage with bow attacks (%)',mode:'add',default:0,display:{label:'Increased damage with bow attacks',type:'percent'}},
         mana: {label:'Maximum mana',mode:'add',default:0,display:{label:'Maximum mana',type:'flat'}},
         manaMultiplier: {label:'Maximum mana multiplier',mode:'multiply',default:1,min:0.000001,display:{label:'Maximum mana',type:'percentBonus'}},
         spellDamage: {label:'Spell damage',mode:'add',default:0,display:{label:'Spell damage',type:'flat'}},
@@ -32,7 +33,7 @@
     const statOrder = [
         'mana','manaMultiplier','manaRegen','manaRegenIncrease','manaRegenPercent','spellDamage','spellDamageMultiplier',
         'health', 'healthMultiplier', 'healthRegen', 'healthRegenIncrease', 'healthRegenPercent', 'maxFury', 'maxFuryMultiplier', 'maxShields', 'maxShieldsMultiplier', 'damage', 'damageMultiplier',
-        'accuracy', 'accuracyMultiplier', 'evasion', 'evasionMultiplier',
+        'bowDamageIncrease', 'accuracy', 'accuracyMultiplier', 'evasion', 'evasionMultiplier',
         'multiHit', 'multiHitMultiplier', 'attackSpeedMultiplier',
         'poisonChance', 'poisonChanceMultiplier', 'poisonDamage', 'poisonDamageMultiplier',
         'poisonTickRate', 'poisonTickRateMultiplier', 'bleedChance', 'bleedChanceMultiplier',

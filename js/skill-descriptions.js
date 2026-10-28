@@ -33,6 +33,7 @@
         ['maxShields', 'maximum shields', 'flat'], ['maxShieldsMultiplier', 'maximum shields', 'multiplier'],
         ['eruptionChains', 'maximum eruption chains', 'flat'],
         ['damage', 'physical damage', 'flat'], ['damageMultiplier', 'physical damage', 'multiplier'],
+        ['bowDamageIncrease', 'increased damage with bow attacks', 'percent'],
         ['accuracy', 'accuracy', 'flat'], ['accuracyMultiplier', 'accuracy', 'multiplier'],
         ['evasion', 'evasion', 'flat'], ['evasionMultiplier', 'evasion', 'multiplier'],
         ['multiHit', 'multi-hit', 'flat'], ['multiHitMultiplier', 'multi-hit', 'multiplier'],

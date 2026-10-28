@@ -59,9 +59,7 @@ window.adventureWorld = {
                 "map_4546b788610e0a73125a6ae3",
                 "map_c32d5eea6bd1eba2f96f3b67",
                 "map_f642a2500ad8cc2f48fc4d1c",
-                "map_65c14787bef2c5f65534e6e0",
-                "map_cba27111ebfbde089baa4414",
-                "map_77621366a9d7163e058a942d"
+                "map_65c14787bef2c5f65534e6e0"
             ],
             "background": {
                 "sprite": "assets/backgrounds/water-7f1f6cde.png",
@@ -261,7 +259,7 @@ window.adventureWorld = {
                 {
                     "id": "main",
                     "monsterId": "brineAndPunishmentMonster",
-                    "count": 1,
+                    "count": 5,
                     "overrides": {}
                 }
             ]
@@ -559,8 +557,8 @@ window.adventureWorld = {
             "spawns": [
                 {
                     "id": "spawn_4f214bb96ce598662ffd103d",
-                    "monsterId": "greenfieldsMonster",
-                    "count": 1,
+                    "monsterId": "monster_ce61788c41d59a12be8cadfe",
+                    "count": 8,
                     "overrides": {}
                 }
             ]
@@ -582,8 +580,8 @@ window.adventureWorld = {
             "spawns": [
                 {
                     "id": "spawn_fc4d468f58516e6872c732c0",
-                    "monsterId": "greenfieldsMonster",
-                    "count": 1,
+                    "monsterId": "monster_dc5ec2260b5f89ac89f5d057",
+                    "count": 8,
                     "overrides": {}
                 }
             ]
@@ -605,8 +603,8 @@ window.adventureWorld = {
             "spawns": [
                 {
                     "id": "spawn_796515699e8ba35e731d8b69",
-                    "monsterId": "greenfieldsMonster",
-                    "count": 1,
+                    "monsterId": "monster_0d685eef5d64116d04d76732",
+                    "count": 8,
                     "overrides": {}
                 }
             ]
@@ -628,8 +626,8 @@ window.adventureWorld = {
             "spawns": [
                 {
                     "id": "spawn_3d22e084a6ab4f222f0fd0ed",
-                    "monsterId": "greenfieldsMonster",
-                    "count": 1,
+                    "monsterId": "monster_fcf4106d791caad0e86c4fba",
+                    "count": 8,
                     "overrides": {}
                 }
             ]
@@ -650,9 +648,9 @@ window.adventureWorld = {
             "itemDrops": [],
             "spawns": [
                 {
-                    "id": "spawn_c9a6caae19c5e8f910bd175a",
-                    "monsterId": "greenfieldsMonster",
-                    "count": 1,
+                    "id": "spawn_f5f65cfd58c2bb2a481f8e79",
+                    "monsterId": "monster_6eeccd5b70e20c9a097349b1",
+                    "count": 8,
                     "overrides": {}
                 }
             ]
@@ -674,8 +672,8 @@ window.adventureWorld = {
             "spawns": [
                 {
                     "id": "spawn_dc3d55d06e477aa5c13c0a03",
-                    "monsterId": "greenfieldsMonster",
-                    "count": 1,
+                    "monsterId": "monster_77dc7966e574425307b3f066",
+                    "count": 8,
                     "overrides": {}
                 }
             ]
@@ -697,8 +695,8 @@ window.adventureWorld = {
             "spawns": [
                 {
                     "id": "spawn_021307438566142959e47e51",
-                    "monsterId": "greenfieldsMonster",
-                    "count": 1,
+                    "monsterId": "monster_0de8fd30513850c95aec32c2",
+                    "count": 8,
                     "overrides": {}
                 }
             ]
@@ -720,8 +718,8 @@ window.adventureWorld = {
             "spawns": [
                 {
                     "id": "spawn_1ff5d9867a1d97c33c887f43",
-                    "monsterId": "greenfieldsMonster",
-                    "count": 1,
+                    "monsterId": "monster_8dba55519814e09382e5a15b",
+                    "count": 8,
                     "overrides": {}
                 }
             ]
@@ -743,8 +741,8 @@ window.adventureWorld = {
             "spawns": [
                 {
                     "id": "spawn_197b011d377360f007f6086e",
-                    "monsterId": "greenfieldsMonster",
-                    "count": 1,
+                    "monsterId": "monster_0f7949eee198a5b35f06544e",
+                    "count": 5,
                     "overrides": {}
                 }
             ]
@@ -766,41 +764,7 @@ window.adventureWorld = {
             "spawns": [
                 {
                     "id": "spawn_967391b8fb9639ac2e01ad7b",
-                    "monsterId": "greenfieldsMonster",
-                    "count": 1,
-                    "overrides": {}
-                }
-            ]
-        },
-        {
-            "id": "map_cba27111ebfbde089baa4414",
-            "name": "New Map",
-            "description": "",
-            "goal": 10,
-            "background": null,
-            "drops": [],
-            "itemDrops": [],
-            "spawns": [
-                {
-                    "id": "spawn_818197d3894e73a654dc742e",
-                    "monsterId": "greenfieldsMonster",
-                    "count": 1,
-                    "overrides": {}
-                }
-            ]
-        },
-        {
-            "id": "map_77621366a9d7163e058a942d",
-            "name": "New Map",
-            "description": "",
-            "goal": 10,
-            "background": null,
-            "drops": [],
-            "itemDrops": [],
-            "spawns": [
-                {
-                    "id": "spawn_9f5871f7637c1d5808ad163b",
-                    "monsterId": "greenfieldsMonster",
+                    "monsterId": "monster_76954c25d646191e1e34e37e",
                     "count": 1,
                     "overrides": {}
                 }
@@ -1290,7 +1254,7 @@ window.adventureWorld = {
         {
             "id": "salmenMonster",
             "name": "Salmen",
-            "sprite": "assets/monsters/seaman-7e70e357.png",
+            "sprite": "assets/monsters/salmon-23f98143.png",
             "health": 1600,
             "respawnSeconds": 5,
             "accuracy": 155,
@@ -1317,7 +1281,7 @@ window.adventureWorld = {
         {
             "id": "brineAndPunishmentMonster",
             "name": "The Plaice-holder",
-            "sprite": "assets/monsters/big_whale-d850b321.png",
+            "sprite": "assets/monsters/whale-7f5ce310.png",
             "health": 24000,
             "respawnSeconds": 25,
             "accuracy": 245,
@@ -1340,6 +1304,196 @@ window.adventureWorld = {
                 }
             ],
             "itemDrops": []
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/piratefish-dadb5e2b.png",
+            "element": "physical",
+            "id": "monster_ce61788c41d59a12be8cadfe",
+            "name": "Piratefish"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/cowfish-42d4d2cf.png",
+            "element": "physical",
+            "id": "monster_dc5ec2260b5f89ac89f5d057",
+            "name": "Cowfish"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/swordfish-ebb8d0c4.png",
+            "element": "physical",
+            "id": "monster_0d685eef5d64116d04d76732",
+            "name": "Swordfish"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/lavacrab-4f43bb8b.png",
+            "element": "physical",
+            "id": "monster_fcf4106d791caad0e86c4fba",
+            "name": "Lava crab"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/electriceel-3cde7d8e.png",
+            "element": "physical",
+            "id": "monster_6eeccd5b70e20c9a097349b1",
+            "name": "Electric eel"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/anglerfish-b585aca4.png",
+            "element": "physical",
+            "id": "monster_77dc7966e574425307b3f066",
+            "name": "Anglerfish"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/blowfish-5845320f.png",
+            "element": "physical",
+            "id": "monster_0de8fd30513850c95aec32c2",
+            "name": "Blowfish"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/discojelly-fd2a7437.png",
+            "element": "physical",
+            "id": "monster_8dba55519814e09382e5a15b",
+            "name": "Discojelly"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/nautiless-c6574bdc.png",
+            "element": "physical",
+            "id": "monster_0f7949eee198a5b35f06544e",
+            "name": "Nautiless"
+        },
+        {
+            "health": 10,
+            "accuracy": 50,
+            "evasion": 0,
+            "attackDamage": 1,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/nautilus-664caf37.png",
+            "element": "physical",
+            "id": "monster_76954c25d646191e1e34e37e",
+            "name": "Mr boss man"
         }
     ],
     "assets": [
@@ -1617,6 +1771,71 @@ window.adventureWorld = {
             "name": "water_12",
             "path": "assets/backgrounds/water_12-7679da78.png",
             "kind": "background"
+        },
+        {
+            "name": "piratefish",
+            "path": "assets/monsters/piratefish-dadb5e2b.png",
+            "kind": "monster"
+        },
+        {
+            "name": "cowfish",
+            "path": "assets/monsters/cowfish-42d4d2cf.png",
+            "kind": "monster"
+        },
+        {
+            "name": "swordfish",
+            "path": "assets/monsters/swordfish-ebb8d0c4.png",
+            "kind": "monster"
+        },
+        {
+            "name": "lavacrab",
+            "path": "assets/monsters/lavacrab-4f43bb8b.png",
+            "kind": "monster"
+        },
+        {
+            "name": "electriceel",
+            "path": "assets/monsters/electriceel-3cde7d8e.png",
+            "kind": "monster"
+        },
+        {
+            "name": "anglerfish",
+            "path": "assets/monsters/anglerfish-b585aca4.png",
+            "kind": "monster"
+        },
+        {
+            "name": "blowfish",
+            "path": "assets/monsters/blowfish-5845320f.png",
+            "kind": "monster"
+        },
+        {
+            "name": "discojelly",
+            "path": "assets/monsters/discojelly-fd2a7437.png",
+            "kind": "monster"
+        },
+        {
+            "name": "nautiless",
+            "path": "assets/monsters/nautiless-c6574bdc.png",
+            "kind": "monster"
+        },
+        {
+            "name": "nautilus",
+            "path": "assets/monsters/nautilus-664caf37.png",
+            "kind": "monster"
+        },
+        {
+            "name": "whale",
+            "path": "assets/monsters/whale-7f5ce310.png",
+            "kind": "monster"
+        },
+        {
+            "name": "seaman",
+            "path": "assets/monsters/seaman-44ed70ad.png",
+            "kind": "monster"
+        },
+        {
+            "name": "salmon",
+            "path": "assets/monsters/salmon-23f98143.png",
+            "kind": "monster"
         }
     ]
 };

@@ -4,7 +4,7 @@
 
     const statNames = [
         'mana','manaMultiplier','spellDamage','spellDamageMultiplier','manaRegen','manaRegenIncrease','manaRegenPercent',
-        'damage',
+        'damage', 'bowDamageIncrease',
         'evasion',
         'goldBonus', 'goldBonusMultiplier', 'attackSpeedMultiplier', 'attackSpeedBonus', 'attackSpeedPerLevel', 'health', 'healthMultiplier', 'accuracy', 'accuracyMultiplier', 'damageMultiplier', 'evasionMultiplier', 'multiHit', 'multiHitMultiplier',
         'poisonChance', 'poisonChanceMultiplier', 'poisonDamage', 'poisonDamageMultiplier',
@@ -53,6 +53,7 @@
         {id:'manaRegenIncrease',label:'Increased mana regeneration (%)',additive:'manaRegenIncrease'},
         {id:'manaRegenPercent',label:'Maximum mana regeneration (%/s)',additive:'manaRegenPercent'},
         { id: 'damage', label: 'Physical damage', additive: 'damage', multiplier: 'damageMultiplier' },
+        { id: 'bowDamageIncrease', label: 'Increased damage with bow attacks (%)', additive: 'bowDamageIncrease' },
         { id: 'health', label: 'Maximum health', additive: 'health', multiplier: 'healthMultiplier' },
         { id: 'healthRegen', label: 'Flat health regeneration (HP/s)', additive: 'healthRegen' },
         { id: 'healthRegenIncrease', label: 'Increased health regeneration (%)', additive: 'healthRegenIncrease' },

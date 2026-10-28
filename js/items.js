@@ -457,7 +457,7 @@ window.adventureItems = {
             "slot": "legs",
             "rarity": "common",
             "description": "",
-            "sprite": "assets/items/Ice-legs-65730862.png",
+            "sprite": "assets/items/Ice-legs-293632e6.png",
             "stats": {
                 "health": 75,
                 "evasion": 30,
@@ -545,7 +545,7 @@ window.adventureItems = {
             "slot": "weapon",
             "rarity": "rare",
             "description": "",
-            "sprite": "",
+            "sprite": "assets/items/Wand-2-9f5de946.png",
             "stats": {
                 "spellDamage": 50,
                 "manaRegenPercent": 0.1,
@@ -556,6 +556,136 @@ window.adventureItems = {
                 "materials": {
                     "material_c5b9f767dd84fce3cc950ab7": 500,
                     "material_b1c43d6c0bc463c355442072": 500
+                }
+            }
+        },
+        {
+            "id": "item_e91b080d7b16940cdaba7f969645233f",
+            "name": "Rapier",
+            "slot": "weapon",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/Rapier-ffc29742.png",
+            "stats": {
+                "attackSpeedMultiplier": 1.35,
+                "damage": 30,
+                "accuracyMultiplier": 1.4
+            },
+            "recipe": null
+        },
+        {
+            "id": "item_a80b80da8b5f4c99a7227ab8ac2d40d1",
+            "name": "Void scythe",
+            "slot": "weapon",
+            "rarity": "unique",
+            "description": "",
+            "sprite": "assets/items/Void-scythe-a96f149c.gif",
+            "stats": {
+                "damage": 75,
+                "bleedChance": 0.2,
+                "attackSpeedMultiplier": 1.25
+            },
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
+        },
+        {
+            "id": "item_f3148bfadc1f22b67cde0f8d84c0e985",
+            "name": "Fish bow",
+            "slot": "weapon",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/Fish-bow-c57f16bf.png",
+            "stats": {
+                "damage": 40,
+                "poisonDamage": 2,
+                "attackSpeedMultiplier": 1.25
+            },
+            "recipe": null
+        },
+        {
+            "id": "item_15e51873410395e752d1b40ac749de62",
+            "name": "Water helmet",
+            "slot": "helmet",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/Water-helmet-e2d9ee55.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
+        },
+        {
+            "id": "item_db9cd77eee84bb40c509ddaaeb73eb71",
+            "name": "Water body",
+            "slot": "chest",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/Water-body-9ede33bc.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
+        },
+        {
+            "id": "item_691dfe98e4e3f396822433d84f55bcba",
+            "name": "Water legs",
+            "slot": "legs",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/Water-legs-78f6669e.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
+        },
+        {
+            "id": "item_95b7c0c573c9566b2a8ea54ee050b1a2",
+            "name": "Water boots",
+            "slot": "boots",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/Water-boots-7e3c5326.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
+        },
+        {
+            "id": "item_089f23985e6b57e087f4a61b5d7f1c83",
+            "name": "Dagger",
+            "slot": "weapon",
+            "rarity": "uncommon",
+            "description": "",
+            "sprite": "assets/items/Dagger-8e4f5f58.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
+        },
+        {
+            "id": "item_f415dc5cd21123b51d1aa1b2b9c7f601",
+            "name": "blade",
+            "slot": "weapon",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/New-Item-f0c349ca.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
                 }
             }
         }

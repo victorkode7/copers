@@ -1,6 +1,12 @@
 // Combat uses saved grid coordinates, never DOM measurements. Rendering updates
 // the column count while playing; background catch-up keeps the saved formation.
 const arrowSkillSettings = Object.freeze({piercingChance: 0.3, forkingChance: 0.1, freezeDuration: 9, freezeDelay: 3});
+const bowAttackAbilityIds = new Set(['multiShot', 'piercingArrow', 'forkingArrow']);
+
+function getBowDamageMultiplier() {
+    return Math.max(0, 1 + getSkillStat('bowDamageIncrease') + getGearStat('bowDamageIncrease'));
+}
+
 const arrowTravelDirections = Object.freeze([{x: 1, y: 0}, {x: -1, y: 0}, {x: 0, y: 1}, {x: 0, y: -1}]);
 const arrowVisualDurations = Object.freeze({piercingArrow: 1400 * 2 / 3, forkingArrow: 2000, multiShot: 450});
 const arrowImpactPause = 90;

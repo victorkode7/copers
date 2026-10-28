@@ -1,6 +1,11 @@
 (function() {
     'use strict';
     const definitions = {
+        bowDamageIncrease: {
+            affects: 'Physical hits from Multishot, Piercing Arrow and Forking Arrow, including chained forks.',
+            formula: 'Bow hit damage = physical damage scaled by the ability (double for Piercing Arrow) × max(0, 1 + item increases + skill increases)',
+            notes: 'These percentage bonuses add together: two +50% bonuses give +100% bow damage. Each arrow hit receives the bonus once. Basic attacks, spells, Shockwave Slash and Volcanic Eruption do not receive this bonus. Bleed from Multishot uses the increased hit damage.', example: .25
+        },
         mana:{affects:'Maximum mana available for attack-triggered spells.',formula:'Maximum mana = (flat skill mana + flat equipment mana) × skill multipliers × equipment multipliers',notes:'Starts at 0. The first mana reserve starts full. Mana is shared by all spells and persists through saves and map changes.',example:100},
         spellDamage:{affects:'Damage dealt by spells, independently of physical attack damage.',formula:'Spell damage = (flat skill spell damage + flat equipment spell damage) × skill multipliers × equipment multipliers × Fury damage bonus',notes:'Starts at 0. Spell hits build Fury. AOE spells cannot apply Bleed or trigger attack skills.',example:10},
         manaRegen:{affects:'Mana restored each second while alive, including offline combat.',formula:'Mana/s = (flat regeneration + maximum mana × maximum-mana regeneration rate) × max(0, 1 + increased regeneration)',notes:'Starts at 0 and stops at maximum mana. Does not revive the character.',example:10},
@@ -128,7 +133,7 @@
             formula: definition.formula,
             example,
             notes: (multiplier ? 'Multipliers multiply together: 1.5 × 1.5 = 2.25 (+125%), not +100%. '
-                : /^(?:health|mana)Regen/.test(key) ? '' : 'Flat bonuses add together before multipliers are applied. ') + definition.notes
+                : /^(?:health|mana)Regen/.test(key) || key === 'bowDamageIncrease' ? '' : 'Flat bonuses add together before multipliers are applied. ') + definition.notes
         };
     }
     window.ItemStatGuides = {get};
