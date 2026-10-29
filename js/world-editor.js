@@ -3,6 +3,7 @@
     const $ = id => document.getElementById(id);
     const clone = WorldContent.clone;
     const draftKey = 'idleAdventureWorldEditorDraft';
+    const previousDraftKey = 'idleAdventureWorldEditorPreviousDraft';
     const viewKey = 'idleAdventureWorldEditorView';
     const projectTextKey='idleAdventureWorldEditorProjectText';
     const projectContent=clone(window.adventureWorld);
@@ -427,6 +428,29 @@
         try { replaceData(JSON.parse(localStorage.getItem(draftKey)), true); await restoreImages(); status('Local draft restored.'); }
         catch (error) { status('Could not restore draft: ' + error.message); }
     });
+    $('loadProject').addEventListener('click', async () => {
+        try {
+            const errors = WorldContent.validate(projectContent, items);
+            if (errors.length) throw new Error(errors.slice(0, 3).join(' '));
+            // Keep a separate backup across reloads before replacing a browser draft.
+            localStorage.setItem(previousDraftKey, JSON.stringify(data));
+            $('restorePreviousDraft').hidden = false;
+            $('search').value = '';
+            projectText = WorldEditorSync.snapshot(projectContent);
+            replaceData(clone(projectContent));
+            await restoreImages();
+            status('Loaded project content: ' + data.worlds.length + ' worlds, ' + data.maps.length + ' maps, ' + data.monsters.length + ' monsters. Your previous draft is saved; use Restore previous draft to recover it.');
+        } catch (error) { status('Could not load project content: ' + error.message); }
+    });
+    $('restorePreviousDraft').addEventListener('click', async () => {
+        try {
+            const previous = JSON.parse(localStorage.getItem(previousDraftKey));
+            replaceData(previous, true);
+            $('search').value = '';
+            await restoreImages();
+            status('Previous browser draft restored. Load project content to return to the project version.');
+        } catch (error) { status('Could not restore previous draft: ' + error.message); }
+    });
     $('chooseJson').addEventListener('click', () => $('importJson').click());
     $('importJson').addEventListener('change', async event => {
         const file = event.target.files[0]; if (!file) return;
@@ -458,6 +482,11 @@
             data = restored;
             mergedProjectText=WorldEditorSync.mergeMapText(data,projectContent,projectText).length;
             status(mergedProjectText?'Resumed your draft and updated '+mergedProjectText+' map names/descriptions from the project. Other edits are preserved.':'Resumed your local world-editor draft. Quick save or apply the game package to test changes.');
+            const missing = ['worlds', 'maps', 'monsters'].map(kind => {
+                const ids = new Set(data[kind].map(entry => entry.id));
+                return projectContent[kind].filter(entry => !ids.has(entry.id)).length;
+            });
+            if (missing.some(Boolean)) status('Your browser draft omits ' + missing[0] + ' worlds, ' + missing[1] + ' maps and ' + missing[2] + ' monsters found in the project. Use Load project content to see the current files and keep a backup of this draft.');
         }
         const view = JSON.parse(localStorage.getItem(viewKey) || 'null');
         if (view && Object.hasOwn(labels, view.selection?.kind) && data[view.selection.kind].some(entry => entry.id === view.selection.id)) selection = view.selection;
@@ -476,6 +505,7 @@
         localStorage.setItem(projectTextKey,JSON.stringify(projectText));
     }catch{status('Map text updated in this tab. Export JSON to keep it; browser storage is unavailable.');}
     $('restoreDraft').disabled = !hasDraft(); window.addEventListener('pagehide', saveView);
+    try { $('restorePreviousDraft').hidden = !localStorage.getItem(previousDraftKey); } catch { /* Loading requires backup storage to be available. */ }
     quickSave = EditorQuickSave.create({
         key: 'world-content', filename: 'world-content.js',
         getPaths: () => allPaths().filter(WorldContent.safePath),

@@ -88,7 +88,13 @@ window.adventureWorld = {
             "spawns": [
                 {
                     "id": "main",
-                    "monsterId": "greenfieldsMonster",
+                    "monsterId": "monster_94a05084efcdf2db9ea78615",
+                    "count": 1,
+                    "overrides": {}
+                },
+                {
+                    "id": "spawn_749c9bc6bb193d0583e5e832",
+                    "monsterId": "monster_94a05084efcdf2db9ea78615",
                     "count": 1,
                     "overrides": {}
                 }
@@ -1494,6 +1500,24 @@ window.adventureWorld = {
             "element": "physical",
             "id": "monster_76954c25d646191e1e34e37e",
             "name": "Mr boss man"
+        },
+        {
+            "health": 150,
+            "accuracy": 50,
+            "evasion": 50,
+            "attackDamage": 5,
+            "attackInterval": 2,
+            "respawnSeconds": 5,
+            "experience": 10,
+            "gold": [
+                1,
+                2
+            ],
+            "drops": [],
+            "itemDrops": [],
+            "sprite": "assets/monsters/georg_gnom_128px-3c2168e5.png",
+            "id": "monster_94a05084efcdf2db9ea78615",
+            "name": "Georg"
         }
     ],
     "assets": [
@@ -1835,6 +1859,16 @@ window.adventureWorld = {
         {
             "name": "salmon",
             "path": "assets/monsters/salmon-23f98143.png",
+            "kind": "monster"
+        },
+        {
+            "name": "cheerful_pixel_art_gnome_with_thumbs_up",
+            "path": "assets/monsters/cheerful_pixel_art_gnome_with_thumbs_up-f4dac44e.png",
+            "kind": "monster"
+        },
+        {
+            "name": "georg_gnom_128px",
+            "path": "assets/monsters/georg_gnom_128px-3c2168e5.png",
             "kind": "monster"
         }
     ]

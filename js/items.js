@@ -688,6 +688,212 @@ window.adventureItems = {
                     "hide": 1
                 }
             }
+        },
+        {
+            "id": "item_be75f1f385eca9058cc20dcd497792e2",
+            "name": "Royal bow",
+            "slot": "weapon",
+            "rarity": "unique",
+            "description": "",
+            "sprite": "assets/items/Royal-bow-c71b3219.png",
+            "stats": {
+                "bowDamageIncrease": 1.5,
+                "damage": 50,
+                "attackSpeedMultiplier": 1.3
+            },
+            "recipe": null
+        },
+        {
+            "id": "item_1247d32afc0b9a9a0d0fddb5c50b6036",
+            "name": "Big 2h sword",
+            "slot": "weapon",
+            "rarity": "epic",
+            "description": "",
+            "sprite": "assets/items/Big-2h-sword-aad3be23.png",
+            "stats": {
+                "damage": 100,
+                "damageMultiplier": 1.2,
+                "bleedDamageMultiplier": 2
+            },
+            "recipe": null
+        },
+        {
+            "id": "item_f283ab664af9a3ff38efeedcc101d96a",
+            "name": "Blue blade",
+            "slot": "weapon",
+            "rarity": "epic",
+            "description": "",
+            "sprite": "assets/items/Blue-blade-27552131.png",
+            "stats": {},
+            "recipe": null
+        },
+        {
+            "id": "item_5b59966746357d75124c63bd5bd4f3f2",
+            "name": "Chrono axe",
+            "slot": "weapon",
+            "rarity": "unique",
+            "description": "",
+            "sprite": "assets/items/New-Item-55f516bd.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
+        },
+        {
+            "id": "item_57237205641fec65162663889f13760e",
+            "name": "Fire sword",
+            "slot": "weapon",
+            "rarity": "unique",
+            "description": "",
+            "sprite": "assets/items/New-Item-564c122d.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
+        },
+        {
+            "id": "item_d765a373cb3e735cb11d1bce094c6284",
+            "name": "Ice dagger",
+            "slot": "weapon",
+            "rarity": "uncommon",
+            "description": "",
+            "sprite": "assets/items/New-Item-3d7212be.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
+        },
+        {
+            "id": "item_caa7ccc47f3c86fe4c53d30e9b9b39f5",
+            "name": "Water dagger",
+            "slot": "weapon",
+            "rarity": "uncommon",
+            "description": "",
+            "sprite": "assets/items/New-Item-fa43e218.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
+        },
+        {
+            "id": "item_feda891c227ed62c299aad89e5d1c1c9",
+            "name": "Opal bow",
+            "slot": "weapon",
+            "rarity": "uncommon",
+            "description": "",
+            "sprite": "assets/items/New-Item-d29a20a3.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
+        },
+        {
+            "id": "item_aab8ba90e95bfa3410799164181eb5bf",
+            "name": "Vagabond bow",
+            "slot": "weapon",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/New-Item-7c14d5ca.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
+        },
+        {
+            "id": "item_d6dda8bac1a8a0cee94366df2dfb2604",
+            "name": "Divine bow",
+            "slot": "weapon",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/Water-bow-eda1edbb.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
+        },
+        {
+            "id": "item_325c050aaded9a8cea45112a4b3dba11",
+            "name": "Blood staff",
+            "slot": "weapon",
+            "rarity": "epic",
+            "description": "",
+            "sprite": "assets/items/New-Item-d0d06c6c.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
+        },
+        {
+            "id": "item_c8cf232fa1bd4457bc5599350335c23d",
+            "name": "Chrono staff",
+            "slot": "weapon",
+            "rarity": "uncommon",
+            "description": "",
+            "sprite": "assets/items/New-Item-1b19a419.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
+        },
+        {
+            "id": "item_db78657b0bb8086df01f672b94d99fdd",
+            "name": "Water staff",
+            "slot": "weapon",
+            "rarity": "uncommon",
+            "description": "",
+            "sprite": "assets/items/New-Item-fb35ab43.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
+        },
+        {
+            "id": "item_265c9788957ffffeef0b07bf5a010cd8",
+            "name": "Magma shield",
+            "slot": "weapon",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/Magma-shield-5a1657f1.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
+        },
+        {
+            "id": "item_5a79c5d5bec1be1684bcac39d09f5528",
+            "name": "Purple flame",
+            "slot": "weapon",
+            "rarity": "unique",
+            "description": "leeching flame",
+            "sprite": "assets/items/Purple-flame-shield-05961094.png",
+            "stats": {},
+            "recipe": {
+                "materials": {
+                    "hide": 1
+                }
+            }
         }
     ],
     "materialDetails": {
