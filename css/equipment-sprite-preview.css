@@ -1,0 +1,31 @@
+.equipment-sprite-trigger { cursor: zoom-in; }
+.equipment-sprite-trigger:focus-visible { outline: 2px solid #f4d58a; outline-offset: 3px; }
+body.idle-adventure .equipment-sprite-preview {
+    position: fixed;
+    z-index: 10000;
+    transform: translate(-50%, -50%);
+    display: grid;
+    place-items: center;
+    width: 192px;
+    height: 192px;
+    min-width: 192px;
+    max-width: none;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    outline: 2px solid rgba(244, 213, 138, 0.65);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.7);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    cursor: zoom-out;
+}
+body.idle-adventure .equipment-sprite-preview img {
+    display: block;
+    width: 192px;
+    height: 192px;
+    max-width: none;
+    max-height: none;
+    object-fit: contain;
+    image-rendering: pixelated;
+    pointer-events: none;
+}

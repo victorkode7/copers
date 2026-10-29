@@ -2347,7 +2347,7 @@ function renderCrafting() {
             const slotTag = document.createElement('span');
             slotTag.className = 'craft-slot-tag';
             slotTag.textContent = recipe.slot;
-            cardHeading.append(Equipment.createIcon(recipe, equipmentSlots.find(slot => slot.id === recipe.slot)?.icon), name, slotTag);
+            cardHeading.append(EquipmentSpritePreview.createIcon(recipe, equipmentSlots.find(slot => slot.id === recipe.slot)?.icon), name, slotTag);
 
             const effect = document.createElement('p');
             effect.className = 'craft-card-effect';
@@ -2517,7 +2517,7 @@ function renderInventory() {
         const label = document.createElement('span');
         label.className = 'equipment-slot-label';
         label.textContent = slot.name;
-        const icon = Equipment.createIcon(equippedItem, slot.icon);
+        const icon = EquipmentSpritePreview.createIcon(equippedItem, slot.icon);
         icon.classList.add('equipment-slot-icon');
         window.EquipmentEffects?.apply(icon);
         const name = document.createElement('strong');
@@ -2584,7 +2584,7 @@ function renderInventory() {
         item.dataset.rarity = recipe.rarity || 'common';
         const copy = document.createElement('div');
         copy.className = 'game-item-copy inventory-item-identity';
-        const spriteFrame = Equipment.createIcon(recipe, selectedSlot.icon);
+        const spriteFrame = EquipmentSpritePreview.createIcon(recipe, selectedSlot.icon);
         spriteFrame.classList.add('inventory-sprite-frame');
         const identity = document.createElement('div');
         identity.className = 'inventory-item-meta';
