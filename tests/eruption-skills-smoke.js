@@ -31,6 +31,9 @@
     }
     function seedRandom(){let seed=1234;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};}
     try {
+        // Keep SVG geometry assertions explicit; combat-webgl-smoke covers GPU cracks.
+        const renderer = document.getElementById('combatEffectRenderer');
+        renderer.value = 'svg'; renderer.dispatchEvent(new Event('change'));
         const legacyChains={statSchemaVersion:2,furySchemaVersion:1,nodes:[{id:'eruptionChain',stats:{damage:1}},{id:'eruptionChain_copy',stats:{damage:1}},{id:'unrelatedDamage',stats:{damage:1}}]};
         SkillStatCompat.normalize(legacyChains);
         check('older chain nodes and their copies gain additive bonuses without changing other damage nodes',legacyChains.nodes[0].stats.eruptionChains===1&&legacyChains.nodes[1].stats.eruptionChains===1&&!Object.hasOwn(legacyChains.nodes[1].stats,'damage')&&legacyChains.nodes[2].stats.damage===1);

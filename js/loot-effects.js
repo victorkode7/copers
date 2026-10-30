@@ -69,6 +69,7 @@
         if (window.CombatSettings?.enabled('glows') === false) return;
         const card = source?.closest('.enemy-card');
         if (!card || reducedMotion()) return;
+        if(window.CombatWebGLEffects?.lootFlash(card,reward.rarity))return;
         const previous = flashes.get(card);
         if (previous) { previous.animation.cancel(); previous.node.remove(); }
         const bounds = card.getBoundingClientRect(), node = document.createElement('span');

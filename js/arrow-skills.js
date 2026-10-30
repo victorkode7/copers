@@ -150,6 +150,7 @@ function showCombatArrow(sourceId, targetId, kind, direction, visual = {}) {
         const target = getCombatEffectCard(targetId)?.querySelector('.enemy-mark');
         const source = getCombatEffectCard(sourceId)?.querySelector('.enemy-mark');
         if (!target) return;
+        if(window.CombatWebGLEffects?.arrow({source,target,rowIds,kind,direction,delay:visual.delay||0,freezing,sourceId}))return;
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.classList.add('combat-arrow');
         svg.classList.toggle('is-freezing', freezing);

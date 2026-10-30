@@ -394,6 +394,7 @@ function restartCombatAnimation(element, className) {
     const category = ['is-defeating', 'is-shockwave-splashed'].includes(className) ? 'shaking'
         : ['is-applying', 'is-proccing', 'is-releasing', 'is-damaged', 'is-dodging', 'is-shockwave-hit', 'is-shield-blocking'].includes(className) ? 'glows' : 'general';
     if (!combatEffectEnabled(category)) return;
+    if(category==='glows'&&window.CombatWebGLEffects?.pulse(element,className))return;
     element.classList.remove(className);
     if (combatAnimationRestarts) {
         if (!combatAnimationRestarts.has(element)) combatAnimationRestarts.set(element, new Set());
@@ -3075,6 +3076,7 @@ function renderCombatContent() {
     if (elements.enemyRoster.dataset.mapId !== map.id ||
         ids.length !== renderedIds.length || ids.some((id, index) => id !== renderedIds[index])) {
         elements.combatPanel.querySelectorAll('.poison-transfer, .combat-arrow, .eruption-chain, .shield-slam-wave, .spell-effect').forEach(effect => effect.remove());
+        window.CombatWebGL?.clear();
         renderedCards = definitions.map(createEnemyCard);
         elements.enemyRoster.replaceChildren(...renderedCards);
         elements.enemyRoster.dataset.mapId = map.id;
@@ -3224,6 +3226,8 @@ function renderCombatContent() {
     renderLootNotice();
     renderDamageBreakdown();
     window.LootEffects?.sync(state.currentView === 'map', map.id);
+    window.CombatWebGL?.sync(state.currentView === 'map', map.id);
+    window.CombatWebGLEffects?.sync();
 }
 
 function render() {
@@ -3419,6 +3423,7 @@ function showPoisonTransfer(sourceId, targetId) {
         const source = getCombatEffectCard(sourceId)?.querySelector('.enemy-mark');
         const target = getCombatEffectCard(targetId)?.querySelector('.enemy-mark');
         if (!source || !target) return;
+        if(window.CombatWebGLEffects?.transfer(source,target))return;
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.classList.add('poison-transfer');
         svg.setAttribute('aria-hidden', 'true');

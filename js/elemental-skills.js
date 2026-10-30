@@ -184,6 +184,7 @@ function showElementalBurst(targetIds,element,explosion) {
     const mapId=state.selectedMap;
     presentCombatEffect(()=>{
         if (state.currentView!=='map' || state.selectedMap!==mapId) return;
+        if(window.CombatWebGLEffects?.elemental(targetIds,element,explosion))return;
         const layer=document.createElement('div');layer.className='elemental-effect-layer';
         layer.setAttribute('aria-hidden','true');elements.combatPanel.append(layer);
         const frame=getCombatOverlayBounds(layer);

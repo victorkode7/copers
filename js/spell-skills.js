@@ -178,6 +178,7 @@ function showVoidVortex(targetIds,visualDelay=0) {
     const mapId=state.selectedMap;
     presentCombatEffect(()=>{
         if (state.currentView!=='map' || state.selectedMap!==mapId) return;
+        if(window.CombatWebGLEffects?.vortex(targetIds,visualDelay))return;
         const cards=targetIds.map(id=>getCombatEffectCard(id)).filter(Boolean);
         if (!cards.length) return;
         const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
@@ -256,6 +257,7 @@ function getVoidVolleyCurve(start,target,index,count,noise,frame) {
 function showVoidVolleyPlayerGlow(holdSeconds,windupSeconds=0) {
     if (!combatEffectEnabled('glows') || !combatEffectEnabled('abilities')) return;
     if(holdSeconds<=0 || state.playerHp<=0)return;
+    if(window.CombatWebGLEffects?.glow(holdSeconds,windupSeconds))return;
     const panel=elements.playerHealthPanel,now=performance.now();
     let glow=panel.querySelector('.void-volley-player-glow');
     const until=Math.max(Number(glow?.dataset.releaseAt)||0,now+holdSeconds*1000);
@@ -292,6 +294,7 @@ function showSpellCast(kind,hits,visualDelay=0) {
     });
     presentCombatEffect(() => {
         if (state.currentView!=='map' || state.selectedMap!==mapId || !hits.length) return;
+        if(window.CombatWebGLEffects?.spells(kind,hits,visualDelay,visuals))return;
         const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
         svg.classList.add('spell-effect',kind==='voidVolley'?'spell-void-volley':'spell-void-bolt');svg.setAttribute('aria-hidden','true');
         svg.dataset.spell=kind;
@@ -375,6 +378,7 @@ function showVoidMissileImpact(targetId,missile) {
     const mapId=state.selectedMap;
     presentCombatEffect(()=>{
         if(state.currentView!=='map'||state.selectedMap!==mapId)return;
+        if(window.CombatWebGLEffects?.impact(targetId))return;
         const card=getCombatEffectCard(targetId);if(!card)return;
         const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
         svg.classList.add('spell-effect','spell-void-volley','spell-impact-effect');

@@ -16,6 +16,18 @@
 .combat-effect-switch[aria-checked="true"] [data-switch-state] { background: #245446; color: #a1edc6; }
 .combat-effect-switch:disabled { opacity: .55; cursor: default; }
 .idle-adventure .combat-effect-master { margin-bottom: 18px; border-color: #a68a52; }
+.combat-renderer-choice { display: grid; gap: 8px; margin-top: 20px; }
+.combat-renderer-choice select { width: 100%; padding: 10px; border: 1px solid var(--adventure-border); border-radius: 6px; background: #1b303e; color: inherit; }
+.combat-webgl-layer { position: fixed; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; }
+.combat-webgl-layer[hidden], .combat-effects-off .combat-webgl-layer { display: none; }
+.combat-webgl-active .enemy-dot-sprite-effect,
+.combat-webgl-active .enemy-mark::before, .combat-webgl-active .enemy-mark::after,
+.combat-webgl-active .enemy-card.is-righteous-fire::before, .combat-webgl-active .enemy-card.is-righteous-fire::after,
+.combat-webgl-active .player-health.is-righteous-fire::before, .combat-webgl-active .player-health.is-righteous-fire::after { display: none !important; }
+.combat-webgl-active :is(.enemy-dot-status,.enemy-bleed-status,.combat-buff,.health-track,.player-health).is-proccing,
+.combat-webgl-active :is(.enemy-dot-status,.enemy-bleed-status).is-applying { animation: none !important; }
+.combat-webgl-active :is(.enemy-mark,.health-track,.enemy-dot-status,.enemy-bleed-status,.combat-buff),
+.combat-webgl-active .enemy-mark img { filter: none !important; box-shadow: none !important; }
 
 /* Keep health, quantities and status labels; suppress only decorative visuals. */
 .combat-no-shaking .enemy-card { animation: none !important; }

@@ -2,9 +2,11 @@
     'use strict';
     const storageKey = 'idleAdventureCombatSettings';
     const settings = {all: true, projectiles: true, abilities: true, shaking: true, glows: true};
+    let effectRenderer = 'webgl';
     try {
         const saved = JSON.parse(localStorage.getItem(storageKey));
         for (const key of Object.keys(settings)) if (typeof saved?.[key] === 'boolean') settings[key] = saved[key];
+        if (['svg','webgl-cracks'].includes(saved?.renderer)) effectRenderer = saved.renderer;
     } catch { /* Defaults work without browser storage. */ }
     function enabled(category = 'general') {
         if (!settings.all) return false;
@@ -12,7 +14,22 @@
         return settings[category] !== false;
     }
     const dialog = document.getElementById('combatSettingsDialog');
+    const rendererSelect = document.getElementById('combatEffectRenderer');
+    function save() {
+        try { localStorage.setItem(storageKey, JSON.stringify({...settings, renderer: effectRenderer})); }
+        catch { document.getElementById('combatSettingsStatus').textContent = 'Applied for this session. Browser storage is unavailable.'; }
+    }
+    function rendererStatus() {
+        const status = window.CombatWebGL?.status();
+        document.getElementById('combatRendererStatus').textContent = effectRenderer === 'svg'
+            ? 'Using the original HTML and SVG effects.' : status?.reducedMotion
+                ? 'Reduced motion is enabled. Using the original reduced-motion effects.' : status?.available === false
+                    ? 'WebGL is unavailable. Using the original effects automatically.'
+                    : effectRenderer==='webgl-cracks' ? 'Only travelling eruption cracks use WebGL. Other effects use the original renderer.'
+                        : 'Projectiles, bursts, particles, auras and glows share one GPU layer. Labels and plate movement use HTML.';
+    }
     function apply() {
+        rendererSelect.value = effectRenderer;
         document.body.classList.toggle('combat-effects-off', !settings.all);
         for (const key of ['projectiles', 'abilities', 'shaking', 'glows']) {
             document.body.classList.toggle('combat-no-' + key, !enabled(key));
@@ -38,6 +55,8 @@
             window.LootEffects?.clear();
             document.getAnimations().forEach(animation => animation.cancel());
         }
+        dispatchEvent(new Event('combat-settings-change'));
+        rendererStatus();
     }
     dialog.addEventListener('click', event => {
         const button = event.target.closest('[data-effect-setting]');
@@ -45,15 +64,20 @@
             const key = button.dataset.effectSetting;
             settings[key] = !settings[key];
             apply();
-            try { localStorage.setItem(storageKey, JSON.stringify(settings)); }
-            catch { document.getElementById('combatSettingsStatus').textContent = 'Applied for this session. Browser storage is unavailable.'; }
+            save();
         } else if (event.target === dialog) {
             const bounds = dialog.getBoundingClientRect();
             if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
         }
     });
-    document.getElementById('openCombatSettings').addEventListener('click', () => dialog.showModal());
+    rendererSelect.addEventListener('change', () => {
+        effectRenderer = ['svg','webgl-cracks'].includes(rendererSelect.value) ? rendererSelect.value : 'webgl';
+        document.querySelectorAll('.combat-arrow,.spell-effect,.eruption-chain,.eruption-burst,.elemental-effect-layer,.shield-slam-wave,.poison-transfer,.void-volley-player-glow,.loot-plate-flash').forEach(node => node.remove());
+        window.CombatWebGL?.clear(); apply(); save();
+    });
+    addEventListener('combat-renderer-status', rendererStatus);
+    document.getElementById('openCombatSettings').addEventListener('click', () => { rendererStatus(); dialog.showModal(); });
     document.getElementById('closeCombatSettings').addEventListener('click', () => dialog.close());
-    window.CombatSettings = {enabled};
+    window.CombatSettings = {enabled, renderer: () => effectRenderer};
     apply();
 }());

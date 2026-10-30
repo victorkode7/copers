@@ -1,18 +1,22 @@
 // Used only by run-combat-effects-benchmark.ps1 in an isolated browser profile.
 (function () {
     const nativeInterval = window.benchmarkSetInterval;
-    const modes = ['all-on', 'projectiles-off', 'abilities-off', 'shaking-off', 'glows-off', 'all-off'];
+    const modes = ['all-on', 'projectiles-off', 'abilities-off', 'shaking-off', 'glows-off', 'all-off', 'webgl', 'webgl-cracks', 'svg'];
     const originalCreate = document.createElement, originalCreateNS = document.createElementNS;
     let created = 0;
     document.createElement = function (...args) { created++; return originalCreate.apply(this, args); };
     document.createElementNS = function (...args) { created++; return originalCreateNS.apply(this, args); };
     const control = key => document.querySelector('[data-effect-setting="' + key + '"]');
     const set = (key, on) => { if (control(key).getAttribute('aria-checked') !== String(on)) control(key).click(); };
-    function prepare(mode, monsterHealth = 100000) {
+    function prepare(mode, monsterHealth = 100000, build = 'mixed') {
         if (!modes.includes(mode)) throw new Error('Unknown mode');
         set('all', true); set('abilities', true);
         for (const key of ['projectiles', 'shaking', 'glows']) set(key, true);
-        if (mode !== 'all-on') set(mode.replace('-off', ''), false);
+        const renderer = document.getElementById('combatEffectRenderer');
+        renderer.value = mode === 'svg' ? 'svg' : mode === 'webgl-cracks' ? 'webgl-cracks' : 'webgl';
+        renderer.dispatchEvent(new Event('change'));
+        if (mode.endsWith('-off')) set(mode.replace('-off', ''), false);
+        window.CombatWebGL?.clear();
         document.getAnimations().forEach(animation => animation.cancel());
         window.LootEffects?.clear();
         combatStatCache = null;
@@ -23,6 +27,7 @@
         state.gear = createEmptyGear(); state.gear.necklace = 'testAmulet';
         state.ownedItemIds = ['testAmulet']; state.crafted = [];
         itemById.testAmulet.stats = {health: 10000, healthRegen: 100000};
+        if(build==='caster')Object.assign(itemById.testAmulet.stats,{mana:10000,manaRegen:10000});
         state.kills = Object.fromEntries(mapData.map(map => [map.id, 0]));
         state.materials = Object.fromEntries(Object.keys(materialNames).map(id => [id, 0]));
         state.gold = 0; state.lootLog = []; state.lastLoot = null; state.tutorials = createTutorialState();
@@ -79,6 +84,7 @@
         if (window.benchmarkErrors.length) throw new Error(window.benchmarkErrors.join('\n'));
         if (state.combatPaused) throw new Error('Player died during the benchmark');
         return {ticks: tick, simulatedSeconds: tick / 10, elapsedMs, simulationMs, visualMs,
+            webgl: window.CombatWebGL?.status(),
             createdElements: created - createdBefore, peakEffectRoots,
             frameP95Ms: sorted[Math.floor(sorted.length * .95)] || 0,
             framesOver25ms: gaps.filter(gap => gap > 25).length, frames: gaps.length,

@@ -3,8 +3,10 @@ param(
     [string]$Page = 'index.html',
     [string]$TestScript = 'tests/equipment-smoke.js',
     [string]$ReportPath,
+    [string]$ScreenshotPath,
     [string]$WindowSize = '1440,1000',
-    [int]$TimeoutSeconds = 25
+    [int]$TimeoutSeconds = 25,
+    [switch]$EnableGpu
 )
 $ErrorActionPreference = 'Stop'
 $workspacePath = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -16,6 +18,12 @@ $prelude = '<script>window.smokeErrors=[];window.smokeIntervals=[];window.addEve
 $html = $html.Replace('<head>', '<head>' + $prelude)
 $html = [regex]::Replace($html, '<script src="https://ajax.googleapis.com[^>]+></script>', '')
 if ($Page -eq 'index.html') {
+    # These suites inspect retained SVG paths and CSS timelines explicitly.
+    # GPU pixels, timing, switches and fallback have dedicated WebGL suites.
+    $originalEffectTests = @('tests/arrow-skills-smoke.js','tests/spell-skills-smoke.js','tests/shield-expansion-smoke.js','tests/elemental-layout-smoke.js','tests/combat-settings-smoke.js','tests/health-regen-smoke.js','tests/eruption-skills-smoke.js','tests/all-skills-performance-smoke.js')
+    if ($TestScript -in $originalEffectTests) {
+        $html = $html.Replace('</body>', '<script>const smokeRenderer=document.getElementById("combatEffectRenderer");smokeRenderer.value="svg";smokeRenderer.dispatchEvent(new Event("change"));</script></body>')
+    }
     $html = $html.Replace('<script src="js/item-system.js', '<script src="tests/equipment-content-fixture.js"></script><script src="js/item-system.js')
     $html = $html.Replace('<script src="js/skill-sprites.js', '<script src="tests/skill-sprite-content-fixture.js"></script><script src="js/skill-sprites.js')
 }
@@ -35,6 +43,9 @@ try {
     $realtime = $realtime -or $TestScript -in @('tests/background-reload-smoke.js', 'tests/game-profiles-smoke.js', 'tests/skill-editor-selection-smoke.js')
     $realtime = $realtime -or $TestScript -eq 'tests/save-compat-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-settings-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-effects-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-projectiles-smoke.js' -or [bool]$ScreenshotPath
     $realtime = $realtime -or $TestScript -eq 'tests/equipment-sprite-preview-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/world-project-load-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/spell-skills-smoke.js'
@@ -42,6 +53,7 @@ try {
     if ($realtime) {
         $processInfo.Arguments = '--headless --disable-gpu --no-first-run --allow-file-access-from-files --remote-debugging-port=0 --user-data-dir="' + $profilePath + '" "' + ([uri]$fixturePath).AbsoluteUri + '"'
     }
+    if ($EnableGpu) { $processInfo.Arguments = $processInfo.Arguments.Replace('--disable-gpu ', '') }
     $processInfo.UseShellExecute = $false
     $processInfo.Arguments += ' --window-size=' + $WindowSize
     $processInfo.CreateNoWindow = $true
@@ -81,6 +93,23 @@ try {
                 } while ($reply.id -ne $messageId)
                 if ($reply.result.result.value) { $outputText = $reply.result.result.value }
                 else { Start-Sleep -Milliseconds 100 }
+            }
+            if ($ScreenshotPath -and $outputText) {
+                $messageId++
+                $command = @{id=$messageId; method='Page.captureScreenshot'; params=@{format='png'}} | ConvertTo-Json -Compress
+                $commandBytes = [Text.Encoding]::UTF8.GetBytes($command)
+                $null = $socket.SendAsync([ArraySegment[byte]]::new($commandBytes), [Net.WebSockets.WebSocketMessageType]::Text, $true, $cancellation.Token).GetAwaiter().GetResult()
+                do {
+                    $message = [IO.MemoryStream]::new()
+                    do {
+                        $buffer = [byte[]]::new(16384)
+                        $received = $socket.ReceiveAsync([ArraySegment[byte]]::new($buffer), $cancellation.Token).GetAwaiter().GetResult()
+                        $message.Write($buffer, 0, $received.Count)
+                    } while (!$received.EndOfMessage)
+                    $reply = [Text.Encoding]::UTF8.GetString($message.ToArray()) | ConvertFrom-Json
+                    $message.Dispose()
+                } while ($reply.id -ne $messageId)
+                [IO.File]::WriteAllBytes($ScreenshotPath, [Convert]::FromBase64String($reply.result.data))
             }
         } finally {
             $socket.Dispose(); $cancellation.Dispose()

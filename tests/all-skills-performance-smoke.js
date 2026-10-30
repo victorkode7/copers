@@ -59,6 +59,9 @@
         checks.push('PROFILE ' + JSON.stringify(Object.entries(samples).sort((a,b) => b[1].ms - a[1].ms).map(([name,value]) => ({name,calls:value.calls,ms:Math.round(value.ms*100)/100}))));
     }
     try {
+        // This suite inspects SVG paths; GPU rendering has its own integration test.
+        const renderer = document.getElementById('combatEffectRenderer');
+        renderer.value = 'svg'; renderer.dispatchEvent(new Event('change'));
         fresh(64);
         check('every allocatable skill node is maxed', skillNodes.every(node => node.start || getSkillNodeRank(node.id) === node.maxRank));
         checks.push('BUILD ' + JSON.stringify({nodes:Object.keys(ranks).length,level:state.level,damage:getDamage(),spellDamage:getSpellDamage(),mana:getPlayerMaxMana(),manaRegen:getPlayerManaRegen(),attackInterval:getAttackSpeed(),multiHit:getMultiHit(),poisonChance:getPoisonChance(),chains:getMaxEruptionChains()}));

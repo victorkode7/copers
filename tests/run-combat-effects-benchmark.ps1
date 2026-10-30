@@ -4,7 +4,9 @@ param(
     [int]$Rounds = 3,
     [int]$MonsterHealth = 100000,
     [string]$ModeList = 'all-on,projectiles-off,abilities-off,shaking-off,glows-off,all-off',
-    [string]$ReportPath = 'combat-effects-benchmark.json'
+    [string]$ReportPath = 'combat-effects-benchmark.json',
+    [switch]$CaptureScreenshots,
+    [ValidateSet('mixed','caster')][string]$CombatBuild = 'mixed'
 )
 $ErrorActionPreference = 'Stop'
 $projectPath = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -69,7 +71,8 @@ try {
     try { $environment | Add-Member cpu ((Get-CimInstance Win32_Processor | Select-Object -ExpandProperty Name) -join ', ') } catch { }
     $null = Send-Cdp 'Performance.enable' @{timeDomain='threadTicks'}
     Write-Output ('ENVIRONMENT ' + ($environment | ConvertTo-Json -Compress))
-    $null = Evaluate ('CombatEffectsBenchmark.prepare("all-on",' + $MonsterHealth + ')')
+    $buildJson = $CombatBuild | ConvertTo-Json -Compress
+    $null = Evaluate ('CombatEffectsBenchmark.prepare("all-on",' + $MonsterHealth + ',' + $buildJson + ')')
     $null = Evaluate 'CombatEffectsBenchmark.run(15)'
     $modes = @($ModeList.Split(','))
     $samples = [Collections.Generic.List[object]]::new()
@@ -80,10 +83,13 @@ try {
             $rotation = if ($modes.Count -eq 2) { $round } else { $round * 2 }
             $mode = $modes[($index + $rotation) % $modes.Count]
             $modeJson = $mode | ConvertTo-Json -Compress
-            $null = Evaluate ('CombatEffectsBenchmark.prepare(' + $modeJson + ',' + $MonsterHealth + ')')
+            $null = Evaluate ('CombatEffectsBenchmark.prepare(' + $modeJson + ',' + $MonsterHealth + ',' + $buildJson + ')')
             $before = Metrics
             $sample = Evaluate ('CombatEffectsBenchmark.run(' + $Ticks + ')')
             $after = Metrics
+            if ($mode -like 'webgl*' -and (!$sample.webgl.available -or $sample.webgl.reducedMotion -or !$sample.webgl.active)) {
+                throw 'The WebGL comparison did not render GPU effects.'
+            }
             if ($referenceOutcome -and $sample.outcome -ne $referenceOutcome) { throw ('Combat outcome differs for ' + $mode) }
             $referenceOutcome = $sample.outcome
             $sample | Add-Member mode $mode
@@ -93,6 +99,11 @@ try {
             $sample | Add-Member layoutStyleMs (($after.LayoutDuration - $before.LayoutDuration + $after.RecalcStyleDuration - $before.RecalcStyleDuration) * 1000)
             $samples.Add($sample)
             Write-Output ('SAMPLE ' + ($sample | ConvertTo-Json -Compress))
+            if ($CaptureScreenshots -and $round -eq 0) {
+                $shot = Send-Cdp 'Page.captureScreenshot' @{format='png'}
+                $shotName = [IO.Path]::GetFileNameWithoutExtension($ReportPath) + '-' + $mode + '.png'
+                [IO.File]::WriteAllBytes((Join-Path $projectPath $shotName), [Convert]::FromBase64String($shot.data))
+            }
         }
     }
     function Median($values) { $sorted = @($values | Sort-Object); return $sorted[[int][Math]::Floor($sorted.Count / 2)] }
@@ -104,7 +115,17 @@ try {
         }
         [pscustomobject]$entry
     }
-    $report = [ordered]@{environment=$environment; monsterHealth=$MonsterHealth; ticksPerSample=$Ticks; rounds=$Rounds; metricTimeDomain='threadTicks'; combatOutcome=$referenceOutcome; summary=@($summary); samples=@($samples.ToArray()); notes=@('Isolated synthetic 64-monster all-skills fight, at 10 combat ticks per second.','Main-thread measurements exclude GPU-process work and do not represent whole-system CPU usage.','Individual-off cases leave all other switches on; abilities-off also disables ability projectiles.','Order rotates across rounds. No saves or background timer throttling are measured.')}
+    $report = [ordered]@{
+        environment=$environment; combatBuild=$CombatBuild; monsterHealth=$MonsterHealth
+        ticksPerSample=$Ticks; rounds=$Rounds; metricTimeDomain='threadTicks'; combatOutcome=$referenceOutcome
+        summary=@($summary); samples=@($samples.ToArray())
+        notes=@('Isolated synthetic 64-monster all-skills fight, at 10 combat ticks per second.',
+            'Main-thread measurements exclude GPU-process work and do not represent whole-system CPU usage.',
+            'Individual-off cases leave all other switches on; abilities-off also disables ability projectiles.',
+            'SVG retains original effects; webgl-cracks changes only cracks; webgl converts projectiles, bursts, particles, auras and glows. Labels and plate movement remain HTML.',
+            'The caster build adds gear mana and mana regeneration to sustain spell casting.',
+            'Order rotates across rounds. No saves or background timer throttling are measured.')
+    }
     $reportJson = $report | ConvertTo-Json -Depth 12
     [IO.File]::WriteAllText((Join-Path $projectPath $ReportPath), $reportJson, [Text.UTF8Encoding]::new($false))
     Write-Output ('SUMMARY ' + ($summary | ConvertTo-Json -Depth 4 -Compress))

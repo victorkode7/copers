@@ -66,6 +66,7 @@ function showVolcanicEruption(centerId, targetIds) {
     const mapId = state.selectedMap;
     presentCombatEffect(() => {
         if (document.hidden || state.currentView !== 'map' || state.selectedMap !== mapId) return;
+        if(window.CombatWebGLEffects?.eruption(centerId,targetIds))return;
         const ids = new Set([centerId, ...targetIds]);
         ids.forEach(id => {
             const card = getCombatEffectCard(id);
@@ -150,6 +151,14 @@ function showEruptionChain(sourceId, targetId, delay) {
         const source = getCombatEffectCard(sourceId);
         const target = getCombatEffectCard(targetId);
         if (!source || !target) return;
+        if (window.CombatSettings?.renderer() !== 'svg' && window.CombatWebGL) {
+            const frame = getCombatEffectBounds(elements.combatPanel);
+            const from = getCombatEffectBounds(source), to = getCombatEffectBounds(target);
+            const start = {x: from.left + from.width / 2 - frame.left, y: from.top + from.height / 2 - frame.top};
+            const end = {x: to.left + to.width / 2 - frame.left, y: to.top + to.height / 2 - frame.top};
+            if (CombatWebGL.eruptionChain({panel: elements.combatPanel, points: createEruptionCrackPoints(start, end),
+                delay, flight: eruptionSkillSettings.chainDelay, duration: eruptionSkillSettings.trailDuration})) return;
+        }
         const namespace = 'http://www.w3.org/2000/svg';
         const svg = document.createElementNS(namespace, 'svg');
         svg.classList.add('eruption-chain');
