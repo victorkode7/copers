@@ -1,0 +1,55 @@
+PASS basic-1 advances all 600 ticks without dying
+PASS basic-1 simulation and saves do not change page elements
+PASS basic-1 writes a valid current save
+PASS basic-1 advances all 600 ticks without dying
+PASS basic-1 simulation and saves do not change page elements
+PASS basic-1 writes a valid current save
+PASS basic-1 advances all 600 ticks without dying
+PASS basic-1 simulation and saves do not change page elements
+PASS basic-1 writes a valid current save
+PASS basic-1 advances all 600 ticks without dying
+PASS basic-1 simulation and saves do not change page elements
+PASS basic-1 writes a valid current save
+PASS all-skills-1 advances all 600 ticks without dying
+PASS all-skills-1 simulation and saves do not change page elements
+PASS all-skills-1 writes a valid current save
+PASS all-skills-1 advances all 600 ticks without dying
+PASS all-skills-1 simulation and saves do not change page elements
+PASS all-skills-1 writes a valid current save
+PASS all-skills-1 advances all 600 ticks without dying
+PASS all-skills-1 simulation and saves do not change page elements
+PASS all-skills-1 writes a valid current save
+PASS all-skills-1 advances all 600 ticks without dying
+PASS all-skills-1 simulation and saves do not change page elements
+PASS all-skills-1 writes a valid current save
+PASS all-skills-8 advances all 600 ticks without dying
+PASS all-skills-8 simulation and saves do not change page elements
+PASS all-skills-8 writes a valid current save
+PASS all-skills-8 advances all 600 ticks without dying
+PASS all-skills-8 simulation and saves do not change page elements
+PASS all-skills-8 writes a valid current save
+PASS all-skills-8 advances all 600 ticks without dying
+PASS all-skills-8 simulation and saves do not change page elements
+PASS all-skills-8 writes a valid current save
+PASS all-skills-8 advances all 600 ticks without dying
+PASS all-skills-8 simulation and saves do not change page elements
+PASS all-skills-8 writes a valid current save
+PASS all-skills-64 advances all 600 ticks without dying
+PASS all-skills-64 simulation and saves do not change page elements
+PASS all-skills-64 writes a valid current save
+PASS all-skills-64 advances all 600 ticks without dying
+PASS all-skills-64 simulation and saves do not change page elements
+PASS all-skills-64 writes a valid current save
+PASS all-skills-64 advances all 600 ticks without dying
+PASS all-skills-64 simulation and saves do not change page elements
+PASS all-skills-64 writes a valid current save
+PASS all-skills-64 advances all 600 ticks without dying
+PASS all-skills-64 simulation and saves do not change page elements
+PASS all-skills-64 writes a valid current save
+PASS no browser runtime errors
+BENCH {"label":"basic-1","monsters":1,"skills":"none","simulatedSeconds":60,"measuredRuns":3,"simulationMs":7.4,"savingMs":1.6,"simulationMsPerSecond":0.123,"savingMsPerSecond":0.027,"saveBytes":3121,"saveBreakdown":{"buildMsPerSave":0.013,"serializeMsPerSave":0.002,"storageMsPerSave":0.017}}
+BENCH {"label":"all-skills-1","monsters":1,"skills":"all","simulatedSeconds":60,"measuredRuns":3,"simulationMs":107.6,"savingMs":5.1,"simulationMsPerSecond":1.793,"savingMsPerSecond":0.085,"saveBytes":7305,"saveBreakdown":{"buildMsPerSave":0.017,"serializeMsPerSave":0.005,"storageMsPerSave":0.012}}
+BENCH {"label":"all-skills-8","monsters":8,"skills":"all","simulatedSeconds":60,"measuredRuns":3,"simulationMs":190.8,"savingMs":7.8,"simulationMsPerSecond":3.18,"savingMsPerSecond":0.13,"saveBytes":9747,"saveBreakdown":{"buildMsPerSave":0.003,"serializeMsPerSave":0.013,"storageMsPerSave":0.022}}
+BENCH {"label":"all-skills-64","monsters":64,"skills":"all","simulatedSeconds":60,"measuredRuns":3,"simulationMs":253.8,"savingMs":13.5,"simulationMsPerSecond":4.23,"savingMsPerSecond":0.225,"saveBytes":59402,"saveBreakdown":{"buildMsPerSave":0.002,"serializeMsPerSave":0.067,"storageMsPerSave":0.057}}
+PROFILE {"label":"all-skills-64","simulatedSeconds":60,"note":"Instrumented inclusive timings overlap and must not be added to the uninstrumented totals.","functions":[{"name":"getSkillStatFromRanks","calls":11071,"inclusiveMs":99.8},{"name":"getSkillMultiplier","calls":11546,"inclusiveMs":78.3},{"name":"tickMonsterPoison","calls":36831,"inclusiveMs":29.8},{"name":"tickMonsterBleed","calls":36830,"inclusiveMs":29.5},{"name":"tickElementalBrands","calls":36829,"inclusiveMs":26.3},{"name":"getGearStat","calls":27847,"inclusiveMs":17},{"name":"monsterDefinition","calls":76754,"inclusiveMs":16.7},{"name":"tickPendingEruptions","calls":600,"inclusiveMs":13.8},{"name":"defeatEnemy","calls":87,"inclusiveMs":2.4}]}
+SMOKE PASSED

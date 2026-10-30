@@ -1,20 +1,30 @@
 (function () {
     'use strict';
     let active = null, preview = null, frame = 0;
+    const sizeObserver = new ResizeObserver(position);
 
     function close() {
         cancelAnimationFrame(frame);
+        frame = 0;
+        sizeObserver.disconnect();
+        document.removeEventListener('scroll', schedulePosition, true);
+        window.removeEventListener('resize', schedulePosition);
         active?.setAttribute('aria-expanded', 'false');
         preview?.remove();
         active = preview = null;
     }
     function position() {
+        if (!active) return;
         const image = active?.querySelector('img');
         const rect = image?.getBoundingClientRect();
         if (!active?.isConnected || !rect?.width || !rect.height) { close(); return; }
         preview.style.left = rect.left + rect.width / 2 + 'px';
         preview.style.top = rect.top + rect.height / 2 + 'px';
-        frame = requestAnimationFrame(position);
+    }
+    function schedulePosition() {
+        if (frame || !active) return;
+        // Coalesce scroll/resize events without running a permanent frame loop.
+        frame = requestAnimationFrame(() => { frame = 0; position(); });
     }
     function toggle(icon) {
         if (active === icon) { close(); return; }
@@ -35,6 +45,9 @@
             source?.focus({preventScroll: true});
         });
         document.body.append(preview);
+        sizeObserver.observe(image);
+        document.addEventListener('scroll', schedulePosition, {capture: true, passive: true});
+        window.addEventListener('resize', schedulePosition, {passive: true});
         position();
     }
     function createIcon(item, fallback) {

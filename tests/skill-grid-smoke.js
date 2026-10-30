@@ -35,9 +35,13 @@
     }
     try {
         if (!editor) { state.currentView = 'upgrades'; render(); }
+        const availableIds = [...document.querySelectorAll(editor ? '.graph-node' : '[data-skill-node]')]
+            .map(node => editor ? node.dataset.nodeId : node.dataset.skillNode);
+        const testIds = ['origin', ...availableIds.filter(id => id !== 'origin').slice(0, 2)];
+        check('grid checks include the origin and two current skill nodes', testIds.length === 3 && availableIds.includes('origin'));
         for (const mode of editor ? ['player', 'detailed'] : ['game']) {
             if (editor) document.querySelector('[data-view-mode="' + mode + '"]').click();
-            for (const id of ['origin', 'poisonDMG_2', 'poisonDMG_3']) {
+            for (const id of testIds) {
                 if (editor) document.querySelector('#nodeList [data-node-id="' + id + '"]').click();
                 const before = center(id);
                 for (const size of [1, 1.25, 1.5]) {
@@ -49,8 +53,8 @@
                 }
             }
             if (editor) {
-                const card = document.querySelector(selector('poisonDMG_3'));
-                const before = center('poisonDMG_3');
+                const card = document.querySelector(selector(testIds[2]));
+                const before = center(testIds[2]);
                 const column = Number(document.getElementById('nodeColumn').value);
                 const row = Number(document.getElementById('nodeRow').value);
                 const scale = card.getBoundingClientRect().width / card.offsetWidth;

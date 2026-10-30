@@ -180,6 +180,7 @@ function renderElementalStatuses(view,monster) {
 }
 
 function showElementalBurst(targetIds,element,explosion) {
+    if (!combatEffectEnabled('abilities')) return;
     const mapId=state.selectedMap;
     presentCombatEffect(()=>{
         if (state.currentView!=='map' || state.selectedMap!==mapId) return;

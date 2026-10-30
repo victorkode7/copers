@@ -66,6 +66,7 @@
         }
     }
     function flash(source, reward) {
+        if (window.CombatSettings?.enabled('glows') === false) return;
         const card = source?.closest('.enemy-card');
         if (!card || reducedMotion()) return;
         const previous = flashes.get(card);
@@ -82,6 +83,7 @@
         };
     }
     function drop(rewards, source, nextMapId) {
+        if (window.CombatSettings?.enabled() === false) return;
         if (document.hidden || !rewards.length) return;
         sync(true, nextMapId);
         const now = performance.now(), visibleStatus = statusBounds();

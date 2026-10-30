@@ -1367,6 +1367,11 @@ html {
     transition: width 150ms linear;
 }
 
+.idle-adventure .health-fill:not(.player-mana-fill) {
+    transform-origin: left center;
+    transition: transform 150ms linear;
+}
+
 .idle-adventure .player-health {
     margin-top: 0.75rem;
     padding: 0.8rem 1rem;
@@ -1720,6 +1725,10 @@ html {
     position: absolute;
     top: 0;
     bottom: 0;
+    left: 0;
+    width: 100%;
+    transform-origin: left center;
+    transform: translateX(0%) scaleX(0);
     border-radius: 0;
     background: var(--adventure-coral);
     opacity: 0;
@@ -1736,6 +1745,10 @@ html {
     z-index: 3;
     top: 0;
     bottom: 0;
+    left: 0;
+    width: 100%;
+    transform-origin: left center;
+    transform: translateX(0%) scaleX(0);
     border-radius: 0;
     background: #d94156;
     opacity: 0;
@@ -1753,13 +1766,15 @@ html {
     left: 0;
     top: 0;
     bottom: 0;
-    width: 0;
+    width: 100%;
+    transform-origin: left center;
+    transform: translateX(0%) scaleX(0);
     border-radius: 0;
     background: #54d878;
     box-shadow: 0 0 6px rgba(84, 216, 120, 0.4);
     opacity: 1;
     pointer-events: none;
-    transition: left 150ms linear, width 150ms linear;
+    transition: transform 150ms linear;
 }
 
 .idle-adventure .enemy-details .subtle {

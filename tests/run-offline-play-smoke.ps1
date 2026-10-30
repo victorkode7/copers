@@ -115,8 +115,9 @@ try {
     $null = Send-Cdp 'Page.navigate' @{url=$origin + '/index.html'}
     Wait-For 'Boolean(navigator.serviceWorker.controller && document.getElementById("offlinePlayStatus")?.textContent === "Ready for offline play")'
     Check 'the hosted game installs a complete offline cache' (Evaluate '(async()=>{const names=await caches.keys();const cache=await caches.open(names.find(name=>name.startsWith("idle-adventure-offline-")));return (await cache.keys()).length>100;})()')
-    $baseline = Evaluate '(()=>{const random=Math.random;Math.random=()=>0;try{state.currentView="map";state.isInTown=false;state.combatPaused=false;state.playerHp=getPlayerMaxHealth();state.monsterStates[0].hp=1;state.attackTimer=getAttackSpeed();simulateCombatStep(gameTickSeconds);render();saveGame();return {gold:state.gold,gel:state.materials.gel,origin:performance.timeOrigin};}finally{Math.random=random;}})()'
+    $baseline = Evaluate '(()=>{const random=Math.random;Math.random=()=>0;try{currentMap().drops=[{id:"gel",amount:[1,1],chance:1}];state.currentView="map";state.isInTown=false;state.combatPaused=false;state.playerHp=getPlayerMaxHealth();state.monsterStates[0].hp=1;state.attackTimer=getAttackSpeed();simulateCombatStep(gameTickSeconds);render();saveGame();return {gold:state.gold,gel:state.materials.gel,origin:performance.timeOrigin};}finally{Math.random=random;}})()'
     Check 'combat awards and saves progress before disconnecting' ($baseline.gold -gt 0 -and $baseline.gel -gt 0)
+    Check 'visual preferences can be saved before disconnecting' (Evaluate '(()=>{document.getElementById("openCombatSettings").click();document.querySelector("[data-effect-setting=projectiles]").click();document.getElementById("closeCombatSettings").click();return !CombatSettings.enabled("projectiles");})()')
     Stop-Job $server
     Check 'the origin server is stopped for the offline checks' ($server.State -eq 'Stopped')
     $oldOrigin = $baseline.origin | ConvertTo-Json -Compress
@@ -124,13 +125,14 @@ try {
     Wait-For ('Boolean(typeof hasSavedGame !== "undefined" && hasSavedGame && document.readyState === "complete" && performance.timeOrigin !== ' + $oldOrigin + ')')
     $restored = Evaluate '({gold:state.gold,gel:state.materials.gel,logo:document.querySelector(".logo img").complete && document.querySelector(".logo img").naturalWidth>0})'
     Check 'the game reloads offline with its saved progress and original logo' ($restored.gold -ge $baseline.gold -and $restored.gel -ge $baseline.gel -and $restored.logo)
+    Check 'Settings and visual preferences work offline' (Evaluate '(()=>{document.getElementById("openCombatSettings").click();const dialog=document.getElementById("combatSettingsDialog"),saved=!CombatSettings.enabled("projectiles"),styled=getComputedStyle(dialog).borderRadius==="14px";document.querySelector("[data-effect-setting=projectiles]").click();document.getElementById("closeCombatSettings").click();return saved&&styled&&CombatSettings.enabled("projectiles");})()')
     Check 'sprites for every world remain available offline' (Evaluate '(async()=>{state.developerTravelEnabled=true;clearOfflineRecap();for(const world of worldData){travelToMap(world.mapIds.at(-1));await elements.combatArt.decode();if(!elements.combatArt.naturalWidth)return false;}return true;})()')
     Check 'crafting and inventory remain playable offline' (Evaluate '(()=>{for(const id of Object.keys(materialNames))state.materials[id]=100000;const recipe=recipes.find(entry=>recipeIsUnlocked(entry)&&!ownsItem(entry.id));craftGear(recipe.id);state.currentView="inventory";render();return ownsItem(recipe.id)&&elements.inventory.children.length>0;})()')
     Check 'the skill tree and fonts remain available offline' (Evaluate '(async()=>{state.currentView="upgrades";render();await document.fonts.ready;return Boolean(document.querySelector(".skill-tree-board"))&&document.fonts.check("16px \"Pixeloid Sans\"");})()')
     Check 'offline play has no runtime errors' (Evaluate 'offlineSmokeErrors.length === 0')
     $null = Send-Cdp 'Page.navigate' @{url=([uri](Join-Path $projectPath 'index.html')).AbsoluteUri}
     Wait-For 'Boolean(location.protocol === "file:" && document.readyState === "complete" && typeof state !== "undefined")'
-    Check 'a downloaded folder also opens directly without a server' (Evaluate '(()=>{const random=Math.random;Math.random=()=>0;try{state.combatPaused=false;state.playerHp=getPlayerMaxHealth();state.monsterStates[0].hp=1;state.attackTimer=getAttackSpeed();simulateCombatStep(gameTickSeconds);return state.gold>0&&state.materials.gel>0&&offlineSmokeErrors.length===0;}finally{Math.random=random;}})()')
+    Check 'a downloaded folder also opens directly without a server' (Evaluate '(()=>{const random=Math.random;Math.random=()=>0;try{currentMap().drops=[{id:"gel",amount:[1,1],chance:1}];state.combatPaused=false;state.playerHp=getPlayerMaxHealth();state.monsterStates[0].hp=1;state.attackTimer=getAttackSpeed();simulateCombatStep(gameTickSeconds);return state.gold>0&&state.materials.gel>0&&offlineSmokeErrors.length===0;}finally{Math.random=random;}})()')
     $external = @($script:requests | Where-Object { $_ -match '^https?://' -and !$_.StartsWith($origin + '/') })
     Check 'the game makes no requests to external services' ($external.Count -eq 0)
     Write-Output 'SMOKE PASSED'

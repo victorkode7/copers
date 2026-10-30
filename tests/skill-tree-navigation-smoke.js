@@ -1,0 +1,66 @@
+(function () {
+    const checks = [];
+    const check = (label, ok) => { checks.push((ok ? 'PASS ' : 'FAIL ') + label); if (!ok) throw new Error(label); };
+    const near = (a, b) => Math.abs(a - b) < .2;
+    const center = element => { const r = element.getBoundingClientRect(); return {x: r.left + r.width / 2, y: r.top + r.height / 2}; };
+    const originalRender = renderUpgrades;
+    let renders = 0;
+    try {
+        state.currentView = 'upgrades'; state.skillRanks = {}; state.skillPoints = 10;
+        pendingSkillRanks = {}; refundMode = false; render(); centerSkillTreeOnOrigin(true);
+        const viewport = elements.upgrades.querySelector('.skill-tree-viewport');
+        const board = viewport.querySelector('.skill-tree-board');
+        const origin = board.querySelector('[data-skill-node="origin"]');
+        const node = board.querySelector('.skill-node.is-available:not(.is-origin)');
+        const ranksBefore = JSON.stringify([state.skillRanks, pendingSkillRanks]);
+        renderUpgrades = function () { renders++; return originalRender(); };
+        const observer = new MutationObserver(() => {});
+        observer.observe(board, {subtree: true, attributes: true, childList: true, characterData: true});
+        const pointer = (target, type, x, y, button = 0) => target.dispatchEvent(new PointerEvent(type, {bubbles: true, button, clientX: x, clientY: y}));
+        const before = center(node), x = skillTreePanX, y = skillTreePanY;
+        pointer(viewport, 'pointerdown', 200, 200);
+        pointer(window, 'pointermove', 240, 225);
+        pointer(window, 'pointerup', 240, 225);
+        const moved = center(node);
+        check('dragging moves the existing board by the pointer delta', near(moved.x - before.x, 40) && near(moved.y - before.y, 25) && near(skillTreePanX, x + 40) && near(skillTreePanY, y + 25));
+        check('releasing the pointer ends panning', !skillTreePanning && !viewport.classList.contains('is-panning'));
+        node.dispatchEvent(new PointerEvent('pointerover', {bubbles: true}));
+        const tooltip = viewport.querySelector('#skillNodeTooltip');
+        check('node tooltips still open', !tooltip.hidden && tooltip.querySelector('strong').textContent === skillNodeById[node.dataset.skillNode].name);
+        const viewportCenter = center(viewport), oldZoom = skillTreeZoom, beforeZoom = center(node);
+        const wheel = (deltaY, point = viewportCenter) => viewport.dispatchEvent(new WheelEvent('wheel', {bubbles: true, cancelable: true, deltaY, clientX: point.x, clientY: point.y}));
+        wheel(-100);
+        const zoomed = center(node), ratio = skillTreeZoom / oldZoom;
+        check('zoom stays anchored at the cursor', near(zoomed.x - viewportCenter.x, (beforeZoom.x - viewportCenter.x) * ratio) && near(zoomed.y - viewportCenter.y, (beforeZoom.y - viewportCenter.y) * ratio));
+        check('camera movement clears a tooltip at the old position', tooltip.hidden);
+        check('the center node retains its zoom-specific sizing', near(origin.offsetWidth * skillTreeZoom, 78 * Number(skillNodeById.origin.size || 1)));
+        wheel(100000);
+        check('zoom out is limited to 0.1 with the center-node size cap', skillTreeZoom === .1 && origin.offsetWidth === 130);
+        wheel(-100000);
+        check('zoom in is limited to 3', skillTreeZoom === 3);
+        pointer(node, 'pointerdown', 100, 100); pointer(window, 'pointermove', 500, 500);
+        check('node presses do not start a drag', !skillTreePanning);
+        pointer(viewport, 'pointerdown', 100, 100); pointer(window, 'pointermove', 100000, 100000);
+        check('dragging cannot move the board beyond its near edge', near(skillTreePanX, viewport.clientWidth / 2) && near(skillTreePanY, viewport.clientHeight / 2));
+        pointer(window, 'pointermove', -100000, -100000);
+        check('dragging cannot move the board beyond its far edge', near(skillTreePanX, viewport.clientWidth / 2 - board.offsetWidth * skillTreeZoom) && near(skillTreePanY, viewport.clientHeight / 2 - board.offsetHeight * skillTreeZoom));
+        pointer(window, 'pointercancel', -100000, -100000);
+        check('pointer cancellation stops panning', !skillTreePanning && !viewport.classList.contains('is-panning'));
+        centerSkillTreeOnOrigin(true);
+        // Centering uses integer offset/client dimensions, so allow pixel rounding.
+        check('recentering keeps the origin centered', Math.abs(center(origin).x - center(viewport).x) < 1 && Math.abs(center(origin).y - center(viewport).y) < 1);
+        const records = observer.takeRecords(); observer.disconnect();
+        check('navigation does not refresh node labels or connection state', records.every(record => record.type === 'attributes' && record.attributeName === 'style' && (record.target === board || origin.contains(record.target))));
+        check('navigation never calls the full tree renderer', renders === 0);
+        check('camera changes preserve skill choices', ranksBefore === JSON.stringify([state.skillRanks, pendingSkillRanks]));
+        check('nodes and connections retain their DOM identity', board.querySelector('[data-skill-node="' + node.dataset.skillNode + '"]') === node);
+        node.click();
+        check('selecting a skill still refreshes its pending state', pendingSkillRanks[node.dataset.skillNode] === 1 && renders > 0 && node.classList.contains('is-pending'));
+        document.getElementById('confirmSkillSelection').click();
+        check('confirming still purchases the selected skill', state.skillRanks[node.dataset.skillNode] === 1 && state.skillPoints === 9);
+        check('no runtime errors', !window.smokeErrors.length);
+        checks.push('SMOKE PASSED');
+    } catch (error) { checks.push('ERROR ' + error.stack); }
+    finally { renderUpgrades = originalRender; }
+    const report = document.createElement('pre'); report.id = 'smoke-results'; report.textContent = checks.join('\n'); document.body.append(report);
+}());

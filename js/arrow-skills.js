@@ -138,6 +138,7 @@ function triggerAttackArrowSkills(target, damage, includeMultishot = true) {
 }
 
 function showCombatArrow(sourceId, targetId, kind, direction, visual = {}) {
+    if (!combatEffectEnabled('projectiles')) return;
     const mapId = state.selectedMap, freezing = getSkillNodeRank('freezingArrows') > 0;
     const columns = Math.max(1, state.monsterColumns || 1);
     const targetMonster = state.monsterStates.find(monster => monster.id === targetId);

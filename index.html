@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/nav.css">
     <link rel="stylesheet" href="css/app-nav.css">
-    <link rel="stylesheet" href="css/game.css?v=20261027-18">
+    <link rel="stylesheet" href="css/game.css?v=20261030-1">
     <link rel="stylesheet" href="css/equipment-effects.css?v=1">
     <link rel="stylesheet" href="css/equipment-sprite-preview.css?v=3">
     <link rel="stylesheet" href="css/elemental-skills.css?v=20261027-10">
@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="css/skill-tree-background.css?v=20261021-18">
     <link rel="stylesheet" href="css/inventory-categories.css?v=2">
     <link rel="stylesheet" href="css/loot-effects.css?v=6">
+    <link rel="stylesheet" href="css/combat-settings.css?v=1">
     <title>Idle Adventure</title>
 </head>
 <body class="idle-adventure">
@@ -41,6 +42,7 @@
                     </ul>
                 </li>
                 <li class="reset-nav-item">
+                    <button id="openCombatSettings" class="nav-button" type="button" aria-haspopup="dialog">Settings</button>
                     <button id="exportProfile" class="nav-button" type="button" title="Download a backup of your current game">Export Profile</button>
                     <button id="importProfile" class="nav-button" type="button" title="Restore a JSON backup, replacing your current progress">Import Profile</button>
                     <button id="saveBackupsButton" class="nav-button" type="button">Backups</button>
@@ -336,9 +338,20 @@
         <ul id="saveBackupsList" class="save-backups-list"></ul>
         <button id="closeSaveBackups" type="button">Close</button>
     </dialog>
+    <dialog id="combatSettingsDialog" class="combat-settings" aria-labelledby="combatSettingsHeading">
+        <div class="combat-settings-heading"><h2 id="combatSettingsHeading">Combat effects</h2><button id="closeCombatSettings" type="button">Close</button></div>
+        <p>Turn off visuals to reduce animation work. Combat, rewards, health bars and status counts work as usual. Choices are saved on this device.</p>
+        <button type="button" role="switch" aria-checked="true" data-effect-setting="all" class="combat-effect-switch combat-effect-master"><span><strong>All combat effects</strong><small>Master switch for optional effects, shaking, glows and animation. Your choices below are remembered.</small></span><span data-switch-state>On</span></button>
+        <button type="button" role="switch" aria-checked="true" data-effect-setting="projectiles" class="combat-effect-switch"><span><strong>Projectiles</strong><small>Travelling arrows and spell missiles. Requires ability effects.</small></span><span data-switch-state>On</span></button>
+        <button type="button" role="switch" aria-checked="true" data-effect-setting="abilities" class="combat-effect-switch"><span><strong>Ability effects</strong><small>All ability visuals, including projectiles, explosions, cracks and impact effects.</small></span><span data-switch-state>On</span></button>
+        <button type="button" role="switch" aria-checked="true" data-effect-setting="shaking" class="combat-effect-switch"><span><strong>Monster plate shaking</strong><small>Movement when monsters are hit or defeated.</small></span><span data-switch-state>On</span></button>
+        <button type="button" role="switch" aria-checked="true" data-effect-setting="glows" class="combat-effect-switch"><span><strong>Glows and pulses</strong><small>Poison and bleed stack pulses, buffs, player plate glow and growing highlights.</small></span><span data-switch-state>On</span></button>
+        <p id="combatSettingsStatus" role="status"></p>
+    </dialog>
     <p id="offlinePlayStatus" class="offline-play-status" role="status" hidden></p>
     <p id="profileStatus" class="profile-status" role="status" aria-live="polite" hidden></p>
     <footer class="developer-options"><details><summary>Developer options</summary><label><input id="developerItems" type="checkbox"> Enable developer equipment</label><label><input id="developerTravel" type="checkbox"> Skip kill requirements — unlock all maps and worlds</label></details></footer>
+    <script src="js/combat-settings.js?v=1"></script>
     <script src="js/items.js?v=20261021-2"></script>
     <script src="js/item-system.js?v=20261028-1"></script>
     <script src="js/skill-tree.js?v=20261027-11"></script>
@@ -348,17 +361,17 @@
     <script src="js/equipment-effects.js?v=1"></script>
     <script src="js/world-content.js?v=20261027-18"></script>
     <script src="js/world-system.js?v=20261026-1"></script>
-    <script src="js/loot-effects.js?v=6"></script>
-    <script src="js/arrow-skills.js?v=20261028-1"></script>
-    <script src="js/eruption-skills.js?v=20261026-2"></script>
-    <script src="js/shield-effects.js?v=20261026-2"></script>
+    <script src="js/loot-effects.js?v=7"></script>
+    <script src="js/arrow-skills.js?v=20261030-1"></script>
+    <script src="js/eruption-skills.js?v=20261030-1"></script>
+    <script src="js/shield-effects.js?v=20261030-1"></script>
     <script src="js/bleed.js?v=20261026-5"></script>
-    <script src="js/spell-skills.js?v=20261027-7"></script>
-    <script src="js/elemental-skills.js?v=20261027-11"></script>
+    <script src="js/spell-skills.js?v=20261030-1"></script>
+    <script src="js/elemental-skills.js?v=20261030-1"></script>
     <script src="js/damage-breakdown.js?v=20261027-6"></script>
     <script src="js/save-compat.js?v=20261026-3"></script>
-    <script src="js/equipment-sprite-preview.js?v=1"></script>
-    <script src="js/game.js?v=20261030-1"></script>
+    <script src="js/equipment-sprite-preview.js?v=2"></script>
+    <script src="js/game.js?v=20261030-6"></script>
     <script src="js/skill-builds.js?v=20261027-14"></script>
     <script src="js/game-profiles.js?v=20261026-1"></script>
     <script src="js/offline-play.js?v=20261025-1"></script>

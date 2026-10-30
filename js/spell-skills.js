@@ -174,6 +174,7 @@ function castVoidVortex() {
 }
 
 function showVoidVortex(targetIds,visualDelay=0) {
+    if (!combatEffectEnabled('abilities')) return;
     const mapId=state.selectedMap;
     presentCombatEffect(()=>{
         if (state.currentView!=='map' || state.selectedMap!==mapId) return;
@@ -253,6 +254,7 @@ function getVoidVolleyCurve(start,target,index,count,noise,frame) {
 }
 
 function showVoidVolleyPlayerGlow(holdSeconds,windupSeconds=0) {
+    if (!combatEffectEnabled('glows') || !combatEffectEnabled('abilities')) return;
     if(holdSeconds<=0 || state.playerHp<=0)return;
     const panel=elements.playerHealthPanel,now=performance.now();
     let glow=panel.querySelector('.void-volley-player-glow');
@@ -280,6 +282,7 @@ function showVoidVolleyPlayerGlow(holdSeconds,windupSeconds=0) {
 }
 
 function showSpellCast(kind,hits,visualDelay=0) {
+    if (!combatEffectEnabled('projectiles')) return;
     const mapId=state.selectedMap;
     const visuals=hits.map(hit=>{
         if(!hit.missile||combatEffects===null||document.hidden)return null;
@@ -365,6 +368,7 @@ function showSpellCast(kind,hits,visualDelay=0) {
 }
 
 function showVoidMissileImpact(targetId,missile) {
+    if (!combatEffectEnabled('abilities')) return;
     // Visible casts already own a ring on the projectile's exact timeline.
     // Saves and casts launched offscreen have no visual handle and use a fallback.
     if(missile&&voidMissileVisuals.has(missile)){voidMissileVisuals.delete(missile);return;}

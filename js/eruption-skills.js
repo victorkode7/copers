@@ -62,6 +62,7 @@ function tickPendingEruptions(elapsed) {
 }
 
 function showVolcanicEruption(centerId, targetIds) {
+    if (!combatEffectEnabled('abilities')) return;
     const mapId = state.selectedMap;
     presentCombatEffect(() => {
         if (document.hidden || state.currentView !== 'map' || state.selectedMap !== mapId) return;
@@ -141,6 +142,7 @@ function addEruptionCrackTrail(svg, path, start, end, delay) {
 }
 
 function showEruptionChain(sourceId, targetId, delay) {
+    if (!combatEffectEnabled('abilities')) return;
     if (sourceId === targetId) return;
     const mapId = state.selectedMap;
     presentCombatEffect(() => {

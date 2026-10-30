@@ -121,9 +121,25 @@
                     const bad=JSON.parse(JSON.stringify(saved));bad.monsterStates[0].bleed=Array.isArray(invalid)||typeof invalid==='string'?invalid:{stacks:1,remainingDuration:1,timeUntilTick:1,...invalid};
                     let rejected=false;try{parseGameSave(JSON.stringify(bad));}catch(_){rejected=true;}check('malformed Bleed saves are rejected: '+JSON.stringify(invalid),rejected);
                 }
-                function simulate(effects){fresh({bleed:1,shieldGenerator:1,shockwaveSlash:1},8,60);Object.assign(itemById.testAmulet.stats,{bleedDamage:4,attackSpeedMultiplier:4,multiHit:2});let seed=7843;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};for(let index=0;index<400;index++)simulateCombatStep(.1,effects);return JSON.stringify({monsters:state.monsterStates,hp:state.playerHp,kills:state.kills,gold:state.gold,target:state.targetMonsterId,shields:state.shieldStacks});}
-                const observer=new MutationObserver(()=>{});observer.observe(document.body,{subtree:true,childList:true,attributes:true,characterData:true});
-                const foreground=simulate(true),offline=simulate(false);const mutations=observer.takeRecords();observer.disconnect();
+                const mutations=[];
+                function simulate(effects) {
+                    fresh({bleed:1,shieldGenerator:1,shockwaveSlash:1},8,60);
+                    Object.assign(itemById.testAmulet.stats,{bleedDamage:4,attackSpeedMultiplier:4,multiHit:2});
+                    let seed=7843;
+                    Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+                    // Scenario reset may update the HUD. Observe only the simulation,
+                    // which must queue visual effects without changing the page.
+                    const observer=new MutationObserver(()=>{});
+                    observer.observe(document.body,{subtree:true,childList:true,attributes:true,characterData:true});
+                    try {
+                        for(let index=0;index<400;index++)simulateCombatStep(.1,effects);
+                    } finally {
+                        mutations.push(...observer.takeRecords());
+                        observer.disconnect();
+                    }
+                    return JSON.stringify({monsters:state.monsterStates,hp:state.playerHp,kills:state.kills,gold:state.gold,target:state.targetMonsterId,shields:state.shieldStacks});
+                }
+                const foreground=simulate(true),offline=simulate(false);
                 check('foreground and offline Bleed combat produce identical states and rewards',foreground===offline&&state.kills[map.id]>0);
                 check('Bleed simulation does not mutate the DOM',mutations.length===0);
                 [a]=fresh();for(let index=0;index<5;index++)tryApplyBleed(a,10);a.poisonStacks=[{remainingDuration:5,timeUntilTick:1}];render();
@@ -131,7 +147,8 @@
                 check('plates show red Bleed stacks and the shared duration beside poison',!badge.hidden&&badge.querySelector('strong').textContent==='5x'&&badge.querySelector('[data-enemy-bleed-duration]').textContent==='5s'&&!card.querySelector('[data-enemy-dot-status]').hidden);
                 check('Bleed status stays inside the plate on narrow screens',badge.getBoundingClientRect().right<=card.getBoundingClientRect().right+1&&badge.getBoundingClientRect().left>=card.getBoundingClientRect().left-1);
                 const green=card.querySelector('.enemy-health-poison-damage:not(.enemy-health-bleed-damage)'),red=card.querySelector('.enemy-health-bleed-damage');
-                check('poison and Bleed forecasts occupy separate health-bar segments',parseFloat(red.style.width)>0&&parseFloat(red.style.left)+parseFloat(red.style.width)<=parseFloat(green.style.left)+1e-6);
+                red.style.transition=green.style.transition='none';
+                check('poison and Bleed forecasts occupy separate health-bar segments',red.getBoundingClientRect().width>0&&red.getBoundingClientRect().right<=green.getBoundingClientRect().left+1e-6);
                 tickMonsterBleed(a,5);a.poisonStacks=[];renderCombat();const after=health.getBoundingClientRect();
                 check('expiring statuses hides the badge without moving the health bar',badge.hidden&&near(before.top,after.top)&&near(before.left,after.left)&&near(before.width,after.width));
                 $('detailedStats').open=true;renderCombat();

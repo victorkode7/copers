@@ -234,6 +234,7 @@ let simulatingCombat = false;
 // undefined presents immediately; null suppresses effects; an array collects a live step.
 let combatEffects;
 let combatStatCache = null;
+const skillBonusCache = {ranks: null, level: null, flat: new Map(), multipliers: new Map()};
 let combatPoisonForecasts = null;
 let combatAnimationRestarts = null;
 let combatEffectLayout = null;
@@ -373,9 +374,13 @@ document.getElementById('offlineRecap').addEventListener('click', event => {
     if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dismissOfflineRecap();
 });
 
-function presentCombatEffect(effect) {
-    if (combatEffects === null || document.hidden) return;
-    if (combatEffects) combatEffects.push(effect);
+function combatEffectEnabled(category = 'general') {
+    return window.CombatSettings?.enabled(category) !== false;
+}
+
+function presentCombatEffect(effect, category = 'general') {
+    if (combatEffects === null || document.hidden || !combatEffectEnabled(category)) return;
+    if (combatEffects) combatEffects.push(() => { if (combatEffectEnabled(category)) effect(); });
     else effect();
 }
 
@@ -386,6 +391,9 @@ function cachedCombatStat(key, calculate) {
 }
 
 function restartCombatAnimation(element, className) {
+    const category = ['is-defeating', 'is-shockwave-splashed'].includes(className) ? 'shaking'
+        : ['is-applying', 'is-proccing', 'is-releasing', 'is-damaged', 'is-dodging', 'is-shockwave-hit', 'is-shield-blocking'].includes(className) ? 'glows' : 'general';
+    if (!combatEffectEnabled(category)) return;
     element.classList.remove(className);
     if (combatAnimationRestarts) {
         if (!combatAnimationRestarts.has(element)) combatAnimationRestarts.set(element, new Set());
@@ -605,14 +613,14 @@ function clearEnemyDamageIndicator() {
             window.clearTimeout(enemyDamageIndicatorTimers.get(indicator));
             indicator.classList.remove('is-visible');
             if (indicator.classList.contains('enemy-health-poison-damage')) {
-                indicator.style.left = '0%';
-                indicator.style.width = '0%';
+                setCombatBar(indicator, 0);
             }
         });
     });
 }
 
 function flashDodge(track) {
+    if (!combatEffectEnabled('glows')) return;
     presentCombatEffect(() => {
         window.clearTimeout(dodgeFlashTimeouts.get(track));
         restartCombatAnimation(track, 'is-dodging');
@@ -624,6 +632,7 @@ function flashDodge(track) {
 }
 
 function showMonsterProc(monsterId, procName) {
+    if (!combatEffectEnabled('abilities')) return;
     presentCombatEffect(() => {
         const card = getCombatEffectCard(monsterId);
         const notice = card && card.querySelector('[data-enemy-proc-notice]');
@@ -646,6 +655,7 @@ function showMonsterProc(monsterId, procName) {
 }
 
 function showPoisonStackProc(monster) {
+    if (!combatEffectEnabled('glows')) return;
     presentCombatEffect(() => {
         const card = getCombatEffectCard(monster.id);
         const indicator = card && card.querySelector('[data-enemy-dot-status]');
@@ -657,6 +667,7 @@ function showPoisonStackProc(monster) {
 }
 
 function flashShockwaveHealthBar(monsterId) {
+    if (!combatEffectEnabled('glows') || !combatEffectEnabled('abilities')) return;
     presentCombatEffect(() => {
         const card = getCombatEffectCard(monsterId);
         const healthTrack = card && card.querySelector('.health-track');
@@ -666,6 +677,7 @@ function flashShockwaveHealthBar(monsterId) {
 }
 
 function showMonsterHitBadge(monsterId, label, isMultiHit = false, priority = 0) {
+    if (!combatEffectEnabled('abilities')) return;
     presentCombatEffect(() => {
         const card = getCombatEffectCard(monsterId);
         if (!card) return;
@@ -688,6 +700,7 @@ function showMonsterHitBadge(monsterId, label, isMultiHit = false, priority = 0)
 }
 
 function flashShockwaveCard(monsterId) {
+    if (!combatEffectEnabled('shaking') || !combatEffectEnabled('abilities')) return;
     presentCombatEffect(() => {
         const card = getCombatEffectCard(monsterId);
         if (!card) return;
@@ -696,6 +709,7 @@ function flashShockwaveCard(monsterId) {
 }
 
 function flashPlayerHealthBar() {
+    if (!combatEffectEnabled('glows')) return;
     presentCombatEffect(() => {
         restartCombatAnimation(elements.playerHealthTrack, 'is-damaged');
     });
@@ -773,9 +787,27 @@ function getSkillStatFromRanks(stat, ranks) {
 }
 
 function getSkillStat(stat) {
-    return cachedCombatStat('getSkillStat:' + stat, () => {
-        return getSkillStatFromRanks(stat, state.skillRanks);
-    });
+    const cache = getSkillBonusCache();
+    if (!cache.flat.has(stat)) cache.flat.set(stat, getSkillStatFromRanks(stat, state.skillRanks));
+    return cache.flat.get(stat);
+}
+
+function invalidateSkillBonusCache() {
+    skillBonusCache.ranks = null;
+    // Derived values in the current combat batch must also see allocation edits.
+    if (combatStatCache) combatStatCache.clear();
+}
+
+function getSkillBonusCache() {
+    // Loading/resetting/importing builds replaces the allocation object. In-place
+    // purchases and refunds explicitly invalidate it; level affects attack speed.
+    if (skillBonusCache.ranks !== state.skillRanks || skillBonusCache.level !== state.level) {
+        skillBonusCache.ranks = state.skillRanks;
+        skillBonusCache.level = state.level;
+        skillBonusCache.flat.clear();
+        skillBonusCache.multipliers.clear();
+    }
+    return skillBonusCache;
 }
 
 function ownsItem(id, source = state) {
@@ -1011,6 +1043,7 @@ function renderCombatBuffs() {
 }
 
 function showVoidVolleyBuffProc() {
+    if (!combatEffectEnabled('glows') || !combatEffectEnabled('abilities')) return;
     const mapId=state.selectedMap;
     presentCombatEffect(()=>{
         if(state.currentView!=='map'||state.selectedMap!==mapId||state.playerHp<=0)return;
@@ -1097,16 +1130,18 @@ function tickPlayerRegeneration(elapsed) {
 }
 
 function getSkillMultiplier(stat) {
-    return cachedCombatStat('getSkillMultiplier:' + stat, () => {
-        return Object.entries(state.skillRanks).reduce((total, [id, rank]) => {
+    const cache = getSkillBonusCache();
+    if (!cache.multipliers.has(stat)) {
+        cache.multipliers.set(stat, Object.entries(state.skillRanks).reduce((total, [id, rank]) => {
             const node = skillNodeById[id];
             if (!node || !rank) return total;
             if (stat === 'attackSpeedMultiplier' && node.stats.attackSpeedPerLevel) {
                 total *= Math.pow(1 + node.stats.attackSpeedPerLevel, state.level * rank);
             }
             return total * Math.pow(node.stats[stat] || 1, rank);
-        }, 1);
-    });
+        }, 1));
+    }
+    return cache.multipliers.get(stat);
 }
 
 function getDamage() {
@@ -1422,7 +1457,7 @@ function travelToMap(mapId) {
     render();
     window.scrollTo(0, 0);
     if (changedMap && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        elements.combatPanel.animate([{opacity: .72, transform: 'translateY(6px)'}, {opacity: 1, transform: 'translateY(0)'}], {duration: 260, easing: 'ease-out'});
+        if (combatEffectEnabled()) elements.combatPanel.animate([{opacity: .72, transform: 'translateY(6px)'}, {opacity: 1, transform: 'translateY(0)'}], {duration: 260, easing: 'ease-out'});
     }
     saveGame();
     return true;
@@ -2157,12 +2192,7 @@ function renderUpgrades() {
         elements.upgrades.appendChild(viewport);
     }
 
-    // Apply zoom and pan transform (only if board exists)
-    if (board) {
-        const viewport = board.parentElement;
-        clampSkillTreePan(viewport, board);
-        board.style.transform = 'translate(' + skillTreePanX + 'px, ' + skillTreePanY + 'px) scale(' + skillTreeZoom + ')';
-    }
+    updateSkillTreeTransform(board.parentElement, board);
 
     // Update the skill points display bar
     const skillPointsDisplay = document.querySelector('#skillPointsDisplay');
@@ -2210,19 +2240,7 @@ function renderUpgrades() {
         const canAllocate = !node.start && available && rank < node.maxRank && (editingBuild || pendingPointCount < state.skillPoints);
         const canDeselect = !node.start && canDeselectPendingSkillNode(node.id);
         const button = board.querySelector('[data-skill-node="' + node.id + '"]');
-        const nodeSize = [1, 1.25, 1.5].includes(Number(node.size)) ? Number(node.size) : 1;
-        const baseNodeSize = 78 * nodeSize;
-        const displayedNodeSize = node.start
-            ? Math.min(130, baseNodeSize / Math.max(skillTreeZoom, 0.1))
-            : baseNodeSize;
-        button.style.width = displayedNodeSize + 'px';
-        button.style.height = displayedNodeSize + 'px';
-        button.style.minWidth = displayedNodeSize + 'px';
-        button.style.minHeight = displayedNodeSize + 'px';
-        if (node.start) {
-            const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
-            button.querySelector('.skill-node-icon').style.fontSize = displayedNodeSize * 1.8 * rootFontSize / 78 + 'px';
-        }
+        updateSkillTreeNodeSize(button, node);
         button.className = 'skill-node' +
             (node.start ? ' is-origin is-allocated' : '') +
             (['health', 'attackSpeed', 'accuracy', 'damage','mana'].includes(node.type) ? ' is-base-' + node.type : '') +
@@ -2996,9 +3014,9 @@ function renderLootNotice() {
         rewards.append(empty);
     }
     elements.lastDrop.replaceChildren(heading, ...(loot.equipment.length ? [equipment] : []), rewards);
-    if (animate && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (animate && combatEffectEnabled() && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         rewards.animate([{opacity: 0.3, transform: 'translateY(5px)'}, {opacity: 1, transform: 'translateY(0)'}], {duration: 260, easing: 'ease-out'});
-        if (newEquipment && loot.equipment.length) equipment.animate([{opacity: 0.3, transform: 'scale(0.97)', filter: 'brightness(1.6)'}, {opacity: 1, transform: 'scale(1)', filter: 'brightness(1)'}], {duration: 650, easing: 'ease-out'});
+        if (newEquipment && loot.equipment.length && combatEffectEnabled('glows')) equipment.animate([{opacity: 0.3, transform: 'scale(0.97)', filter: 'brightness(1.6)'}, {opacity: 1, transform: 'scale(1)', filter: 'brightness(1)'}], {duration: 650, easing: 'ease-out'});
     }
 }
 
@@ -3029,6 +3047,11 @@ function updateCombatHidden(element, hidden) {
 
 let combatLootSignature = null;
 let combatLootOwnedLabels = [];
+
+function setCombatBar(bar, percent, offset = 0) {
+    const transform = 'translateX(' + offset + '%) scaleX(' + percent / 100 + ')';
+    if (bar.style.transform !== transform) bar.style.transform = transform;
+}
 
 function renderCombat() {
     // This cache expires every render so equipment, ranks and levels stay current.
@@ -3141,22 +3164,20 @@ function renderCombatContent() {
         updateCombatText(enemyAccuracyText, combatStatFormatter.format(enemyHitChance) + '%');
         setAccuracyClass(playerAccuracyText, playerHitChance, true);
         setAccuracyClass(enemyAccuracyText, enemyHitChance, false);
-        view.healthBar.style.width = hpPercent + '%';
+        setCombatBar(view.healthBar, hpPercent);
         const healthTrack = view.healthTrack;
         updateCombatAttribute(healthTrack, 'aria-valuenow', Math.round(hpPercent));
         const poisonIndicator = view.poisonDamageBar;
         const remainingPoisonDamage = Math.min(monster.hp, getRemainingPoisonDamage(monster));
         const poisonPercent = remainingPoisonDamage / definition.health * 100;
-        poisonIndicator.style.left = Math.max(0, hpPercent - poisonPercent) + '%';
-        poisonIndicator.style.width = poisonPercent + '%';
+        setCombatBar(poisonIndicator, poisonPercent, Math.max(0, hpPercent - poisonPercent));
         poisonIndicator.classList.toggle('is-visible', monster.hp > 0 && remainingPoisonDamage > 0);
         updateCombatAttribute(poisonIndicator, 'title', remainingPoisonDamage > 0
             ? 'Poison will deal ' + combatStatFormatter.format(remainingPoisonDamage) + ' more damage'
             : '');
         const remainingBleedDamage = Math.min(Math.max(0, monster.hp - remainingPoisonDamage), getRemainingBleedDamage(monster));
         const bleedPercent = remainingBleedDamage / definition.health * 100;
-        view.bleedDamageBar.style.left = Math.max(0, hpPercent - poisonPercent - bleedPercent) + '%';
-        view.bleedDamageBar.style.width = bleedPercent + '%';
+        setCombatBar(view.bleedDamageBar, bleedPercent, Math.max(0, hpPercent - poisonPercent - bleedPercent));
         view.bleedDamageBar.classList.toggle('is-visible', monster.hp > 0 && remainingBleedDamage > 0);
         updateCombatAttribute(view.bleedDamageBar, 'title', remainingBleedDamage > 0
             ? 'Bleed will deal ' + combatStatFormatter.format(getRemainingBleedDamage(monster)) + ' more damage' : '');
@@ -3187,10 +3208,9 @@ function renderCombatContent() {
             ? 'Respawns in ' + monster.respawnRemaining.toFixed(1) + 's'
             : '');
     });
-    elements.playerHealthBar.style.width = playerHpPercent + '%';
+    setCombatBar(elements.playerHealthBar, playerHpPercent);
     const damagePercent = Math.min(100 - playerHpPercent, recentPlayerDamage / maxHealth * 100);
-    elements.playerHealthDamage.style.left = playerHpPercent + '%';
-    elements.playerHealthDamage.style.width = damagePercent + '%';
+    setCombatBar(elements.playerHealthDamage, damagePercent, playerHpPercent);
     updateCombatAttribute(elements.playerHealthTrack, 'aria-valuenow', Math.round(playerHpPercent));
     // Keep fractional combat health, but do not round the displayed HP above a healing cap.
     const displayedPlayerHp = state.playerHp > 0 && state.playerHp < 1 ? '<1' : Math.floor(state.playerHp + 1e-8);
@@ -3259,9 +3279,11 @@ function render() {
     renderWorlds();
     renderMaps();
     renderCombat();
-    renderUpgrades();
-    renderCrafting();
-    renderInventory();
+    // Refresh a panel when it is visible; switching views calls render() again
+    // with current game state, so hidden panels do not need combat updates.
+    if (state.currentView === 'upgrades') renderUpgrades();
+    if (state.currentView === 'town') renderCrafting();
+    if (state.currentView === 'inventory') renderInventory();
     renderTutorialNotifications();
     elements.lootLog.innerHTML = '';
     if (state.lootLog.length === 0) {
@@ -3392,6 +3414,7 @@ function transferPoisonOnDeath(monster, stacks) {
 }
 
 function showPoisonTransfer(sourceId, targetId) {
+    if (!combatEffectEnabled('projectiles')) return;
     presentCombatEffect(() => {
         const source = getCombatEffectCard(sourceId)?.querySelector('.enemy-mark');
         const target = getCombatEffectCard(targetId)?.querySelector('.enemy-mark');
@@ -3502,8 +3525,7 @@ function applyDamageToMonster(monster, damage, damageType = 'physical', abilityI
             const currentHpPercent = Math.max(0, Math.min(100, monster.hp / maxHp * 100));
             const damagePercent = Math.min(100 - currentHpPercent,
                 Math.max(recentEnemyDamage / maxHp * 100, 1));
-            damageIndicator.style.left = currentHpPercent + '%';
-            damageIndicator.style.width = damagePercent + '%';
+            setCombatBar(damageIndicator, damagePercent, currentHpPercent);
             damageIndicator.classList.add('is-visible');
             window.clearTimeout(enemyDamageIndicatorTimers.get(damageIndicator));
             enemyDamageIndicatorTimers.set(damageIndicator, window.setTimeout(() => {
@@ -3799,6 +3821,7 @@ elements.upgrades.addEventListener('click', function(event) {
             Object.entries(pendingSkillRanks).forEach(([id, rank]) => {
                 state.skillRanks[id] = getSkillNodeRank(id) + rank;
             });
+            invalidateSkillBonusCache();
             state.skillPoints -= pendingCount;
             const maxHealth = getPlayerMaxHealth();
             state.playerHp = Math.min(maxHealth, state.playerHp);
@@ -3835,8 +3858,7 @@ elements.upgrades.addEventListener('click', function(event) {
         const board = button.closest('.skill-tree-board');
         skillTreePanX = viewport.clientWidth / 2 - (button.offsetLeft + button.offsetWidth / 2) * skillTreeZoom;
         skillTreePanY = viewport.clientHeight / 2 - (button.offsetTop + button.offsetHeight / 2) * skillTreeZoom;
-        clampSkillTreePan(viewport, board);
-        renderUpgrades();
+        updateSkillTreeTransform(viewport, board);
         return;
     }
     if(window.SkillBuilds?.isEditing()){SkillBuilds.editNode(node.id);return;}
@@ -3845,6 +3867,7 @@ elements.upgrades.addEventListener('click', function(event) {
             !canRefundSkillRank(node.id)) return;
         state.skillRanks[node.id]--;
         if (state.skillRanks[node.id] <= 0) delete state.skillRanks[node.id];
+        invalidateSkillBonusCache();
         state.skillPoints++;
         state.playerHp = Math.min(state.playerHp, getPlayerMaxHealth());
         render();
@@ -4193,7 +4216,7 @@ function resetCombatClock(timestamp = Date.now()) {
 function processCombatBacklog() {
     if (SaveCompatibility.protection.blocked) return;
     const startedAt = performance.now(), effects = [];
-    const showEffects = !document.hidden && !combatCatchingUp;
+    const showEffects = !document.hidden && !combatCatchingUp && combatEffectEnabled();
     combatStatCache = new Map();
     try {
         // Bound each batch, not the amount of elapsed game time. The remainder is
@@ -4266,6 +4289,39 @@ if (pendingCombatSeconds >= gameTickSeconds) updateCombatClock();
 
 let skillTreePanListenersAdded = false;
 
+function updateSkillTreeNodeSize(button, node) {
+    const nodeSize = [1, 1.25, 1.5].includes(Number(node.size)) ? Number(node.size) : 1;
+    const baseNodeSize = 78 * nodeSize;
+    const displayedNodeSize = node.start
+        ? Math.min(130, baseNodeSize / Math.max(skillTreeZoom, 0.1)) : baseNodeSize;
+    const size = displayedNodeSize + 'px';
+    for (const property of ['width', 'height', 'minWidth', 'minHeight']) {
+        if (button.style[property] !== size) button.style[property] = size;
+    }
+    if (node.start) {
+        const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        const icon = button.querySelector('.skill-node-icon');
+        const fontSize = displayedNodeSize * 1.8 * rootFontSize / 78 + 'px';
+        if (icon.style.fontSize !== fontSize) icon.style.fontSize = fontSize;
+    }
+}
+
+function updateSkillTreeTransform(viewport, board, resizeOrigin = false) {
+    if (!viewport || !board) return;
+    if (resizeOrigin) {
+        const origin = board.querySelector('[data-skill-node="origin"]');
+        if (origin) updateSkillTreeNodeSize(origin, skillNodeById.origin);
+    }
+    clampSkillTreePan(viewport, board);
+    const transform = 'translate(' + skillTreePanX + 'px, ' + skillTreePanY + 'px) scale(' + skillTreeZoom + ')';
+    if (board.style.transform !== transform) {
+        board.style.transform = transform;
+        // A tooltip belongs to the previous camera position until hovered again.
+        const tooltip = viewport.querySelector('#skillNodeTooltip');
+        if (tooltip && !tooltip.hidden) tooltip.hidden = true;
+    }
+}
+
 function clampSkillTreePan(viewport, board) {
     if (!viewport || !board) return;
     const width = board.offsetWidth * skillTreeZoom;
@@ -4286,11 +4342,10 @@ function centerSkillTreeOnOrigin(resetZoom = false) {
     if (!viewport || !board || !origin) return;
 
     if (resetZoom) skillTreeZoom = initialSkillTreeZoom;
-    renderUpgrades();
+    updateSkillTreeNodeSize(origin, skillNodeById.origin);
     skillTreePanX = viewport.clientWidth / 2 - (origin.offsetLeft + origin.offsetWidth / 2) * skillTreeZoom;
     skillTreePanY = viewport.clientHeight / 2 - (origin.offsetTop + origin.offsetHeight / 2) * skillTreeZoom;
-    clampSkillTreePan(viewport, board);
-    renderUpgrades();
+    updateSkillTreeTransform(viewport, board);
 }
 
 function initSkillTreePan(viewport) {
@@ -4357,8 +4412,7 @@ function initSkillTreePan(viewport) {
         skillTreePanY += event.clientY - skillTreePanStartY;
         skillTreePanStartX = event.clientX;
         skillTreePanStartY = event.clientY;
-        clampSkillTreePan(viewport, viewport.querySelector('.skill-tree-board'));
-        renderUpgrades();
+        updateSkillTreeTransform(viewport, viewport.querySelector('.skill-tree-board'));
     });
     window.addEventListener('pointerup', function() {
         skillTreePanning = false;
@@ -4383,8 +4437,7 @@ function initSkillTreePan(viewport) {
         skillTreeZoom = nextZoom;
         skillTreePanX = cursorX - boardX * skillTreeZoom;
         skillTreePanY = cursorY - boardY * skillTreeZoom;
-        clampSkillTreePan(viewport, viewport.querySelector('.skill-tree-board'));
-        renderUpgrades();
+        updateSkillTreeTransform(viewport, viewport.querySelector('.skill-tree-board'), true);
     }, { passive: false });
 }
 

@@ -518,7 +518,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_7febce5ed2e4d886cc363ea2",
                     "monsterId": "monster_365f8e73c6121c5189836468",
-                    "count": 21,
+                    "count": 50,
                     "overrides": {}
                 }
             ]
@@ -1495,7 +1495,20 @@ window.adventureWorld = {
                 2
             ],
             "drops": [],
-            "itemDrops": [],
+            "itemDrops": [
+                {
+                    "id": "item_1247d32afc0b9a9a0d0fddb5c50b6036",
+                    "chance": 0.01
+                },
+                {
+                    "id": "item_be75f1f385eca9058cc20dcd497792e2",
+                    "chance": 0.01
+                },
+                {
+                    "id": "testItem1",
+                    "chance": 1
+                }
+            ],
             "sprite": "assets/monsters/nautilus-664caf37.png",
             "element": "physical",
             "id": "monster_76954c25d646191e1e34e37e",

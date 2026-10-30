@@ -1,6 +1,7 @@
 const shieldSlamVisualSettings = Object.freeze({maximumWaves:6, maximumImpacts:12});
 
 function showShieldSlamWave(hitIds) {
+    if (!combatEffectEnabled('abilities')) return;
     if (!hitIds.length) return;
     const mapId = state.selectedMap;
     presentCombatEffect(() => {

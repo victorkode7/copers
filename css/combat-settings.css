@@ -1,0 +1,40 @@
+.idle-adventure .combat-settings {
+    width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 32px);
+    box-sizing: border-box; overflow-y: auto; padding: 20px;
+    color: var(--adventure-text); background: #12232e;
+    border: 1px solid var(--adventure-border); border-radius: 14px;
+}
+.combat-settings::backdrop { background: rgba(0, 0, 0, .7); }
+.combat-settings-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.combat-settings-heading h2 { margin: 0; }
+.combat-settings p { color: var(--adventure-muted); line-height: 1.5; }
+.idle-adventure .combat-settings button { color: inherit; cursor: pointer; }
+.combat-settings-heading button { padding: 8px 12px; background: #233d4b; border: 1px solid var(--adventure-border); border-radius: 6px; }
+.idle-adventure .combat-effect-switch { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 16px; padding: 14px; margin-top: 8px; border: 1px solid var(--adventure-border); border-radius: 9px; background: #1b303e; text-align: left; }
+.combat-effect-switch small { display: block; margin-top: 5px; color: var(--adventure-muted); font-weight: 400; line-height: 1.4; }
+.combat-effect-switch [data-switch-state] { flex: 0 0 42px; padding: 5px; text-align: center; border-radius: 5px; background: #30414a; }
+.combat-effect-switch[aria-checked="true"] [data-switch-state] { background: #245446; color: #a1edc6; }
+.combat-effect-switch:disabled { opacity: .55; cursor: default; }
+.idle-adventure .combat-effect-master { margin-bottom: 18px; border-color: #a68a52; }
+
+/* Keep health, quantities and status labels; suppress only decorative visuals. */
+.combat-no-shaking .enemy-card { animation: none !important; }
+.combat-no-glows :is(.combat-panel, .loot-effects) *,
+.combat-no-glows :is(.combat-panel, .loot-effects) *::before,
+.combat-no-glows :is(.combat-panel, .loot-effects) *::after { box-shadow: none !important; filter: none !important; }
+.combat-no-glows :is(.enemy-dot-status, .enemy-bleed-status, .combat-buff, .combat-indicator, .health-track, .player-health, .enemy-mark),
+.combat-no-glows :is(.enemy-dot-status, .enemy-bleed-status, .combat-buff, .combat-indicator, .health-track, .player-health, .enemy-mark)::before,
+.combat-no-glows :is(.enemy-dot-status, .enemy-bleed-status, .combat-buff, .combat-indicator, .health-track, .player-health, .enemy-mark)::after { animation: none !important; }
+.combat-no-glows :is(.enemy-dot-sprite-effect, .void-volley-player-glow, .loot-plate-flash),
+.combat-no-abilities :is(.enemy-dot-sprite-effect, .elemental-effect-layer, .eruption-burst, .eruption-chain, .shield-slam-wave, .poison-transfer, .spell-effect, [data-enemy-proc-notice], [data-combat-hit-badge]),
+.combat-no-projectiles :is(.combat-arrow, .spell-void-bolt, .spell-void-volley:not(.spell-impact-effect)) { display: none !important; }
+.combat-no-glows .enemy-mark::before, .combat-no-glows .enemy-mark::after,
+.combat-no-glows .enemy-card.is-righteous-fire::after,
+.combat-no-glows .player-health::before, .combat-no-glows .player-health::after,
+.combat-no-abilities .enemy-mark::before, .combat-no-abilities .enemy-mark::after,
+.combat-no-abilities .enemy-card.is-righteous-fire::after,
+.combat-no-abilities .player-health.is-righteous-fire::before, .combat-no-abilities .player-health.is-righteous-fire::after { display: none !important; }
+.combat-effects-off *, .combat-effects-off *::before, .combat-effects-off *::after { animation: none !important; transition: none !important; }
+.combat-effects-off :is(.loot-effects, [data-enemy-proc-notice], [data-combat-hit-badge], .player-health-damage, .enemy-health-damage) { display: none !important; }
+.combat-effects-off .equipment-slot-icon.has-equipment-aura::before { display: none !important; }
+.combat-effects-off .equipment-slot-icon.has-equipment-aura img { filter: none !important; }

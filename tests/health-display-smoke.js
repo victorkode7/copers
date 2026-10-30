@@ -26,7 +26,8 @@
         state.playerHp = .25; renderCombat();
         check('a living player below one HP is distinguished from zero HP without decimals', elements.playerHealthText.textContent === '<1 / 100 HP');
         state.playerHp = 30.3; renderCombat();
-        check('display rounding preserves fractional combat health and bar fill', state.playerHp === 30.3 && elements.playerHealthText.textContent === '30 / 100 HP' && Math.abs(parseFloat(elements.playerHealthBar.style.width) - 30.3) < 1e-6);
+        elements.playerHealthBar.style.transition = 'none';
+        check('display rounding preserves fractional combat health and bar fill', state.playerHp === 30.3 && elements.playerHealthText.textContent === '30 / 100 HP' && Math.abs(bounds(elements.playerHealthBar).width / bounds(track).width - .303) < 1e-6);
         const text = bounds(elements.playerHealthText), heading = bounds(elements.playerHealthText.parentElement);
         check('the health label fits within its heading without overlapping the track', text.right <= heading.right + .1 && text.bottom <= bounds(track).top);
         const beforeDamage = bounds(track);

@@ -104,6 +104,8 @@
         for(const [id,node] of Object.entries(oldSpeedNodes)){if(node)skillNodeById[id]=node;else delete skillNodeById[id];}
         // New content must work without adding an item-specific runtime branch.
         const extra = itemById.testAmulet;
+        // The edited project world need not retain the original starting gel drop.
+        materialSources.gel = [{mapId: mapData[0].id}];
         check('new necklace recipe appears automatically', recipes.some(recipe => recipe.id === extra.id) && craftingCategories.some(category => category.recipes.includes(extra.id)));
         state.materials.gel = 10; craftGear(extra.id);
         check('new recipe crafts and consumes configured materials', state.materials.gel === 8 && ownsItem(extra.id) && state.crafted.includes(extra.id));
