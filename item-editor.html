@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Item Editor | Idle Adventure</title>
-    <link rel="stylesheet" href="css/item-editor.css?v=20261021-6">
+    <link rel="stylesheet" href="css/item-editor.css?v=20261030-2">
     <link rel="stylesheet" href="css/app-nav.css">
     <link rel="stylesheet" href="css/editor-quick-save.css?v=1">
     <link rel="stylesheet" href="css/stat-picker.css?v=20261027-1">
@@ -20,6 +20,8 @@
         <div class="toolbar">
             <button id="undo" type="button" disabled>Undo</button>
             <button id="restoreDraft" type="button" disabled>Restore local draft</button>
+            <button id="loadProjectItems" type="button">Load project items</button>
+            <button id="restorePreviousItems" type="button" hidden>Restore previous draft</button>
             <button id="chooseJson" type="button">Import JSON</button>
             <input id="importJson" type="file" accept=".json,application/json" hidden>
             <button id="exportJson" type="button">Export JSON</button>
@@ -31,7 +33,11 @@
         </div>
     </header>
     <p id="status" class="status" role="status">Edit items, then quick-save or apply a game package to test changes.</p>
-    <main class="workspace">
+    <nav class="editor-pages" aria-label="Item editor pages">
+        <button id="showItemsPage" type="button" aria-controls="itemsEditorPage" aria-pressed="true">Items</button>
+        <button id="showTiersPage" type="button" aria-controls="tierEditorPage" aria-pressed="false">Tier &amp; type rolls</button>
+    </nav>
+    <main id="itemsEditorPage" class="workspace">
         <aside class="panel catalogue">
             <div class="section-heading"><h2>Equipment <span id="itemCount"></span></h2><button id="addItem" type="button">+ Add</button></div>
             <label>Search<input id="search" type="search" placeholder="Name or slot"></label>
@@ -47,6 +53,12 @@
                     <label>Slot<select id="itemSlot"></select></label>
                     <label>Rarity<select id="itemRarity"><option>common</option><option>uncommon</option><option>rare</option><option>epic</option><option>unique</option></select></label>
                 </div>
+                <div class="field-grid">
+                    <label>Equipment type<select id="equipmentType"></select></label>
+                    <label>Equipment tier<select id="equipmentTier"></select></label>
+                </div>
+                <p class="hint">Crafted stats use the roll pool for this equipment type and tier.</p>
+                <button id="editSharedCraftingPreset" type="button">Edit this type &amp; tier's rolls</button>
                 <label>Description<textarea id="itemDescription" rows="3"></textarea></label>
                 <label>Sprite image path<input id="itemSprite" placeholder="assets/items/helmet.png" aria-describedby="spriteHint"></label>
                 <label>Import sprite<input id="importSprite" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>
@@ -54,7 +66,7 @@
                 <label class="check"><input id="itemDeveloper" type="checkbox"> Developer only</label>
                 <p class="hint">Developer items are available only when Developer options → Enable developer equipment is checked in the game.</p>
                 <section class="form-section">
-                    <div class="section-heading"><h2>Stat bonuses</h2><button id="addStat" type="button">+ Bonus</button></div>
+                    <div class="section-heading"><h2 id="statBonusesHeading">Stat bonuses</h2><button id="addStat" type="button">+ Bonus</button></div>
                     <p class="hint">Flat bonuses add together; multipliers multiply. Gold bonus and poison chance use fractions: 0.2 means 20%.</p>
                     <div id="statRows" class="rows"></div>
                 </section>
@@ -63,6 +75,19 @@
                     <label class="check"><input id="craftable" type="checkbox"> Can be crafted once</label>
                     <div id="recipeFields"><div id="materialRows" class="rows"></div><button id="addMaterial" type="button">+ Material</button></div>
                 </section>
+                <details class="form-section equipment-crafting-rules" id="itemCraftingSettings">
+                    <summary>Crafting settings</summary>
+                    <label class="check"><input id="rerollable" type="checkbox"> Enable crafted stats</label>
+                    <p class="hint">The stat bonuses above stay permanent. All crafted slots roll together and cannot roll the same stat.</p>
+                    <div id="rerollEditorFields" hidden>
+                        <label>Number of crafted stats<input id="craftedSlotCount" type="number" min="1" step="1" aria-describedby="craftedSlotCountHint"></label>
+                        <p id="craftedSlotCountHint" class="hint">Choose how many stats roll together. The selected tier must offer at least this many different stats.</p>
+                        <p id="itemRerollGold" class="hint"></p>
+                        <h3>Materials per reroll</h3><div id="rerollMaterialRows" class="rows"></div><button id="addRerollMaterial" type="button">+ Material cost</button>
+                        <p id="craftingRangeSource" class="hint"></p>
+                        <button id="useSharedCraftingPreset" type="button" hidden>Use tier rolls</button>
+                    </div>
+                </details>
                 <details class="form-section">
                     <summary>Advanced settings</summary>
                     <label>Permanent internal ID<input id="itemId" readonly aria-describedby="idHint"></label>
@@ -76,13 +101,30 @@
             <section class="panel"><h2>Apply to the game</h2><p>Choose the existing <code>js/items.js</code> file inside your game project. Quick save then overwrites that file directly. Reload the game to test changes.</p><p id="quickSaveTarget" class="quick-save-help">Checking quick-save availability…</p><button id="chooseQuickSaveFile" type="button" hidden>Choose project file</button><p>For new sprites, download the game package and extract it into your project folder. It contains <code>js/items.js</code> and imported sprites under <code>assets/items/</code>.</p><p>JSON contains item definitions and image paths for editor import. Keep the ZIP too: JSON does not contain image files. Drafts and imported images are stored in this browser.</p></section>
         </aside>
     </main>
-    <script src="js/items.js?v=20261021-2"></script>
-    <script src="js/item-system.js?v=20261028-1"></script>
+    <section id="tierEditorPage" class="tier-editor-page" hidden aria-label="Tier and equipment type rolls">
+        <section class="panel" id="sharedCraftingPresets">
+            <h2>Tier &amp; type rolls</h2>
+            <p class="hint">Choose an equipment type and tier, then edit its possible crafted stats and ranges. All linked items use this pool automatically. A crafted stat can also be a permanent stat on the item: flat bonuses add and multipliers multiply. Each crafted slot rolls a different stat.</p>
+            <div class="field-grid"><label>Equipment type<select id="presetEquipmentType"></select></label><label>Tier<select id="presetEquipmentTier"></select></label></div>
+            <label>Gold per reroll<input id="presetRerollGold" type="number" min="1" step="1" aria-describedby="presetGoldHint"></label>
+            <p id="presetGoldHint" class="hint">One gold cost for every item with this equipment type and tier. Charged once when all its crafted slots reroll.</p>
+            <p id="presetUseSummary" class="hint"></p>
+            <div class="toolbar"><input id="newEquipmentTypeName" aria-label="New equipment type name" placeholder="New equipment type name"><button id="addEquipmentType" type="button">+ Type</button><button id="addEquipmentTier" type="button">+ Tier (copy current)</button></div>
+            <div class="section-heading"><h3>Possible crafted stats</h3><button id="addPresetRoll" type="button">+ Stat</button></div>
+            <p class="hint">Minimum and maximum are inclusive. Step 5 gives values such as 5, 10, 15. Percent values use fractions: 0.1 means 10%. Multipliers use 1.1 for +10%.</p>
+            <div id="presetRollRows" class="rows"></div>
+        </section>
+        <aside class="panel"><h2>Validation</h2><p id="tierValidationSummary"></p><ul id="tierValidation"></ul><p class="hint">Save and export buttons above include both pages. Switch back to Items to assign a tier or change permanent stats.</p></aside>
+    </section>
+    <script src="js/items.js?v=20261031-1"></script>
+    <script src="js/item-system.js?v=20261031-1"></script>
     <script src="js/item-package.js?v=20261021-2"></script>
     <script src="js/item-stat-guides.js?v=20261028-1"></script>
     <script src="js/editor-file-save.js?v=20261027-5"></script>
     <script src="js/editor-quick-save.js?v=20261027-5"></script>
     <script src="js/stat-picker.js?v=20261027-1"></script>
-    <script src="js/item-editor.js?v=20261027-3"></script>
+    <script src="js/crafting-preset-editor.js?v=3"></script>
+    <script src="js/item-crafting-editor.js?v=4"></script>
+    <script src="js/item-editor.js?v=20261030-3"></script>
 </body>
 </html>

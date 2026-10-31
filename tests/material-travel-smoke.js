@@ -2,6 +2,7 @@
     const checks = [];
     const check = (label, ok) => { checks.push((ok ? 'PASS ' : 'FAIL ') + label); if (!ok) throw new Error(label); };
     try {
+        ItemCrafting.setMode('recipes');
         const firstWorld = worldData[0], firstMaps = mapsForWorld(firstWorld.id), nextWorld = worldData[1];
         const start = firstMaps[0], next = firstMaps[1], otherWorldMap = mapsForWorld(nextWorld.id)[0];
         // Ensure this resource has sources at each progression boundary.

@@ -42,6 +42,8 @@ try {
     $realtime = $TestScript -in @('tests/editor-persistence-smoke.js', 'tests/skill-sprites-smoke.js', 'tests/item-editor-smoke.js', 'tests/material-editor-smoke.js', 'tests/inventory-categories-smoke.js', 'tests/loot-effects-smoke.js', 'tests/crowded-background-smoke.js', 'tests/world-editor-smoke.js', 'tests/world-quick-save-smoke.js', 'tests/editor-quick-save-smoke.js')
     $realtime = $realtime -or $TestScript -in @('tests/background-reload-smoke.js', 'tests/game-profiles-smoke.js', 'tests/skill-editor-selection-smoke.js')
     $realtime = $realtime -or $TestScript -eq 'tests/save-compat-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/equipment-crafting-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/item-crafting-editor-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-settings-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-effects-smoke.js'

@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    let active = null, preview = null, frame = 0;
+    let active = null, preview = null, sourcePanel = null, frame = 0;
     const sizeObserver = new ResizeObserver(position);
 
     function close() {
@@ -11,10 +11,24 @@
         window.removeEventListener('resize', schedulePosition);
         active?.setAttribute('aria-expanded', 'false');
         preview?.remove();
-        active = preview = null;
+        active = preview = sourcePanel = null;
     }
     function position() {
         if (!active) return;
+        // Crafting refreshes replace their cards. Follow the same item inside
+        // its original panel instead of dismissing an otherwise valid preview.
+        if (!active.isConnected && sourcePanel?.isConnected) {
+            const replacement = [...sourcePanel.querySelectorAll('.equipment-sprite-trigger')]
+                .find(icon => icon.dataset.previewItemId === active.dataset.previewItemId);
+            if (replacement) {
+                sizeObserver.disconnect();
+                active.setAttribute('aria-expanded', 'false');
+                active = replacement;
+                active.setAttribute('aria-expanded', 'true');
+                const image = active.querySelector('img');
+                if (image) sizeObserver.observe(image);
+            }
+        }
         const image = active?.querySelector('img');
         const rect = image?.getBoundingClientRect();
         if (!active?.isConnected || !rect?.width || !rect.height) { close(); return; }
@@ -32,6 +46,7 @@
         const image = icon.querySelector('img');
         if (!image) return;
         active = icon;
+        sourcePanel = icon.closest('.page-view') || icon.parentElement;
         active.setAttribute('aria-expanded', 'true');
         preview = document.createElement('button');
         preview.type = 'button';
@@ -54,6 +69,7 @@
         const icon = Equipment.createIcon(item, fallback);
         if (!icon.querySelector('img')) return icon;
         icon.classList.add('equipment-sprite-trigger');
+        icon.dataset.previewItemId = item.id;
         icon.removeAttribute('aria-hidden');
         icon.setAttribute('role', 'button');
         icon.tabIndex = 0;

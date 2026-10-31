@@ -27,7 +27,7 @@ function getPlayerMaxMana() {
 function getProfileMaxMana(profile) {
     // Parsing must not replace live state just to calculate an old profile's
     // initial pool. Returning a concrete default also triggers its exact backup.
-    const equipment=Object.values(profile.gear).filter(id=>ownsItem(id,profile)).map(id=>itemById[id]);
+    const equipment=Object.values(profile.gear).filter(id=>ownsItem(id,profile)).map(id=>ItemCrafting.effective(itemById[id],profile));
     const skillMultiplier=Object.entries(profile.skillRanks).reduce((total,[id,rank])=>
         total*Math.pow(skillNodeById[id]?.stats.manaMultiplier||1,rank),1);
     return Math.max(0,Math.round((getSkillStatFromRanks('mana',profile.skillRanks)+Equipment.aggregate(equipment,'mana'))*

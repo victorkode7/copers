@@ -7,6 +7,41 @@ New combat fields default safely; new stats on skills and items use the current
 content definitions. Unknown unrelated top-level fields and material/kill counters
 survive subsequent saves.
 
+## Crafted equipment
+
+Optional `itemCrafts` stores a variable number of crafted slots per item ID. Old profiles default
+to an empty object. Rolls stay with owned items across equips, imports and saves;
+unknown item IDs and unsupported stat keys are retained for returning content.
+Item aliases also remap these IDs. Item definitions hold permanent stats, an
+`equipmentType`, a positive integer `tier`, and per-item `crafting` material costs
+and slot counts. Root `equipmentTypes` names the groups; `craftingPresets` supplies
+the gold per reroll (`gold`), possible stats, inclusive min/max and step for each
+type/tier pair. Gold is charged once per action, regardless of slot count. An omitted
+`crafting.pool` inherits the entire matching preset automatically. Legacy inline
+range arrays and explicit stat selections still resolve without losing custom
+values; the item editor offers an explicit switch to tier rolls. Old packages
+without preset tables gain the project's defaults when opened in the editor.
+Older preset tables missing gold promote the median linked item's gold cost,
+or default to 1,000 per tier when no previous cost exists. Shared gold takes
+precedence over old per-item gold fields. Standalone legacy items without a
+matching preset retain their old gold cost until assigned a type and tier.
+Changing future roll ranges does not invalidate previously earned rolls or
+change permanent stats. Default weapon presets also include flat damage and
+attack speed; defensive presets include flat health and evasion. Rolled stats may
+match permanent stats: additive stats add and multipliers multiply. Uniqueness
+applies only between crafted slots, not between crafted and permanent stats.
+Both editor pages save/export one item catalogue.
+
+`crafting.slots` is a positive integer per item and cannot exceed the number of
+distinct potential stats. Increasing the count displays extra empty slots while
+retaining existing rolls. Reducing it makes surplus saved slots inactive without
+deleting them. A subsequent reroll replaces the saved array with the new count.
+
+Rerolls replace all configured slots, draw distinct stat keys, and persist the complete
+transaction before reporting success. Failed storage writes restore currency,
+materials, rolls, health and mana. Capacity changes clamp current health/mana
+without healing the character. A full game reset clears crafted slots.
+
 ## Content edits
 
 Keep content IDs stable. For intentional changes, append a numbered entry to

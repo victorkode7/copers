@@ -2,6 +2,7 @@
     const checks = [];
     function check(label, condition) { checks.push((condition ? 'PASS ' : 'FAIL ') + label); if (!condition) throw new Error(label); }
     try {
+        ItemCrafting.setMode('recipes');
         state.currentView = 'town'; state.isInTown = true;
         state.materials = Object.fromEntries(Object.keys(materialNames).map(id => [id, 100000]));
         state.ownedItemIds = []; state.crafted = []; render();

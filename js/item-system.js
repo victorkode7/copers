@@ -1,5 +1,14 @@
 (function() {
     'use strict';
+    const uniqueEffects = {
+        geobreakerShockwave: {
+            description: 'Shockwave Slash has a 50% chance to trigger and activates twice per successful proc. Requires Shockwave Slash.',
+            shockwaveSlash: {chance: 0.5, triggers: 2}
+        }
+    };
+    function uniqueEffect(item) {
+        return item && Object.hasOwn(uniqueEffects, item.uniqueEffect) ? uniqueEffects[item.uniqueEffect] : null;
+    }
     // This registry is shared by the game, item tooltips, and editor controls.
     const stats = Object.create(null);
     for (const [id, label] of Object.entries({damage: 'Physical damage', health: 'Maximum health', maxFury: 'Maximum fury', maxShields: 'Maximum shields', accuracy: 'Accuracy', evasion: 'Evasion', multiHit: 'Multi-hit', poisonDamage: 'Poison damage', poisonTickRate: 'Poison tick rate', bleedDamage: 'Bleed damage', bleedTickRate: 'Bleed tick rate'})) {
@@ -54,7 +63,7 @@
     }
 
     function describe(item) {
-        return orderedStats(item).map(([key, value]) => {
+        const bonuses = orderedStats(item).map(([key, value]) => {
             const rule = stats[key];
             if (!rule) return '';
             if (!Number.isFinite(value)) return rule.label + ': enter a valid number';
@@ -73,6 +82,8 @@
                 : rule.mode === 'min' ? label + ': ' + number
                 : (number >= 0 ? '+' : '') + number + (rule.percent ? '%' : '') + ' ' + label.toLowerCase();
         }).filter(Boolean).join('\n') || 'No stat bonuses';
+        const effect = uniqueEffect(item);
+        return bonuses + (effect ? '\nUnique: ' + effect.description : '');
     }
 
     function compare(candidate, equipped) {
@@ -139,9 +150,50 @@
             }
             if (item && typeof item === 'object') delete item.drops;
         }
+        // Older catalogues stored gold on each item. Promote it once per shared preset.
+        for (const preset of Array.isArray(data.craftingPresets) ? data.craftingPresets : []) {
+            if (!preset || typeof preset !== 'object' || Array.isArray(preset) || preset.gold !== undefined) continue;
+            const costs = data.items.filter(item => item?.equipmentType === preset.equipmentType && item?.tier === preset.tier)
+                .map(item => item.crafting?.cost?.gold).filter(value => Number.isSafeInteger(value) && value > 0).sort((a,b) => a-b);
+            if (Number.isSafeInteger(preset.tier) && preset.tier > 0)
+                preset.gold = costs[Math.floor(costs.length / 2)] ?? preset.tier * 1000;
+        }
         delete data.maps;
         data.schemaVersion = 2;
         return data;
+    }
+
+    function craftingPreset(item, data) {
+        return (Array.isArray(data.craftingPresets) ? data.craftingPresets : []).find(preset => preset?.equipmentType === item?.equipmentType && preset?.tier === item?.tier) || null;
+    }
+
+    function craftingGold(item, data) {
+        const preset = craftingPreset(item, data);
+        return preset ? preset.gold : item?.crafting?.cost?.gold; // Standalone legacy items keep their original cost.
+    }
+
+    function craftingPool(item, data) {
+        const preset = craftingPreset(item, data), shared = Array.isArray(preset?.pool) ? preset.pool : [];
+        if (item?.crafting && item.crafting.pool === undefined) return shared;
+        return (Array.isArray(item?.crafting?.pool) ? item.crafting.pool : []).map(entry => {
+            if (entry && typeof entry === 'object' && 'min' in entry) return entry; // Older item packages retain their custom ranges.
+            const stat = typeof entry === 'string' ? entry : entry?.stat;
+            return shared.find(roll => roll?.stat === stat) || {stat,min:NaN,max:NaN,step:NaN};
+        });
+    }
+
+    function validatePool(pool, label, required, errors) {
+        if (!Array.isArray(pool) || pool.length < required) { errors.push(label + ': add at least one different potential stat per crafted slot.'); return; }
+        const used = new Set();
+        for (const roll of pool) {
+            const rule = stats[roll?.stat];
+            if (!rule || rule.developer || used.has(roll.stat) || ![roll.min, roll.max, roll.step].every(Number.isFinite) ||
+                roll.min > roll.max || roll.step <= 0 || !Number.isSafeInteger(Math.round((roll.max - roll.min) / roll.step)) ||
+                roll.min < (rule.min ?? 0) || roll.max > (rule.max ?? Infinity) || (rule.mode === 'multiply' && roll.min <= 0) ||
+                Math.abs((roll.max - roll.min) / roll.step - Math.round((roll.max - roll.min) / roll.step)) > 1e-6)
+                errors.push(label + ': invalid potential roll ' + (roll?.stat || '') + '. Use a unique stat and a range divisible by its step.');
+            if (roll) used.add(roll.stat);
+        }
     }
 
     function validate(data) {
@@ -151,6 +203,20 @@
             return ['Invalid equipment file: expected schemaVersion 2, items, slots, and materials.'];
         }
         const idPattern = /^[A-Za-z_][A-Za-z0-9_]*$/;
+        const types = new Set(), presets = new Set();
+        if (data.equipmentTypes !== undefined && !Array.isArray(data.equipmentTypes)) errors.push('Equipment types must be a list.');
+        else for (const type of data.equipmentTypes || []) {
+            if (!object(type) || !idPattern.test(type.id) || ['__proto__','constructor','prototype'].includes(type.id) || types.has(type.id) || typeof type.name !== 'string' || !type.name.trim()) errors.push('Invalid or duplicate equipment type.');
+            if (type) types.add(type.id);
+        }
+        if (data.craftingPresets !== undefined && !Array.isArray(data.craftingPresets)) errors.push('Crafting presets must be a list.');
+        else for (const preset of data.craftingPresets || []) {
+            const key = preset?.equipmentType + ':' + preset?.tier;
+            if (!object(preset) || !types.has(preset.equipmentType) || !Number.isSafeInteger(preset.tier) || preset.tier < 1 || presets.has(key)) errors.push('Invalid or duplicate equipment type/tier preset.');
+            presets.add(key);
+            if (!Number.isSafeInteger(preset?.gold) || preset.gold < 1) errors.push('Shared ' + key + ': gold per reroll must be a positive whole number.');
+            validatePool(preset?.pool, 'Shared ' + key, 1, errors);
+        }
         Object.entries(data.materials).forEach(([id, name]) => {
             if (!idPattern.test(id) || ['__proto__', 'constructor', 'prototype'].includes(id)) errors.push('Invalid material ID: ' + id + '.');
             if (typeof name !== 'string' || !name.trim()) errors.push(id + ': a material name is required.');
@@ -178,9 +244,12 @@
             if (typeof item.name !== 'string' || !item.name.trim()) errors.push(label + ': a name is required.');
             if (!data.slots.some(slot => slot && slot.id === item.slot)) errors.push(label + ': unknown slot.');
             if (!['common', 'uncommon', 'rare', 'epic', 'unique'].includes(item.rarity)) errors.push(label + ': unknown rarity.');
+            if (item.uniqueEffect !== undefined && (typeof item.uniqueEffect !== 'string' || !uniqueEffect(item))) errors.push(label + ': unknown unique effect.');
             if (typeof item.description !== 'string') errors.push(label + ': description must be text.');
             if (typeof item.sprite !== 'string' || (item.sprite && !safeSprite(item.sprite))) errors.push(label + ': use a local image path or import a sprite.');
             if (item.developerOnly !== undefined && typeof item.developerOnly !== 'boolean') errors.push(label + ': invalid developer option.');
+            if (item.equipmentType !== undefined && !types.has(item.equipmentType)) errors.push(label + ': unknown equipment type.');
+            if (item.tier !== undefined && (!Number.isSafeInteger(item.tier) || item.tier < 1)) errors.push(label + ': tier must be a positive whole number.');
             if (!object(item.stats)) errors.push(label + ': stats must be an object.');
             else Object.entries(item.stats).forEach(([key, value]) => {
                 const rule = stats[key];
@@ -192,6 +261,21 @@
                 else Object.entries(item.recipe.materials).forEach(([id, amount]) => {
                     if (!Object.hasOwn(data.materials, id) || !Number.isInteger(amount) || amount <= 0) errors.push(label + ': invalid recipe material ' + id + '.');
                 });
+            }
+            if (item.crafting !== undefined) {
+                const craft = item.crafting, gold = craftingGold(item, data);
+                const validCost = object(craft?.cost) && Number.isSafeInteger(gold) && gold > 0 && object(craft.cost.materials);
+                const validSlots = Number.isSafeInteger(craft?.slots) && craft.slots > 0;
+                if (!object(craft) || !validSlots || !validCost || !Object.keys(craft.cost.materials).length) errors.push(label + ': rerolling needs a positive whole number of crafted slots, a positive gold cost and materials.');
+                if (validCost) for (const [id, amount] of Object.entries(craft.cost.materials)) {
+                    if (!Object.hasOwn(data.materials, id) || !Number.isSafeInteger(amount) || amount <= 0) errors.push(label + ': invalid reroll material ' + id + '.');
+                }
+                if (craft?.pool !== undefined && !Array.isArray(craft.pool)) errors.push(label + ': potential rolls must be a list.');
+                else {
+                    const linked = craft?.pool === undefined || craft.pool.some(entry => !entry || typeof entry !== 'object' || !('min' in entry));
+                    if (linked && !craftingPreset(item, data)) errors.push(label + ': choose a shared preset for this equipment type and tier.');
+                    if (Array.isArray(data.craftingPresets) || data.craftingPresets === undefined) validatePool(craftingPool(item, data), label, validSlots ? craft.slots : 1, errors);
+                }
             }
         });
         return errors;
@@ -221,5 +305,5 @@
         }
         return icon;
     }
-    window.Equipment = { stats, describe, validate, aggregate, createIcon, safeSprite, normalizeData, orderedStats, compare };
+    window.Equipment = { stats, describe, validate, aggregate, createIcon, safeSprite, normalizeData, orderedStats, compare, craftingPool, craftingPreset, craftingGold, uniqueEffect };
 })();

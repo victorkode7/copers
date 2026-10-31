@@ -1,0 +1,57 @@
+.crafting-mode-tabs { display:flex; gap:8px; margin:18px 0 24px; flex-wrap:wrap; }
+.crafting-mode-tabs button { padding:10px 16px; background:#172b36; border:1px solid #3c535d; border-radius:7px; color:#bdced7; cursor:pointer; }
+.crafting-mode-tabs button[aria-pressed=true] { border-color:#e4bf73; color:#ffe1a0; background:#3a3020; }
+.reroll-workbench { display:grid; grid-template-columns:minmax(0,1fr) minmax(250px,.85fr); gap:20px; }
+.reroll-item-panel,.reroll-recipe-panel { min-width:0; padding:22px; border:1px solid #3c4d59; border-radius:12px; background:linear-gradient(145deg,#203240,#14252f); }
+.reroll-item-panel { display:flex; flex-direction:column; }
+.reroll-item-heading { display:flex; align-items:center; gap:18px; min-height:94px; margin-bottom:26px; }
+.reroll-item-heading h2 { margin:7px 0; font-size:1.35rem; }
+.reroll-item-heading p { margin:0; font-size:.75rem; line-height:1.6; }
+#rerollItemArt { display:grid; place-items:center; flex:0 0 84px; width:84px; height:84px; border:1px solid #51616c; border-radius:12px; background:#0c1c26; box-shadow:inset 0 0 25px #0006; }
+#rerollItemArt .item-sprite,#rerollItemArt img { width:64px; height:64px; object-fit:contain; image-rendering:pixelated; }
+.reroll-permanent-heading { display:flex; align-items:center; gap:10px; color:#e4d1a5; }
+.reroll-permanent-heading h3,.reroll-recipe-panel h3 { font-size:.85rem; margin:0; }
+.permanent-lock { display:inline-block; width:12px; height:10px; background:#bc9e63; border-radius:2px; position:relative; margin-top:5px; }
+.permanent-lock::before { content:''; position:absolute; width:8px; height:8px; border:2px solid #bc9e63; border-bottom:0; border-radius:6px 6px 0 0; left:2px; top:-6px; box-sizing:border-box; }
+.reroll-permanent-stats { display:grid; gap:12px; list-style:none; padding:18px 0 26px; margin:0; color:#e7edf2; font-size:.85rem; }
+.reroll-slots { display:grid; gap:12px; margin-top:18px; }
+.crafted-stat-card { display:grid; gap:10px; min-height:105px; padding:18px; border:1px dashed #9b82cb; border-radius:9px; background:#a989e30b; }
+.crafted-stat-card small { color:#bda4e2; font-size:.63rem; letter-spacing:.06em; }
+.crafted-stat-card strong { color:#c5b4df; font-size:.9rem; }
+.crafted-stat-card > span { color:#9bacc0; font-size:.7rem; }
+.crafted-stat-card.is-filled { border-style:solid; border-color:#9e7cc9; background:linear-gradient(110deg,#75519c30,#24223940); }
+.crafted-stat-card.is-filled strong { color:#e5c7ff; }
+.reroll-cost { list-style:none; padding:0; margin:15px 0 20px; display:grid; gap:12px; }
+.reroll-cost li { display:flex; align-items:center; gap:8px; font-size:.75rem; }
+.reroll-cost .item-sprite,.reroll-gold-mark { display:grid; place-items:center; width:27px; height:27px; flex:0 0 27px; }
+.reroll-cost img { width:26px; height:26px; object-fit:contain; image-rendering:pixelated; }
+.reroll-gold-mark { border-radius:50%; border:2px solid #b48b37; background:#604619; color:#ffe194; font-size:.8rem; }
+.reroll-cost-name { flex:1; }
+.reroll-cost strong { text-align:right; font-variant-numeric:tabular-nums; }
+.reroll-cost strong small { display:block; margin-top:5px; font-weight:400; font-size:.65rem; color:#a8bac7; }
+.reroll-cost .has-enough strong { color:#a5dfbb; }
+.reroll-cost .needs-more strong { color:#ffa395; }
+.reroll-action { width:100%; padding:13px 8px; }
+.reroll-status { min-height:3.5em; font-size:.72rem; line-height:1.7; color:#c8d2de; margin:12px 0 24px; }
+.potential-rolls { display:grid; gap:0; padding:0; margin:12px 0; list-style:none; }
+.potential-rolls li { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid #ffffff0d; font-size:.72rem; line-height:1.5; }
+.potential-rolls strong { color:#d7b4ff; white-space:nowrap; font-variant-numeric:tabular-nums; }
+#rollPoolHint { font-size:.67rem; line-height:1.7; }
+.reroll-gear-selection { margin-top:25px; padding-top:22px; border-top:1px solid #42525e; }
+.reroll-gear-selection .section-heading { margin-bottom:16px; }
+.reroll-gear-selection .subtle { font-size:.7rem; }
+.reroll-gear-list { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.reroll-gear-option { display:grid; grid-template-columns:46px minmax(0,1fr); gap:7px 10px; text-align:left; padding:13px; color:#d2dce6; background:#182a36; border:1px solid #435867; border-radius:9px; cursor:pointer; }
+.reroll-gear-option .item-sprite { width:46px; height:46px; grid-row:span 2; display:grid; place-items:center; }
+.reroll-gear-option img { width:42px; height:42px; object-fit:contain; image-rendering:pixelated; }
+.reroll-gear-option strong { align-self:end; font-size:.78rem; overflow-wrap:anywhere; }
+.reroll-gear-option small { color:#a4b6c3; font-size:.65rem; }
+.reroll-gear-option[aria-pressed=true] { border-color:#e4bf73; background:#393322; box-shadow:inset 0 0 0 1px #b48b3740; }
+.reroll-gear-option.is-unowned { opacity:.65; }
+.item-crafted-slot { display:block; width:fit-content; max-width:100%; margin-top:7px; padding:5px 8px; border:1px dashed #9976b8; border-radius:5px; color:#c5aadf; background:#8054a00b; font-size:.72rem; }
+.item-crafted-slot.is-filled { border-style:solid; background:#8054a018; color:#dfbaff; }
+.item-stat-line.is-crafted-stat { color:#dfbaff; }
+.crafted-stat-label { margin-left:7px; padding:2px 4px; color:#d6b3ee; background:#69428b40; border-radius:3px; font-size:.6rem; }
+.equipment-crafting-rules { border:1px solid #735a92; border-radius:9px; padding:14px; background:#9a6fc30a; }
+@media(max-width:1100px) { .reroll-workbench { grid-template-columns:minmax(0,1fr); } .reroll-slots { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:550px) { .reroll-gear-list { grid-template-columns:repeat(2,minmax(0,1fr)); } .reroll-gear-option { grid-template-columns:minmax(0,1fr); text-align:center; justify-items:center; } .reroll-gear-option .item-sprite { grid-row:auto; } .reroll-slots { grid-template-columns:minmax(0,1fr); } .reroll-item-panel,.reroll-recipe-panel { padding:16px; } .reroll-item-heading { gap:12px; } }

@@ -7,9 +7,10 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/nav.css">
     <link rel="stylesheet" href="css/app-nav.css">
-    <link rel="stylesheet" href="css/game.css?v=20261030-1">
+    <link rel="stylesheet" href="css/game.css?v=20261031-1">
     <link rel="stylesheet" href="css/equipment-effects.css?v=1">
     <link rel="stylesheet" href="css/equipment-sprite-preview.css?v=3">
+    <link rel="stylesheet" href="css/equipment-crafting.css?v=2">
     <link rel="stylesheet" href="css/elemental-skills.css?v=20261027-10">
     <link rel="stylesheet" href="css/world-game.css?v=33">
     <link rel="stylesheet" href="css/skill-tree-background.css?v=20261021-18">
@@ -185,8 +186,31 @@
                     <span class="eyebrow">THE WORKSHOP</span>
                     <h1>Crafting</h1>
                 </div>
-                <p class="subtle">Unlock material drop locations to discover new recipes, then craft gear for your next expedition.</p>
+                <p class="subtle">Shape your equipment with materials gathered on your adventures.</p>
             </div>
+            <div class="crafting-mode-tabs" role="group" aria-label="Crafting pages">
+                <button type="button" data-crafting-mode="stats" aria-pressed="true">Crafted stats</button>
+                <button type="button" data-crafting-mode="recipes" aria-pressed="false">Gear recipes</button>
+            </div>
+            <section id="statCrafting" aria-label="Craft equipment stats">
+                <div id="rerollWorkbench" class="reroll-workbench">
+                    <section class="reroll-item-panel" aria-labelledby="rerollItemName">
+                        <div class="reroll-item-heading"><div id="rerollItemArt"></div><div><span class="eyebrow">ON THE WORKBENCH</span><h2 id="rerollItemName"></h2><p id="rerollItemMeta" class="subtle"></p></div></div>
+                        <div class="reroll-permanent-heading"><span class="permanent-lock" aria-hidden="true"></span><h3>Permanent stats</h3></div>
+                        <ul id="rerollPermanentStats" class="reroll-permanent-stats"></ul>
+                        <div id="rerollSlots" class="reroll-slots" aria-label="Crafted stat slots"></div>
+                    </section>
+                    <section class="reroll-recipe-panel" aria-label="Reroll cost and outcomes">
+                        <h3>Cost per craft</h3><ul id="rerollCost" class="reroll-cost"></ul>
+                        <button id="rerollEquipment" class="action-button reroll-action" type="button" disabled>Craft stats</button>
+                        <p id="rerollStatus" class="reroll-status" role="status" aria-live="polite"></p>
+                        <h3>Potential rolls</h3><ul id="potentialRolls" class="potential-rolls"></ul><p id="rollPoolHint" class="subtle"></p>
+                    </section>
+                </div>
+                <p id="rerollEmpty" class="subtle" hidden>No rerollable equipment is available yet.</p>
+                <section class="reroll-gear-selection" aria-labelledby="rerollGearHeading"><div class="section-heading"><h2 id="rerollGearHeading">Choose your equipment</h2><span id="rerollSlotSummary" class="subtle"></span></div><div id="rerollGearList" class="reroll-gear-list"></div></section>
+            </section>
+            <section id="recipeCrafting" aria-label="Craft new equipment" hidden>
             <div class="crafting-heading">
                 <h2>Gear recipes</h2>
                 <p class="subtle">Crafted items go to your inventory. Equip them when you are ready.</p>
@@ -203,6 +227,7 @@
                 <p id="craftingSummary" class="crafting-summary" aria-live="polite"></p>
             </div>
             <div id="craftList" class="crafting-grid"></div>
+            </section>
         </section>
 
         <section id="upgradesView" class="game-panel page-view" hidden>
@@ -358,26 +383,27 @@
     <script src="js/combat-settings.js?v=2"></script>
     <script src="js/combat-webgl.js?v=3"></script>
     <script src="js/combat-webgl-effects.js?v=2"></script>
-    <script src="js/items.js?v=20261021-2"></script>
-    <script src="js/item-system.js?v=20261028-1"></script>
+    <script src="js/items.js?v=20261031-1"></script>
+    <script src="js/item-system.js?v=20261031-1"></script>
     <script src="js/skill-tree.js?v=20261027-11"></script>
     <script src="js/skill-stat-compat.js?v=20261026-7"></script>
     <script src="js/skill-descriptions.js?v=20261028-1"></script>
     <script src="js/skill-sprites.js?v=20261021-13"></script>
     <script src="js/equipment-effects.js?v=1"></script>
-    <script src="js/world-content.js?v=20261027-18"></script>
+    <script src="js/world-content.js?v=20261030-2"></script>
     <script src="js/world-system.js?v=20261026-1"></script>
     <script src="js/loot-effects.js?v=8"></script>
     <script src="js/arrow-skills.js?v=20261030-2"></script>
     <script src="js/eruption-skills.js?v=20261030-2"></script>
     <script src="js/shield-effects.js?v=20261030-2"></script>
     <script src="js/bleed.js?v=20261026-5"></script>
-    <script src="js/spell-skills.js?v=20261030-2"></script>
+    <script src="js/spell-skills.js?v=20261030-3"></script>
     <script src="js/elemental-skills.js?v=20261030-2"></script>
     <script src="js/damage-breakdown.js?v=20261027-6"></script>
-    <script src="js/save-compat.js?v=20261026-3"></script>
-    <script src="js/equipment-sprite-preview.js?v=2"></script>
-    <script src="js/game.js?v=20261030-7"></script>
+    <script src="js/save-compat.js?v=20261030-1"></script>
+    <script src="js/equipment-sprite-preview.js?v=3"></script>
+    <script src="js/equipment-crafting.js?v=5"></script>
+    <script src="js/game.js?v=20261031-1"></script>
     <script src="js/skill-builds.js?v=20261027-14"></script>
     <script src="js/game-profiles.js?v=20261026-1"></script>
     <script src="js/offline-play.js?v=20261025-1"></script>

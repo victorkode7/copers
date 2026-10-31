@@ -149,6 +149,8 @@
         saved.skillRanks = ranks;saved.skillPoints += report.refundedPoints;
 
         const itemRules=rulesFor('items',migrations), oldKept=saved.preservedContent || {ownedItemIds:[],crafted:[],gear:{}};
+        if (saved.itemCrafts) saved.itemCrafts = Object.fromEntries(Object.entries(saved.itemCrafts).map(([oldId,rolls]) =>
+            [resolve(oldId,itemRules,context.items),rolls]).filter(([id]) => id !== null));
         const ids = values => [...new Set(values.map(id => resolve(id,itemRules,context.items)).filter(id => id !== null))];
         const owned=ids([...saved.ownedItemIds,...oldKept.ownedItemIds]), crafted=ids([...saved.crafted,...oldKept.crafted]);
         const kept={ownedItemIds:owned.filter(id => !own(context.items,id)),crafted:[],gear:Object.create(null)};

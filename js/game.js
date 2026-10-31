@@ -129,6 +129,7 @@ const state = {
     developerItemsEnabled: false,
     developerTravelEnabled: false,
     crafted: [],
+    itemCrafts: {},
     tutorials: createTutorialState(),
     selectedWorld: worldData[0].id,
     lastMapByWorld: Object.fromEntries(worldData.map(world => [world.id, world.mapIds[0]])),
@@ -819,7 +820,7 @@ function ownsItem(id, source = state) {
 }
 
 function getEquippedItems() {
-    return Object.values(state.gear).filter(id => ownsItem(id)).map(id => itemById[id]);
+    return Object.values(state.gear).filter(id => ownsItem(id)).map(id => ItemCrafting.effective(itemById[id]));
 }
 
 function getGearStat(stat) {
@@ -1511,6 +1512,7 @@ function createGameSave() {
         developerItemsEnabled: state.developerItemsEnabled,
         developerTravelEnabled: state.developerTravelEnabled,
         crafted: state.crafted,
+        itemCrafts: state.itemCrafts,
         tutorials: state.tutorials,
         selectedWorld: state.selectedWorld,
         lastMapByWorld: state.lastMapByWorld,
@@ -1677,6 +1679,8 @@ function parseGameSave(rawSave) {
     }
     if (saved.tutorials && typeof saved.tutorials === 'object' && !Array.isArray(saved.tutorials)) saved.tutorials = {...createTutorialState(),...saved.tutorials};
     if (saved.upgrades && typeof saved.upgrades === 'object' && !Array.isArray(saved.upgrades)) legacyUpgradeIds.forEach(id=>{if(saved.upgrades[id]===undefined)saved.upgrades[id]=0;});
+    if (saved.itemCrafts === undefined) saved.itemCrafts = {};
+    ItemCrafting.validateSave(saved.itemCrafts);
     SaveCompatibility.migrate(saved,saveCompatibilityContext());
     normalizeElementalSaveTimers(saved);
     if (
@@ -1823,6 +1827,7 @@ function applyGameSave(saved) {
     state.developerItemsEnabled = saved.developerItemsEnabled;
     state.developerTravelEnabled = saved.developerTravelEnabled;
     state.crafted = saved.crafted;
+    state.itemCrafts = saved.itemCrafts;
     state.tutorials = saved.tutorials;
     state.selectedMap = saved.selectedMap;
     const savedMapWorld = worldForMap(saved.selectedMap) || worldData[0];
@@ -2303,6 +2308,8 @@ function recipeIsUnlocked(recipe) {
 }
 
 function renderCrafting() {
+    ItemCrafting.render();
+    if (ItemCrafting.mode() !== 'recipes') return;
     elements.crafts.innerHTML = '';
     const unlockedRecipes = recipes.filter(recipe => (!recipe.developerOnly || state.developerItemsEnabled) && recipeIsUnlocked(recipe));
     const unlockedIds = new Set(unlockedRecipes.map(recipe => recipe.id));
@@ -2370,7 +2377,7 @@ function renderCrafting() {
 
             const effect = document.createElement('p');
             effect.className = 'craft-card-effect';
-            effect.textContent = recipe.effect;
+            effect.textContent = recipe.crafting ? ItemCrafting.describe(recipe) : recipe.effect;
             const description = document.createElement('p');
             description.className = 'craft-card-description';
             description.textContent = recipe.description;
@@ -2459,7 +2466,11 @@ function renderCrafting() {
 function renderItemComparison(container, item) {
     const equipped = itemById[state.gear[item.slot]];
     const labels = {new: 'New bonus', better: 'Improvement', equal: 'Equal value', worse: 'Worse value', missing: 'Missing bonus'};
-    const lines = Equipment.compare(item, equipped);
+    const lines = Equipment.compare(ItemCrafting.effective(item), ItemCrafting.effective(equipped));
+    const craftedKeys = new Set(ItemCrafting.rollsFor(item).filter(Boolean).map(roll => roll.stat));
+    // Keep permanent bonuses above crafted bonuses, preserving the usual stat
+    // order within each group. Empty crafted slots are appended below both.
+    lines.sort((a, b) => Number(craftedKeys.has(a.key)) - Number(craftedKeys.has(b.key)));
     container.classList.add('item-stat-comparison');
     container.replaceChildren();
     lines.forEach(line => {
@@ -2467,6 +2478,7 @@ function renderItemComparison(container, item) {
         entry.className = 'item-stat-line stat-' + line.status;
         entry.dataset.stat = line.key;
         entry.dataset.comparison = line.status;
+        if (craftedKeys.has(line.key)) entry.classList.add('is-crafted-stat');
         const label = Equipment.stats[line.key].display.label;
         const value = document.createElement('span');
         value.className = 'item-stat-value';
@@ -2489,9 +2501,15 @@ function renderItemComparison(container, item) {
         }
         entry.title = labels[line.status] + ' compared with ' + (equipped ? equipped.name : 'an empty slot') + '. ' + line.deltaDescription;
         entry.setAttribute('aria-label', entry.textContent + '. ' + entry.title);
+        if (craftedKeys.has(line.key)) entry.append(Object.assign(document.createElement('small'), {className:'crafted-stat-label',textContent:'Crafted'}));
         container.append(entry);
     });
     if (!lines.length) container.textContent = 'No stat bonuses';
+    ItemCrafting.appendSlots(container, item, state, true);
+    const unique = Equipment.uniqueEffect(item);
+    if (unique) container.append(Object.assign(document.createElement('span'), {
+        className: 'item-stat-line item-unique-effect', textContent: 'Unique: ' + unique.description
+    }));
 }
 
 function renderInventory() {
@@ -2503,6 +2521,7 @@ function renderInventory() {
     const gearSignature = JSON.stringify({
         selectedGearSlot,
         inventoryCategory,
+        itemCrafts: state.itemCrafts,
         gear: state.gear,
         crafted: state.crafted,
         ownedItemIds: state.ownedItemIds,
@@ -2552,7 +2571,7 @@ function renderInventory() {
             bonus.className = 'equipment-slot-bonus';
             bonus.id = 'equipped-stats-' + slot.id;
             bonus.setAttribute('role', 'tooltip');
-            bonus.textContent = Equipment.describe(equippedItem);
+            bonus.textContent = ItemCrafting.describe(equippedItem);
             entry.setAttribute('aria-describedby', bonus.id);
             wrapper.append(bonus);
             const remove = document.createElement('button');
@@ -3256,6 +3275,8 @@ function render() {
     elements.maxHealth.textContent = formatAmount(getPlayerMaxHealth());
     elements.maxFury.textContent = formatAmount(getPlayerMaxFury());
     elements.healthRegen.textContent = combatStatFormatter.format(getPlayerHealthRegen()) + ' HP/s';
+    if (state.currentView !== 'inventory' && !elements.inventoryView.hidden)
+        elements.inventory.querySelectorAll('details[open]').forEach(entry => { entry.open = false; });
     elements.townView.hidden = state.currentView !== 'town';
     elements.upgradesView.hidden = state.currentView !== 'upgrades';
     elements.mapView.hidden = state.currentView !== 'map';
@@ -3633,19 +3654,25 @@ function playerHasShockwaveSlash() {
 }
 
 function triggerShockwaveSlash(hitMonster, hitDamage) {
-    if (!playerHasShockwaveSlash() || Math.random() >= 0.25) return;
+    if (!playerHasShockwaveSlash()) return;
+    const unique = getEquippedItems().map(Equipment.uniqueEffect).find(effect => effect?.shockwaveSlash);
+    const {chance, triggers} = unique?.shockwaveSlash || {chance: 0.25, triggers: 1};
+    if (Math.random() >= chance) return;
     const splashDamage = hitDamage * 0.33;
-    const splashTargets = state.monsterStates
-        .filter(monster => monster.hp > 0 && monster.id !== hitMonster.id);
-    splashTargets.forEach(monster => {
-        showMonsterProc(monster.id, 'SHOCKWAVE HIT');
-        flashShockwaveCard(monster.id);
-        flashShockwaveHealthBar(monster.id);
-        applyDamageToMonster(monster, splashDamage, 'physical', 'shockwaveSlash');
-    });
-    // One shield per activation, independently of the number of splash hits.
-    // A proc against a lone boss still grants its shield.
-    if (getSkillNodeRank('resonantGuard') > 0) gainShields();
+    for (let activation = 0; activation < triggers; activation++) {
+        // Resolve each activation separately so both can apply on-hit effects,
+        // while enemies killed by the first wave cannot be hit or looted twice.
+        const splashTargets = state.monsterStates
+            .filter(monster => monster.hp > 0 && monster.id !== hitMonster.id);
+        splashTargets.forEach(monster => {
+            showMonsterProc(monster.id, 'SHOCKWAVE HIT');
+            flashShockwaveCard(monster.id);
+            flashShockwaveHealthBar(monster.id);
+            applyDamageToMonster(monster, splashDamage, 'physical', 'shockwaveSlash');
+        });
+        // One shield per activation, including procs against a lone boss.
+        if (getSkillNodeRank('resonantGuard') > 0) gainShields();
+    }
 }
 
 function craftGear(id) {
@@ -3732,6 +3759,7 @@ document.querySelector('#resetGame').addEventListener('click', function() {
     document.querySelector('#developerItems').checked = false;
     document.querySelector('#developerTravel').checked = false;
     state.crafted = [];
+    state.itemCrafts = {};
     state.tutorials = createTutorialState();
     state.selectedWorld = worldData[0].id;
     state.lastMapByWorld = Object.fromEntries(worldData.map(world => [world.id, world.mapIds[0]]));

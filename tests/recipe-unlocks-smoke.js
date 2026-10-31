@@ -2,6 +2,7 @@
     const checks = [];
     const check = (label, ok) => { checks.push((ok ? 'PASS ' : 'FAIL ') + label); if (!ok) throw new Error(label); };
     try {
+        ItemCrafting.setMode('recipes');
         const firstMaps = mapsForWorld(worldData[0].id), secondMaps = mapsForWorld(worldData[1].id);
         const woods = firstMaps.find(map => map.id === 'whisperingWoods') || firstMaps[1];
         const woodsIndex = firstMaps.indexOf(woods);

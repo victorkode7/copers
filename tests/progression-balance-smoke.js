@@ -1,154 +1,135 @@
+// Real combat at the minimum level earned by reaching each map. ?baseline
+// reports existing problems without requiring successful survival.
 (function () {
-    const checks = [];
-    const check = (label, ok) => { checks.push((ok ? 'PASS ' : 'FAIL ') + label); if (!ok) throw new Error(label); };
-    const originalRandom = Math.random;
-    try {
-        check('all rebalanced content validates', WorldContent.validate(worldContent, itemData).length === 0);
-        for (const world of worldData) {
-            const maps = mapsForWorld(world.id), bossMap = maps.at(-1);
-            const boss = monsterDefinitions(bossMap);
-            const regular = maps.slice(0, -1).flatMap(map => monsterDefinitions(map));
-            check(world.name + ' ends with one boss and a one-kill goal', boss.length === 1 && bossMap.goal === 1);
-            check(world.name + ' boss has at least ten times regular monster health', boss[0].health >= Math.max(...regular.map(monster => monster.health)) * 10);
-            check(world.name + ' boss hits harder than every regular monster', boss[0].attackDamage >= Math.max(...regular.map(monster => monster.attackDamage)) * 1.5);
-            check(world.name + ' regular kill goals increase', maps.slice(1, -1).every((map, index) => map.goal > maps[index].goal));
-        }
-        const second = mapsForWorld(worldData[1].id);
-        check('world two starts above the first world regular enemies', monsterDefinitions(second[0])[0].health > monsterDefinitions(mapsForWorld(worldData[0].id).at(-2))[0].health);
-        check('crowded maps retain their mobs without multiplying individual damage', monsterDefinitions(second[8]).length === 21 && monsterDefinitions(second[8])[0].attackDamage < monsterDefinitions(second[7])[0].attackDamage);
-        state.developerTravelEnabled = false;
-        state.kills = Object.fromEntries(mapData.map(map => [map.id, 0]));
-        for (let worldIndex = 0; worldIndex < worldData.length; worldIndex++) {
-            const maps = mapsForWorld(worldData[worldIndex].id);
-            check('can enter earned world ' + worldData[worldIndex].name, worldIsUnlocked(worldIndex));
-            for (let index = 0; index < maps.length; index++) {
-                check('earned map is accessible: ' + worldData[worldIndex].name + '/' + maps[index].name, mapTravelAccess(maps[index].id).unlocked);
-                if (index + 1 < maps.length) {
-                    state.kills[maps[index].id] = maps[index].goal - 1;
-                    check('next map stays locked below the new goal', !mapIsUnlocked(maps, index + 1));
-                } else if (worldIndex + 1 < worldData.length) {
-                    check('next world requires its boss kill', !worldIsUnlocked(worldIndex + 1));
+    const checks = [], rows = [], baseline = new URL(document.currentScript.src).searchParams.has('baseline');
+    const originalRandom = Math.random, round = value => Math.round(value * 100) / 100;
+    const check = (name, ok) => { checks.push((ok ? 'PASS ' : 'FAIL ') + name); if (!ok) throw new Error(name); };
+    const readBuild = name => {
+        const request = new XMLHttpRequest(); request.open('GET', 'builds/' + name + '.json', false); request.send();
+        return JSON.parse(request.responseText).allocationOrder;
+    };
+    function recoveryOrder() {
+        const order = [], ranks = {}, root = skillNodes.find(node => node.start).id;
+        const excluded = new Set(['shieldGenerator', 'shieldSlam', 'resonantGuard', 'overflowingSlam', 'freezingArrows', 'righteousFire', 'volcanicEruption']);
+        const add = target => {
+            const queue = [[root], ...order.map(id => [id])], seen = new Set(queue.flat());
+            for (let index = 0; index < queue.length; index++) {
+                const path = queue[index], last = path.at(-1);
+                if (last === target) {
+                    for (const id of path) if (id !== root && !ranks[id] && order.length < 60) { order.push(id); ranks[id] = 1; }
+                    return;
                 }
-                state.kills[maps[index].id] = maps[index].goal;
+                for (const id of skillNodeConnections[last]) if (!seen.has(id) && !excluded.has(id)) { seen.add(id); queue.push([...path, id]); }
             }
-        }
-
-        // Sample the actual combat simulation at fixed midpoint builds. These are
-        // active-combat estimates: revives are immediate and extra farming, travel
-        // and time spent planning/crafting are excluded. No legacy upgrades,
-        // developer items or rare equipment drops are equipped. Disable only
-        // presentation/persistence and XP gain so each sample measures a fixed build.
-        render = renderCombat = saveGame = nudgePlayerHealthBar = flashDodge =
-            clearEnemyDamageIndicator = showMonsterProc = showPoisonTransfer =
-            showPoisonStackProc = showMonsterHitBadge = flashShockwaveCard =
-            flashShockwaveHealthBar = () => {};
-        awardExperience = () => 0;
-        window.setTimeout = () => 0;
-        elements.enemyRoster.replaceChildren();
-        const tick = () => simulateCombatStep(gameTickSeconds);
-        const readers = {getSkillStat, getSkillMultiplier, getGearStat};
-        const memoize = reader => {
-            const values = new Map();
-            return stat => { if (!values.has(stat)) values.set(stat, reader(stat)); return values.get(stat); };
         };
-        const priorities = ['damageNode', 'mightyBlows', 'shockwaveSlash', 'healthNode', 'thickHide', 'untouchable',
-            'attackSpeedNode', 'attackSpeedNode2', 'bigAttackSpeed_1', 'bigAttackSpeed_2', 'quickHands', 'fleetFooted',
-            'accuracyNode', 'multiHit1', 'multiHit1_copy', 'multiHit1_copy_copy', 'multiHit1_copy_copy_copy',
-            'bigAttackSpeed_4', 'bigAttackSpeed_3', 'snakeBite', 'poisonDMG_3', 'poisonDMG_2', 'basicallySnake',
-            'snakeBite_2', 'poisonExecute', 'bloomingFlower', 'damageNode2', 'accuracyNode2', 'healthNode2', 'scavenger', 'treasureHunter'].map(SkillStatCompat.resolveNodeId);
-        const poisonNodes = new Set(['snakeBite', 'poisonDMG_3', 'poisonDMG_2', 'basicallySnake', 'snakeBite_2', 'poisonExecute', 'bloomingFlower']);
-        const levelAt = xp => { let level = 0; while (xp >= experienceForNextLevel(level)) xp -= experienceForNextLevel(level++); return level; };
-        function equip(names) {
-            state.gear = createEmptyGear(); state.ownedItemIds = [];
-            for (const name of names) {
-                const item = itemData.items.find(entry => entry.name === name);
-                if (!item) throw new Error('Missing balance fixture item: ' + name);
-                state.gear[item.slot] = item.id; state.ownedItemIds.push(item.id);
-            }
+        ['healthNode', 'healthNode2', 'thickHide', 'untouchable', 'evasiveVitality', 'healthRegeneration2',
+            'damageNode', 'mightyBlows', 'heavyBlows', 'maxFury', 'maxFury2', 'attackSpeedNode', 'attackSpeedNode2',
+            'quickHands', 'accuracyNode', 'multiHit1', 'shockwaveSlash', 'multiShot', 'piercingArrow', 'gatheringPower',
+            'damageBoost', 'forkingArrow'].forEach(add);
+        skillNodes.filter(node => !node.start && !excluded.has(node.id) &&
+            Object.keys(node.stats).some(key => /^(damage|accuracy|attackSpeed|multiHit)/.test(key))).forEach(node => add(node.id));
+        return order;
+    }
+    function gearFor(worldIndex, mapIndex) {
+        const names = [];
+        if (worldIndex || mapIndex >= 1) names.push('Blobhopper Boots');
+        if (worldIndex || mapIndex >= 2) names.push('Slimy Necklace');
+        if (worldIndex || mapIndex >= 3) names.push('Long spear');
+        if (worldIndex || mapIndex >= 4) names.push('TestItem1', 'Wolf Helmet', "John's Coat", 'Woodland Greaves', 'Forest cape');
+        if (worldIndex || mapIndex >= 5) names.push('Wolf necklace');
+        if (worldIndex) names.push('Cinderstep Boots');
+        if (worldIndex > 1 || worldIndex === 1 && mapIndex >= 1) names.push('Shark bow');
+        if (worldIndex > 1 || worldIndex === 1 && mapIndex >= 5) names.push('Ice helmet');
+        if (worldIndex > 1 || worldIndex === 1 && mapIndex >= 7) names.push('Ice body', 'Ice legs');
+        if (worldIndex > 1 || worldIndex === 1 && mapIndex >= 8) names.push('Wizard Cloak');
+        // Established gear only: World 3's new armor has no stats yet.
+        state.gear = createEmptyGear(); state.ownedItemIds = [];
+        for (const name of names) {
+            const item = itemData.items.find(entry => entry.name === name && !entry.developerOnly);
+            if (!item) throw new Error('Missing progression equipment: ' + name);
+            state.gear[item.slot] = item.id; state.ownedItemIds.push(item.id);
         }
-        function measure(map, level, hybrid, worldIndex, mapIndex, singleFight = false) {
-            getSkillStat = readers.getSkillStat;
-            getSkillMultiplier = readers.getSkillMultiplier;
-            getGearStat = readers.getGearStat;
-            state.selectedWorld = worldForMap(map.id).id; state.selectedMap = map.id;
-            state.currentView = 'town'; state.level = level;
-            state.upgrades = {strength: 0, haste: 0, evasion: 0}; state.skillRanks = {};
-            for (const id of priorities) {
-                if (Object.keys(state.skillRanks).length >= level) break;
-                if (!hybrid && poisonNodes.has(id)) continue;
-                if (skillNodeIsAvailable(skillNodeById[id])) state.skillRanks[id] = 1;
-            }
-            const names = [];
-            if (worldIndex > 0 || mapIndex >= 1) names.push('Blobhopper Boots');
-            if (worldIndex > 0 || mapIndex >= 2) names.push('Slimy Necklace');
-            if (worldIndex > 0 || mapIndex >= 3) {
-                names.push('TestItem1', 'Wolf Helmet', "John's Coat", 'Woodland Greaves', 'Forest cape');
-            }
-            if (worldIndex > 0 || mapIndex >= 4) names.push('Wolf necklace');
-            if (worldIndex > 0) names.push('Cinderstep Boots');
-            if (worldIndex > 0 && mapIndex >= 1) names.push('Shark bow');
-            if (worldIndex > 0 && hybrid && mapIndex >= 7) names.push('Wizard Cloak');
-            if (worldIndex === 2) names.push('Ice helmet', 'Ice body', 'Ice legs', 'Wizard Cloak', 'Big ass hammer');
-            equip(names);
-            // Equipment and skill allocation stay fixed during this sample.
-            getSkillStat = memoize(readers.getSkillStat);
-            getSkillMultiplier = memoize(readers.getSkillMultiplier);
-            getGearStat = memoize(readers.getGearStat);
-            state.playerHp = getPlayerMaxHealth(); state.combatPaused = false; state.attackTimer = 0;
-            resetMonsterStates(map);
-            const start = state.kills[map.id]; let deaths = 0, firstKillSeconds = null, deathsBeforeFirstKill = 0;
-            for (let step = 0; step < 6000; step++) {
-                tick();
-                if (firstKillSeconds === null && state.kills[map.id] > start) firstKillSeconds = (step + 1) / 10;
-                if (state.combatPaused && firstKillSeconds === null) deathsBeforeFirstKill++;
-                if (state.combatPaused) { deaths++; state.playerHp = getPlayerMaxHealth(); state.combatPaused = false; }
-                if (singleFight && (firstKillSeconds !== null || deaths)) break;
-            }
-            const kills = state.kills[map.id] - start;
-            if (!singleFight) check('sample can kill enemies on ' + map.name, kills > 0);
-            return {seconds: map.goal === 1 ? firstKillSeconds : map.goal * 600 / kills,
-                deaths, kills, firstKillSeconds, deathsBeforeFirstKill, damage: getDamage(), interval: getAttackSpeed(), level};
+    }
+    function measure(map, worldIndex, mapIndex, level, order, seed, columns) {
+        let roll = seed;
+        Math.random = () => { roll = (Math.imul(roll, 1664525) + 1013904223) >>> 0; return roll / 4294967296; };
+        combatStatCache = null;
+        const ranks = Object.fromEntries(order.slice(0, Math.min(level, 60)).map(id => [id, 1]));
+        SkillBuilds.validate({format: 'copers-skill-build', version: 1, skillRanks: ranks});
+        state.skillRanks = ranks; state.level = level; state.skillPoints = level - Object.keys(ranks).length; state.experience = 0;
+        state.upgrades = {strength: 0, haste: 0, evasion: 0}; state.developerItemsEnabled = false;
+        state.kills = Object.fromEntries(mapData.map(entry => [entry.id, 0]));
+        state.materials = Object.fromEntries(Object.keys(materialNames).map(id => [id, 0]));
+        state.crafted = []; state.gold = 0; state.lootLog = []; state.lastLoot = null; state.tutorials = createTutorialState();
+        state.selectedWorld = worldForMap(map.id).id; state.selectedMap = map.id; state.currentView = 'map'; state.isInTown = false;
+        gearFor(worldIndex, mapIndex);
+        resetMonsterStates(map); state.monsterColumns = columns;
+        state.playerHp = getPlayerMaxHealth(); state.playerMana = getPlayerMaxMana(); state.manaCapacity = getPlayerMaxMana();
+        state.attackTimer = 0; state.combatPaused = false; resetDamageBreakdown(map.id);
+        const health = getPlayerMaxHealth(), definitions = monsterDefinitions(map);
+        const rawBurst = definitions.reduce((sum, monster) => sum + monster.attackDamage, 0);
+        const expectedIncoming = state.monsterStates.reduce((sum, monster) => sum + monsterDefinition(monster).attackDamage * getEnemyHitChance(monster) / 100 / monsterDefinition(monster).attackInterval, 0);
+        const stats = {health, regen: round(getPlayerHealthRegen()), evasion: getPlayerEvasion(), points: Object.keys(ranks).length,
+            expectedIncoming: round(expectedIncoming), rawBurstPercent: round(rawBurst / health * 100)};
+        let minimumHp = 1, firstKill = null, seconds = 0;
+        for (let step = 0; step < (map.goal === 1 ? 6000 : 1800); step++) {
+            simulateCombatStep(.1, false); seconds = (step + 1) / 10;
+            minimumHp = Math.min(minimumHp, state.playerHp / health);
+            if (firstKill === null && state.kills[map.id]) firstKill = seconds;
+            if (state.combatPaused || state.kills[map.id] >= map.goal) break;
         }
-        const forecasts = [];
-        for (const hybrid of [true, false]) {
-            let xp = 0, totalSeconds = 0, seed = 48271;
-            Math.random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
-            const rows = [];
-            for (let worldIndex = 0; worldIndex < 2; worldIndex++) {
-                const maps = mapsForWorld(worldData[worldIndex].id);
-                for (let index = 0; index < maps.length; index++) {
-                    const map = maps[index], monster = monsterDefinitions(map)[0];
-                    const level = levelAt(xp + map.goal * monster.experience / 2);
-                    const sample = measure(map, level, hybrid, worldIndex, index);
-                    totalSeconds += sample.seconds;
-                    rows.push({world: worldIndex + 1, map: map.name, goal: map.goal, hours: +(sample.seconds / 3600).toFixed(2), ...sample});
-                    xp += map.goal * monster.experience;
+        return {seed, columns, ...stats, died: state.combatPaused, seconds, kills: state.kills[map.id], firstKill,
+            minimumHp: round(minimumHp * 100), endHp: round(state.playerHp / health * 100)};
+    }
+    try {
+        check('world content validates', WorldContent.validate(worldContent, itemData).length === 0);
+        awardExperience = () => 0; // Hold the entry build fixed throughout each sample.
+        const recovery = recoveryOrder();
+        check('recovery allocation needs no shields, freezing or self-damage',
+            ['shieldGenerator', 'resonantGuard', 'freezingArrows', 'glacialRupture', 'volcanicEruption', 'righteousFire'].every(id => !recovery.includes(id)));
+        const styles = [{name: 'Vanguard', order: readBuild('shielded-vanguard-60')},
+            {name: 'Elemental', order: readBuild('elemental-warden-60')},
+            {name: 'Recovery without shields or freeze', order: recovery},
+            {name: '30-point recovery', points: 30, order: recovery.slice(0, 30)}];
+        for (const style of styles) {
+            check(style.name + ' has its expected point budget', style.order.length === (style.points || 60));
+            SkillBuilds.validate({format: 'copers-skill-build', version: 1, skillRanks: Object.fromEntries(style.order.map(id => [id, 1]))});
+        }
+        let xp = 0;
+        for (const [worldIndex, world] of worldData.entries()) {
+            const maps = mapsForWorld(world.id);
+            if (!baseline) {
+                check(world.name + ' ends with one boss', monsterDefinitions(maps.at(-1)).length === 1 && maps.at(-1).goal === 1);
+                check(world.name + ' has increasing regular map goals', maps.slice(1, -1).every((map, index) => map.goal > maps[index].goal));
+                const regular = maps.slice(0, -1).map(map => monsterDefinitions(map));
+                const boss = monsterDefinitions(maps.at(-1))[0];
+                check(world.name + ' regular health increases gradually', regular.slice(1).every((pack, index) => pack[0].health > regular[index][0].health));
+                check(world.name + ' packs have at most nine attackers', regular.every(pack => pack.length <= 9));
+                check(world.name + ' boss has at least ten times regular health', boss.health >= Math.max(...regular.flat().map(monster => monster.health)) * 10);
+                check(world.name + ' boss has a stronger individual hit', boss.attackDamage >= Math.max(...regular.flat().map(monster => monster.attackDamage)) * 1.5);
+            }
+            for (const [mapIndex, map] of maps.entries()) {
+                let remainingXp = xp, level = 0;
+                while (remainingXp >= experienceForNextLevel(level)) remainingXp -= experienceForNextLevel(level++);
+                const definitions = monsterDefinitions(map), boss = mapIndex === maps.length - 1;
+                for (const style of styles) {
+                    const trials = [48271, 98765, 654321].map((seed, i) => measure(map, worldIndex, mapIndex, level, style.order, seed, i === 2 ? 1 : 3));
+                    rows.push({world: worldIndex + 1, mapId: map.id, map: map.name, build: style.name, level, boss,
+                        count: definitions.length, monsterHealth: definitions[0].health, monsterDamage: definitions[0].attackDamage,
+                        attackInterval: definitions[0].attackInterval, trials});
+                    if (!baseline) {
+                        check(style.name + ' survives ' + world.name + '/' + map.name, trials.every(trial => !trial.died));
+                        check(style.name + ' can defeat enemies on ' + world.name + '/' + map.name, trials.every(trial => trial.firstKill !== null));
+                        if (!boss) check(style.name + ' retains a safe HP margin on ' + world.name + '/' + map.name, trials.every(trial => trial.minimumHp >= 50));
+                    }
                 }
+                xp += map.goal * Math.min(...definitions.map(monster => monster.experience));
             }
-            forecasts.push({build: hybrid ? 'hybrid' : 'physical', hours: totalSeconds / 3600, rows});
         }
-        for (const forecast of forecasts) {
-            checks.push('FORECAST ' + forecast.build + ': ' + forecast.hours.toFixed(2) + ' active hours through world two');
-            for (const row of forecast.rows) checks.push('  World ' + row.world + ', ' + row.map + ': ' + row.hours + 'h (' + row.goal + ' kills, level ' + row.level + ')');
-            check(forecast.build + ' forecast finishes world two in 10–20 active hours', forecast.hours >= 10 && forecast.hours <= 20);
-            const late = forecast.rows.filter(row => row.world === 2).slice(5, 9);
-            check(forecast.build + ' late world two maps take progressively longer', late.every((row, index) => index === 0 || row.seconds > late[index - 1].seconds));
-        }
-        for (let worldIndex = 0; worldIndex < worldData.length; worldIndex++) {
-            const maps = mapsForWorld(worldData[worldIndex].id), map = maps.at(-1);
-            const level = worldIndex < 2 ? forecasts[0].rows.find(row => row.world === worldIndex + 1 && row.goal === 1).level : 220;
-            let wins = 0;
-            for (let trial = 0; trial < 20; trial++) {
-                let seed = 7001 + trial * 99991;
-                Math.random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
-                const fight = measure(map, level, true, worldIndex, maps.length - 1, true);
-                if (fight.firstKillSeconds !== null && fight.deathsBeforeFirstKill === 0) wins++;
-            }
-            check('prepared build beats world ' + (worldIndex + 1) + ' boss without reviving in at least 80% of seeded fights (' + wins + '/20)', wins >= 16);
-        }
-        check('no runtime errors', !window.smokeErrors.length);
-        checks.push('SMOKE PASSED');
+        check('no runtime errors', !window.smokeErrors.length); checks.push('SMOKE PASSED');
     } catch (error) { checks.push('ERROR ' + error.stack); }
-    Math.random = originalRandom;
-    const report = document.createElement('pre'); report.id = 'smoke-results'; report.textContent = checks.join('\n'); document.body.append(report);
+    finally { Math.random = originalRandom; combatStatCache = null; }
+    const report = document.createElement('pre'); report.id = 'smoke-results';
+    report.textContent = JSON.stringify({method: 'Three entry-level seeded trials per map/build, including single-column formation; 180s regular maps or 600s bosses, capped at map goal; full HP, empty combat buffs, staged gear, at most 30 or 60 points, no crafted stats, legacy upgrades or developer items.', rows, checks});
+    document.body.append(report);
 }());

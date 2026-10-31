@@ -47,6 +47,7 @@
     }
     function references(id) {
         const recipes = data.items.filter(item => Object.hasOwn(item.recipe?.materials || {}, id));
+        const rerolls = data.items.filter(item => Object.hasOwn(item.crafting?.cost?.materials || {}, id));
         const drops = [];
         let world = window.adventureWorld;
         try {
@@ -61,7 +62,7 @@
                 });
             });
         }
-        return {recipes, drops};
+        return {recipes, rerolls, drops};
     }
     function renderValidation() {
         const errors = Equipment.validate(data);
@@ -101,6 +102,10 @@
         const refs = references(selectedId);
         $('materialSources').append(...(refs.drops.length ? refs.drops : ['No drop sources assigned.']).map(text => node('li', text)));
         $('materialRecipes').append(...(refs.recipes.length ? refs.recipes.map(item => item.name + ' — ' + item.recipe.materials[selectedId] + ' required') : ['No recipes use this material.']).map(text => node('li', text)));
+        if (refs.rerolls.length) {
+            if (!refs.recipes.length) $('materialRecipes').replaceChildren();
+            $('materialRecipes').append(...refs.rerolls.map(item => node('li', item.name + ' reroll: ' + item.crafting.cost.materials[selectedId] + ' required')));
+        }
     }
     function changed(message) {
         const next = JSON.stringify(data);
@@ -151,7 +156,7 @@
     });
     $('deleteMaterial').addEventListener('click', () => {
         const refs = references(selectedId);
-        if (refs.recipes.length || refs.drops.length) { status('Remove this material from recipes and drops before deleting it.'); return; }
+        if (refs.recipes.length || refs.rerolls.length || refs.drops.length) { status('Remove this material from recipes, reroll costs and drops before deleting it.'); return; }
         delete data.materials[selectedId]; if (data.materialDetails) delete data.materialDetails[selectedId];
         selectedId = Object.keys(data.materials)[0]; changed('Material deleted. Undo is available.'); render();
     });

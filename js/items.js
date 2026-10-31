@@ -90,13 +90,12 @@ window.adventureItems = {
             "rarity": "rare",
             "sprite": "assets/items/emberforgedBlade-50944b24.png",
             "stats": {
-                "damage": 10,
+                "damage": 7,
                 "attackSpeedMultiplier": 1.1
             },
             "recipe": {
                 "materials": {
-                    "material_0e547cc411cb91fce7c30162": 100,
-                    "material_1b4e649727a05b3ad2ec7f8a": 50
+                    "fang": 200
                 }
             }
         },
@@ -110,7 +109,7 @@ window.adventureItems = {
             "stats": {
                 "evasion": 10,
                 "health": 15,
-                "damageMultiplier": 1.05
+                "damage": 1
             },
             "recipe": {
                 "materials": {
@@ -300,7 +299,8 @@ window.adventureItems = {
             },
             "recipe": {
                 "materials": {
-                    "fang": 15
+                    "material_0e547cc411cb91fce7c30162": 50,
+                    "material_1b4e649727a05b3ad2ec7f8a": 50
                 }
             }
         },
@@ -327,10 +327,11 @@ window.adventureItems = {
             "name": "Geobreaker",
             "slot": "weapon",
             "rarity": "unique",
+            "uniqueEffect": "geobreakerShockwave",
             "description": "Great for slaying monsters, even better for tilling your garden. Warranty void if used on soft dirt.",
             "sprite": "assets/items/Geobreaker-70b1ec4b.png",
             "stats": {
-                "damage": 21,
+                "damage": 11,
                 "attackSpeedMultiplier": 1.21,
                 "accuracy": 21
             },
@@ -419,15 +420,23 @@ window.adventureItems = {
             "description": "",
             "sprite": "assets/items/Ice-helmet-d34a7251.png",
             "stats": {
-                "evasion": 30,
-                "health": 40,
-                "damageMultiplier": 1.1
+                "health": 40
             },
             "recipe": {
                 "materials": {
                     "material_5f1658126246b7b3a5ede35d": 200,
                     "material_985927188da978e5f7fa3e5c": 1,
                     "hide": 50
+                }
+            },
+            "equipmentType": "armor",
+            "tier": 1,
+            "crafting": {
+                "slots": 2,
+                "cost": {
+                    "materials": {
+                        "hide": 10
+                    }
                 }
             }
         },
@@ -548,14 +557,23 @@ window.adventureItems = {
             "sprite": "assets/items/Wand-2-9f5de946.png",
             "stats": {
                 "spellDamage": 50,
-                "manaRegenPercent": 0.1,
-                "attackSpeedMultiplier": 1.25,
-                "mana": 50
+                "attackSpeedMultiplier": 1.25
             },
             "recipe": {
                 "materials": {
-                    "material_c5b9f767dd84fce3cc950ab7": 500,
-                    "material_b1c43d6c0bc463c355442072": 500
+                    "material_b1c43d6c0bc463c355442072": 500,
+                    "material_985927188da978e5f7fa3e5c": 5
+                }
+            },
+            "equipmentType": "wand",
+            "tier": 1,
+            "crafting": {
+                "slots": 2,
+                "cost": {
+                    "gold": 1000,
+                    "materials": {
+                        "hide": 10
+                    }
                 }
             }
         },
@@ -682,218 +700,27 @@ window.adventureItems = {
             "rarity": "rare",
             "description": "",
             "sprite": "assets/items/New-Item-f0c349ca.png",
-            "stats": {},
-            "recipe": {
-                "materials": {
-                    "hide": 1
-                }
-            }
-        },
-        {
-            "id": "item_be75f1f385eca9058cc20dcd497792e2",
-            "name": "Royal bow",
-            "slot": "weapon",
-            "rarity": "unique",
-            "description": "",
-            "sprite": "assets/items/Royal-bow-c71b3219.png",
             "stats": {
-                "bowDamageIncrease": 1.5,
-                "damage": 50,
-                "attackSpeedMultiplier": 1.3
+                "damage": 70,
+                "attackSpeedMultiplier": 1.25
             },
-            "recipe": null
-        },
-        {
-            "id": "item_1247d32afc0b9a9a0d0fddb5c50b6036",
-            "name": "Big 2h sword",
-            "slot": "weapon",
-            "rarity": "epic",
-            "description": "",
-            "sprite": "assets/items/Big-2h-sword-aad3be23.png",
-            "stats": {
-                "damage": 100,
-                "damageMultiplier": 1.2,
-                "bleedDamageMultiplier": 2
+            "recipe": {
+                "materials": {
+                    "material_985927188da978e5f7fa3e5c": 5,
+                    "material_84c44258b76b2d4efca9f050": 250
+                }
             },
-            "recipe": null
-        },
-        {
-            "id": "item_f283ab664af9a3ff38efeedcc101d96a",
-            "name": "Blue blade",
-            "slot": "weapon",
-            "rarity": "epic",
-            "description": "",
-            "sprite": "assets/items/Blue-blade-27552131.png",
-            "stats": {},
-            "recipe": null
-        },
-        {
-            "id": "item_5b59966746357d75124c63bd5bd4f3f2",
-            "name": "Chrono axe",
-            "slot": "weapon",
-            "rarity": "unique",
-            "description": "",
-            "sprite": "assets/items/New-Item-55f516bd.png",
-            "stats": {},
-            "recipe": {
-                "materials": {
-                    "hide": 1
+            "crafting": {
+                "slots": 2,
+                "cost": {
+                    "gold": 1000,
+                    "materials": {
+                        "gel": 50
+                    }
                 }
-            }
-        },
-        {
-            "id": "item_57237205641fec65162663889f13760e",
-            "name": "Fire sword",
-            "slot": "weapon",
-            "rarity": "unique",
-            "description": "",
-            "sprite": "assets/items/New-Item-564c122d.png",
-            "stats": {},
-            "recipe": {
-                "materials": {
-                    "hide": 1
-                }
-            }
-        },
-        {
-            "id": "item_d765a373cb3e735cb11d1bce094c6284",
-            "name": "Ice dagger",
-            "slot": "weapon",
-            "rarity": "uncommon",
-            "description": "",
-            "sprite": "assets/items/New-Item-3d7212be.png",
-            "stats": {},
-            "recipe": {
-                "materials": {
-                    "hide": 1
-                }
-            }
-        },
-        {
-            "id": "item_caa7ccc47f3c86fe4c53d30e9b9b39f5",
-            "name": "Water dagger",
-            "slot": "weapon",
-            "rarity": "uncommon",
-            "description": "",
-            "sprite": "assets/items/New-Item-fa43e218.png",
-            "stats": {},
-            "recipe": {
-                "materials": {
-                    "hide": 1
-                }
-            }
-        },
-        {
-            "id": "item_feda891c227ed62c299aad89e5d1c1c9",
-            "name": "Opal bow",
-            "slot": "weapon",
-            "rarity": "uncommon",
-            "description": "",
-            "sprite": "assets/items/New-Item-d29a20a3.png",
-            "stats": {},
-            "recipe": {
-                "materials": {
-                    "hide": 1
-                }
-            }
-        },
-        {
-            "id": "item_aab8ba90e95bfa3410799164181eb5bf",
-            "name": "Vagabond bow",
-            "slot": "weapon",
-            "rarity": "rare",
-            "description": "",
-            "sprite": "assets/items/New-Item-7c14d5ca.png",
-            "stats": {},
-            "recipe": {
-                "materials": {
-                    "hide": 1
-                }
-            }
-        },
-        {
-            "id": "item_d6dda8bac1a8a0cee94366df2dfb2604",
-            "name": "Divine bow",
-            "slot": "weapon",
-            "rarity": "rare",
-            "description": "",
-            "sprite": "assets/items/Water-bow-eda1edbb.png",
-            "stats": {},
-            "recipe": {
-                "materials": {
-                    "hide": 1
-                }
-            }
-        },
-        {
-            "id": "item_325c050aaded9a8cea45112a4b3dba11",
-            "name": "Blood staff",
-            "slot": "weapon",
-            "rarity": "epic",
-            "description": "",
-            "sprite": "assets/items/New-Item-d0d06c6c.png",
-            "stats": {},
-            "recipe": {
-                "materials": {
-                    "hide": 1
-                }
-            }
-        },
-        {
-            "id": "item_c8cf232fa1bd4457bc5599350335c23d",
-            "name": "Chrono staff",
-            "slot": "weapon",
-            "rarity": "uncommon",
-            "description": "",
-            "sprite": "assets/items/New-Item-1b19a419.png",
-            "stats": {},
-            "recipe": {
-                "materials": {
-                    "hide": 1
-                }
-            }
-        },
-        {
-            "id": "item_db78657b0bb8086df01f672b94d99fdd",
-            "name": "Water staff",
-            "slot": "weapon",
-            "rarity": "uncommon",
-            "description": "",
-            "sprite": "assets/items/New-Item-fb35ab43.png",
-            "stats": {},
-            "recipe": {
-                "materials": {
-                    "hide": 1
-                }
-            }
-        },
-        {
-            "id": "item_265c9788957ffffeef0b07bf5a010cd8",
-            "name": "Magma shield",
-            "slot": "weapon",
-            "rarity": "rare",
-            "description": "",
-            "sprite": "assets/items/Magma-shield-5a1657f1.png",
-            "stats": {},
-            "recipe": {
-                "materials": {
-                    "hide": 1
-                }
-            }
-        },
-        {
-            "id": "item_5a79c5d5bec1be1684bcac39d09f5528",
-            "name": "Purple flame",
-            "slot": "weapon",
-            "rarity": "unique",
-            "description": "leeching flame",
-            "sprite": "assets/items/Purple-flame-shield-05961094.png",
-            "stats": {},
-            "recipe": {
-                "materials": {
-                    "hide": 1
-                }
-            }
+            },
+            "equipmentType": "melee",
+            "tier": 1
         }
     ],
     "materialDetails": {
@@ -965,5 +792,1584 @@ window.adventureItems = {
             "description": "",
             "sprite": "assets/materials/material_b6b0c78bdb1d374fbf5b4a1c-fe7234d3.png"
         }
-    }
+    },
+    "equipmentTypes": [
+        {
+            "id": "armor",
+            "name": "Armor"
+        },
+        {
+            "id": "wand",
+            "name": "Wands"
+        },
+        {
+            "id": "bow",
+            "name": "Bows"
+        },
+        {
+            "id": "melee",
+            "name": "Melee weapons"
+        },
+        {
+            "id": "accessory",
+            "name": "Accessories"
+        }
+    ],
+    "craftingPresets": [
+        {
+            "equipmentType": "armor",
+            "tier": 1,
+            "pool": [
+                {
+                    "stat": "healthMultiplier",
+                    "min": 1.02,
+                    "max": 1.06,
+                    "step": 0.01
+                },
+                {
+                    "stat": "evasionMultiplier",
+                    "min": 1.02,
+                    "max": 1.07,
+                    "step": 0.01
+                },
+                {
+                    "stat": "healthRegen",
+                    "min": 1,
+                    "max": 2,
+                    "step": 1
+                },
+                {
+                    "stat": "healthRegenIncrease",
+                    "min": 0.05,
+                    "max": 0.15,
+                    "step": 0.01
+                },
+                {
+                    "stat": "mana",
+                    "min": 5,
+                    "max": 20,
+                    "step": 5
+                },
+                {
+                    "stat": "manaRegen",
+                    "min": 1,
+                    "max": 2,
+                    "step": 1
+                },
+                {
+                    "stat": "goldBonus",
+                    "min": 0.02,
+                    "max": 0.06,
+                    "step": 0.01
+                },
+                {
+                    "stat": "health",
+                    "min": 10,
+                    "max": 30,
+                    "step": 5
+                },
+                {
+                    "stat": "evasion",
+                    "min": 5,
+                    "max": 10,
+                    "step": 5
+                }
+            ],
+            "gold": 10000
+        },
+        {
+            "equipmentType": "armor",
+            "tier": 2,
+            "pool": [
+                {
+                    "stat": "healthMultiplier",
+                    "min": 1.03,
+                    "max": 1.12,
+                    "step": 0.01
+                },
+                {
+                    "stat": "evasionMultiplier",
+                    "min": 1.04,
+                    "max": 1.15,
+                    "step": 0.01
+                },
+                {
+                    "stat": "healthRegen",
+                    "min": 1,
+                    "max": 4,
+                    "step": 1
+                },
+                {
+                    "stat": "healthRegenIncrease",
+                    "min": 0.1,
+                    "max": 0.3,
+                    "step": 0.01
+                },
+                {
+                    "stat": "mana",
+                    "min": 10,
+                    "max": 40,
+                    "step": 5
+                },
+                {
+                    "stat": "manaRegen",
+                    "min": 1,
+                    "max": 4,
+                    "step": 1
+                },
+                {
+                    "stat": "goldBonus",
+                    "min": 0.03,
+                    "max": 0.12,
+                    "step": 0.01
+                },
+                {
+                    "stat": "health",
+                    "min": 20,
+                    "max": 60,
+                    "step": 5
+                },
+                {
+                    "stat": "evasion",
+                    "min": 5,
+                    "max": 20,
+                    "step": 5
+                }
+            ],
+            "gold": 50000
+        },
+        {
+            "equipmentType": "armor",
+            "tier": 3,
+            "pool": [
+                {
+                    "stat": "healthMultiplier",
+                    "min": 1.05,
+                    "max": 1.18,
+                    "step": 0.01
+                },
+                {
+                    "stat": "evasionMultiplier",
+                    "min": 1.06,
+                    "max": 1.22,
+                    "step": 0.01
+                },
+                {
+                    "stat": "healthRegen",
+                    "min": 2,
+                    "max": 6,
+                    "step": 1
+                },
+                {
+                    "stat": "healthRegenIncrease",
+                    "min": 0.15,
+                    "max": 0.45,
+                    "step": 0.01
+                },
+                {
+                    "stat": "mana",
+                    "min": 15,
+                    "max": 60,
+                    "step": 5
+                },
+                {
+                    "stat": "manaRegen",
+                    "min": 2,
+                    "max": 6,
+                    "step": 1
+                },
+                {
+                    "stat": "goldBonus",
+                    "min": 0.05,
+                    "max": 0.18,
+                    "step": 0.01
+                },
+                {
+                    "stat": "health",
+                    "min": 30,
+                    "max": 90,
+                    "step": 5
+                },
+                {
+                    "stat": "evasion",
+                    "min": 10,
+                    "max": 30,
+                    "step": 5
+                }
+            ],
+            "gold": 3000
+        },
+        {
+            "equipmentType": "armor",
+            "tier": 4,
+            "pool": [
+                {
+                    "stat": "healthMultiplier",
+                    "min": 1.06,
+                    "max": 1.24,
+                    "step": 0.02
+                },
+                {
+                    "stat": "evasionMultiplier",
+                    "min": 1.08,
+                    "max": 1.3,
+                    "step": 0.02
+                },
+                {
+                    "stat": "healthRegen",
+                    "min": 2,
+                    "max": 8,
+                    "step": 2
+                },
+                {
+                    "stat": "healthRegenIncrease",
+                    "min": 0.2,
+                    "max": 0.6,
+                    "step": 0.02
+                },
+                {
+                    "stat": "mana",
+                    "min": 20,
+                    "max": 80,
+                    "step": 10
+                },
+                {
+                    "stat": "manaRegen",
+                    "min": 2,
+                    "max": 8,
+                    "step": 2
+                },
+                {
+                    "stat": "goldBonus",
+                    "min": 0.06,
+                    "max": 0.24,
+                    "step": 0.02
+                },
+                {
+                    "stat": "health",
+                    "min": 40,
+                    "max": 120,
+                    "step": 10
+                },
+                {
+                    "stat": "evasion",
+                    "min": 10,
+                    "max": 40,
+                    "step": 10
+                }
+            ],
+            "gold": 4000
+        },
+        {
+            "equipmentType": "armor",
+            "tier": 5,
+            "pool": [
+                {
+                    "stat": "healthMultiplier",
+                    "min": 1.1,
+                    "max": 1.36,
+                    "step": 0.02
+                },
+                {
+                    "stat": "evasionMultiplier",
+                    "min": 1.12,
+                    "max": 1.44,
+                    "step": 0.02
+                },
+                {
+                    "stat": "healthRegen",
+                    "min": 4,
+                    "max": 12,
+                    "step": 2
+                },
+                {
+                    "stat": "healthRegenIncrease",
+                    "min": 0.3,
+                    "max": 0.9,
+                    "step": 0.02
+                },
+                {
+                    "stat": "mana",
+                    "min": 30,
+                    "max": 120,
+                    "step": 10
+                },
+                {
+                    "stat": "manaRegen",
+                    "min": 4,
+                    "max": 12,
+                    "step": 2
+                },
+                {
+                    "stat": "goldBonus",
+                    "min": 0.1,
+                    "max": 0.36,
+                    "step": 0.02
+                },
+                {
+                    "stat": "health",
+                    "min": 60,
+                    "max": 180,
+                    "step": 10
+                },
+                {
+                    "stat": "evasion",
+                    "min": 20,
+                    "max": 60,
+                    "step": 10
+                }
+            ],
+            "gold": 5000
+        },
+        {
+            "equipmentType": "wand",
+            "tier": 1,
+            "pool": [
+                {
+                    "stat": "spellDamageMultiplier",
+                    "min": 1.03,
+                    "max": 1.13,
+                    "step": 0.01
+                },
+                {
+                    "stat": "mana",
+                    "min": 10,
+                    "max": 40,
+                    "step": 5
+                },
+                {
+                    "stat": "manaRegen",
+                    "min": 1,
+                    "max": 3,
+                    "step": 1
+                },
+                {
+                    "stat": "manaRegenIncrease",
+                    "min": 0.05,
+                    "max": 0.18,
+                    "step": 0.01
+                },
+                {
+                    "stat": "manaRegenPercent",
+                    "min": 0.01,
+                    "max": 0.03,
+                    "step": 0.01
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 5,
+                    "max": 20,
+                    "step": 5
+                },
+                {
+                    "stat": "health",
+                    "min": 10,
+                    "max": 30,
+                    "step": 5
+                },
+                {
+                    "stat": "spellDamage",
+                    "min": 5,
+                    "max": 15,
+                    "step": 1
+                },
+                {
+                    "stat": "attackSpeedMultiplier",
+                    "min": 1.02,
+                    "max": 1.06,
+                    "step": 0.01
+                }
+            ],
+            "gold": 10000
+        },
+        {
+            "equipmentType": "wand",
+            "tier": 2,
+            "pool": [
+                {
+                    "stat": "spellDamageMultiplier",
+                    "min": 1.05,
+                    "max": 1.25,
+                    "step": 0.01
+                },
+                {
+                    "stat": "mana",
+                    "min": 20,
+                    "max": 80,
+                    "step": 5
+                },
+                {
+                    "stat": "manaRegen",
+                    "min": 1,
+                    "max": 5,
+                    "step": 1
+                },
+                {
+                    "stat": "manaRegenIncrease",
+                    "min": 0.1,
+                    "max": 0.35,
+                    "step": 0.01
+                },
+                {
+                    "stat": "manaRegenPercent",
+                    "min": 0.01,
+                    "max": 0.05,
+                    "step": 0.01
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 10,
+                    "max": 40,
+                    "step": 5
+                },
+                {
+                    "stat": "health",
+                    "min": 20,
+                    "max": 60,
+                    "step": 5
+                },
+                {
+                    "stat": "spellDamage",
+                    "min": 10,
+                    "max": 30,
+                    "step": 1
+                },
+                {
+                    "stat": "attackSpeedMultiplier",
+                    "min": 1.03,
+                    "max": 1.12,
+                    "step": 0.01
+                }
+            ],
+            "gold": 50000
+        },
+        {
+            "equipmentType": "wand",
+            "tier": 3,
+            "pool": [
+                {
+                    "stat": "spellDamageMultiplier",
+                    "min": 1.08,
+                    "max": 1.38,
+                    "step": 0.01
+                },
+                {
+                    "stat": "mana",
+                    "min": 30,
+                    "max": 120,
+                    "step": 5
+                },
+                {
+                    "stat": "manaRegen",
+                    "min": 2,
+                    "max": 8,
+                    "step": 1
+                },
+                {
+                    "stat": "manaRegenIncrease",
+                    "min": 0.15,
+                    "max": 0.52,
+                    "step": 0.01
+                },
+                {
+                    "stat": "manaRegenPercent",
+                    "min": 0.02,
+                    "max": 0.08,
+                    "step": 0.01
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 15,
+                    "max": 60,
+                    "step": 5
+                },
+                {
+                    "stat": "health",
+                    "min": 30,
+                    "max": 90,
+                    "step": 5
+                },
+                {
+                    "stat": "spellDamage",
+                    "min": 15,
+                    "max": 45,
+                    "step": 1
+                },
+                {
+                    "stat": "attackSpeedMultiplier",
+                    "min": 1.05,
+                    "max": 1.18,
+                    "step": 0.01
+                }
+            ],
+            "gold": 3000
+        },
+        {
+            "equipmentType": "wand",
+            "tier": 4,
+            "pool": [
+                {
+                    "stat": "spellDamageMultiplier",
+                    "min": 1.1,
+                    "max": 1.5,
+                    "step": 0.02
+                },
+                {
+                    "stat": "mana",
+                    "min": 40,
+                    "max": 160,
+                    "step": 10
+                },
+                {
+                    "stat": "manaRegen",
+                    "min": 2,
+                    "max": 10,
+                    "step": 2
+                },
+                {
+                    "stat": "manaRegenIncrease",
+                    "min": 0.2,
+                    "max": 0.7,
+                    "step": 0.02
+                },
+                {
+                    "stat": "manaRegenPercent",
+                    "min": 0.02,
+                    "max": 0.1,
+                    "step": 0.02
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 20,
+                    "max": 80,
+                    "step": 10
+                },
+                {
+                    "stat": "health",
+                    "min": 40,
+                    "max": 120,
+                    "step": 10
+                },
+                {
+                    "stat": "spellDamage",
+                    "min": 20,
+                    "max": 60,
+                    "step": 2
+                },
+                {
+                    "stat": "attackSpeedMultiplier",
+                    "min": 1.06,
+                    "max": 1.24,
+                    "step": 0.02
+                }
+            ],
+            "gold": 4000
+        },
+        {
+            "equipmentType": "wand",
+            "tier": 5,
+            "pool": [
+                {
+                    "stat": "spellDamageMultiplier",
+                    "min": 1.16,
+                    "max": 1.76,
+                    "step": 0.02
+                },
+                {
+                    "stat": "mana",
+                    "min": 60,
+                    "max": 240,
+                    "step": 10
+                },
+                {
+                    "stat": "manaRegen",
+                    "min": 4,
+                    "max": 16,
+                    "step": 2
+                },
+                {
+                    "stat": "manaRegenIncrease",
+                    "min": 0.3,
+                    "max": 1.04,
+                    "step": 0.02
+                },
+                {
+                    "stat": "manaRegenPercent",
+                    "min": 0.04,
+                    "max": 0.16,
+                    "step": 0.02
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 30,
+                    "max": 120,
+                    "step": 10
+                },
+                {
+                    "stat": "health",
+                    "min": 60,
+                    "max": 180,
+                    "step": 10
+                },
+                {
+                    "stat": "spellDamage",
+                    "min": 30,
+                    "max": 90,
+                    "step": 2
+                },
+                {
+                    "stat": "attackSpeedMultiplier",
+                    "min": 1.1,
+                    "max": 1.36,
+                    "step": 0.02
+                }
+            ],
+            "gold": 5000
+        },
+        {
+            "equipmentType": "bow",
+            "tier": 1,
+            "pool": [
+                {
+                    "stat": "bowDamageIncrease",
+                    "min": 0.05,
+                    "max": 0.2,
+                    "step": 0.01
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 5,
+                    "max": 20,
+                    "step": 5
+                },
+                {
+                    "stat": "multiHit",
+                    "min": 0.05,
+                    "max": 0.15,
+                    "step": 0.05
+                },
+                {
+                    "stat": "poisonChance",
+                    "min": 0.02,
+                    "max": 0.06,
+                    "step": 0.01
+                },
+                {
+                    "stat": "poisonDamage",
+                    "min": 1,
+                    "max": 3,
+                    "step": 1
+                },
+                {
+                    "stat": "damageMultiplier",
+                    "min": 1.03,
+                    "max": 1.1,
+                    "step": 0.01
+                },
+                {
+                    "stat": "evasion",
+                    "min": 5,
+                    "max": 10,
+                    "step": 5
+                },
+                {
+                    "stat": "damage",
+                    "min": 5,
+                    "max": 15,
+                    "step": 1
+                },
+                {
+                    "stat": "attackSpeedMultiplier",
+                    "min": 1.02,
+                    "max": 1.06,
+                    "step": 0.01
+                }
+            ],
+            "gold": 10000
+        },
+        {
+            "equipmentType": "bow",
+            "tier": 2,
+            "pool": [
+                {
+                    "stat": "bowDamageIncrease",
+                    "min": 0.1,
+                    "max": 0.4,
+                    "step": 0.01
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 10,
+                    "max": 40,
+                    "step": 5
+                },
+                {
+                    "stat": "multiHit",
+                    "min": 0.1,
+                    "max": 0.3,
+                    "step": 0.05
+                },
+                {
+                    "stat": "poisonChance",
+                    "min": 0.03,
+                    "max": 0.12,
+                    "step": 0.01
+                },
+                {
+                    "stat": "poisonDamage",
+                    "min": 1,
+                    "max": 5,
+                    "step": 1
+                },
+                {
+                    "stat": "damageMultiplier",
+                    "min": 1.05,
+                    "max": 1.2,
+                    "step": 0.01
+                },
+                {
+                    "stat": "evasion",
+                    "min": 5,
+                    "max": 20,
+                    "step": 5
+                },
+                {
+                    "stat": "damage",
+                    "min": 10,
+                    "max": 30,
+                    "step": 1
+                },
+                {
+                    "stat": "attackSpeedMultiplier",
+                    "min": 1.03,
+                    "max": 1.12,
+                    "step": 0.01
+                }
+            ],
+            "gold": 50000
+        },
+        {
+            "equipmentType": "bow",
+            "tier": 3,
+            "pool": [
+                {
+                    "stat": "bowDamageIncrease",
+                    "min": 0.15,
+                    "max": 0.6,
+                    "step": 0.01
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 15,
+                    "max": 60,
+                    "step": 5
+                },
+                {
+                    "stat": "multiHit",
+                    "min": 0.15,
+                    "max": 0.45,
+                    "step": 0.05
+                },
+                {
+                    "stat": "poisonChance",
+                    "min": 0.05,
+                    "max": 0.18,
+                    "step": 0.01
+                },
+                {
+                    "stat": "poisonDamage",
+                    "min": 2,
+                    "max": 8,
+                    "step": 1
+                },
+                {
+                    "stat": "damageMultiplier",
+                    "min": 1.08,
+                    "max": 1.3,
+                    "step": 0.01
+                },
+                {
+                    "stat": "evasion",
+                    "min": 10,
+                    "max": 30,
+                    "step": 5
+                },
+                {
+                    "stat": "damage",
+                    "min": 15,
+                    "max": 45,
+                    "step": 1
+                },
+                {
+                    "stat": "attackSpeedMultiplier",
+                    "min": 1.05,
+                    "max": 1.18,
+                    "step": 0.01
+                }
+            ],
+            "gold": 3000
+        },
+        {
+            "equipmentType": "bow",
+            "tier": 4,
+            "pool": [
+                {
+                    "stat": "bowDamageIncrease",
+                    "min": 0.2,
+                    "max": 0.8,
+                    "step": 0.02
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 20,
+                    "max": 80,
+                    "step": 10
+                },
+                {
+                    "stat": "multiHit",
+                    "min": 0.2,
+                    "max": 0.6,
+                    "step": 0.1
+                },
+                {
+                    "stat": "poisonChance",
+                    "min": 0.06,
+                    "max": 0.24,
+                    "step": 0.02
+                },
+                {
+                    "stat": "poisonDamage",
+                    "min": 2,
+                    "max": 10,
+                    "step": 2
+                },
+                {
+                    "stat": "damageMultiplier",
+                    "min": 1.1,
+                    "max": 1.4,
+                    "step": 0.02
+                },
+                {
+                    "stat": "evasion",
+                    "min": 10,
+                    "max": 40,
+                    "step": 10
+                },
+                {
+                    "stat": "damage",
+                    "min": 20,
+                    "max": 60,
+                    "step": 2
+                },
+                {
+                    "stat": "attackSpeedMultiplier",
+                    "min": 1.06,
+                    "max": 1.24,
+                    "step": 0.02
+                }
+            ],
+            "gold": 4000
+        },
+        {
+            "equipmentType": "bow",
+            "tier": 5,
+            "pool": [
+                {
+                    "stat": "bowDamageIncrease",
+                    "min": 0.3,
+                    "max": 1.2,
+                    "step": 0.02
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 30,
+                    "max": 120,
+                    "step": 10
+                },
+                {
+                    "stat": "multiHit",
+                    "min": 0.3,
+                    "max": 0.9,
+                    "step": 0.1
+                },
+                {
+                    "stat": "poisonChance",
+                    "min": 0.1,
+                    "max": 0.36,
+                    "step": 0.02
+                },
+                {
+                    "stat": "poisonDamage",
+                    "min": 4,
+                    "max": 16,
+                    "step": 2
+                },
+                {
+                    "stat": "damageMultiplier",
+                    "min": 1.16,
+                    "max": 1.6,
+                    "step": 0.02
+                },
+                {
+                    "stat": "evasion",
+                    "min": 20,
+                    "max": 60,
+                    "step": 10
+                },
+                {
+                    "stat": "damage",
+                    "min": 30,
+                    "max": 90,
+                    "step": 2
+                },
+                {
+                    "stat": "attackSpeedMultiplier",
+                    "min": 1.1,
+                    "max": 1.36,
+                    "step": 0.02
+                }
+            ],
+            "gold": 5000
+        },
+        {
+            "equipmentType": "melee",
+            "tier": 1,
+            "pool": [
+                {
+                    "stat": "damageMultiplier",
+                    "min": 1.03,
+                    "max": 1.15,
+                    "step": 0.01
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 5,
+                    "max": 20,
+                    "step": 5
+                },
+                {
+                    "stat": "bleedChance",
+                    "min": 0.02,
+                    "max": 0.06,
+                    "step": 0.01
+                },
+                {
+                    "stat": "bleedDamageMultiplier",
+                    "min": 1.05,
+                    "max": 1.2,
+                    "step": 0.01
+                },
+                {
+                    "stat": "health",
+                    "min": 10,
+                    "max": 30,
+                    "step": 5
+                },
+                {
+                    "stat": "maxFury",
+                    "min": 1,
+                    "max": 4,
+                    "step": 1
+                },
+                {
+                    "stat": "evasion",
+                    "min": 5,
+                    "max": 10,
+                    "step": 5
+                },
+                {
+                    "stat": "damage",
+                    "min": 5,
+                    "max": 15,
+                    "step": 1
+                },
+                {
+                    "stat": "attackSpeedMultiplier",
+                    "min": 1.02,
+                    "max": 1.06,
+                    "step": 0.01
+                }
+            ],
+            "gold": 10000
+        },
+        {
+            "equipmentType": "melee",
+            "tier": 2,
+            "pool": [
+                {
+                    "stat": "damageMultiplier",
+                    "min": 1.05,
+                    "max": 1.25,
+                    "step": 0.01
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 10,
+                    "max": 40,
+                    "step": 5
+                },
+                {
+                    "stat": "bleedChance",
+                    "min": 0.03,
+                    "max": 0.12,
+                    "step": 0.01
+                },
+                {
+                    "stat": "bleedDamageMultiplier",
+                    "min": 1.1,
+                    "max": 1.4,
+                    "step": 0.01
+                },
+                {
+                    "stat": "health",
+                    "min": 20,
+                    "max": 60,
+                    "step": 5
+                },
+                {
+                    "stat": "maxFury",
+                    "min": 2,
+                    "max": 8,
+                    "step": 1
+                },
+                {
+                    "stat": "evasion",
+                    "min": 5,
+                    "max": 20,
+                    "step": 5
+                },
+                {
+                    "stat": "damage",
+                    "min": 10,
+                    "max": 30,
+                    "step": 1
+                },
+                {
+                    "stat": "attackSpeedMultiplier",
+                    "min": 1.03,
+                    "max": 1.12,
+                    "step": 0.01
+                }
+            ],
+            "gold": 50000
+        },
+        {
+            "equipmentType": "melee",
+            "tier": 3,
+            "pool": [
+                {
+                    "stat": "damageMultiplier",
+                    "min": 1.08,
+                    "max": 1.38,
+                    "step": 0.01
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 15,
+                    "max": 60,
+                    "step": 5
+                },
+                {
+                    "stat": "bleedChance",
+                    "min": 0.05,
+                    "max": 0.18,
+                    "step": 0.01
+                },
+                {
+                    "stat": "bleedDamageMultiplier",
+                    "min": 1.15,
+                    "max": 1.6,
+                    "step": 0.01
+                },
+                {
+                    "stat": "health",
+                    "min": 30,
+                    "max": 90,
+                    "step": 5
+                },
+                {
+                    "stat": "maxFury",
+                    "min": 3,
+                    "max": 12,
+                    "step": 1
+                },
+                {
+                    "stat": "evasion",
+                    "min": 10,
+                    "max": 30,
+                    "step": 5
+                },
+                {
+                    "stat": "damage",
+                    "min": 15,
+                    "max": 45,
+                    "step": 1
+                },
+                {
+                    "stat": "attackSpeedMultiplier",
+                    "min": 1.05,
+                    "max": 1.18,
+                    "step": 0.01
+                }
+            ],
+            "gold": 3000
+        },
+        {
+            "equipmentType": "melee",
+            "tier": 4,
+            "pool": [
+                {
+                    "stat": "damageMultiplier",
+                    "min": 1.1,
+                    "max": 1.5,
+                    "step": 0.02
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 20,
+                    "max": 80,
+                    "step": 10
+                },
+                {
+                    "stat": "bleedChance",
+                    "min": 0.06,
+                    "max": 0.24,
+                    "step": 0.02
+                },
+                {
+                    "stat": "bleedDamageMultiplier",
+                    "min": 1.2,
+                    "max": 1.8,
+                    "step": 0.02
+                },
+                {
+                    "stat": "health",
+                    "min": 40,
+                    "max": 120,
+                    "step": 10
+                },
+                {
+                    "stat": "maxFury",
+                    "min": 4,
+                    "max": 16,
+                    "step": 2
+                },
+                {
+                    "stat": "evasion",
+                    "min": 10,
+                    "max": 40,
+                    "step": 10
+                },
+                {
+                    "stat": "damage",
+                    "min": 20,
+                    "max": 60,
+                    "step": 2
+                },
+                {
+                    "stat": "attackSpeedMultiplier",
+                    "min": 1.06,
+                    "max": 1.24,
+                    "step": 0.02
+                }
+            ],
+            "gold": 4000
+        },
+        {
+            "equipmentType": "melee",
+            "tier": 5,
+            "pool": [
+                {
+                    "stat": "damageMultiplier",
+                    "min": 1.16,
+                    "max": 1.76,
+                    "step": 0.02
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 30,
+                    "max": 120,
+                    "step": 10
+                },
+                {
+                    "stat": "bleedChance",
+                    "min": 0.1,
+                    "max": 0.36,
+                    "step": 0.02
+                },
+                {
+                    "stat": "bleedDamageMultiplier",
+                    "min": 1.3,
+                    "max": 2.2,
+                    "step": 0.02
+                },
+                {
+                    "stat": "health",
+                    "min": 60,
+                    "max": 180,
+                    "step": 10
+                },
+                {
+                    "stat": "maxFury",
+                    "min": 6,
+                    "max": 24,
+                    "step": 2
+                },
+                {
+                    "stat": "evasion",
+                    "min": 20,
+                    "max": 60,
+                    "step": 10
+                },
+                {
+                    "stat": "damage",
+                    "min": 30,
+                    "max": 90,
+                    "step": 2
+                },
+                {
+                    "stat": "attackSpeedMultiplier",
+                    "min": 1.1,
+                    "max": 1.36,
+                    "step": 0.02
+                }
+            ],
+            "gold": 5000
+        },
+        {
+            "equipmentType": "accessory",
+            "tier": 1,
+            "pool": [
+                {
+                    "stat": "healthMultiplier",
+                    "min": 1.02,
+                    "max": 1.06,
+                    "step": 0.01
+                },
+                {
+                    "stat": "evasionMultiplier",
+                    "min": 1.02,
+                    "max": 1.07,
+                    "step": 0.01
+                },
+                {
+                    "stat": "healthRegen",
+                    "min": 1,
+                    "max": 2,
+                    "step": 1
+                },
+                {
+                    "stat": "healthRegenIncrease",
+                    "min": 0.05,
+                    "max": 0.15,
+                    "step": 0.01
+                },
+                {
+                    "stat": "mana",
+                    "min": 5,
+                    "max": 20,
+                    "step": 5
+                },
+                {
+                    "stat": "manaRegen",
+                    "min": 1,
+                    "max": 2,
+                    "step": 1
+                },
+                {
+                    "stat": "goldBonus",
+                    "min": 0.02,
+                    "max": 0.06,
+                    "step": 0.01
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 5,
+                    "max": 20,
+                    "step": 5
+                },
+                {
+                    "stat": "health",
+                    "min": 10,
+                    "max": 30,
+                    "step": 5
+                },
+                {
+                    "stat": "evasion",
+                    "min": 5,
+                    "max": 10,
+                    "step": 5
+                }
+            ],
+            "gold": 10000
+        },
+        {
+            "equipmentType": "accessory",
+            "tier": 2,
+            "pool": [
+                {
+                    "stat": "healthMultiplier",
+                    "min": 1.03,
+                    "max": 1.12,
+                    "step": 0.01
+                },
+                {
+                    "stat": "evasionMultiplier",
+                    "min": 1.04,
+                    "max": 1.15,
+                    "step": 0.01
+                },
+                {
+                    "stat": "healthRegen",
+                    "min": 1,
+                    "max": 4,
+                    "step": 1
+                },
+                {
+                    "stat": "healthRegenIncrease",
+                    "min": 0.1,
+                    "max": 0.3,
+                    "step": 0.01
+                },
+                {
+                    "stat": "mana",
+                    "min": 10,
+                    "max": 40,
+                    "step": 5
+                },
+                {
+                    "stat": "manaRegen",
+                    "min": 1,
+                    "max": 4,
+                    "step": 1
+                },
+                {
+                    "stat": "goldBonus",
+                    "min": 0.03,
+                    "max": 0.12,
+                    "step": 0.01
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 10,
+                    "max": 40,
+                    "step": 5
+                },
+                {
+                    "stat": "health",
+                    "min": 20,
+                    "max": 60,
+                    "step": 5
+                },
+                {
+                    "stat": "evasion",
+                    "min": 5,
+                    "max": 20,
+                    "step": 5
+                }
+            ],
+            "gold": 50000
+        },
+        {
+            "equipmentType": "accessory",
+            "tier": 3,
+            "pool": [
+                {
+                    "stat": "healthMultiplier",
+                    "min": 1.05,
+                    "max": 1.18,
+                    "step": 0.01
+                },
+                {
+                    "stat": "evasionMultiplier",
+                    "min": 1.06,
+                    "max": 1.22,
+                    "step": 0.01
+                },
+                {
+                    "stat": "healthRegen",
+                    "min": 2,
+                    "max": 6,
+                    "step": 1
+                },
+                {
+                    "stat": "healthRegenIncrease",
+                    "min": 0.15,
+                    "max": 0.45,
+                    "step": 0.01
+                },
+                {
+                    "stat": "mana",
+                    "min": 15,
+                    "max": 60,
+                    "step": 5
+                },
+                {
+                    "stat": "manaRegen",
+                    "min": 2,
+                    "max": 6,
+                    "step": 1
+                },
+                {
+                    "stat": "goldBonus",
+                    "min": 0.05,
+                    "max": 0.18,
+                    "step": 0.01
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 15,
+                    "max": 60,
+                    "step": 5
+                },
+                {
+                    "stat": "health",
+                    "min": 30,
+                    "max": 90,
+                    "step": 5
+                },
+                {
+                    "stat": "evasion",
+                    "min": 10,
+                    "max": 30,
+                    "step": 5
+                }
+            ],
+            "gold": 3000
+        },
+        {
+            "equipmentType": "accessory",
+            "tier": 4,
+            "pool": [
+                {
+                    "stat": "healthMultiplier",
+                    "min": 1.06,
+                    "max": 1.24,
+                    "step": 0.02
+                },
+                {
+                    "stat": "evasionMultiplier",
+                    "min": 1.08,
+                    "max": 1.3,
+                    "step": 0.02
+                },
+                {
+                    "stat": "healthRegen",
+                    "min": 2,
+                    "max": 8,
+                    "step": 2
+                },
+                {
+                    "stat": "healthRegenIncrease",
+                    "min": 0.2,
+                    "max": 0.6,
+                    "step": 0.02
+                },
+                {
+                    "stat": "mana",
+                    "min": 20,
+                    "max": 80,
+                    "step": 10
+                },
+                {
+                    "stat": "manaRegen",
+                    "min": 2,
+                    "max": 8,
+                    "step": 2
+                },
+                {
+                    "stat": "goldBonus",
+                    "min": 0.06,
+                    "max": 0.24,
+                    "step": 0.02
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 20,
+                    "max": 80,
+                    "step": 10
+                },
+                {
+                    "stat": "health",
+                    "min": 40,
+                    "max": 120,
+                    "step": 10
+                },
+                {
+                    "stat": "evasion",
+                    "min": 10,
+                    "max": 40,
+                    "step": 10
+                }
+            ],
+            "gold": 4000
+        },
+        {
+            "equipmentType": "accessory",
+            "tier": 5,
+            "pool": [
+                {
+                    "stat": "healthMultiplier",
+                    "min": 1.1,
+                    "max": 1.36,
+                    "step": 0.02
+                },
+                {
+                    "stat": "evasionMultiplier",
+                    "min": 1.12,
+                    "max": 1.44,
+                    "step": 0.02
+                },
+                {
+                    "stat": "healthRegen",
+                    "min": 4,
+                    "max": 12,
+                    "step": 2
+                },
+                {
+                    "stat": "healthRegenIncrease",
+                    "min": 0.3,
+                    "max": 0.9,
+                    "step": 0.02
+                },
+                {
+                    "stat": "mana",
+                    "min": 30,
+                    "max": 120,
+                    "step": 10
+                },
+                {
+                    "stat": "manaRegen",
+                    "min": 4,
+                    "max": 12,
+                    "step": 2
+                },
+                {
+                    "stat": "goldBonus",
+                    "min": 0.1,
+                    "max": 0.36,
+                    "step": 0.02
+                },
+                {
+                    "stat": "accuracy",
+                    "min": 30,
+                    "max": 120,
+                    "step": 10
+                },
+                {
+                    "stat": "health",
+                    "min": 60,
+                    "max": 180,
+                    "step": 10
+                },
+                {
+                    "stat": "evasion",
+                    "min": 20,
+                    "max": 60,
+                    "step": 10
+                }
+            ],
+            "gold": 5000
+        }
+    ]
 };

@@ -6,6 +6,7 @@
     const resetCalls = () => { calls.tree = calls.crafting = calls.inventory = 0; };
     const click = id => document.getElementById(id).click();
     try {
+        ItemCrafting.setMode('recipes');
         state.currentView = 'map'; state.isInTown = false; state.combatPaused = false;
         state.skillRanks = {}; pendingSkillRanks = {}; refundMode = false;
         state.level = 0; state.experience = 0; state.skillPoints = 0;

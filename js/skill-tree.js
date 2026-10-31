@@ -798,10 +798,10 @@ window.adventureSkillTree = {
             "id": "accuracyNode8",
             "name": "Accuracy",
             "icon": "◎",
-            "effect": "+1.15 accuracy\n+15% evasion",
+            "effect": "+15% accuracy\n+15% evasion",
             "type": "accuracy",
             "stats": {
-                "accuracy": 1.15,
+                "accuracyMultiplier": 1.15,
                 "evasionMultiplier": 1.15
             },
             "size": 1,
@@ -815,7 +815,8 @@ window.adventureSkillTree = {
             "requiresMode": "all",
             "start": false,
             "sprite": "",
-            "customDescription": false
+            "customDescription": false,
+            "abilityTargeting": null
         },
         {
             "id": "damageNode5",
@@ -1097,10 +1098,10 @@ window.adventureSkillTree = {
             "id": "maxHealthRegen",
             "name": "Maximum Health Regeneration",
             "icon": "♥",
-            "effect": "+15% maximum health regenerated per second",
+            "effect": "+10% maximum health regenerated per second",
             "type": "health",
             "stats": {
-                "healthRegenPercent": 0.15
+                "healthRegenPercent": 0.1
             },
             "size": 1,
             "column": -4,
@@ -1112,28 +1113,8 @@ window.adventureSkillTree = {
             "requiresMode": "all",
             "start": false,
             "customDescription": false,
-            "sprite": ""
-        },
-        {
-            "id": "maxHealthRegen2",
-            "name": "Maximum Health Regeneration",
-            "icon": "♥",
-            "effect": "+15% maximum health regenerated per second",
-            "type": "health",
-            "stats": {
-                "healthRegenPercent": 0.15
-            },
-            "size": 1,
-            "column": -5,
-            "row": 3,
-            "maxRank": 1,
-            "requires": [
-                "flatHealthRegen"
-            ],
-            "requiresMode": "all",
-            "start": false,
-            "customDescription": false,
-            "sprite": ""
+            "sprite": "",
+            "abilityTargeting": null
         },
         {
             "id": "shieldGenerator",
@@ -1390,10 +1371,10 @@ window.adventureSkillTree = {
             "id": "maxHealthRegen3",
             "name": "Maximum Health Regeneration",
             "icon": "♥",
-            "effect": "+15% maximum health regenerated per second",
+            "effect": "+10% maximum health regenerated per second",
             "type": "health",
             "stats": {
-                "healthRegenPercent": 0.15
+                "healthRegenPercent": 0.1
             },
             "size": 1,
             "column": -4,
@@ -1405,7 +1386,8 @@ window.adventureSkillTree = {
             "requiresMode": "all",
             "start": false,
             "customDescription": false,
-            "sprite": ""
+            "sprite": "",
+            "abilityTargeting": null
         },
         {
             "id": "untouchable2",
@@ -2269,7 +2251,7 @@ window.adventureSkillTree = {
             "id": "gatheringPower",
             "name": "Gathering Power",
             "icon": "✦",
-            "effect": "In combat, gain 1 stack each second: +2% damage per stack, up to 50 stacks (+100%, double damage).\nAll stacks expire after 1 second out of combat, on death, or when changing maps.",
+            "effect": "In combat, gain 1 stack each second: +2% damage per stack, with no stack limit.\nAll stacks expire after 2 seconds out of combat, on death, or when changing maps.",
             "requires": [
                 "multMana1"
             ],
@@ -2646,10 +2628,10 @@ window.adventureSkillTree = {
             "id": "healthRegeneration2",
             "name": "Health Regeneration",
             "icon": "♥",
-            "effect": "+10 flat health regeneration per second",
+            "effect": "+5 flat health regeneration per second",
             "type": "health",
             "stats": {
-                "healthRegen": 10
+                "healthRegen": 5
             },
             "size": 1,
             "column": 2,
@@ -2661,7 +2643,8 @@ window.adventureSkillTree = {
             "requiresMode": "all",
             "start": false,
             "customDescription": false,
-            "sprite": ""
+            "sprite": "",
+            "abilityTargeting": null
         },
         {
             "id": "health2",
@@ -2764,6 +2747,11 @@ window.adventureSkillTree = {
         {
             "id": "spellAmplification2",
             "name": "Spell Amplification",
+            "reason": "Removed in skill tree editor"
+        },
+        {
+            "id": "maxHealthRegen2",
+            "name": "Maximum Health Regeneration",
             "reason": "Removed in skill tree editor"
         }
     ],

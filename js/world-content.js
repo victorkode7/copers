@@ -88,13 +88,7 @@ window.adventureWorld = {
             "spawns": [
                 {
                     "id": "main",
-                    "monsterId": "monster_94a05084efcdf2db9ea78615",
-                    "count": 1,
-                    "overrides": {}
-                },
-                {
-                    "id": "spawn_749c9bc6bb193d0583e5e832",
-                    "monsterId": "monster_94a05084efcdf2db9ea78615",
+                    "monsterId": "greenfieldsMonster",
                     "count": 1,
                     "overrides": {}
                 }
@@ -248,7 +242,7 @@ window.adventureWorld = {
                 {
                     "id": "salmen-copy-1",
                     "monsterId": "salmenMonster",
-                    "count": 7,
+                    "count": 6,
                     "overrides": {}
                 }
             ]
@@ -257,7 +251,7 @@ window.adventureWorld = {
             "id": "brineAndPunishment",
             "name": "Brine & Punishment",
             "description": "A stormy reef where a flatfish champion guards the deeper coast.",
-            "goal": 1,
+            "goal": 5000,
             "background": null,
             "drops": [],
             "itemDrops": [],
@@ -311,7 +305,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_b8da630f834af6945336478b",
                     "monsterId": "monster_eafa130d278dd6781312c386",
-                    "count": 3,
+                    "count": 2,
                     "overrides": {}
                 }
             ]
@@ -334,7 +328,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_0700b0c1ab6c43b99edec605",
                     "monsterId": "monster_2b106413992cce9313c20ce7",
-                    "count": 5,
+                    "count": 4,
                     "overrides": {}
                 }
             ]
@@ -357,7 +351,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_c695523b0c625c03756c57a7",
                     "monsterId": "monster_37c07d183899f5c7036ac09f",
-                    "count": 6,
+                    "count": 4,
                     "overrides": {}
                 }
             ]
@@ -380,7 +374,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_d561c1318938c07fc85623dc",
                     "monsterId": "monster_a4ff3e8e7127d10b1532501d",
-                    "count": 4,
+                    "count": 5,
                     "overrides": {}
                 }
             ]
@@ -403,7 +397,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_7a14b40663f82bb55c0d1a88",
                     "monsterId": "monster_6352a14e888ed3fba2f151cd",
-                    "count": 6,
+                    "count": 5,
                     "overrides": {}
                 }
             ]
@@ -426,7 +420,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_366c0556b8f4e2bd9d42ecd1",
                     "monsterId": "monster_ed1a656d3be2e7df0597f4f8",
-                    "count": 8,
+                    "count": 6,
                     "overrides": {}
                 }
             ]
@@ -449,7 +443,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_3056373948be890872138d8d",
                     "monsterId": "monster_2b10a0e61bd5ebd4e8050372",
-                    "count": 5,
+                    "count": 4,
                     "overrides": {}
                 }
             ]
@@ -472,7 +466,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_8053408aa34409e7a609cc62",
                     "monsterId": "monster_70bf3d6d118e73ac85dee0cd",
-                    "count": 10,
+                    "count": 7,
                     "overrides": {}
                 }
             ]
@@ -518,7 +512,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_7febce5ed2e4d886cc363ea2",
                     "monsterId": "monster_365f8e73c6121c5189836468",
-                    "count": 50,
+                    "count": 9,
                     "overrides": {}
                 }
             ]
@@ -550,7 +544,7 @@ window.adventureWorld = {
             "id": "map_caec6733a002dbb1accf5fcb",
             "name": "New Map",
             "description": "",
-            "goal": 10,
+            "goal": 6000,
             "background": {
                 "sprite": "assets/backgrounds/water_2-316fc4e4.png",
                 "color": "#172632",
@@ -564,7 +558,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_4f214bb96ce598662ffd103d",
                     "monsterId": "monster_ce61788c41d59a12be8cadfe",
-                    "count": 8,
+                    "count": 5,
                     "overrides": {}
                 }
             ]
@@ -573,7 +567,7 @@ window.adventureWorld = {
             "id": "map_894ee94452fb5d427e5195ed",
             "name": "New Map",
             "description": "",
-            "goal": 10,
+            "goal": 8000,
             "background": {
                 "sprite": "assets/backgrounds/water_4-06bba5c2.png",
                 "color": "#172632",
@@ -587,7 +581,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_fc4d468f58516e6872c732c0",
                     "monsterId": "monster_dc5ec2260b5f89ac89f5d057",
-                    "count": 8,
+                    "count": 5,
                     "overrides": {}
                 }
             ]
@@ -596,7 +590,7 @@ window.adventureWorld = {
             "id": "map_448b17234c96c80e0d4a8353",
             "name": "New Map",
             "description": "",
-            "goal": 10,
+            "goal": 9000,
             "background": {
                 "sprite": "assets/backgrounds/water_5-fbf0d76f.png",
                 "color": "#172632",
@@ -610,7 +604,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_796515699e8ba35e731d8b69",
                     "monsterId": "monster_0d685eef5d64116d04d76732",
-                    "count": 8,
+                    "count": 5,
                     "overrides": {}
                 }
             ]
@@ -619,7 +613,7 @@ window.adventureWorld = {
             "id": "map_77ee4660a39fc4b8ce909c90",
             "name": "New Map",
             "description": "",
-            "goal": 10,
+            "goal": 10000,
             "background": {
                 "sprite": "assets/backgrounds/water_6-05e21b3b.png",
                 "color": "#172632",
@@ -633,7 +627,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_3d22e084a6ab4f222f0fd0ed",
                     "monsterId": "monster_fcf4106d791caad0e86c4fba",
-                    "count": 8,
+                    "count": 4,
                     "overrides": {}
                 }
             ]
@@ -642,7 +636,7 @@ window.adventureWorld = {
             "id": "map_abcce1e4a9202de23ec2f319",
             "name": "New Map",
             "description": "",
-            "goal": 10,
+            "goal": 11000,
             "background": {
                 "sprite": "assets/backgrounds/water_7-547af170.png",
                 "color": "#172632",
@@ -656,7 +650,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_f5f65cfd58c2bb2a481f8e79",
                     "monsterId": "monster_6eeccd5b70e20c9a097349b1",
-                    "count": 8,
+                    "count": 5,
                     "overrides": {}
                 }
             ]
@@ -665,7 +659,7 @@ window.adventureWorld = {
             "id": "map_7a96613a038175e1696bcb2b",
             "name": "New Map",
             "description": "",
-            "goal": 10,
+            "goal": 12000,
             "background": {
                 "sprite": "assets/backgrounds/water_8-cb5a742c.png",
                 "color": "#172632",
@@ -679,7 +673,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_dc3d55d06e477aa5c13c0a03",
                     "monsterId": "monster_77dc7966e574425307b3f066",
-                    "count": 8,
+                    "count": 4,
                     "overrides": {}
                 }
             ]
@@ -688,7 +682,7 @@ window.adventureWorld = {
             "id": "map_4546b788610e0a73125a6ae3",
             "name": "New Map",
             "description": "",
-            "goal": 10,
+            "goal": 13000,
             "background": {
                 "sprite": "assets/backgrounds/water_9-4d008aca.png",
                 "color": "#172632",
@@ -702,7 +696,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_021307438566142959e47e51",
                     "monsterId": "monster_0de8fd30513850c95aec32c2",
-                    "count": 8,
+                    "count": 6,
                     "overrides": {}
                 }
             ]
@@ -711,7 +705,7 @@ window.adventureWorld = {
             "id": "map_c32d5eea6bd1eba2f96f3b67",
             "name": "New Map",
             "description": "",
-            "goal": 10,
+            "goal": 14000,
             "background": {
                 "sprite": "assets/backgrounds/water_10-ede3eaf8.png",
                 "color": "#172632",
@@ -725,7 +719,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_1ff5d9867a1d97c33c887f43",
                     "monsterId": "monster_8dba55519814e09382e5a15b",
-                    "count": 8,
+                    "count": 5,
                     "overrides": {}
                 }
             ]
@@ -734,7 +728,7 @@ window.adventureWorld = {
             "id": "map_f642a2500ad8cc2f48fc4d1c",
             "name": "New Map",
             "description": "",
-            "goal": 10,
+            "goal": 15000,
             "background": {
                 "sprite": "assets/backgrounds/water_11-26a8f64a.png",
                 "color": "#172632",
@@ -748,7 +742,7 @@ window.adventureWorld = {
                 {
                     "id": "spawn_197b011d377360f007f6086e",
                     "monsterId": "monster_0f7949eee198a5b35f06544e",
-                    "count": 5,
+                    "count": 4,
                     "overrides": {}
                 }
             ]
@@ -757,7 +751,7 @@ window.adventureWorld = {
             "id": "map_65c14787bef2c5f65534e6e0",
             "name": "New Map",
             "description": "",
-            "goal": 10,
+            "goal": 1,
             "background": {
                 "sprite": "assets/backgrounds/water_12-7679da78.png",
                 "color": "#172632",
@@ -784,10 +778,10 @@ window.adventureWorld = {
             "sprite": "assets/monsters/sprite-fusion-pixel-art-generator-32x32-c37d999a.png",
             "health": 18,
             "respawnSeconds": 4,
-            "accuracy": 55,
+            "accuracy": 50,
             "evasion": 3,
-            "attackDamage": 3,
-            "attackInterval": 2.5,
+            "attackDamage": 2,
+            "attackInterval": 3,
             "gold": [
                 4,
                 7
@@ -812,10 +806,10 @@ window.adventureWorld = {
         },
         {
             "health": 24,
-            "accuracy": 58,
+            "accuracy": 55,
             "evasion": 5,
-            "attackDamage": 3,
-            "attackInterval": 2.4,
+            "attackDamage": 2,
+            "attackInterval": 2.8,
             "respawnSeconds": 5,
             "experience": 12,
             "gold": [
@@ -839,10 +833,10 @@ window.adventureWorld = {
         },
         {
             "health": 36,
-            "accuracy": 62,
+            "accuracy": 60,
             "evasion": 8,
-            "attackDamage": 5,
-            "attackInterval": 2.8,
+            "attackDamage": 3,
+            "attackInterval": 3,
             "respawnSeconds": 5,
             "experience": 16,
             "gold": [
@@ -875,10 +869,10 @@ window.adventureWorld = {
             "sprite": "assets/monsters/gen-c1c4a79f-f5f2-49f1-989f-8bdc0d87d728-f2401c93.png",
             "health": 52,
             "respawnSeconds": 5,
-            "accuracy": 70,
+            "accuracy": 65,
             "evasion": 12,
-            "attackDamage": 5,
-            "attackInterval": 2.4,
+            "attackDamage": 4,
+            "attackInterval": 2.8,
             "gold": [
                 12,
                 18
@@ -902,10 +896,10 @@ window.adventureWorld = {
             "sprite": "assets/monsters/gen-23db66a5-cac1-4654-941a-c49dfd5a2ff3-22cb942c.png",
             "health": 75,
             "respawnSeconds": 5,
-            "accuracy": 80,
+            "accuracy": 72,
             "evasion": 14,
-            "attackDamage": 6,
-            "attackInterval": 2.5,
+            "attackDamage": 5,
+            "attackInterval": 3,
             "gold": [
                 24,
                 34
@@ -929,10 +923,10 @@ window.adventureWorld = {
             "sprite": "assets/monsters/lavasnake_96px-a53213be.png",
             "health": 110,
             "respawnSeconds": 5,
-            "accuracy": 85,
+            "accuracy": 80,
             "evasion": 18,
-            "attackDamage": 7,
-            "attackInterval": 2.4,
+            "attackDamage": 6,
+            "attackInterval": 3,
             "gold": [
                 36,
                 50
@@ -956,10 +950,10 @@ window.adventureWorld = {
             "sprite": "assets/monsters/grove_guardian-ae288fe1.png",
             "health": 1800,
             "respawnSeconds": 15,
-            "accuracy": 125,
+            "accuracy": 105,
             "evasion": 22,
             "attackDamage": 24,
-            "attackInterval": 2.5,
+            "attackInterval": 3.2,
             "gold": [
                 250,
                 350
@@ -984,10 +978,10 @@ window.adventureWorld = {
         },
         {
             "health": 200,
-            "accuracy": 105,
+            "accuracy": 95,
             "evasion": 20,
-            "attackDamage": 10,
-            "attackInterval": 3,
+            "attackDamage": 12,
+            "attackInterval": 3.2,
             "respawnSeconds": 5,
             "experience": 40,
             "gold": [
@@ -1011,10 +1005,10 @@ window.adventureWorld = {
         },
         {
             "health": 260,
-            "accuracy": 110,
+            "accuracy": 100,
             "evasion": 21,
-            "attackDamage": 12,
-            "attackInterval": 3.2,
+            "attackDamage": 14,
+            "attackInterval": 3.6,
             "respawnSeconds": 5,
             "experience": 45,
             "gold": [
@@ -1038,10 +1032,10 @@ window.adventureWorld = {
         },
         {
             "health": 340,
-            "accuracy": 115,
+            "accuracy": 108,
             "evasion": 22,
             "attackDamage": 15,
-            "attackInterval": 2.8,
+            "attackInterval": 3.2,
             "respawnSeconds": 5,
             "experience": 50,
             "gold": [
@@ -1065,10 +1059,10 @@ window.adventureWorld = {
         },
         {
             "health": 430,
-            "accuracy": 120,
+            "accuracy": 112,
             "evasion": 23,
-            "attackDamage": 17,
-            "attackInterval": 3,
+            "attackDamage": 16,
+            "attackInterval": 3.4,
             "respawnSeconds": 5,
             "experience": 55,
             "gold": [
@@ -1092,10 +1086,10 @@ window.adventureWorld = {
         },
         {
             "health": 540,
-            "accuracy": 125,
+            "accuracy": 118,
             "evasion": 24,
-            "attackDamage": 20,
-            "attackInterval": 3.2,
+            "attackDamage": 18,
+            "attackInterval": 3.6,
             "respawnSeconds": 5,
             "experience": 60,
             "gold": [
@@ -1119,10 +1113,10 @@ window.adventureWorld = {
         },
         {
             "health": 670,
-            "accuracy": 130,
+            "accuracy": 125,
             "evasion": 25,
-            "attackDamage": 25,
-            "attackInterval": 2.8,
+            "attackDamage": 24,
+            "attackInterval": 3.2,
             "respawnSeconds": 5,
             "experience": 65,
             "gold": [
@@ -1146,10 +1140,10 @@ window.adventureWorld = {
         },
         {
             "health": 820,
-            "accuracy": 135,
+            "accuracy": 130,
             "evasion": 26,
             "attackDamage": 16,
-            "attackInterval": 3,
+            "attackInterval": 3.4,
             "respawnSeconds": 5,
             "experience": 70,
             "gold": [
@@ -1173,10 +1167,10 @@ window.adventureWorld = {
         },
         {
             "health": 1000,
-            "accuracy": 140,
+            "accuracy": 136,
             "evasion": 28,
-            "attackDamage": 32,
-            "attackInterval": 2.8,
+            "attackDamage": 26,
+            "attackInterval": 3.2,
             "respawnSeconds": 5,
             "experience": 75,
             "gold": [
@@ -1200,10 +1194,10 @@ window.adventureWorld = {
         },
         {
             "health": 1200,
-            "accuracy": 145,
+            "accuracy": 142,
             "evasion": 30,
-            "attackDamage": 12,
-            "attackInterval": 3.5,
+            "attackDamage": 16,
+            "attackInterval": 3.6,
             "respawnSeconds": 5,
             "experience": 80,
             "gold": [
@@ -1227,10 +1221,10 @@ window.adventureWorld = {
         },
         {
             "health": 15000,
-            "accuracy": 210,
+            "accuracy": 175,
             "evasion": 35,
-            "attackDamage": 48,
-            "attackInterval": 3.2,
+            "attackDamage": 60,
+            "attackInterval": 4,
             "respawnSeconds": 20,
             "experience": 2000,
             "gold": [
@@ -1261,17 +1255,17 @@ window.adventureWorld = {
             "id": "salmenMonster",
             "name": "Salmen",
             "sprite": "assets/monsters/salmon-23f98143.png",
-            "health": 1600,
+            "health": 2200,
             "respawnSeconds": 5,
-            "accuracy": 155,
-            "evasion": 32,
-            "attackDamage": 38,
-            "attackInterval": 3,
+            "accuracy": 160,
+            "evasion": 36,
+            "attackDamage": 30,
+            "attackInterval": 3.6,
             "gold": [
-                210,
-                280
+                16,
+                22
             ],
-            "experience": 100,
+            "experience": 120,
             "drops": [
                 {
                     "id": "pearl",
@@ -1288,17 +1282,17 @@ window.adventureWorld = {
             "id": "brineAndPunishmentMonster",
             "name": "The Plaice-holder",
             "sprite": "assets/monsters/whale-7f5ce310.png",
-            "health": 24000,
-            "respawnSeconds": 25,
-            "accuracy": 245,
-            "evasion": 40,
-            "attackDamage": 90,
-            "attackInterval": 3,
+            "health": 1600,
+            "respawnSeconds": 5,
+            "accuracy": 150,
+            "evasion": 32,
+            "attackDamage": 30,
+            "attackInterval": 3.5,
             "gold": [
-                3000,
-                4000
+                12,
+                18
             ],
-            "experience": 4000,
+            "experience": 100,
             "drops": [
                 {
                     "id": "pearl",
@@ -1312,16 +1306,16 @@ window.adventureWorld = {
             "itemDrops": []
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 1850,
+            "accuracy": 155,
+            "evasion": 34,
+            "attackDamage": 32,
+            "attackInterval": 3.6,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 110,
             "gold": [
-                1,
-                2
+                14,
+                20
             ],
             "drops": [],
             "itemDrops": [],
@@ -1331,16 +1325,16 @@ window.adventureWorld = {
             "name": "Piratefish"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 2600,
+            "accuracy": 165,
+            "evasion": 38,
+            "attackDamage": 38,
+            "attackInterval": 3.7,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 130,
             "gold": [
-                1,
-                2
+                18,
+                24
             ],
             "drops": [],
             "itemDrops": [],
@@ -1350,16 +1344,16 @@ window.adventureWorld = {
             "name": "Cowfish"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 3100,
+            "accuracy": 170,
+            "evasion": 40,
+            "attackDamage": 40,
+            "attackInterval": 3.8,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 140,
             "gold": [
-                1,
-                2
+                20,
+                28
             ],
             "drops": [],
             "itemDrops": [],
@@ -1369,16 +1363,16 @@ window.adventureWorld = {
             "name": "Swordfish"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 3700,
+            "accuracy": 175,
+            "evasion": 42,
+            "attackDamage": 48,
+            "attackInterval": 3.8,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 150,
             "gold": [
-                1,
-                2
+                22,
+                30
             ],
             "drops": [],
             "itemDrops": [],
@@ -1388,16 +1382,16 @@ window.adventureWorld = {
             "name": "Lava crab"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 4400,
+            "accuracy": 180,
+            "evasion": 44,
+            "attackDamage": 42,
+            "attackInterval": 4,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 160,
             "gold": [
-                1,
-                2
+                24,
+                32
             ],
             "drops": [],
             "itemDrops": [],
@@ -1407,16 +1401,16 @@ window.adventureWorld = {
             "name": "Electric eel"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 5200,
+            "accuracy": 185,
+            "evasion": 46,
+            "attackDamage": 55,
+            "attackInterval": 4,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 175,
             "gold": [
-                1,
-                2
+                26,
+                36
             ],
             "drops": [],
             "itemDrops": [],
@@ -1426,16 +1420,16 @@ window.adventureWorld = {
             "name": "Anglerfish"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 6100,
+            "accuracy": 190,
+            "evasion": 48,
+            "attackDamage": 40,
+            "attackInterval": 4,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 190,
             "gold": [
-                1,
-                2
+                28,
+                38
             ],
             "drops": [],
             "itemDrops": [],
@@ -1445,16 +1439,16 @@ window.adventureWorld = {
             "name": "Blowfish"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 7100,
+            "accuracy": 195,
+            "evasion": 50,
+            "attackDamage": 52,
+            "attackInterval": 4,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 210,
             "gold": [
-                1,
-                2
+                30,
+                42
             ],
             "drops": [],
             "itemDrops": [],
@@ -1464,16 +1458,16 @@ window.adventureWorld = {
             "name": "Discojelly"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
+            "health": 8200,
+            "accuracy": 200,
+            "evasion": 52,
+            "attackDamage": 65,
+            "attackInterval": 4.2,
             "respawnSeconds": 5,
-            "experience": 10,
+            "experience": 230,
             "gold": [
-                1,
-                2
+                32,
+                46
             ],
             "drops": [],
             "itemDrops": [],
@@ -1483,16 +1477,16 @@ window.adventureWorld = {
             "name": "Nautiless"
         },
         {
-            "health": 10,
-            "accuracy": 50,
-            "evasion": 0,
-            "attackDamage": 1,
-            "attackInterval": 2,
-            "respawnSeconds": 5,
-            "experience": 10,
+            "health": 90000,
+            "accuracy": 240,
+            "evasion": 60,
+            "attackDamage": 120,
+            "attackInterval": 4.5,
+            "respawnSeconds": 25,
+            "experience": 6000,
             "gold": [
-                1,
-                2
+                250,
+                400
             ],
             "drops": [],
             "itemDrops": [

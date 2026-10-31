@@ -1,5 +1,15 @@
 COPERS PROGRESSION BUILDS — 27 OCTOBER 2026
 
+BALANCE UPDATE - 30 OCTOBER 2026
+Monster packs and attacks now scale more smoothly across all three worlds.
+Cold Stare Gallery has 9 enemies; World 3 now has regular encounters and a final
+boss. Its placeholder XP and unlock goals have also been filled in.
+The comparisons below describe the older 27 October balance. Current survival
+results are in progression-balance.json: 348 seeded trials across all 29 maps,
+four builds, no deaths. This includes a 30-point build without shields/freezing.
+Rechecked with the Ice set's new HP/evasion permanent stats and empty crafted slots.
+Rerun with tests/run-equipment-smoke.ps1 -TestScript tests/progression-balance-smoke.js.
+
 Import in the game: Skill Tree > Import build > select a JSON file > Apply build.
 The preview shows the cost. If it exceeds your earned points, Edit to fit points
 opens the build with its nodes selected. Remove the number shown in red, then

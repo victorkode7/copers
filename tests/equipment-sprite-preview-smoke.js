@@ -17,6 +17,7 @@
         check('preview keeps pixelated rendering', getComputedStyle(preview().querySelector('img')).imageRendering === 'pixelated');
     }
     try {
+        ItemCrafting.setMode('recipes');
         state.currentView = 'inventory'; state.ownedItemIds = ['testAmulet']; state.gear = createEmptyGear();
         inventoryCategory = 'all'; render();
         let icon = elements.gearInventory.querySelector('.equipment-sprite-trigger');
@@ -71,8 +72,25 @@
         const materials = JSON.stringify(state.materials);
         await openAndCheck(icon);
         check('preview does not craft or consume materials', !state.ownedItemIds.length && JSON.stringify(state.materials) === materials);
+        const enlargedCraftSprite = preview(), recipeId = icon.dataset.previewItemId;
         renderCrafting(); await tick(); await tick();
-        check('rerendering removes a detached preview', !preview());
+        icon = [...elements.crafts.querySelectorAll('.equipment-sprite-trigger')].find(node => node.dataset.previewItemId === recipeId);
+        check('automatic crafting refresh keeps the same enlarged sprite open', preview() === enlargedCraftSprite && icon.getAttribute('aria-expanded') === 'true');
+        for (let refresh = 0; refresh < 3; refresh++) {
+            state.materials.gel++;
+            render(); await tick(); await tick();
+        }
+        icon = [...elements.crafts.querySelectorAll('.equipment-sprite-trigger')].find(node => node.dataset.previewItemId === recipeId);
+        const refreshedSource = icon.querySelector('img').getBoundingClientRect(), refreshedPreview = preview()?.getBoundingClientRect();
+        check('material updates keep the preview attached to the current recipe icon', preview() === enlargedCraftSprite &&
+            near(refreshedPreview.left + 96, refreshedSource.left + refreshedSource.width / 2) &&
+            near(refreshedPreview.top + 96, refreshedSource.top + refreshedSource.height / 2));
+        icon.click();
+        check('clicking the refreshed recipe icon still closes its preview', !preview());
+        icon.click();
+        selectedCraftCategory = 'empty-test-category'; renderCrafting(); await tick(); await tick();
+        check('a recipe disappearing from the visible list closes its preview', !preview());
+        selectedCraftCategory = 'all'; renderCrafting();
         elements.crafts.querySelector('[data-craft="testAmulet"]').click();
         check('Craft still works after closing the preview', ownsItem('testAmulet'));
         check('loot table has no preview triggers', !elements.mapLootTable.querySelector('.equipment-sprite-trigger'));

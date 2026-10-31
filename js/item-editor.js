@@ -4,6 +4,7 @@
     const viewKey = 'idleAdventureItemEditorView';
     const clone = value => JSON.parse(JSON.stringify(value));
     let data = Equipment.normalizeData(clone(window.adventureItems));
+    const projectItems = clone(data), previousDraftKey = 'idleAdventureItemEditorPreviousDraft';
     let selectedIndex = data.items.length ? 0 : -1;
     let snapshotSelection = selectedIndex;
     let history = [];
@@ -14,6 +15,7 @@
     const spritePaths = () => [...data.items.map(item => item.sprite), ...Object.values(data.materialDetails || {}).map(material => material.sprite)].filter(Equipment.safeSprite);
     let imageDatabase;
     let quickSave = null;
+    const craftingEditor = ItemCraftingEditor.create({current, data: () => data, changed});
 
     function openImageDatabase() {
         if (!imageDatabase) imageDatabase = new Promise((resolve, reject) => {
@@ -61,7 +63,7 @@
     function status(message) { $('status').textContent = message; }
     function saveView() {
         try {
-            localStorage.setItem(viewKey, JSON.stringify({selectedIndex, search: $('search').value, slot: $('filterSlot').value}));
+            localStorage.setItem(viewKey, JSON.stringify({selectedIndex, search: $('search').value, slot: $('filterSlot').value, editorPage:craftingEditor.page()}));
         } catch { /* Data saving reports storage errors separately. */ }
     }
     function option(value, label) {
@@ -128,6 +130,7 @@
             name.textContent = item.name || 'Unnamed item';
             const detail = document.createElement('small');
             detail.textContent = item.slot + (item.developerOnly ? ' · Developer' : ' · ' + item.rarity);
+        if (item.tier) detail.textContent += ' · Tier ' + item.tier;
             copy.append(name, detail);
             button.append(iconFor(item), copy);
             button.addEventListener('click', () => { selectedIndex = index; snapshotSelection = index; render(); });
@@ -242,6 +245,7 @@
         $('itemDeveloper').checked = item.developerOnly === true;
         $('craftable').checked = Boolean(item.recipe);
         renderRows();
+        craftingEditor.render();
     }
     function renderPreview() {
         $('preview').replaceChildren();
@@ -251,10 +255,15 @@
         name.textContent = item.name || 'Unnamed item';
         const meta = document.createElement('p');
         meta.textContent = item.rarity + ' · ' + item.slot + (item.developerOnly ? ' · Developer only' : '');
+        if (item.tier) meta.textContent += ' · Tier ' + item.tier;
         const description = document.createElement('p');
         description.textContent = item.description;
         const stats = document.createElement('pre');
         stats.textContent = Equipment.describe(item);
+        if (item.crafting) {
+            const count = Number.isSafeInteger(item.crafting.slots) && item.crafting.slots > 0 ? Math.min(item.crafting.slots, Object.keys(Equipment.stats).length) : 0;
+            stats.textContent += '\n' + Array.from({length:count}, () => '◇ Crafted stat').join('\n');
+        }
         $('preview').append(iconFor(item), name, meta, stats, description);
         if (item.recipe) {
             const recipe = document.createElement('p');
@@ -265,10 +274,12 @@
     }
     function renderValidation() {
         const errors = Equipment.validate(data);
-        $('validationSummary').textContent = errors.length ? errors.length + ' issue(s) to fix before exporting.' : 'All equipment data is valid.';
-        $('validation').replaceChildren(...errors.map(message => {
-            const entry = document.createElement('li'); entry.textContent = message; return entry;
-        }));
+        for (const [summary,list] of [['validationSummary','validation'],['tierValidationSummary','tierValidation']]) {
+            $(summary).textContent = errors.length ? errors.length + ' issue(s) to fix before exporting.' : 'All equipment data is valid.';
+            $(list).replaceChildren(...errors.map(message => {
+                const entry = document.createElement('li'); entry.textContent = message; return entry;
+            }));
+        }
         $('exportGame').disabled = errors.length > 0;
         quickSave?.refresh(errors);
         return errors;
@@ -319,7 +330,10 @@
     $('search').addEventListener('input', renderList);
     $('filterSlot').addEventListener('change', renderList);
     $('addItem').addEventListener('click', () => {
-        data.items.push({ id: newItemId(), name: 'New Item', slot: data.slots[0].id, rarity: 'common', description: '', sprite: '', stats: {}, recipe: null });
+        const equipmentType = (data.equipmentTypes || []).find(type => type.id === 'melee')?.id || data.equipmentTypes?.[0]?.id;
+        const tier = (data.craftingPresets || []).filter(preset => preset.equipmentType === equipmentType).sort((a,b) => a.tier-b.tier)[0]?.tier;
+        data.items.push({ id: newItemId(), name: 'New Item', slot: data.slots[0].id, rarity: 'common', description: '', sprite: '', stats: {}, recipe: null,
+            ...(equipmentType && tier ? {equipmentType,tier} : {}) });
         selectedIndex = data.items.length - 1;
         $('search').value = ''; $('filterSlot').value = '';
         changed(); renderForm();
@@ -355,6 +369,10 @@
         populateSlots(); render(); status('Last item edit undone. Export to update the game.');
     });
     function replaceData(next, draft = false) {
+        if (next && typeof next === 'object' && !Array.isArray(next)) {
+            if (next.equipmentTypes === undefined) next.equipmentTypes = clone(projectItems.equipmentTypes || []);
+            if (next.craftingPresets === undefined) next.craftingPresets = clone(projectItems.craftingPresets || []);
+        }
         next = Equipment.normalizeData(next);
         const errors = Equipment.validate(next);
         const object = value => value && typeof value === 'object' && !Array.isArray(value);
@@ -372,6 +390,19 @@
     $('restoreDraft').addEventListener('click', async () => {
         try { replaceData(JSON.parse(localStorage.getItem(draftKey)), true); await loadDraftSprites(); status('Local draft restored. Export to apply it to the game.'); }
         catch (error) { status('Could not restore draft: ' + error.message); }
+    });
+    $('loadProjectItems').addEventListener('click', async () => {
+        try {
+            localStorage.setItem(previousDraftKey, JSON.stringify(data));
+            $('restorePreviousItems').hidden = false;
+            $('search').value = ''; $('filterSlot').value = '';
+            replaceData(clone(projectItems)); await loadDraftSprites();
+            status('Loaded current project items. Your previous editor draft is backed up; Restore previous draft brings it back.');
+        } catch (error) { status('Could not load project items: ' + error.message); }
+    });
+    $('restorePreviousItems').addEventListener('click', async () => {
+        try { replaceData(JSON.parse(localStorage.getItem(previousDraftKey)), true); await loadDraftSprites(); status('Previous editor draft restored.'); }
+        catch (error) { status('Could not restore previous draft: ' + error.message); }
     });
     $('importJson').addEventListener('change', async event => {
         const file = event.target.files[0]; if (!file) return;
@@ -422,9 +453,13 @@
             populateSlots();
             if (typeof view.search === 'string') $('search').value = view.search;
             if (data.slots.some(slot => slot.id === view.slot)) $('filterSlot').value = view.slot;
+            craftingEditor.setPage(view.editorPage);
         }
     } catch (error) { status('Could not resume the saved draft: ' + error.message); }
     $('restoreDraft').disabled = !draftAvailable();
+    try { $('restorePreviousItems').hidden = !localStorage.getItem(previousDraftKey); } catch { /* Export remains available. */ }
+    if (projectItems.items.some(project => project.crafting && !data.items.find(item => item.id === project.id)?.crafting))
+        status('Your browser draft is missing project reroll settings. Use Load project items to get the current equipment and keep a backup of your draft.');
     populateSlots(); render();
     quickSave = EditorQuickSave.create({
         key: 'items', filename: 'items.js',

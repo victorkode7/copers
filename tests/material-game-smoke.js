@@ -2,6 +2,7 @@
     const checks = [];
     function check(label, condition) { checks.push((condition ? 'PASS ' : 'FAIL ') + label); if (!condition) throw new Error(label); }
     try {
+        ItemCrafting.setMode('recipes');
         itemData.materialDetails = {gel: {description: 'A luminous crafting ingredient.', sprite: 'tests/fixtures/equipment-sprite.svg'}};
         state.materials.gel = 3; state.currentView = 'inventory'; render();
         let entry = [...elements.inventory.querySelectorAll('.material-entry')].find(node => node.dataset.materialId === 'gel');
