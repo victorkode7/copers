@@ -5,6 +5,7 @@ param(
     [string]$ReportPath,
     [string]$ScreenshotPath,
     [string]$WindowSize = '1440,1000',
+    [ValidatePattern('^\d+,\d+$')][string]$ViewportSize,
     [int]$TimeoutSeconds = 25,
     [string]$ProjectRoot,
     [switch]$WithoutDeveloperTools,
@@ -63,6 +64,7 @@ try {
     $realtime = $realtime -or $TestScript -eq 'tests/persistent-tooltips-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/retired-town-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/town-page-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/game-theme-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/town-production-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/town-sawmill-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/town-mine-smoke.js'
@@ -82,8 +84,10 @@ try {
     $realtime = $realtime -or $TestScript -eq 'tests/world-project-load-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/spell-skills-smoke.js'
     $realtime = $realtime -or ($Page -eq 'skill-tree-editor.html' -and $TestScript -eq 'tests/shield-expansion-smoke.js')
+    $realtime = $realtime -or [bool]$ViewportSize
     if ($realtime) {
-        $processInfo.Arguments = '--headless --disable-gpu --no-first-run --allow-file-access-from-files --remote-debugging-port=0 --user-data-dir="' + $profilePath + '" "' + ([uri]$fixturePath).AbsoluteUri + '"'
+        $startUrl = if ($ViewportSize) { 'about:blank' } else { ([uri]$fixturePath).AbsoluteUri }
+        $processInfo.Arguments = '--headless --disable-gpu --no-first-run --allow-file-access-from-files --remote-debugging-port=0 --user-data-dir="' + $profilePath + '" "' + $startUrl + '"'
     }
     if ($EnableGpu) { $processInfo.Arguments = $processInfo.Arguments.Replace('--disable-gpu ', '') }
     $processInfo.UseShellExecute = $false
@@ -107,6 +111,32 @@ try {
         try {
             $null = $socket.ConnectAsync([uri]$target.webSocketDebuggerUrl, $cancellation.Token).GetAwaiter().GetResult()
             $messageId = 0
+            if ($ViewportSize) {
+                # Chrome's minimum desktop window can exceed phone widths.
+                # Set the actual viewport before loading the page and its tests.
+                $dimensions = $ViewportSize.Split(',')
+                $startupCommands = @(
+                    @{method='Emulation.setDeviceMetricsOverride'; params=@{width=[int]$dimensions[0]; height=[int]$dimensions[1]; deviceScaleFactor=1; mobile=$true}},
+                    @{method='Page.navigate'; params=@{url=([uri]$fixturePath).AbsoluteUri}}
+                )
+                foreach ($startup in $startupCommands) {
+                    $messageId++
+                    $command = @{id=$messageId; method=$startup.method; params=$startup.params} | ConvertTo-Json -Depth 6 -Compress
+                    $commandBytes = [Text.Encoding]::UTF8.GetBytes($command)
+                    $null = $socket.SendAsync([ArraySegment[byte]]::new($commandBytes), [Net.WebSockets.WebSocketMessageType]::Text, $true, $cancellation.Token).GetAwaiter().GetResult()
+                    do {
+                        $message = [IO.MemoryStream]::new()
+                        do {
+                            $buffer = [byte[]]::new(16384)
+                            $received = $socket.ReceiveAsync([ArraySegment[byte]]::new($buffer), $cancellation.Token).GetAwaiter().GetResult()
+                            $message.Write($buffer, 0, $received.Count)
+                        } while (!$received.EndOfMessage)
+                        $reply = [Text.Encoding]::UTF8.GetString($message.ToArray()) | ConvertFrom-Json
+                        $message.Dispose()
+                    } while ($reply.id -ne $messageId)
+                    if ($reply.error) { throw ('Viewport setup failed: ' + $reply.error.message) }
+                }
+            }
             $outputText = $null
             while (!$outputText -and [DateTime]::UtcNow -lt $deadline) {
                 $messageId++

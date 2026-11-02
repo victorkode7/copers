@@ -1,5 +1,14 @@
 COPERS PROGRESSION BUILDS — 27 OCTOBER 2026
 
+COLORFUL GAME UI
+The game uses css/game-theme.css for shared navy surfaces, vivid accents and
+pixel-style frames. Only the game loads this layer; editor pages keep their UI.
+Town retains green, ice-blue and turquoise world palettes, with brighter scenery
+and a neutral navigation bar. Gameplay, resource costs and save formats are unchanged.
+Geometry, resource-card stability, text selection and map locking are covered by
+tests/game-theme-smoke.js. Use -ViewportSize 390,844 with run-equipment-smoke.ps1
+to check a real phone viewport independently of Chrome's desktop window minimum.
+
 ORE AND SMELTERY
 Mine output is now half the matching Lumber Outpost: 360 Ore/hour per production
 step (tier x 10 + level), before Town Hall productivity.

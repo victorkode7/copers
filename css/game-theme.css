@@ -1,0 +1,197 @@
+/* Game-only color and frame layer. Dimensions stay in the existing component
+   styles. Editor pages deliberately do not load this stylesheet. */
+.idle-adventure {
+    --adventure-bg: #07162f;
+    --adventure-panel: #102c53;
+    --adventure-raised: #204774;
+    --adventure-card: #15365f;
+    --adventure-border: #4679ad;
+    --adventure-text: #f5f8ef;
+    --adventure-muted: #b5cee7;
+    --adventure-green: #79ed84;
+    --adventure-amber: #ffd15a;
+    --adventure-coral: #ff8175;
+    --adventure-blue: #70dcff;
+    --adventure-purple: #ce9dff;
+    --adventure-danger: #ff637d;
+    --ui-teal: #40e3c2;
+    --ui-frame: inset 0 1px 0 #c9ecff30, inset 0 -2px 0 #020c244d;
+    --ui-panel-frame: var(--ui-frame), 0 3px 0 #020b2080;
+    --ui-control: #224d7b;
+    --ui-control-hover: #2d6297;
+    --ui-radius: 4px;
+    --game-text-shadow: 1px 1px 0 #020b20;
+    background: var(--adventure-bg);
+    color: var(--adventure-text);
+}
+
+/* Quiet navigation leaves the scenery and selected destination in focus. */
+.idle-adventure>header,
+.idle-adventure.town-page-open>header {
+    --adventure-panel: #152a35;
+    --adventure-raised: #293f4c;
+    --adventure-border: #536775;
+    --ui-control: #293f4c;
+    --ui-control-hover: #365463;
+    background: var(--adventure-panel);
+}
+.idle-adventure .app-nav,
+.idle-adventure.town-page-open .app-nav { background: #0d1c28; border-color: #354c60; }
+.idle-adventure .app-nav a,
+.idle-adventure.town-page-open .app-nav a { color: #bdcddd; border-radius: var(--ui-radius); }
+.idle-adventure .app-nav a:is(:hover,[aria-current="page"]),
+.idle-adventure.town-page-open .app-nav a:is(:hover,[aria-current="page"]) { background: #294052; color: #f1f6e6; }
+.idle-adventure .logo { border-color: #778e9c; border-radius: 6px; box-shadow: var(--ui-frame); }
+.idle-adventure .eyebrow { color: var(--adventure-blue); }
+.idle-adventure .gold-display strong { color: var(--adventure-amber); }
+
+/* Inset bevels never move labels on hover or press. */
+.idle-adventure :is(.nav-button,.action-button,.craft-filter,.skill-tree-control,.mastery-open-button,.map-selector-lock,.potential-roll-choice,.reroll-gear-option),
+.idle-adventure :is(.crafting-mode-tabs,.weapon-roll-save-actions,.mastery-actions,.mastery-heading,.save-recovery) button,
+.idle-adventure .combat-settings-heading button {
+    border-radius: var(--ui-radius);
+    border-color: var(--adventure-border);
+    background: var(--ui-control);
+    color: var(--adventure-text);
+    box-shadow: var(--ui-frame);
+}
+.idle-adventure :is(.nav-button,.action-button,.craft-filter,.skill-tree-control,.mastery-open-button,.map-selector-lock,.potential-roll-choice,.reroll-gear-option):hover:not(:disabled),
+.idle-adventure :is(.crafting-mode-tabs,.weapon-roll-save-actions,.mastery-actions,.mastery-heading,.save-recovery) button:hover:not(:disabled),
+.idle-adventure .combat-settings-heading button:hover:not(:disabled) {
+    background: var(--ui-control-hover);
+    border-color: var(--adventure-blue);
+    color: #fffbe6;
+    filter: none;
+}
+.idle-adventure :is(.nav-button,.action-button,.craft-filter,.skill-tree-control,.mastery-open-button,.map-selector-lock,.potential-roll-choice,.reroll-gear-option):active:not(:disabled) { box-shadow: inset 0 2px 0 #020c2466, inset 0 -1px 0 #c9ecff24; }
+.idle-adventure .nav-button[aria-pressed="true"] { background: color-mix(in srgb,var(--view-accent) 22%,#153244); border-color: var(--view-accent); color: var(--view-accent); box-shadow: var(--ui-frame), inset 0 0 0 1px color-mix(in srgb,var(--view-accent) 28%,transparent); }
+.idle-adventure .action-button:not(:disabled) { background: #22684b; border-color: var(--adventure-green); color: #efffd8; }
+.idle-adventure .action-button:hover:not(:disabled) { background: #2a8057; border-color: #c2ff9b; }
+.idle-adventure :is(.craft-filter,.crafting-mode-tabs button,.reroll-gear-option)[aria-pressed="true"] { background: #674819; border-color: var(--adventure-amber); color: #fff1bc; }
+.idle-adventure .potential-roll-choice[aria-pressed="true"] { background: #57337c; border-color: var(--adventure-purple); }
+.idle-adventure .auto-roll-action[aria-pressed="true"],
+.idle-adventure .auto-roll-action[aria-pressed="true"]:hover:not(:disabled) { background: #873c50; border-color: var(--adventure-coral); color: #fff0e9; }
+.idle-adventure :is(.nav-button,.action-button,.craft-filter,.skill-tree-control,.mastery-actions button,.reroll-gear-option):disabled { background: #263952; border-color: #52637d; color: #bcc7d6; opacity: .55; }
+.idle-adventure :is(button,a,input,select,textarea,summary):focus-visible { outline: 2px solid var(--adventure-amber); outline-offset: 3px; }
+.idle-adventure :is(input:not([type="checkbox"]):not([type="range"]),select,textarea) { background-color: #0c2346; border-color: #5b86b6; border-radius: var(--ui-radius); color: var(--adventure-text); caret-color: var(--adventure-amber); }
+.idle-adventure :is(input[type="checkbox"],input[type="range"]) { accent-color: var(--ui-teal); }
+
+/* Shared frames preserve each component's border width and spacing. */
+.idle-adventure :is(.game-panel,.side-panel,.town-section,.loot-table-panel,.player-health,.game-item,.craft-card,.reroll-item-panel,.reroll-recipe-panel,.mastery-node-details) { border-radius: var(--ui-radius); border-color: var(--adventure-border); box-shadow: var(--ui-panel-frame); }
+.idle-adventure .game-panel { background-color: var(--adventure-panel); }
+.idle-adventure .side-panel { background: linear-gradient(150deg,#183e6c,#102849); }
+.idle-adventure .stats-panel { border-color: #449bb8; }
+.idle-adventure .damage-breakdown { border-color: #8b75c8; }
+.idle-adventure :is(.town-section,.loot-table-panel,.player-health,.game-item) { background-color: var(--adventure-card); }
+.idle-adventure #upgradesView { background: transparent; border-radius: 0; box-shadow: none; }
+.idle-adventure #townView,
+.idle-adventure #inventoryView .town-section { background-color: #102647; background-image: linear-gradient(#071a39a6,#071a39a6),url("../assets/ui/brick128.png"); border-color: #738cb7; }
+.idle-adventure :is(.craft-card,.reroll-item-panel,.reroll-recipe-panel) { background: linear-gradient(145deg,#203d6d,#152b50); }
+.idle-adventure .craft-card.is-craftable { border-color: var(--adventure-green); }
+.idle-adventure .craft-card.is-crafted { border-color: #4aaf9e; }
+.idle-adventure :is(.craft-materials,.craft-material-info-wrap,.material-details,.equipment-slot-bonus) { background-color: #0b2548; border-color: #507aa9; border-radius: var(--ui-radius); }
+.idle-adventure :is(.equipment-slot,.reroll-gear-option) { border-radius: var(--ui-radius); background-color: #18365d; box-shadow: var(--ui-frame); }
+.idle-adventure .equipment-slot.is-selected { border-color: var(--adventure-amber); background: #414126; }
+.idle-adventure .equipment-slot-icon { border-radius: var(--ui-radius); background-color: #081c37; }
+.idle-adventure #gearInventory .game-item { background: linear-gradient(120deg,#173962,#10294a); box-shadow: var(--ui-frame); }
+.idle-adventure #gearInventory .gear-equip-button { background: #22684b; border-color: #79ed84; border-radius: var(--ui-radius); color: #efffd8; box-shadow: var(--ui-frame); }
+.idle-adventure #gearInventory .gear-equip-button:hover { background: #2a8057; border-color: #c2ff9b; box-shadow: var(--ui-frame); }
+.idle-adventure [data-rarity] { --item-rarity: #bdcede; }
+.idle-adventure [data-rarity="uncommon"] { --item-rarity: #8ded9c; }
+.idle-adventure [data-rarity="rare"] { --item-rarity: #72caff; }
+.idle-adventure [data-rarity="epic"] { --item-rarity: #d798ff; }
+.idle-adventure [data-rarity="unique"] { --item-rarity: #ffd15a; }
+.idle-adventure #rerollItemArt { border-radius: var(--ui-radius); background: #081d3a; border-color: #6387b5; box-shadow: var(--ui-frame); }
+.idle-adventure :is(.crafted-stat-card,.item-crafted-slot,.equipment-crafting-rules) { border-radius: var(--ui-radius); border-color: #a47be2; background-color: #2b2452; }
+.idle-adventure .crafted-stat-card.is-filled { border-color: var(--adventure-purple); background: linear-gradient(115deg,#58326e,#2c2855); }
+.idle-adventure .crafted-stat-card.is-filled strong { color: #edd1ff; }
+.idle-adventure .weapon-roll-save { border-color: #e3b749; border-radius: var(--ui-radius); background: #493824; box-shadow: var(--ui-frame); }
+.idle-adventure :is(.reroll-permanent-heading,.weapon-roll-save h3) { color: var(--adventure-amber); }
+.idle-adventure .craft-materials .needs-more,
+.idle-adventure .reroll-cost .needs-more strong { color: #ffb3a8; }
+.idle-adventure .reroll-cost .has-enough strong { color: #a3f2a2; }
+
+/* Map art and sprite colors remain untouched. */
+.idle-adventure :is(.map-button,.world-button) { border-radius: var(--ui-radius); box-shadow: var(--ui-frame); }
+.idle-adventure .map-button.incomplete { border-color: #4f8fc3; }
+.idle-adventure .map-button.completed { border-color: #63cc94; }
+.idle-adventure .map-button.selected,
+.idle-adventure .world-button.selected { border-color: var(--adventure-amber); box-shadow: var(--ui-frame), inset 0 0 0 1px var(--adventure-amber); }
+.idle-adventure .map-button.selected strong { color: #fff3ba; }
+.idle-adventure .map-button.locked { border-color: #455e7a; }
+.idle-adventure .map-selector-lock[aria-pressed="true"] { color: var(--adventure-amber); border-color: var(--adventure-amber); background: #574522; }
+.idle-adventure .enemy-card,
+.idle-adventure .combat-panel.has-area-background .enemy-card { background: #102b50eb; border-color: #3c7eac; border-radius: var(--ui-radius); box-shadow: var(--ui-frame); }
+.idle-adventure .enemy-card.is-target { border-color: var(--adventure-amber); }
+.idle-adventure .enemy-mark.has-monster-sprite { background: #07193270; border-radius: var(--ui-radius); }
+.idle-adventure .combat-status { border-color: #48978e; background: #12494a; color: #abffd3; border-radius: var(--ui-radius); }
+.idle-adventure .combat-status.combat-dead { border-color: var(--adventure-danger); background: #65283d; color: #ffd1ca; }
+.idle-adventure :is(.health-track,.experience-track) { background: #06152f; border-color: #4c719e; border-radius: 3px; box-shadow: inset 0 2px 0 #02081a80; }
+.idle-adventure .health-fill:not(.player-mana-fill) { background: linear-gradient(#ff9e75 0 18%,#f3606f 18% 80%,#b63858 80%); border-radius: 2px 0 0 2px; }
+.idle-adventure .player-mana-fill { background: linear-gradient(#8ceaff 0 18%,#4b9cff 18% 80%,#5554bd 80%); border-radius: 2px 0 0 2px; box-shadow: none; }
+.idle-adventure #playerManaText { color: #b9eaff; }
+.idle-adventure .experience-bar { background: linear-gradient(#fff2a6 0 18%,#ffc743 18% 80%,#c58b2f 80%); }
+.idle-adventure :is(.loot-reward,.combat-buff,.interface-setting,.combat-effect-switch) { border-radius: var(--ui-radius); background-color: #163b61; border-color: #4c84b3; }
+.idle-adventure .loot-reward--gold { border-color: #d6aa47; background-color: #4b3923; }
+
+/* Town worlds supply their own saturated palette to the shared frames. */
+.idle-adventure #townPageButton { --view-accent: #9bec80; }
+.idle-adventure .town-page { --town-accent:#9bea64; --town-surface-rgb:14 57 43; --town-border:#45896f; --town-muted:#bde5cf; }
+.idle-adventure :is(.town-resource,.town-world-button,.town-future-world,.town-building-card,.town-unlock-button) { border-radius: var(--ui-radius); }
+.idle-adventure .town-resources { background: rgb(var(--town-surface-rgb)/.94); box-shadow: inset 0 1px 0 #d4ffdf26; }
+.idle-adventure .town-resource { background: rgb(var(--town-surface-rgb)/.92); box-shadow: var(--ui-frame); }
+.idle-adventure .town-resource strong { color: #ffe49a; }
+.idle-adventure .town-resource.is-full { border-color: var(--adventure-amber); }
+.idle-adventure .town-worlds { background: rgb(var(--town-surface-rgb)/.92); }
+.idle-adventure .town-world-button { border-color: var(--town-border); box-shadow: var(--ui-frame); }
+.idle-adventure .town-world-button[aria-pressed="true"] { border-color: var(--world-accent); box-shadow: inset 3px 0 var(--world-accent), inset 0 0 0 1px #d4ffd942; }
+.idle-adventure .town-building-card { background: linear-gradient(145deg,rgb(var(--town-surface-rgb)/.95),rgb(var(--town-surface-rgb)/.89)); box-shadow: var(--ui-panel-frame); }
+.idle-adventure .town-building-card.is-owned { border-color: var(--town-accent); }
+.idle-adventure :is(.town-building-card h3,.town-buildings-heading h2,.town-resource-heading h1) { color: #fff0c5; }
+.idle-adventure .town-building-art svg { fill: rgb(var(--town-surface-rgb)/.7); opacity: 1; }
+.idle-adventure .town-building-card .town-building-preview { color: #dbf5c3; }
+.idle-adventure .town-unlock-button { background: rgb(var(--town-surface-rgb)); box-shadow: var(--ui-frame); }
+.idle-adventure .town-unlock-button:hover:not(:disabled) { background: color-mix(in srgb,var(--town-accent) 20%,rgb(var(--town-surface-rgb))); border-color: #efffd0; }
+.idle-adventure .town-unlock-button:active:not(:disabled) { box-shadow: inset 0 2px 0 #020c2466; }
+.idle-adventure .town-building-costs li.is-missing { color: #ffb1a2; }
+.idle-adventure .town-production { border-radius: 0 0 var(--ui-radius) var(--ui-radius); }
+.idle-adventure .town-production-bar { background: #021c2a; }
+.idle-adventure .town-production-bar>span { background: linear-gradient(90deg,color-mix(in srgb,var(--town-accent) 65%,#057b80),var(--town-accent)); }
+.idle-adventure .town-resource-list { scrollbar-color: var(--town-border) transparent; }
+
+/* Gold available, green learned, purple planned; existing node shapes stay. */
+.idle-adventure .skill-tree-viewport { border-color: #5c81b9; border-radius: var(--ui-radius); box-shadow: var(--ui-panel-frame); }
+.idle-adventure :is(.skill-points-bar,.skill-build-file-controls) { border-radius: var(--ui-radius); background-color: #102850f2; border-color: #607cb1; }
+.idle-adventure .skill-tree-link { stroke: #6882a7; }
+.idle-adventure .skill-tree-link.is-active { stroke: var(--ui-teal); filter: none; }
+.idle-adventure .skill-node { border-color: #5678ab; background: linear-gradient(160deg,#31558a,#162b54); box-shadow: var(--ui-frame); }
+.idle-adventure .skill-node.is-available { border-color: var(--adventure-amber); background: linear-gradient(160deg,#805c24,#493b29); color: #fff0be; }
+.idle-adventure .skill-node.is-available:not(.is-pending):not(.is-allocated) { animation: none; }
+.idle-adventure .skill-node.is-allocated { border-color: var(--ui-teal); background: linear-gradient(160deg,#247b70,#15443e); color: #d5ffdf; box-shadow: var(--ui-frame), inset 0 0 0 1px #54e4b340; }
+.idle-adventure .skill-node.is-pending { border-color: var(--adventure-purple); box-shadow: var(--ui-frame), 0 0 0 2px #ae74d47a; }
+.idle-adventure .skill-node:is(.is-base-health,.is-origin.is-base-health) { border-color: var(--adventure-coral); background: radial-gradient(circle,#8e3b61,#482b4a 74%); }
+.idle-adventure .skill-node.is-base-attackSpeed { border-color: #a9ee60; background: radial-gradient(circle,#548d3a,#244b38 74%); }
+.idle-adventure .skill-node.is-base-mana { border-color: #9bafff; background: radial-gradient(circle,#454399,#222d62 74%); }
+.idle-adventure .mastery-node { border-color: #6084bd; background: #173460; color: #b0c8ec; box-shadow: var(--ui-frame); }
+.idle-adventure .mastery-node.is-available { border-color: var(--ui-teal); background: #175953; color: #ccffdf; }
+.idle-adventure .mastery-node.is-allocated { border-color: var(--adventure-amber); background: #715023; color: #fff1b8; }
+.idle-adventure .mastery-node.is-capstone { background-color: #51366f; }
+.idle-adventure .mastery-node.is-selected { outline-color: var(--adventure-purple); }
+.idle-adventure .mastery-node:not(.is-passive):hover { border-color: #fff1b8; box-shadow: var(--ui-frame), 0 0 0 1px #ffd15a; }
+.idle-adventure .mastery-link { stroke: #5477a0; }
+.idle-adventure .mastery-link.is-active { stroke: var(--adventure-amber); }
+.idle-adventure .mastery-node-details { background: #102b50f5; }
+.idle-adventure .mastery-node-details p { color: var(--adventure-muted); }
+.idle-adventure .mastery-bonuses { color: #a5efbb; }
+.idle-adventure .mastery-penalties { color: #ffb4af; }
+.idle-adventure .mastery-progress progress { accent-color: var(--adventure-amber); }
+
+/* Opaque dialog and tooltip frames keep small text readable over busy art. */
+.idle-adventure :is(.combat-settings,.skill-build-dialog,.save-recovery,.offline-recap) { background: #102b53; border-color: #759dd1; border-radius: var(--ui-radius); color: var(--adventure-text); box-shadow: var(--ui-frame), 0 6px 0 #02091f80; }
+.idle-adventure dialog::backdrop { background: #020b24c4; }
+.idle-adventure :is(.skill-node-tooltip,.live-game-tooltip,.craft-material-tooltip,.equipment-slot-bonus) { border-radius: var(--ui-radius); background: #0b2346fa; border-color: #8cb7ec; box-shadow: var(--ui-frame), 0 3px 0 #020b20b3; color: var(--adventure-text); }
+.idle-adventure .combat-effect-switch[aria-checked="true"] [data-switch-state] { background: #206244; color: #bdffab; }
+.idle-adventure .combat-effect-switch[aria-checked="false"] [data-switch-state] { background: #34445e; color: #cad8e7; }
+.idle-adventure .combat-effect-master { border-color: var(--adventure-amber); }
+.idle-adventure .combat-renderer-choice select { background: #0c2346; }
+.idle-adventure .skill-build-error { color: #ffb5ab; }

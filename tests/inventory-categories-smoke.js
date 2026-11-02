@@ -16,7 +16,7 @@
             const image = new Image(); image.src = source; return image.decode();
         }));
         check('all four category icons load with pixelated rendering', tabs.length === 4 && tabs.every(tab => getComputedStyle(tab, '::before').imageRendering === 'pixelated'));
-        check('inventory returns to its original panel styling', getComputedStyle(page).backgroundColor === 'rgb(27, 45, 59)' && getComputedStyle(page).borderImageSource === 'none' && getComputedStyle(page.querySelector('.town-section')).backgroundImage.includes('brick128.png') && !page.querySelector('.leather-frame, .cosmic-frame'));
+        check('inventory uses the shared navy theme and keeps its brick artwork', getComputedStyle(page).backgroundColor === 'rgb(16, 44, 83)' && getComputedStyle(page).borderImageSource === 'none' && getComputedStyle(page.querySelector('.town-section')).backgroundImage.includes('brick128.png') && !page.querySelector('.leather-frame, .cosmic-frame'));
         check('the redesign controls and item descriptions are removed', !page.querySelector('#inventorySearch, #inventoryRarity, .inventory-totals, .inventory-item-description'));
         check('gear displays the actual unequipped inventory', bag().length === state.ownedItemIds.length);
         check('item rows and square equip controls use the original layout', getComputedStyle(elements.gearInventory.firstElementChild).display === 'grid' && elements.gearInventory.querySelector('[data-equip]').offsetWidth === 72 && elements.gearInventory.querySelector('[data-equip]').offsetHeight === 72);
