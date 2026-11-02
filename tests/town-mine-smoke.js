@@ -1,0 +1,45 @@
+(async function(){
+    const checks=[],$=id=>document.getElementById(id),check=(label,ok)=>{checks.push((ok?'PASS ':'FAIL ')+label);if(!ok)throw new Error(label);};
+    const originalWrite=Storage.prototype.setItem;
+    try{
+        await document.fonts.ready;
+        state.townProgress=TownProgression.defaults();state.gold=99999;state.currentView='townPage';state.isInTown=true;state.combatPaused=true;resetCombatClock();render();
+        const destination=JSON.stringify([state.selectedWorld,state.selectedMap]),slopes=TownContent.buildings.mine.world;
+        $('townWorldList').querySelector('[data-world="'+slopes+'"]').click();
+        const grid=$('townBuildingGrid'),hall=grid.children[0],mine=grid.children[1],button=mine.querySelector('button');
+        check('Slippery Slopes has Town Hall in plot 1 and Mine in plot 2',hall.querySelector('h3').textContent==='Town Hall'&&mine.querySelector('h3').textContent==='Mine'&&state.townProgress.buildings.slopesTownHall.level===1);
+        check('the new Hall has no assigned bonus',TownContent.buildings.slopesTownHall.effects===null&&hall.querySelector('.town-building-preview').hidden&&hall.querySelector('.town-production-rate').hidden&&TownProgression.productivity(state)===1);
+        check('the Hall requires ore, planks and gold',hall.querySelector('[aria-label="2,000 Ore"]')&&hall.querySelector('[aria-label="2,000 Planks"]')&&hall.querySelector('[aria-label="5,000 gold"]'));
+        check('Mine purchase requires the full 100000 gold',button.disabled&&!TownProgression.can(state,'purchase','mine')&&mine.querySelector('[aria-label="100,000 gold"]'));
+        state.gold=100000;render();
+        Storage.prototype.setItem=function(key,value){if(key===saveKey)throw new Error('Storage full');return originalWrite.call(this,key,value);};button.click();Storage.prototype.setItem=originalWrite;
+        check('failed Mine purchases restore gold and ownership',state.gold===100000&&!state.townProgress.buildings.mine&&!Object.hasOwn(state.townProgress.resources,'ore'));
+        button.click();
+        check('buying the Mine discovers Ore at zero',state.gold===0&&state.townProgress.buildings.mine.level===1&&state.townProgress.resources.ore===0&&document.querySelector('[data-resource="ore"]'));
+        check('Ore icons are grey in production and the resource strip',mine.querySelector('.town-production-rate [aria-label="Ore"]').style.color==='rgb(183, 190, 198)'&&document.querySelector('[data-resource="ore"] .town-resource-icon').style.color==='rgb(183, 190, 198)');
+        $('townWorldList').firstElementChild.click();TownProgression.tick(state,10);
+        check('Mine produces Ore while browsing a different world',state.townProgress.resources.ore===1);
+        state.gold=1000;state.townProgress.resources.wood=2000;TownProgression.apply(state,'upgrade','townHall');TownProgression.tick(state,10);
+        check('Verdant Town Hall productivity boosts Mine output',state.townProgress.resources.ore===2&&Math.abs(TownProgression.production('mine',state.townProgress.buildings.mine,state).perSecond-.11)<1e-9);
+        $('townWorldList').querySelector('[data-world="'+slopes+'"]').click();
+        state.gold=5000;state.townProgress.resources.planks=99;render();button.click();
+        check('Mine upgrades require planks as well as gold',button.disabled&&state.gold===5000&&state.townProgress.buildings.mine.level===1);
+        state.townProgress.resources.planks=100;render();button.click();
+        check('Mine upgrades spend both costs and improve boosted output',state.gold===0&&state.townProgress.resources.planks===0&&state.townProgress.buildings.mine.level===2&&mine.querySelector('.town-production-rate').textContent==='792 ◆ / h');
+        const mineProfile={gold:200000,townProgress:TownProgression.clone(state.townProgress)};mineProfile.townProgress.resources.planks=1000;
+        for(let i=0;i<8;i++)TownProgression.apply(mineProfile,'upgrade','mine');
+        check('Mine reaches level 10 and prestiges using only planks and gold',mineProfile.townProgress.buildings.mine.level===10&&TownProgression.apply(mineProfile,'prestige','mine')&&mineProfile.townProgress.buildings.mine.tier===1&&mineProfile.townProgress.buildings.mine.level===1);
+        const hallProfile={gold:5000,townProgress:TownProgression.clone(state.townProgress)};hallProfile.townProgress.resources.planks=2000;hallProfile.townProgress.resources.ore=1999;
+        check('Slopes Hall upgrades cannot bypass the Ore cost',!TownProgression.apply(hallProfile,'upgrade','slopesTownHall')&&hallProfile.gold===5000);
+        hallProfile.townProgress.resources.ore=2000;
+        check('Slopes Hall upgrades spend all three resources without adding a bonus',TownProgression.apply(hallProfile,'upgrade','slopesTownHall')&&hallProfile.gold===0&&hallProfile.townProgress.resources.ore===0&&hallProfile.townProgress.resources.planks===0&&TownProgression.productivity(hallProfile)===TownProgression.productivity(state));
+        const saved=parseGameSave(JSON.stringify(createGameSave()));applyGameSave(saved);render();
+        check('Mine ownership, level and Ore survive profile loading',state.townProgress.buildings.mine.level===2&&state.townProgress.resources.ore===2);
+        const older=TownProgression.clone(state.townProgress);delete older.buildings.slopesTownHall;
+        check('older profiles gain only the free Slopes Hall',TownProgression.normalize(older).buildings.slopesTownHall.level===1);
+        check('browsing Town worlds does not change adventure location',JSON.stringify([state.selectedWorld,state.selectedMap])===destination);
+        check('layout fits the viewport',document.documentElement.scrollWidth<=innerWidth);
+        check('no runtime errors',!smokeErrors.length);checks.push('SMOKE PASSED');
+    }catch(error){checks.push('ERROR '+error.stack);}finally{Storage.prototype.setItem=originalWrite;}
+    const report=document.createElement('pre');report.id='smoke-results';report.textContent=checks.join('\n');document.body.append(report);
+}());

@@ -3,6 +3,8 @@
 .catalogue-tabs button { flex: 1; padding: .55rem .3rem; }
 .catalogue-tabs button[aria-pressed=true] { background: #19382e; border-color: var(--green); }
 .catalogue-help { margin: 1rem 0 0; }
+.monster-catalogue-group { display: grid; gap: .5rem; min-width: 0; }
+.monster-catalogue-heading { margin: .5rem 0 .15rem; color: var(--green); font-size: .78rem; line-height: 1.5; overflow-wrap: anywhere; }
 .entry-actions { display: flex; flex-wrap: wrap; gap: .35rem; }
 .field-hint { color: var(--muted); font-size: .75rem; line-height: 1.5; }
 .spawn-entry { border: 1px solid var(--border); border-radius: 8px; padding: .8rem; margin-bottom: .8rem; }

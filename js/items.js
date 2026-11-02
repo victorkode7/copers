@@ -207,18 +207,28 @@ window.adventureItems = {
         },
         {
             "id": "pearlSignet",
-            "name": "Pearl Signet",
+            "name": "Wolf ring",
             "slot": "ring",
             "description": "A sea-polished ring set with a luminous pearl.",
-            "rarity": "common",
-            "sprite": "",
+            "rarity": "rare",
+            "sprite": "assets/items/Wolf-ring-c7832834.png",
             "stats": {
-                "damage": 4
+                "health": 15
             },
             "recipe": {
                 "materials": {
-                    "pearl": 8,
-                    "fang": 6
+                    "hide": 200,
+                    "material_985927188da978e5f7fa3e5c": 1
+                }
+            },
+            "equipmentType": "accessory",
+            "tier": 1,
+            "crafting": {
+                "slots": 2,
+                "cost": {
+                    "materials": {
+                        "hide": 10
+                    }
                 }
             }
         },
@@ -226,7 +236,7 @@ window.adventureItems = {
             "id": "slimyNecklace",
             "name": "Slimy Necklace",
             "slot": "necklace",
-            "rarity": "unique",
+            "rarity": "epic",
             "description": "",
             "sprite": "assets/items/Slimy-Necklace-33b2b95e.png",
             "stats": {
@@ -358,19 +368,28 @@ window.adventureItems = {
         },
         {
             "id": "item_16605286e928a4751a742b1ca4487ff1",
-            "name": "Big ass hammer",
+            "name": "Big ah hammer",
             "slot": "weapon",
             "rarity": "epic",
             "description": "",
             "sprite": "assets/items/Big-ass-hammer-07a7d53d.png",
             "stats": {
                 "damage": 25,
-                "damageMultiplier": 1.5,
-                "attackSpeedMultiplier": 1.1
+                "damageMultiplier": 1.5
             },
             "recipe": {
                 "materials": {
                     "material_985927188da978e5f7fa3e5c": 20
+                }
+            },
+            "equipmentType": "melee",
+            "tier": 1,
+            "crafting": {
+                "slots": 2,
+                "cost": {
+                    "materials": {
+                        "material_0e547cc411cb91fce7c30162": 20
+                    }
                 }
             }
         },
@@ -420,7 +439,8 @@ window.adventureItems = {
             "description": "",
             "sprite": "assets/items/Ice-helmet-d34a7251.png",
             "stats": {
-                "health": 40
+                "health": 40,
+                "evasion": 20
             },
             "recipe": {
                 "materials": {
@@ -435,7 +455,7 @@ window.adventureItems = {
                 "slots": 2,
                 "cost": {
                     "materials": {
-                        "hide": 10
+                        "hide": 20
                     }
                 }
             }
@@ -444,13 +464,12 @@ window.adventureItems = {
             "id": "item_472d75d45fc8629486e7b792509955eb",
             "name": "Ice body",
             "slot": "chest",
-            "rarity": "common",
+            "rarity": "rare",
             "description": "",
             "sprite": "assets/items/Ice-body-73d507ba.png",
             "stats": {
                 "health": 80,
-                "evasion": 30,
-                "healthRegenIncrease": 0.5
+                "evasion": 30
             },
             "recipe": {
                 "materials": {
@@ -458,25 +477,44 @@ window.adventureItems = {
                     "material_985927188da978e5f7fa3e5c": 1,
                     "material_84c44258b76b2d4efca9f050": 50
                 }
+            },
+            "equipmentType": "armor",
+            "tier": 1,
+            "crafting": {
+                "slots": 2,
+                "cost": {
+                    "materials": {
+                        "singedMane": 20
+                    }
+                }
             }
         },
         {
             "id": "item_2d985f476d15b709bf5a6b397e017227",
             "name": "Ice legs",
             "slot": "legs",
-            "rarity": "common",
+            "rarity": "rare",
             "description": "",
             "sprite": "assets/items/Ice-legs-293632e6.png",
             "stats": {
-                "health": 75,
-                "evasion": 30,
-                "goldBonusMultiplier": 1.25
+                "health": 50,
+                "evasion": 30
             },
             "recipe": {
                 "materials": {
                     "material_985927188da978e5f7fa3e5c": 1,
                     "material_5f1658126246b7b3a5ede35d": 250,
                     "material_630e87734f9c2d4f706637f4": 50
+                }
+            },
+            "equipmentType": "armor",
+            "tier": 1,
+            "crafting": {
+                "slots": 2,
+                "cost": {
+                    "materials": {
+                        "material_1b4e649727a05b3ad2ec7f8a": 20
+                    }
                 }
             }
         },
@@ -502,15 +540,24 @@ window.adventureItems = {
             "id": "item_3db2de48cb30c07c6cbcf61a90f3b8e4",
             "name": "Blood cloak",
             "slot": "cape",
-            "rarity": "unique",
+            "rarity": "epic",
             "description": "Looks sick",
             "sprite": "assets/items/Blood-cloak-14bcfbfd.png",
             "stats": {
                 "healthMultiplier": 1.2,
-                "damageMultiplier": 1.25,
                 "health": 40
             },
-            "recipe": null
+            "recipe": null,
+            "equipmentType": "armor",
+            "tier": 2,
+            "crafting": {
+                "slots": 2,
+                "cost": {
+                    "materials": {
+                        "material_b6b0c78bdb1d374fbf5b4a1c": 20
+                    }
+                }
+            }
         },
         {
             "id": "item_9e83e3705d8ed822691e528bb795a64c",
@@ -530,15 +577,14 @@ window.adventureItems = {
         },
         {
             "id": "item_8b41545b9cb73491f80051684955b8fd",
-            "name": "Wand",
+            "name": "Starter wand",
             "slot": "weapon",
             "rarity": "uncommon",
             "description": "",
-            "sprite": "",
+            "sprite": "assets/items/Wand-0bbedbe7.png",
             "stats": {
                 "spellDamage": 25,
-                "manaRegenPercent": 0.1,
-                "attackSpeedMultiplier": 1.15
+                "manaRegenPercent": 0.05
             },
             "recipe": {
                 "materials": {
@@ -550,14 +596,14 @@ window.adventureItems = {
         },
         {
             "id": "item_e1349b5585a77f308513c104a2784bc4",
-            "name": "Wand 2",
+            "name": "Ice wand",
             "slot": "weapon",
             "rarity": "rare",
             "description": "",
             "sprite": "assets/items/Wand-2-9f5de946.png",
             "stats": {
                 "spellDamage": 50,
-                "attackSpeedMultiplier": 1.25
+                "manaRegenPercent": 0.1
             },
             "recipe": {
                 "materials": {
@@ -570,7 +616,7 @@ window.adventureItems = {
             "crafting": {
                 "slots": 2,
                 "cost": {
-                    "gold": 1000,
+                    "gold": 100,
                     "materials": {
                         "hide": 10
                     }
@@ -585,11 +631,19 @@ window.adventureItems = {
             "description": "",
             "sprite": "assets/items/Rapier-ffc29742.png",
             "stats": {
-                "attackSpeedMultiplier": 1.35,
-                "damage": 30,
-                "accuracyMultiplier": 1.4
+                "attackSpeedMultiplier": 1.35
             },
-            "recipe": null
+            "recipe": null,
+            "equipmentType": "melee",
+            "tier": 2,
+            "crafting": {
+                "slots": 3,
+                "cost": {
+                    "materials": {
+                        "material_630e87734f9c2d4f706637f4": 50
+                    }
+                }
+            }
         },
         {
             "id": "item_a80b80da8b5f4c99a7227ab8ac2d40d1",
@@ -617,11 +671,20 @@ window.adventureItems = {
             "description": "",
             "sprite": "assets/items/Fish-bow-c57f16bf.png",
             "stats": {
-                "damage": 40,
-                "poisonDamage": 2,
-                "attackSpeedMultiplier": 1.25
+                "bowDamageIncrease": 0.75,
+                "damage": 30
             },
-            "recipe": null
+            "recipe": null,
+            "equipmentType": "bow",
+            "tier": 2,
+            "crafting": {
+                "slots": 3,
+                "cost": {
+                    "materials": {
+                        "material_630e87734f9c2d4f706637f4": 20
+                    }
+                }
+            }
         },
         {
             "id": "item_15e51873410395e752d1b40ac749de62",
@@ -630,10 +693,20 @@ window.adventureItems = {
             "rarity": "rare",
             "description": "",
             "sprite": "assets/items/Water-helmet-e2d9ee55.png",
-            "stats": {},
-            "recipe": {
-                "materials": {
-                    "hide": 1
+            "stats": {
+                "health": 50,
+                "evasion": 30,
+                "accuracyMultiplier": 1.4
+            },
+            "recipe": null,
+            "equipmentType": "armor",
+            "tier": 3,
+            "crafting": {
+                "slots": 3,
+                "cost": {
+                    "materials": {
+                        "material_5f1658126246b7b3a5ede35d": 20
+                    }
                 }
             }
         },
@@ -644,10 +717,20 @@ window.adventureItems = {
             "rarity": "rare",
             "description": "",
             "sprite": "assets/items/Water-body-9ede33bc.png",
-            "stats": {},
-            "recipe": {
-                "materials": {
-                    "hide": 1
+            "stats": {
+                "health": 100,
+                "evasion": 50,
+                "healthRegenPercent": 0.02
+            },
+            "recipe": null,
+            "equipmentType": "armor",
+            "tier": 3,
+            "crafting": {
+                "slots": 3,
+                "cost": {
+                    "materials": {
+                        "material_09adb7d7fc1d647bac41b75d": 20
+                    }
                 }
             }
         },
@@ -658,10 +741,20 @@ window.adventureItems = {
             "rarity": "rare",
             "description": "",
             "sprite": "assets/items/Water-legs-78f6669e.png",
-            "stats": {},
-            "recipe": {
-                "materials": {
-                    "hide": 1
+            "stats": {
+                "evasion": 40,
+                "health": 50,
+                "goldBonus": 0.4
+            },
+            "recipe": null,
+            "equipmentType": "armor",
+            "tier": 3,
+            "crafting": {
+                "slots": 3,
+                "cost": {
+                    "materials": {
+                        "hide": 10
+                    }
                 }
             }
         },
@@ -672,10 +765,20 @@ window.adventureItems = {
             "rarity": "rare",
             "description": "",
             "sprite": "assets/items/Water-boots-7e3c5326.png",
-            "stats": {},
-            "recipe": {
-                "materials": {
-                    "hide": 1
+            "stats": {
+                "attackSpeedMultiplier": 1.1,
+                "health": 30,
+                "evasion": 25
+            },
+            "recipe": null,
+            "equipmentType": "armor",
+            "tier": 3,
+            "crafting": {
+                "slots": 3,
+                "cost": {
+                    "materials": {
+                        "material_062b4fbe63e85e9a00f80a92": 20
+                    }
                 }
             }
         },
@@ -683,13 +786,26 @@ window.adventureItems = {
             "id": "item_089f23985e6b57e087f4a61b5d7f1c83",
             "name": "Dagger",
             "slot": "weapon",
-            "rarity": "uncommon",
+            "rarity": "rare",
             "description": "",
             "sprite": "assets/items/Dagger-8e4f5f58.png",
-            "stats": {},
+            "stats": {
+                "attackSpeedMultiplier": 1.3,
+                "poisonDamage": 5
+            },
             "recipe": {
                 "materials": {
                     "hide": 1
+                }
+            },
+            "equipmentType": "melee",
+            "tier": 1,
+            "crafting": {
+                "slots": 2,
+                "cost": {
+                    "materials": {
+                        "fang": 20
+                    }
                 }
             }
         },
@@ -701,8 +817,8 @@ window.adventureItems = {
             "description": "",
             "sprite": "assets/items/New-Item-f0c349ca.png",
             "stats": {
-                "damage": 70,
-                "attackSpeedMultiplier": 1.25
+                "damage": 20,
+                "attackSpeedMultiplier": 1.2
             },
             "recipe": {
                 "materials": {
@@ -713,13 +829,287 @@ window.adventureItems = {
             "crafting": {
                 "slots": 2,
                 "cost": {
-                    "gold": 1000,
+                    "gold": 100,
                     "materials": {
                         "gel": 50
                     }
                 }
             },
             "equipmentType": "melee",
+            "tier": 1
+        },
+        {
+            "id": "item_7dd0894d97dfd9a4fad4b78453272041",
+            "name": "Vagabond bow",
+            "slot": "weapon",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/Vagabond-bow-7c14d5ca.png",
+            "stats": {
+                "damage": 25,
+                "damageMultiplier": 1.4
+            },
+            "recipe": null,
+            "equipmentType": "bow",
+            "tier": 2,
+            "crafting": {
+                "slots": 2,
+                "cost": {
+                    "materials": {
+                        "material_b1c43d6c0bc463c355442072": 20
+                    }
+                }
+            }
+        },
+        {
+            "id": "item_421efe9e6cb9dab26ee79d47aa87f4a1",
+            "name": "Opal bow",
+            "slot": "weapon",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/New-Item-d29a20a3.png",
+            "stats": {
+                "attackSpeedMultiplier": 1.2,
+                "bowDamageIncrease": 0.4
+            },
+            "recipe": {
+                "materials": {
+                    "material_985927188da978e5f7fa3e5c": 5,
+                    "material_84c44258b76b2d4efca9f050": 200
+                }
+            },
+            "equipmentType": "bow",
+            "tier": 1,
+            "crafting": {
+                "slots": 2,
+                "cost": {
+                    "materials": {
+                        "gel": 20
+                    }
+                }
+            }
+        },
+        {
+            "id": "item_2e3f6d66eda79baaf76f05b32766f591",
+            "name": "Divine bow",
+            "slot": "weapon",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/New-Item-eda1edbb.png",
+            "stats": {
+                "damage": 30,
+                "attackSpeedMultiplier": 1.25
+            },
+            "recipe": null,
+            "equipmentType": "bow",
+            "tier": 2,
+            "crafting": {
+                "slots": 2,
+                "cost": {
+                    "materials": {
+                        "material_c5b9f767dd84fce3cc950ab7": 20
+                    }
+                }
+            }
+        },
+        {
+            "id": "item_f078e6e80b695eaab0683be8f6d5efc6",
+            "name": "Purple flame",
+            "slot": "weapon",
+            "rarity": "unique",
+            "uniqueEffect": "blackSun",
+            "description": "",
+            "sprite": "assets/items/New-Item-05961094.png",
+            "stats": {},
+            "recipe": null,
+            "equipmentType": "melee",
+            "tier": 1
+        },
+        {
+            "id": "item_cf4a620e87bf35c66a92d2e2a8a0293e",
+            "name": "New Item",
+            "slot": "weapon",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/New-Item-5a1657f1.png",
+            "stats": {},
+            "recipe": null,
+            "equipmentType": "melee",
+            "tier": 1
+        },
+        {
+            "id": "item_7fa97c77fe647e1092d9c8e9469bf32a",
+            "name": "Mirror wand",
+            "slot": "weapon",
+            "rarity": "common",
+            "description": "",
+            "sprite": "assets/items/New-Item-30696e8a.png",
+            "stats": {
+                "goldBonus": 2
+            },
+            "recipe": null,
+            "equipmentType": "wand",
+            "tier": 2,
+            "crafting": {
+                "slots": 3,
+                "cost": {
+                    "materials": {
+                        "material_84c44258b76b2d4efca9f050": 20
+                    }
+                }
+            }
+        },
+        {
+            "id": "item_f93b3c71cfcfb43c81ec07ab951e6433",
+            "name": "Water wand",
+            "slot": "weapon",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/New-Item-fb35ab43.png",
+            "stats": {
+                "mana": 50,
+                "manaRegenIncrease": 0.5
+            },
+            "recipe": null,
+            "equipmentType": "wand",
+            "tier": 2,
+            "crafting": {
+                "slots": 3,
+                "cost": {
+                    "materials": {
+                        "material_09adb7d7fc1d647bac41b75d": 20
+                    }
+                }
+            }
+        },
+        {
+            "id": "item_4df4a855474f0c66933789ac753eb4a8",
+            "name": "Bleed wand",
+            "slot": "weapon",
+            "rarity": "epic",
+            "description": "",
+            "sprite": "assets/items/New-Item-d0d06c6c.png",
+            "stats": {
+                "bleedChance": 0.3,
+                "bleedDamageMultiplier": 2,
+                "attackSpeedMultiplier": 1.2
+            },
+            "recipe": null,
+            "equipmentType": "wand",
+            "tier": 1,
+            "crafting": {
+                "slots": 3,
+                "cost": {
+                    "materials": {
+                        "material_b6b0c78bdb1d374fbf5b4a1c": 20
+                    }
+                }
+            }
+        },
+        {
+            "id": "item_7396f1cb2f8605db8057ae9005ca90af",
+            "name": "Chrono wand",
+            "slot": "weapon",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/New-Item-1b19a419.png",
+            "stats": {
+                "attackSpeedMultiplier": 1.4
+            },
+            "recipe": null,
+            "equipmentType": "wand",
+            "tier": 2,
+            "crafting": {
+                "slots": 4,
+                "cost": {
+                    "materials": {
+                        "material_b1c43d6c0bc463c355442072": 20
+                    }
+                }
+            }
+        },
+        {
+            "id": "item_ef02a906ad89ef233857565a1c45d9ab",
+            "name": "New Item",
+            "slot": "weapon",
+            "rarity": "common",
+            "description": "",
+            "sprite": "assets/items/New-Item-3d7212be.png",
+            "stats": {},
+            "recipe": null,
+            "equipmentType": "melee",
+            "tier": 1
+        },
+        {
+            "id": "item_8d698e037c025c80c8dc3c90f237a0ad",
+            "name": "New Item",
+            "slot": "weapon",
+            "rarity": "common",
+            "description": "",
+            "sprite": "assets/items/New-Item-fa43e218.png",
+            "stats": {},
+            "recipe": null,
+            "equipmentType": "melee",
+            "tier": 1
+        },
+        {
+            "id": "item_764c4c2e8b564380a41260bfe46674c7",
+            "name": "Chrono axe",
+            "slot": "weapon",
+            "rarity": "rare",
+            "description": "",
+            "sprite": "assets/items/New-Item-55f516bd.png",
+            "stats": {
+                "attackSpeedMultiplier": 1.4
+            },
+            "recipe": null,
+            "equipmentType": "melee",
+            "tier": 2,
+            "crafting": {
+                "slots": 4,
+                "cost": {
+                    "materials": {
+                        "material_b1c43d6c0bc463c355442072": 20
+                    }
+                }
+            }
+        },
+        {
+            "id": "item_1b9bada365f98805f509c032d65ea7cf",
+            "name": "New Item",
+            "slot": "weapon",
+            "rarity": "common",
+            "description": "",
+            "sprite": "assets/items/New-Item-564c122d.png",
+            "stats": {},
+            "recipe": null,
+            "equipmentType": "melee",
+            "tier": 1
+        },
+        {
+            "id": "item_8b1fe5e3fa60c821f67055d4798a812c",
+            "name": "New Item",
+            "slot": "weapon",
+            "rarity": "common",
+            "description": "",
+            "sprite": "assets/items/New-Item-f3ec1954.png",
+            "stats": {
+                "damage": 0
+            },
+            "recipe": null,
+            "equipmentType": "wand",
+            "tier": 1
+        },
+        {
+            "id": "item_0db3533d4f7c1ee80a92d7e4c3317236",
+            "name": "New Item",
+            "slot": "weapon",
+            "rarity": "common",
+            "description": "",
+            "sprite": "assets/items/New-Item-18c2fd1b.png",
+            "stats": {},
+            "recipe": null,
+            "equipmentType": "wand",
             "tier": 1
         }
     ],
@@ -822,20 +1212,20 @@ window.adventureItems = {
             "pool": [
                 {
                     "stat": "healthMultiplier",
-                    "min": 1.02,
-                    "max": 1.06,
+                    "min": 1.03,
+                    "max": 1.08,
                     "step": 0.01
                 },
                 {
                     "stat": "evasionMultiplier",
                     "min": 1.02,
-                    "max": 1.07,
+                    "max": 1.08,
                     "step": 0.01
                 },
                 {
                     "stat": "healthRegen",
-                    "min": 1,
-                    "max": 2,
+                    "min": 3,
+                    "max": 5,
                     "step": 1
                 },
                 {
@@ -858,8 +1248,8 @@ window.adventureItems = {
                 },
                 {
                     "stat": "goldBonus",
-                    "min": 0.02,
-                    "max": 0.06,
+                    "min": 0.06,
+                    "max": 0.17,
                     "step": 0.01
                 },
                 {
@@ -875,7 +1265,7 @@ window.adventureItems = {
                     "step": 5
                 }
             ],
-            "gold": 10000
+            "gold": 1000
         },
         {
             "equipmentType": "armor",
@@ -883,20 +1273,20 @@ window.adventureItems = {
             "pool": [
                 {
                     "stat": "healthMultiplier",
-                    "min": 1.03,
-                    "max": 1.12,
+                    "min": 1.04,
+                    "max": 1.17,
                     "step": 0.01
                 },
                 {
                     "stat": "evasionMultiplier",
-                    "min": 1.04,
-                    "max": 1.15,
+                    "min": 1.05,
+                    "max": 1.17,
                     "step": 0.01
                 },
                 {
                     "stat": "healthRegen",
-                    "min": 1,
-                    "max": 4,
+                    "min": 3,
+                    "max": 10,
                     "step": 1
                 },
                 {
@@ -919,8 +1309,8 @@ window.adventureItems = {
                 },
                 {
                     "stat": "goldBonus",
-                    "min": 0.03,
-                    "max": 0.12,
+                    "min": 0.08,
+                    "max": 0.33,
                     "step": 0.01
                 },
                 {
@@ -936,7 +1326,7 @@ window.adventureItems = {
                     "step": 5
                 }
             ],
-            "gold": 50000
+            "gold": 5000
         },
         {
             "equipmentType": "armor",
@@ -944,20 +1334,20 @@ window.adventureItems = {
             "pool": [
                 {
                     "stat": "healthMultiplier",
-                    "min": 1.05,
-                    "max": 1.18,
+                    "min": 1.07,
+                    "max": 1.25,
                     "step": 0.01
                 },
                 {
                     "stat": "evasionMultiplier",
-                    "min": 1.06,
-                    "max": 1.22,
+                    "min": 1.07,
+                    "max": 1.25,
                     "step": 0.01
                 },
                 {
                     "stat": "healthRegen",
-                    "min": 2,
-                    "max": 6,
+                    "min": 5,
+                    "max": 15,
                     "step": 1
                 },
                 {
@@ -980,8 +1370,8 @@ window.adventureItems = {
                 },
                 {
                     "stat": "goldBonus",
-                    "min": 0.05,
-                    "max": 0.18,
+                    "min": 0.14,
+                    "max": 0.5,
                     "step": 0.01
                 },
                 {
@@ -997,7 +1387,7 @@ window.adventureItems = {
                     "step": 5
                 }
             ],
-            "gold": 3000
+            "gold": 300
         },
         {
             "equipmentType": "armor",
@@ -1005,20 +1395,20 @@ window.adventureItems = {
             "pool": [
                 {
                     "stat": "healthMultiplier",
-                    "min": 1.06,
-                    "max": 1.24,
+                    "min": 1.08,
+                    "max": 1.34,
                     "step": 0.02
                 },
                 {
                     "stat": "evasionMultiplier",
-                    "min": 1.08,
-                    "max": 1.3,
+                    "min": 1.1,
+                    "max": 1.34,
                     "step": 0.02
                 },
                 {
                     "stat": "healthRegen",
-                    "min": 2,
-                    "max": 8,
+                    "min": 6,
+                    "max": 20,
                     "step": 2
                 },
                 {
@@ -1041,8 +1431,8 @@ window.adventureItems = {
                 },
                 {
                     "stat": "goldBonus",
-                    "min": 0.06,
-                    "max": 0.24,
+                    "min": 0.16,
+                    "max": 0.66,
                     "step": 0.02
                 },
                 {
@@ -1058,7 +1448,7 @@ window.adventureItems = {
                     "step": 10
                 }
             ],
-            "gold": 4000
+            "gold": 400
         },
         {
             "equipmentType": "armor",
@@ -1066,20 +1456,20 @@ window.adventureItems = {
             "pool": [
                 {
                     "stat": "healthMultiplier",
-                    "min": 1.1,
-                    "max": 1.36,
+                    "min": 1.14,
+                    "max": 1.5,
                     "step": 0.02
                 },
                 {
                     "stat": "evasionMultiplier",
-                    "min": 1.12,
-                    "max": 1.44,
+                    "min": 1.14,
+                    "max": 1.5,
                     "step": 0.02
                 },
                 {
                     "stat": "healthRegen",
-                    "min": 4,
-                    "max": 12,
+                    "min": 10,
+                    "max": 30,
                     "step": 2
                 },
                 {
@@ -1102,8 +1492,8 @@ window.adventureItems = {
                 },
                 {
                     "stat": "goldBonus",
-                    "min": 0.1,
-                    "max": 0.36,
+                    "min": 0.28,
+                    "max": 1,
                     "step": 0.02
                 },
                 {
@@ -1119,7 +1509,7 @@ window.adventureItems = {
                     "step": 10
                 }
             ],
-            "gold": 5000
+            "gold": 500
         },
         {
             "equipmentType": "wand",
@@ -1175,12 +1565,12 @@ window.adventureItems = {
                 },
                 {
                     "stat": "attackSpeedMultiplier",
-                    "min": 1.02,
-                    "max": 1.06,
+                    "min": 1.06,
+                    "max": 1.17,
                     "step": 0.01
                 }
             ],
-            "gold": 10000
+            "gold": 1000
         },
         {
             "equipmentType": "wand",
@@ -1236,12 +1626,12 @@ window.adventureItems = {
                 },
                 {
                     "stat": "attackSpeedMultiplier",
-                    "min": 1.03,
-                    "max": 1.12,
+                    "min": 1.08,
+                    "max": 1.33,
                     "step": 0.01
                 }
             ],
-            "gold": 50000
+            "gold": 5000
         },
         {
             "equipmentType": "wand",
@@ -1297,12 +1687,12 @@ window.adventureItems = {
                 },
                 {
                     "stat": "attackSpeedMultiplier",
-                    "min": 1.05,
-                    "max": 1.18,
+                    "min": 1.14,
+                    "max": 1.5,
                     "step": 0.01
                 }
             ],
-            "gold": 3000
+            "gold": 300
         },
         {
             "equipmentType": "wand",
@@ -1358,12 +1748,12 @@ window.adventureItems = {
                 },
                 {
                     "stat": "attackSpeedMultiplier",
-                    "min": 1.06,
-                    "max": 1.24,
+                    "min": 1.16,
+                    "max": 1.66,
                     "step": 0.02
                 }
             ],
-            "gold": 4000
+            "gold": 400
         },
         {
             "equipmentType": "wand",
@@ -1419,12 +1809,12 @@ window.adventureItems = {
                 },
                 {
                     "stat": "attackSpeedMultiplier",
-                    "min": 1.1,
-                    "max": 1.36,
+                    "min": 1.28,
+                    "max": 2,
                     "step": 0.02
                 }
             ],
-            "gold": 5000
+            "gold": 500
         },
         {
             "equipmentType": "bow",
@@ -1462,8 +1852,8 @@ window.adventureItems = {
                 },
                 {
                     "stat": "damageMultiplier",
-                    "min": 1.03,
-                    "max": 1.1,
+                    "min": 1.08,
+                    "max": 1.25,
                     "step": 0.01
                 },
                 {
@@ -1474,18 +1864,18 @@ window.adventureItems = {
                 },
                 {
                     "stat": "damage",
-                    "min": 5,
-                    "max": 15,
+                    "min": 8,
+                    "max": 25,
                     "step": 1
                 },
                 {
                     "stat": "attackSpeedMultiplier",
-                    "min": 1.02,
-                    "max": 1.06,
+                    "min": 1.06,
+                    "max": 1.17,
                     "step": 0.01
                 }
             ],
-            "gold": 10000
+            "gold": 1000
         },
         {
             "equipmentType": "bow",
@@ -1523,8 +1913,8 @@ window.adventureItems = {
                 },
                 {
                     "stat": "damageMultiplier",
-                    "min": 1.05,
-                    "max": 1.2,
+                    "min": 1.13,
+                    "max": 1.5,
                     "step": 0.01
                 },
                 {
@@ -1535,18 +1925,18 @@ window.adventureItems = {
                 },
                 {
                     "stat": "damage",
-                    "min": 10,
-                    "max": 30,
+                    "min": 17,
+                    "max": 50,
                     "step": 1
                 },
                 {
                     "stat": "attackSpeedMultiplier",
-                    "min": 1.03,
-                    "max": 1.12,
+                    "min": 1.08,
+                    "max": 1.33,
                     "step": 0.01
                 }
             ],
-            "gold": 50000
+            "gold": 5000
         },
         {
             "equipmentType": "bow",
@@ -1584,8 +1974,8 @@ window.adventureItems = {
                 },
                 {
                     "stat": "damageMultiplier",
-                    "min": 1.08,
-                    "max": 1.3,
+                    "min": 1.2,
+                    "max": 1.75,
                     "step": 0.01
                 },
                 {
@@ -1596,18 +1986,18 @@ window.adventureItems = {
                 },
                 {
                     "stat": "damage",
-                    "min": 15,
-                    "max": 45,
+                    "min": 25,
+                    "max": 75,
                     "step": 1
                 },
                 {
                     "stat": "attackSpeedMultiplier",
-                    "min": 1.05,
-                    "max": 1.18,
+                    "min": 1.14,
+                    "max": 1.5,
                     "step": 0.01
                 }
             ],
-            "gold": 3000
+            "gold": 300
         },
         {
             "equipmentType": "bow",
@@ -1645,8 +2035,8 @@ window.adventureItems = {
                 },
                 {
                     "stat": "damageMultiplier",
-                    "min": 1.1,
-                    "max": 1.4,
+                    "min": 1.26,
+                    "max": 2,
                     "step": 0.02
                 },
                 {
@@ -1657,18 +2047,18 @@ window.adventureItems = {
                 },
                 {
                     "stat": "damage",
-                    "min": 20,
-                    "max": 60,
+                    "min": 34,
+                    "max": 100,
                     "step": 2
                 },
                 {
                     "stat": "attackSpeedMultiplier",
-                    "min": 1.06,
-                    "max": 1.24,
+                    "min": 1.16,
+                    "max": 1.66,
                     "step": 0.02
                 }
             ],
-            "gold": 4000
+            "gold": 400
         },
         {
             "equipmentType": "bow",
@@ -1706,8 +2096,8 @@ window.adventureItems = {
                 },
                 {
                     "stat": "damageMultiplier",
-                    "min": 1.16,
-                    "max": 1.6,
+                    "min": 1.4,
+                    "max": 2.5,
                     "step": 0.02
                 },
                 {
@@ -1718,18 +2108,18 @@ window.adventureItems = {
                 },
                 {
                     "stat": "damage",
-                    "min": 30,
-                    "max": 90,
+                    "min": 50,
+                    "max": 150,
                     "step": 2
                 },
                 {
                     "stat": "attackSpeedMultiplier",
-                    "min": 1.1,
-                    "max": 1.36,
+                    "min": 1.28,
+                    "max": 2,
                     "step": 0.02
                 }
             ],
-            "gold": 5000
+            "gold": 500
         },
         {
             "equipmentType": "melee",
@@ -1737,8 +2127,8 @@ window.adventureItems = {
             "pool": [
                 {
                     "stat": "damageMultiplier",
-                    "min": 1.03,
-                    "max": 1.15,
+                    "min": 1.06,
+                    "max": 1.3,
                     "step": 0.01
                 },
                 {
@@ -1749,8 +2139,8 @@ window.adventureItems = {
                 },
                 {
                     "stat": "bleedChance",
-                    "min": 0.02,
-                    "max": 0.06,
+                    "min": 0.03,
+                    "max": 0.1,
                     "step": 0.01
                 },
                 {
@@ -1779,18 +2169,18 @@ window.adventureItems = {
                 },
                 {
                     "stat": "damage",
-                    "min": 5,
-                    "max": 15,
+                    "min": 8,
+                    "max": 25,
                     "step": 1
                 },
                 {
                     "stat": "attackSpeedMultiplier",
-                    "min": 1.02,
-                    "max": 1.06,
+                    "min": 1.06,
+                    "max": 1.17,
                     "step": 0.01
                 }
             ],
-            "gold": 10000
+            "gold": 1000
         },
         {
             "equipmentType": "melee",
@@ -1798,8 +2188,8 @@ window.adventureItems = {
             "pool": [
                 {
                     "stat": "damageMultiplier",
-                    "min": 1.05,
-                    "max": 1.25,
+                    "min": 1.1,
+                    "max": 1.49,
                     "step": 0.01
                 },
                 {
@@ -1810,8 +2200,8 @@ window.adventureItems = {
                 },
                 {
                     "stat": "bleedChance",
-                    "min": 0.03,
-                    "max": 0.12,
+                    "min": 0.05,
+                    "max": 0.2,
                     "step": 0.01
                 },
                 {
@@ -1840,18 +2230,18 @@ window.adventureItems = {
                 },
                 {
                     "stat": "damage",
-                    "min": 10,
-                    "max": 30,
+                    "min": 17,
+                    "max": 50,
                     "step": 1
                 },
                 {
                     "stat": "attackSpeedMultiplier",
-                    "min": 1.03,
-                    "max": 1.12,
+                    "min": 1.08,
+                    "max": 1.33,
                     "step": 0.01
                 }
             ],
-            "gold": 50000
+            "gold": 5000
         },
         {
             "equipmentType": "melee",
@@ -1859,8 +2249,8 @@ window.adventureItems = {
             "pool": [
                 {
                     "stat": "damageMultiplier",
-                    "min": 1.08,
-                    "max": 1.38,
+                    "min": 1.16,
+                    "max": 1.75,
                     "step": 0.01
                 },
                 {
@@ -1871,8 +2261,8 @@ window.adventureItems = {
                 },
                 {
                     "stat": "bleedChance",
-                    "min": 0.05,
-                    "max": 0.18,
+                    "min": 0.08,
+                    "max": 0.3,
                     "step": 0.01
                 },
                 {
@@ -1901,18 +2291,18 @@ window.adventureItems = {
                 },
                 {
                     "stat": "damage",
-                    "min": 15,
-                    "max": 45,
+                    "min": 25,
+                    "max": 75,
                     "step": 1
                 },
                 {
                     "stat": "attackSpeedMultiplier",
-                    "min": 1.05,
-                    "max": 1.18,
+                    "min": 1.14,
+                    "max": 1.5,
                     "step": 0.01
                 }
             ],
-            "gold": 3000
+            "gold": 300
         },
         {
             "equipmentType": "melee",
@@ -1920,8 +2310,8 @@ window.adventureItems = {
             "pool": [
                 {
                     "stat": "damageMultiplier",
-                    "min": 1.1,
-                    "max": 1.5,
+                    "min": 1.2,
+                    "max": 1.98,
                     "step": 0.02
                 },
                 {
@@ -1932,8 +2322,8 @@ window.adventureItems = {
                 },
                 {
                     "stat": "bleedChance",
-                    "min": 0.06,
-                    "max": 0.24,
+                    "min": 0.1,
+                    "max": 0.4,
                     "step": 0.02
                 },
                 {
@@ -1962,18 +2352,18 @@ window.adventureItems = {
                 },
                 {
                     "stat": "damage",
-                    "min": 20,
-                    "max": 60,
+                    "min": 34,
+                    "max": 100,
                     "step": 2
                 },
                 {
                     "stat": "attackSpeedMultiplier",
-                    "min": 1.06,
-                    "max": 1.24,
+                    "min": 1.16,
+                    "max": 1.66,
                     "step": 0.02
                 }
             ],
-            "gold": 4000
+            "gold": 400
         },
         {
             "equipmentType": "melee",
@@ -1981,8 +2371,8 @@ window.adventureItems = {
             "pool": [
                 {
                     "stat": "damageMultiplier",
-                    "min": 1.16,
-                    "max": 1.76,
+                    "min": 1.32,
+                    "max": 2.5,
                     "step": 0.02
                 },
                 {
@@ -1993,8 +2383,8 @@ window.adventureItems = {
                 },
                 {
                     "stat": "bleedChance",
-                    "min": 0.1,
-                    "max": 0.36,
+                    "min": 0.16,
+                    "max": 0.6,
                     "step": 0.02
                 },
                 {
@@ -2023,18 +2413,18 @@ window.adventureItems = {
                 },
                 {
                     "stat": "damage",
-                    "min": 30,
-                    "max": 90,
+                    "min": 50,
+                    "max": 150,
                     "step": 2
                 },
                 {
                     "stat": "attackSpeedMultiplier",
-                    "min": 1.1,
-                    "max": 1.36,
+                    "min": 1.28,
+                    "max": 2,
                     "step": 0.02
                 }
             ],
-            "gold": 5000
+            "gold": 500
         },
         {
             "equipmentType": "accessory",
@@ -2101,7 +2491,7 @@ window.adventureItems = {
                     "step": 5
                 }
             ],
-            "gold": 10000
+            "gold": 1000
         },
         {
             "equipmentType": "accessory",
@@ -2168,7 +2558,7 @@ window.adventureItems = {
                     "step": 5
                 }
             ],
-            "gold": 50000
+            "gold": 5000
         },
         {
             "equipmentType": "accessory",
@@ -2235,7 +2625,7 @@ window.adventureItems = {
                     "step": 5
                 }
             ],
-            "gold": 3000
+            "gold": 300
         },
         {
             "equipmentType": "accessory",
@@ -2302,7 +2692,7 @@ window.adventureItems = {
                     "step": 10
                 }
             ],
-            "gold": 4000
+            "gold": 400
         },
         {
             "equipmentType": "accessory",
@@ -2369,7 +2759,7 @@ window.adventureItems = {
                     "step": 10
                 }
             ],
-            "gold": 5000
+            "gold": 500
         }
     ]
 };

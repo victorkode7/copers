@@ -1,7 +1,8 @@
 (function () {
     'use strict';
-    const categories = ['Physical damage', 'Spells & mana', 'Health & regeneration', 'Defence', 'Attack speed & multi-hit', 'Fury', 'Shields', 'Poison', 'Bleed', 'Eruption', 'Rewards', 'Developer'];
+    const categories = ['Physical damage', 'Spells & mana', 'Health & regeneration', 'Defence', 'Attack speed & multi-hit', 'Fury', 'Shields', 'Poison', 'Bleed', 'Eruption', 'Rewards', 'Monster mastery', 'Developer'];
     function category(id) {
+        if (/^(monster|dropRate)/.test(id)) return 'Monster mastery';
         if (/^minimum/.test(id)) return 'Developer';
         if (/^(mana|spell)/.test(id)) return 'Spells & mana';
         if (/^health/.test(id)) return 'Health & regeneration';

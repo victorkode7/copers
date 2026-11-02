@@ -19,6 +19,267 @@ window.adventureWorld = {
                 "fit": "cover",
                 "dim": 0.55,
                 "tileSize": 256
+            },
+            "masteryPresets": {
+                "regular": {
+                    "name": "Verdant Reach — Monster Mastery",
+                    "nodes": [
+                        {
+                            "id": "root",
+                            "name": "Begin Mastery",
+                            "description": "Master this map to earn points. Bonuses apply only on this map.",
+                            "icon": "◆",
+                            "column": 0,
+                            "row": 5,
+                            "start": true,
+                            "requires": [],
+                            "requiresMode": "all",
+                            "stats": {}
+                        },
+                        {
+                            "id": "wealth1",
+                            "name": "Loose Purses",
+                            "description": "Improve farming rewards in exchange for a tougher encounter on this map.",
+                            "icon": "◈",
+                            "column": -1,
+                            "row": 4,
+                            "requires": [
+                                "root"
+                            ],
+                            "requiresMode": "all",
+                            "stats": {
+                                "goldBonus": 2
+                            },
+                            "penalties": {
+                                "monsterHealthMultiplier": 5
+                            }
+                        },
+                        {
+                            "id": "wealth2",
+                            "name": "Golden Trail",
+                            "description": "Improve farming rewards in exchange for a tougher encounter on this map.",
+                            "icon": "◈",
+                            "column": -1,
+                            "row": 3,
+                            "requires": [
+                                "wealth1"
+                            ],
+                            "requiresMode": "all",
+                            "stats": {
+                                "goldBonus": 2
+                            },
+                            "penalties": {
+                                "monsterDamageMultiplier": 5
+                            }
+                        },
+                        {
+                            "id": "wealth3",
+                            "name": "Prosperous Hunting",
+                            "description": "Improve farming rewards in exchange for a tougher encounter on this map.",
+                            "icon": "◈",
+                            "column": -1,
+                            "row": 2,
+                            "requires": [
+                                "wealth2"
+                            ],
+                            "requiresMode": "all",
+                            "stats": {
+                                "goldBonus": 2
+                            },
+                            "penalties": {
+                                "monsterAccuracyMultiplier": 5
+                            }
+                        },
+                        {
+                            "id": "wealth4",
+                            "name": "Gilded Grounds",
+                            "description": "Improve farming rewards in exchange for a tougher encounter on this map.",
+                            "icon": "◈",
+                            "column": -1,
+                            "row": 1,
+                            "requires": [
+                                "wealth3"
+                            ],
+                            "requiresMode": "all",
+                            "stats": {
+                                "goldBonus": 2
+                            },
+                            "penalties": {
+                                "monsterHealthMultiplier": 5
+                            }
+                        },
+                        {
+                            "id": "population1",
+                            "name": "Restless Prey",
+                            "description": "Improve farming rewards in exchange for a tougher encounter on this map.",
+                            "icon": "↻",
+                            "column": 0,
+                            "row": 4,
+                            "requires": [
+                                "root"
+                            ],
+                            "requiresMode": "all",
+                            "stats": {
+                                "monsterRespawnMultiplier": 0.5
+                            },
+                            "penalties": {
+                                "monsterHealthMultiplier": 5
+                            }
+                        },
+                        {
+                            "id": "population2",
+                            "name": "Growing Population",
+                            "description": "Improve farming rewards in exchange for a tougher encounter on this map.",
+                            "icon": "↻",
+                            "column": 0,
+                            "row": 3,
+                            "requires": [
+                                "population1"
+                            ],
+                            "requiresMode": "all",
+                            "stats": {
+                                "monsterCountBonus": 4
+                            },
+                            "penalties": {
+                                "monsterDamageMultiplier": 5
+                            }
+                        },
+                        {
+                            "id": "population3",
+                            "name": "Quick Return",
+                            "description": "Improve farming rewards in exchange for a tougher encounter on this map.",
+                            "icon": "↻",
+                            "column": 0,
+                            "row": 2,
+                            "requires": [
+                                "population2"
+                            ],
+                            "requiresMode": "all",
+                            "stats": {
+                                "monsterRespawnMultiplier": 0.5
+                            },
+                            "penalties": {
+                                "monsterAccuracyMultiplier": 5
+                            }
+                        },
+                        {
+                            "id": "population4",
+                            "name": "Swarming Grounds",
+                            "description": "Improve farming rewards in exchange for a tougher encounter on this map.",
+                            "icon": "↻",
+                            "column": 0,
+                            "row": 1,
+                            "requires": [
+                                "population3"
+                            ],
+                            "requiresMode": "all",
+                            "stats": {
+                                "monsterCountBonus": 4
+                            },
+                            "penalties": {
+                                "monsterHealthMultiplier": 5
+                            }
+                        },
+                        {
+                            "id": "drops1",
+                            "name": "Scavenger",
+                            "description": "Improve farming rewards in exchange for a tougher encounter on this map.",
+                            "icon": "✦",
+                            "column": 1,
+                            "row": 4,
+                            "requires": [
+                                "root"
+                            ],
+                            "requiresMode": "all",
+                            "stats": {
+                                "dropRateMultiplier": 1.25
+                            },
+                            "penalties": {
+                                "monsterHealthMultiplier": 5
+                            }
+                        },
+                        {
+                            "id": "drops2",
+                            "name": "Treasure Seeker",
+                            "description": "Improve farming rewards in exchange for a tougher encounter on this map.",
+                            "icon": "✦",
+                            "column": 1,
+                            "row": 3,
+                            "requires": [
+                                "drops1"
+                            ],
+                            "requiresMode": "all",
+                            "stats": {
+                                "dropRateMultiplier": 1.25
+                            },
+                            "penalties": {
+                                "monsterDamageMultiplier": 5
+                            }
+                        },
+                        {
+                            "id": "drops3",
+                            "name": "Fortune Favors",
+                            "description": "Improve farming rewards in exchange for a tougher encounter on this map.",
+                            "icon": "✦",
+                            "column": 1,
+                            "row": 2,
+                            "requires": [
+                                "drops2"
+                            ],
+                            "requiresMode": "all",
+                            "stats": {
+                                "dropRateMultiplier": 1.25
+                            },
+                            "penalties": {
+                                "monsterAccuracyMultiplier": 5
+                            }
+                        },
+                        {
+                            "id": "drops4",
+                            "name": "Bountiful Hunting",
+                            "description": "Improve farming rewards in exchange for a tougher encounter on this map.",
+                            "icon": "✦",
+                            "column": 1,
+                            "row": 1,
+                            "requires": [
+                                "drops3"
+                            ],
+                            "requiresMode": "all",
+                            "stats": {
+                                "dropRateMultiplier": 1.25
+                            },
+                            "penalties": {
+                                "monsterHealthMultiplier": 5
+                            }
+                        },
+                        {
+                            "id": "capstone",
+                            "name": "Monster Overlord",
+                            "description": "Complete any branch to unlock a much harder, more rewarding version of this map.",
+                            "icon": "★",
+                            "column": 0,
+                            "row": 0,
+                            "size": 1.4,
+                            "requires": [
+                                "wealth4",
+                                "population4",
+                                "drops4"
+                            ],
+                            "requiresMode": "any",
+                            "stats": {
+                                "goldBonus": 3,
+                                "dropRateMultiplier": 2,
+                                "monsterRespawnMultiplier": 0.5,
+                                "monsterCountBonus": 4
+                            },
+                            "penalties": {
+                                "monsterHealthMultiplier": 10,
+                                "monsterDamageMultiplier": 10,
+                                "monsterAccuracyMultiplier": 10
+                            }
+                        }
+                    ]
+                }
             }
         },
         {
@@ -776,15 +1037,15 @@ window.adventureWorld = {
             "id": "greenfieldsMonster",
             "name": "Blob",
             "sprite": "assets/monsters/sprite-fusion-pixel-art-generator-32x32-c37d999a.png",
-            "health": 18,
+            "health": 36,
             "respawnSeconds": 4,
-            "accuracy": 50,
+            "accuracy": 100,
             "evasion": 3,
             "attackDamage": 2,
             "attackInterval": 3,
             "gold": [
-                4,
-                7
+                0,
+                1
             ],
             "experience": 10,
             "drops": [
@@ -805,16 +1066,16 @@ window.adventureWorld = {
             ]
         },
         {
-            "health": 24,
-            "accuracy": 55,
+            "health": 48,
+            "accuracy": 110,
             "evasion": 5,
             "attackDamage": 2,
             "attackInterval": 2.8,
             "respawnSeconds": 5,
             "experience": 12,
             "gold": [
-                6,
-                10
+                1,
+                1
             ],
             "drops": [
                 {
@@ -832,16 +1093,16 @@ window.adventureWorld = {
             "name": "Bee"
         },
         {
-            "health": 36,
-            "accuracy": 60,
+            "health": 72,
+            "accuracy": 120,
             "evasion": 8,
             "attackDamage": 3,
             "attackInterval": 3,
             "respawnSeconds": 5,
             "experience": 16,
             "gold": [
-                9,
-                14
+                1,
+                1
             ],
             "drops": [
                 {
@@ -853,12 +1114,7 @@ window.adventureWorld = {
                     ]
                 }
             ],
-            "itemDrops": [
-                {
-                    "id": "slimyNecklace",
-                    "chance": 1
-                }
-            ],
+            "itemDrops": [],
             "sprite": "assets/monsters/boar-1620e233.png",
             "id": "monster_eafa130d278dd6781312c386",
             "name": "Boar"
@@ -867,15 +1123,15 @@ window.adventureWorld = {
             "id": "whisperingWoodsMonster",
             "name": "Wolf",
             "sprite": "assets/monsters/gen-c1c4a79f-f5f2-49f1-989f-8bdc0d87d728-f2401c93.png",
-            "health": 52,
+            "health": 104,
             "respawnSeconds": 5,
-            "accuracy": 65,
+            "accuracy": 130,
             "evasion": 12,
             "attackDamage": 4,
             "attackInterval": 2.8,
             "gold": [
-                12,
-                18
+                1,
+                2
             ],
             "experience": 20,
             "drops": [
@@ -894,15 +1150,15 @@ window.adventureWorld = {
             "id": "emberCavernsMonster",
             "name": "Cave Stalker",
             "sprite": "assets/monsters/gen-23db66a5-cac1-4654-941a-c49dfd5a2ff3-22cb942c.png",
-            "health": 75,
+            "health": 150,
             "respawnSeconds": 5,
-            "accuracy": 72,
+            "accuracy": 144,
             "evasion": 14,
             "attackDamage": 5,
             "attackInterval": 3,
             "gold": [
-                24,
-                34
+                2,
+                3
             ],
             "experience": 26,
             "drops": [
@@ -921,15 +1177,15 @@ window.adventureWorld = {
             "id": "cinderPaddockMonster",
             "name": "Cindersnake",
             "sprite": "assets/monsters/lavasnake_96px-a53213be.png",
-            "health": 110,
+            "health": 220,
             "respawnSeconds": 5,
-            "accuracy": 80,
+            "accuracy": 160,
             "evasion": 18,
             "attackDamage": 6,
             "attackInterval": 3,
             "gold": [
-                36,
-                50
+                4,
+                5
             ],
             "experience": 34,
             "drops": [
@@ -948,15 +1204,15 @@ window.adventureWorld = {
             "id": "verdantWardenMonster",
             "name": "Grove Guardian",
             "sprite": "assets/monsters/grove_guardian-ae288fe1.png",
-            "health": 1800,
+            "health": 3600,
             "respawnSeconds": 15,
-            "accuracy": 105,
+            "accuracy": 210,
             "evasion": 22,
             "attackDamage": 24,
             "attackInterval": 3.2,
             "gold": [
-                250,
-                350
+                25,
+                35
             ],
             "experience": 300,
             "drops": [
@@ -977,16 +1233,16 @@ window.adventureWorld = {
             ]
         },
         {
-            "health": 200,
-            "accuracy": 95,
+            "health": 400,
+            "accuracy": 190,
             "evasion": 20,
             "attackDamage": 12,
             "attackInterval": 3.2,
             "respawnSeconds": 5,
             "experience": 40,
             "gold": [
-                50,
-                70
+                5,
+                6
             ],
             "drops": [
                 {
@@ -1004,16 +1260,16 @@ window.adventureWorld = {
             "name": "Shy shark"
         },
         {
-            "health": 260,
-            "accuracy": 100,
+            "health": 520,
+            "accuracy": 200,
             "evasion": 21,
             "attackDamage": 14,
             "attackInterval": 3.6,
             "respawnSeconds": 5,
             "experience": 45,
             "gold": [
-                60,
-                80
+                5,
+                7
             ],
             "drops": [
                 {
@@ -1031,16 +1287,16 @@ window.adventureWorld = {
             "name": "Warturtle"
         },
         {
-            "health": 340,
-            "accuracy": 108,
+            "health": 680,
+            "accuracy": 216,
             "evasion": 22,
             "attackDamage": 15,
             "attackInterval": 3.2,
             "respawnSeconds": 5,
             "experience": 50,
             "gold": [
-                70,
-                95
+                6,
+                8
             ],
             "drops": [
                 {
@@ -1058,16 +1314,16 @@ window.adventureWorld = {
             "name": "Snowman"
         },
         {
-            "health": 430,
-            "accuracy": 112,
+            "health": 860,
+            "accuracy": 224,
             "evasion": 23,
             "attackDamage": 16,
             "attackInterval": 3.4,
             "respawnSeconds": 5,
             "experience": 55,
             "gold": [
-                80,
-                110
+                6,
+                9
             ],
             "drops": [
                 {
@@ -1085,16 +1341,16 @@ window.adventureWorld = {
             "name": "Penguin"
         },
         {
-            "health": 540,
-            "accuracy": 118,
+            "health": 1080,
+            "accuracy": 236,
             "evasion": 24,
             "attackDamage": 18,
             "attackInterval": 3.6,
             "respawnSeconds": 5,
             "experience": 60,
             "gold": [
-                95,
-                125
+                7,
+                10
             ],
             "drops": [
                 {
@@ -1112,16 +1368,16 @@ window.adventureWorld = {
             "name": "Ice cube"
         },
         {
-            "health": 670,
-            "accuracy": 125,
+            "health": 1340,
+            "accuracy": 250,
             "evasion": 25,
             "attackDamage": 24,
             "attackInterval": 3.2,
             "respawnSeconds": 5,
             "experience": 65,
             "gold": [
-                110,
-                145
+                8,
+                11
             ],
             "drops": [
                 {
@@ -1139,16 +1395,16 @@ window.adventureWorld = {
             "name": "Polarbear"
         },
         {
-            "health": 820,
-            "accuracy": 130,
+            "health": 1640,
+            "accuracy": 260,
             "evasion": 26,
             "attackDamage": 16,
             "attackInterval": 3.4,
             "respawnSeconds": 5,
             "experience": 70,
             "gold": [
-                125,
-                165
+                9,
+                12
             ],
             "drops": [
                 {
@@ -1166,16 +1422,16 @@ window.adventureWorld = {
             "name": "Tri-color Bat"
         },
         {
-            "health": 1000,
-            "accuracy": 136,
+            "health": 2000,
+            "accuracy": 272,
             "evasion": 28,
             "attackDamage": 26,
             "attackInterval": 3.2,
             "respawnSeconds": 5,
             "experience": 75,
             "gold": [
-                145,
-                190
+                10,
+                14
             ],
             "drops": [
                 {
@@ -1193,16 +1449,16 @@ window.adventureWorld = {
             "name": "Snowflake"
         },
         {
-            "health": 1200,
-            "accuracy": 142,
+            "health": 2400,
+            "accuracy": 284,
             "evasion": 30,
             "attackDamage": 16,
             "attackInterval": 3.6,
             "respawnSeconds": 5,
             "experience": 80,
             "gold": [
-                165,
-                215
+                12,
+                16
             ],
             "drops": [
                 {
@@ -1220,16 +1476,16 @@ window.adventureWorld = {
             "name": "Eyecicle"
         },
         {
-            "health": 15000,
-            "accuracy": 175,
+            "health": 30000,
+            "accuracy": 350,
             "evasion": 35,
             "attackDamage": 60,
             "attackInterval": 4,
             "respawnSeconds": 20,
             "experience": 2000,
             "gold": [
-                1800,
-                2400
+                100,
+                150
             ],
             "drops": [
                 {
@@ -1255,86 +1511,78 @@ window.adventureWorld = {
             "id": "salmenMonster",
             "name": "Salmen",
             "sprite": "assets/monsters/salmon-23f98143.png",
-            "health": 2200,
+            "health": 4400,
             "respawnSeconds": 5,
-            "accuracy": 160,
+            "accuracy": 320,
             "evasion": 36,
             "attackDamage": 30,
             "attackInterval": 3.6,
             "gold": [
-                16,
-                22
+                32,
+                42
             ],
             "experience": 120,
-            "drops": [
-                {
-                    "id": "pearl",
-                    "amount": [
-                        1,
-                        2
-                    ],
-                    "chance": 1
-                }
-            ],
+            "drops": [],
             "itemDrops": []
         },
         {
             "id": "brineAndPunishmentMonster",
             "name": "The Plaice-holder",
             "sprite": "assets/monsters/whale-7f5ce310.png",
-            "health": 1600,
+            "health": 3200,
             "respawnSeconds": 5,
-            "accuracy": 150,
+            "accuracy": 300,
             "evasion": 32,
             "attackDamage": 30,
             "attackInterval": 3.5,
             "gold": [
-                12,
-                18
+                24,
+                32
             ],
             "experience": 100,
-            "drops": [
+            "drops": [],
+            "itemDrops": [
                 {
-                    "id": "pearl",
-                    "amount": [
-                        2,
-                        3
-                    ],
-                    "chance": 1
+                    "id": "item_7dd0894d97dfd9a4fad4b78453272041",
+                    "chance": 0.0002
                 }
-            ],
-            "itemDrops": []
+            ]
         },
         {
-            "health": 1850,
-            "accuracy": 155,
+            "health": 3700,
+            "accuracy": 310,
             "evasion": 34,
             "attackDamage": 32,
             "attackInterval": 3.6,
             "respawnSeconds": 5,
             "experience": 110,
             "gold": [
-                14,
-                20
+                28,
+                36
             ],
             "drops": [],
-            "itemDrops": [],
+            "itemDrops": [
+                {
+                    "id": "item_089f23985e6b57e087f4a61b5d7f1c83",
+                    "chance": 0.0002
+                }
+            ],
             "sprite": "assets/monsters/piratefish-dadb5e2b.png",
             "element": "physical",
             "id": "monster_ce61788c41d59a12be8cadfe",
             "name": "Piratefish"
         },
         {
-            "health": 2600,
-            "accuracy": 165,
+            "health": 5200,
+            "accuracy": 330,
             "evasion": 38,
             "attackDamage": 38,
             "attackInterval": 3.7,
             "respawnSeconds": 5,
             "experience": 130,
             "gold": [
-                18,
-                24
+                36,
+                48
             ],
             "drops": [],
             "itemDrops": [],
@@ -1344,35 +1592,40 @@ window.adventureWorld = {
             "name": "Cowfish"
         },
         {
-            "health": 3100,
-            "accuracy": 170,
+            "health": 6200,
+            "accuracy": 340,
             "evasion": 40,
             "attackDamage": 40,
             "attackInterval": 3.8,
             "respawnSeconds": 5,
             "experience": 140,
             "gold": [
-                20,
-                28
+                40,
+                54
             ],
             "drops": [],
-            "itemDrops": [],
+            "itemDrops": [
+                {
+                    "id": "item_e91b080d7b16940cdaba7f969645233f",
+                    "chance": 0.0002
+                }
+            ],
             "sprite": "assets/monsters/swordfish-ebb8d0c4.png",
             "element": "physical",
             "id": "monster_0d685eef5d64116d04d76732",
             "name": "Swordfish"
         },
         {
-            "health": 3700,
-            "accuracy": 175,
+            "health": 7400,
+            "accuracy": 350,
             "evasion": 42,
             "attackDamage": 48,
             "attackInterval": 3.8,
             "respawnSeconds": 5,
             "experience": 150,
             "gold": [
-                22,
-                30
+                46,
+                62
             ],
             "drops": [],
             "itemDrops": [],
@@ -1382,125 +1635,142 @@ window.adventureWorld = {
             "name": "Lava crab"
         },
         {
-            "health": 4400,
-            "accuracy": 180,
+            "health": 8800,
+            "accuracy": 360,
             "evasion": 44,
             "attackDamage": 42,
             "attackInterval": 4,
             "respawnSeconds": 5,
             "experience": 160,
             "gold": [
-                24,
-                32
+                52,
+                70
             ],
             "drops": [],
-            "itemDrops": [],
+            "itemDrops": [
+                {
+                    "id": "testItem1",
+                    "chance": 1
+                }
+            ],
             "sprite": "assets/monsters/electriceel-3cde7d8e.png",
             "element": "physical",
             "id": "monster_6eeccd5b70e20c9a097349b1",
             "name": "Electric eel"
         },
         {
-            "health": 5200,
-            "accuracy": 185,
+            "health": 10400,
+            "accuracy": 370,
             "evasion": 46,
             "attackDamage": 55,
             "attackInterval": 4,
             "respawnSeconds": 5,
             "experience": 175,
             "gold": [
-                26,
-                36
+                60,
+                80
             ],
             "drops": [],
-            "itemDrops": [],
+            "itemDrops": [
+                {
+                    "id": "item_15e51873410395e752d1b40ac749de62",
+                    "chance": 0.0001
+                }
+            ],
             "sprite": "assets/monsters/anglerfish-b585aca4.png",
             "element": "physical",
             "id": "monster_77dc7966e574425307b3f066",
             "name": "Anglerfish"
         },
         {
-            "health": 6100,
-            "accuracy": 190,
+            "health": 12200,
+            "accuracy": 380,
             "evasion": 48,
             "attackDamage": 40,
             "attackInterval": 4,
             "respawnSeconds": 5,
             "experience": 190,
             "gold": [
-                28,
-                38
+                68,
+                90
             ],
             "drops": [],
-            "itemDrops": [],
+            "itemDrops": [
+                {
+                    "id": "item_f3148bfadc1f22b67cde0f8d84c0e985",
+                    "chance": 0.0002
+                }
+            ],
             "sprite": "assets/monsters/blowfish-5845320f.png",
             "element": "physical",
             "id": "monster_0de8fd30513850c95aec32c2",
             "name": "Blowfish"
         },
         {
-            "health": 7100,
-            "accuracy": 195,
+            "health": 14200,
+            "accuracy": 390,
             "evasion": 50,
             "attackDamage": 52,
             "attackInterval": 4,
             "respawnSeconds": 5,
             "experience": 210,
             "gold": [
-                30,
-                42
+                76,
+                100
             ],
             "drops": [],
-            "itemDrops": [],
+            "itemDrops": [
+                {
+                    "id": "item_691dfe98e4e3f396822433d84f55bcba",
+                    "chance": 0.0001
+                }
+            ],
             "sprite": "assets/monsters/discojelly-fd2a7437.png",
             "element": "physical",
             "id": "monster_8dba55519814e09382e5a15b",
             "name": "Discojelly"
         },
         {
-            "health": 8200,
-            "accuracy": 200,
+            "health": 16400,
+            "accuracy": 400,
             "evasion": 52,
             "attackDamage": 65,
             "attackInterval": 4.2,
             "respawnSeconds": 5,
             "experience": 230,
             "gold": [
-                32,
-                46
+                86,
+                114
             ],
             "drops": [],
-            "itemDrops": [],
+            "itemDrops": [
+                {
+                    "id": "item_764c4c2e8b564380a41260bfe46674c7",
+                    "chance": 0.0002
+                }
+            ],
             "sprite": "assets/monsters/nautiless-c6574bdc.png",
             "element": "physical",
             "id": "monster_0f7949eee198a5b35f06544e",
             "name": "Nautiless"
         },
         {
-            "health": 90000,
-            "accuracy": 240,
+            "health": 180000,
+            "accuracy": 480,
             "evasion": 60,
             "attackDamage": 120,
             "attackInterval": 4.5,
             "respawnSeconds": 25,
             "experience": 6000,
             "gold": [
-                250,
-                400
+                600,
+                900
             ],
             "drops": [],
             "itemDrops": [
                 {
-                    "id": "item_1247d32afc0b9a9a0d0fddb5c50b6036",
+                    "id": "item_db9cd77eee84bb40c509ddaaeb73eb71",
                     "chance": 0.01
-                },
-                {
-                    "id": "item_be75f1f385eca9058cc20dcd497792e2",
-                    "chance": 0.01
-                },
-                {
-                    "id": "testItem1",
-                    "chance": 1
                 }
             ],
             "sprite": "assets/monsters/nautilus-664caf37.png",
@@ -1509,16 +1779,16 @@ window.adventureWorld = {
             "name": "Mr boss man"
         },
         {
-            "health": 150,
-            "accuracy": 50,
+            "health": 300,
+            "accuracy": 100,
             "evasion": 50,
             "attackDamage": 5,
             "attackInterval": 2,
             "respawnSeconds": 5,
             "experience": 10,
             "gold": [
-                1,
-                2
+                0,
+                1
             ],
             "drops": [],
             "itemDrops": [],

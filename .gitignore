@@ -1,0 +1,4 @@
+# Generated playtest packages; source balance/build JSON files stay tracked.
+playtest/
+builds/playtest-*/
+builds/playtest-*.zip

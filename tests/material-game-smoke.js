@@ -51,6 +51,7 @@
         map.itemDrops = [{id: 'testDropHelm', chance: 1}]; renderCombat();
         check('unowned equipment shows a zero quantity', elements.mapLootTable.querySelector('[data-item-id="testDropHelm"] .loot-table-owned')?.textContent === 'Owned: 0');
         const originalRandom = Math.random, previousGold = state.gold;
+        definition.gold = [10,10]; // Ownership refresh should not depend on the catalogue's minimum gold roll.
         try { Math.random = () => 0; defeatEnemy(activeMonster()); } finally { Math.random = originalRandom; }
         renderCombat();
         check('earning loot refreshes both material source rows and equipment ownership', state.materials.gel === 7 && [...elements.mapLootTable.querySelectorAll('[data-material-id="gel"] .loot-table-owned')].every(node => node.textContent === 'Owned: 7') && elements.mapLootTable.querySelector('[data-item-id="testDropHelm"] .loot-table-owned').textContent === 'Owned: 1');

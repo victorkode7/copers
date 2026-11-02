@@ -17,7 +17,7 @@ function getArrowFlightTime(kind, sourceId) {
 }
 
 function updateCombatFormation() {
-    if (combatCatchingUp || document.hidden || state.currentView !== 'map' || !elements.enemyRoster.clientWidth) return;
+    if (combatCatchingUp || document.hidden || !isCombatView() || !elements.enemyRoster.clientWidth) return;
     const tracks = getComputedStyle(elements.enemyRoster).gridTemplateColumns;
     if (tracks && tracks !== 'none') {
         state.monsterColumns = Math.max(1, Math.min(state.monsterStates.length, tracks.trim().split(/\s+/).length));
@@ -146,7 +146,7 @@ function showCombatArrow(sourceId, targetId, kind, direction, visual = {}) {
     const rowIds = kind === 'piercingArrow'
         ? state.monsterStates.slice(row * columns, (row + 1) * columns).map(monster => monster.id) : [];
     presentCombatEffect(() => {
-        if (document.hidden || state.currentView !== 'map' || state.selectedMap !== mapId) return;
+        if (document.hidden || !isCombatView() || state.selectedMap !== mapId) return;
         const target = getCombatEffectCard(targetId)?.querySelector('.enemy-mark');
         const source = getCombatEffectCard(sourceId)?.querySelector('.enemy-mark');
         if (!target) return;

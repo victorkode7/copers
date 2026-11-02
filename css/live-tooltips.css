@@ -1,0 +1,2 @@
+.idle-adventure .live-game-tooltip { position:fixed; z-index:10020; pointer-events:none; width:max-content; max-width:min(330px,calc(100vw - 16px)); max-height:calc(100dvh - 16px); overflow:hidden; padding:10px 12px; border:1px solid #6b8995; border-radius:8px; background:#10212bf5; box-shadow:0 5px 18px #0006; color:#e0edf3; font-size:.75rem; line-height:1.5; white-space:pre-line; overflow-wrap:anywhere; }
+.idle-adventure .live-game-tooltip[hidden] { display:none; }

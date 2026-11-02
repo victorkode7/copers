@@ -25,8 +25,8 @@
         document.body.dataset.profileTestPhase = 'fonts';
         await document.fonts.ready;
         document.body.dataset.profileTestPhase = 'export';
-        const group = document.getElementById('resetGame').parentElement;
-        check('export and import sit next to Reset Game', group.contains(exportButton) && group.contains(importButton));
+        const group = document.getElementById('openCombatSettings').parentElement;
+        check('export and import remain in navigation while Reset Game is in Settings', group.contains(exportButton) && group.contains(importButton) && document.getElementById('combatSettingsDialog').contains(document.getElementById('resetGame')));
         const buttonBounds = [...document.querySelectorAll('.navbar button')].map(button => button.getBoundingClientRect());
         check('navigation controls fit without overlapping at this viewport size', buttonBounds.every((bounds, i) =>
             bounds.left >= 0 && bounds.right <= document.documentElement.clientWidth && buttonBounds.every((other, j) =>

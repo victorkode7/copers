@@ -14,6 +14,7 @@
     } catch { /* Keep four empty slots if browser storage is unavailable. */ }
     function persistPresets() {localStorage.setItem(presetKey,JSON.stringify({version:1,slots:presets}));}
     function renderPresets() {
+        $('recoverSkillBuild').hidden = !state.skillPointRecoveryRanks;
         $('skillPresetSlot').replaceChildren(...presets.map((slot,index)=>new Option((index+1)+'. '+(slot.name||'Preset '+(index+1))+(slot.build?'':' (empty)'),String(index))));
         $('skillPresetSlot').value=String(selectedPreset);$('skillPresetName').value=presets[selectedPreset].name;
         $('loadSkillPreset').disabled=!presets[selectedPreset].build;
@@ -53,7 +54,7 @@
         for(const id of Object.keys(ranks)) if(!connected.has(id)) throw new Error(skillNodeById[id].name+' is disconnected from the starting node.');
         return {format,version:1,name:typeof data.name==='string'?data.name.slice(0,120):'Shared build',description:typeof data.description==='string'?data.description.slice(0,4000):'',skillRanks:{...ranks},points:count(ranks),allocationOrder:Array.isArray(data.allocationOrder)?data.allocationOrder.filter(id=>ranks[id]):undefined};
     }
-    const budget=()=>state.skillPoints+count(state.skillRanks);
+    const budget=()=>Math.min(state.skillPoints+count(state.skillRanks),getEarnedSkillPoints());
     function showPreview(data) {
         preview=validate(data);
         $('skillBuildTitle').textContent=preview.name;
@@ -80,6 +81,7 @@
         if(SaveCompatibility.protection.blocked||next.points>total)throw new Error('You do not have enough available skill points to apply this build.');
         SaveCompatibility.backup(JSON.stringify(createGameSave()),'Before skill build import');
         state.skillRanks={...next.skillRanks};state.skillPoints=total-next.points;
+        state.skillPointTrimPending=false;
         pendingSkillRanks={};refundMode=false;combatStatCache=null;combatPoisonForecasts=null;
         clearPlayerCombatBuffs();state.pendingEruptions=[];state.pendingVoidMissiles=[];
         state.monsterStates.forEach(clearElementalDebuffs);
@@ -97,6 +99,7 @@
         return editing;
     }
     function updateEditingUi() {
+        $('recoverSkillBuild').hidden = !state.skillPointRecoveryRanks;
         const warning=$('skillBuildBudgetWarning');if(!warning)return;
         warning.hidden=!editing;
         if(!editing){warning.textContent='';return;}
@@ -109,7 +112,18 @@
         $('clearSkillSelection').hidden=false;$('clearSkillSelection').textContent='Cancel edit';
         $('resetSkillTree').disabled=selected===0;
     }
-    function cancelEditing(repaint=true) {editing=null;if(repaint){renderUpgrades();$('skillBuildStatus').textContent='Build edit cancelled. Your active skills are unchanged.';}}
+    function cancelEditing(repaint=true) {
+        editing=null;
+        if(repaint){
+            const wasPending=state.skillPointTrimPending;state.skillPointTrimPending=false;
+            renderUpgrades();$('skillBuildStatus').textContent='Build edit cancelled. Your active skills are unchanged.'+(state.skillPointRecoveryRanks?' Your original tree remains available through Recover previous build.':'');
+            if(wasPending)saveGame();
+        }
+    }
+    function recoverBuild() {
+        if(!state.skillPointRecoveryRanks)return;
+        return beginEditing({format,version:1,name:'Previous skill tree',description:'Your full tree before the skill point cap changed. Trim it to fit, or export it to keep a copy.',skillRanks:{...state.skillPointRecoveryRanks}});
+    }
     function editNode(id) {
         if(!editing||skillNodeById[id]?.start)return;
         const ranks=editing.skillRanks;
@@ -150,6 +164,7 @@
     $('cancelSkillBuild').addEventListener('click',()=>{$('skillBuildDialog').close();preview=null;});
     $('importSkillBuild').addEventListener('click',()=>$('importSkillBuildFile').click());
     $('exportSkillBuild').addEventListener('click',exportCurrent);
+    $('recoverSkillBuild').addEventListener('click',()=>{try{recoverBuild();}catch(error){$('skillBuildStatus').textContent=error.message;}});
     $('skillPresetSlot').addEventListener('change',event=>{selectedPreset=Number(event.target.value);renderPresets();});
     $('renameSkillPreset').addEventListener('click',()=>{
         if(renamingPreset){finishRename();return;}
@@ -165,9 +180,10 @@
     $('skillPresetName').addEventListener('blur',event=>{if(event.relatedTarget!==$('renameSkillPreset'))finishRename();});
     $('saveSkillPreset').addEventListener('click',()=>{try{savePreset();}catch(error){$('skillBuildStatus').textContent='Could not save preset: '+error.message;}});
     $('loadSkillPreset').addEventListener('click',()=>{try{const slot=presets[selectedPreset];if(slot.build)showPreview({...slot.build,name:slot.name});}catch(error){$('skillBuildStatus').textContent='Could not load preset: '+error.message;}});
-    window.SkillBuilds={validate,showPreview,applyPreview,exportCurrent,beginEditing,editNode,applyEditing,cancelEditing,
+    window.SkillBuilds={validate,showPreview,applyPreview,exportCurrent,beginEditing,editNode,applyEditing,cancelEditing,recoverBuild,
         isEditing:()=>Boolean(editing),getEditingRanks:()=>editing?{...editing.skillRanks}:{},updateEditingUi,
         clearEditing:()=>{if(editing){editing.skillRanks={};renderUpgrades();}},savePreset,
         openImport:()=>$('importSkillBuildFile').click()};
     renderPresets();
+    if(state.skillPointTrimPending)recoverBuild();
 }());

@@ -1,0 +1,13 @@
+Copers Sans is a modified version of Pixeloid Sans by GGBotNet.
+It remains licensed under the SIL Open Font License 1.1; see
+pixeloid-sans-license.txt for the original copyright notice and full license.
+The modified font is renamed because "Pixeloid" is a Reserved Font Name.
+
+Modification: extend each arm of U+002B PLUS SIGN by one original pixel,
+preserving stroke thickness and the vertical center. Increase only the plus
+advance width by two pixels to preserve space before the following character.
+All other glyph outlines, character widths, and line metrics are unchanged.
+Both regular and bold weights are modified. Original fonts are retained.
+
+Rebuild from the project root:
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/enlarge-plus.ps1

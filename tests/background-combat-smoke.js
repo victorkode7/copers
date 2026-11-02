@@ -14,7 +14,7 @@
     Object.defineProperty(document, 'visibilityState', {configurable: true, get: () => hidden ? 'hidden' : 'visible'});
     Storage.prototype.setItem = function (...args) { if (args[0] === saveKey) writes++; return originalStorageWrite.apply(this, args); };
     let observer;
-    const map = mapData.find(entry => entry.id === worldData[0].mapIds[0]);
+    const map = mapData.find(entry => entry.id === worldData[1].mapIds[0]);
     const originalConnections = Object.fromEntries(Object.entries(skillNodeConnections).map(([id, links]) => [id, new Set(links)]));
     const ranks = ['damageNode', 'mightyBlows', 'shockwaveSlash', 'accuracyNode', 'multiHit1',
         'attackSpeedNode', 'attackSpeedNode2', 'snakeBite', 'poisonDMG_3', 'poisonDMG_2',
@@ -30,14 +30,17 @@
     }
     function fresh({harmless = false} = {}) {
         hidden = false;
-        state.selectedMap = map.id; state.selectedWorld = worldData[0].id;
+        state.selectedMap = map.id; state.selectedWorld = worldData[1].id;
         state.currentView = 'map'; state.isInTown = false;
         state.kills = Object.fromEntries(mapData.map(entry => [entry.id, 0]));
+        state.kills[worldData[0].mapIds.at(-1)] = 1;
+        state.defeatedBossWorldIds = [worldData[0].id];
         state.materials = Object.fromEntries(Object.keys(materialNames).map(id => [id, 0]));
         state.gold = 0; state.upgrades = {strength: 0, haste: 0, evasion: 0};
         state.skillRanks = Object.fromEntries(ranks.map(id => [id, 1]));
         state.level = ranks.length; state.skillPoints = 0;
         state.experience = experienceForNextLevel(state.level) - 5;
+        state.experienceRemainder = 0;
         state.gear = createEmptyGear(); state.gear.necklace = 'testAmulet';
         state.ownedItemIds = ['testAmulet']; state.crafted = [];
         state.developerTravelEnabled = state.developerItemsEnabled = false;
@@ -60,6 +63,7 @@
         gold: state.gold, kills: state.kills,
         materials: Object.fromEntries(Object.keys(materialNames).map(id => [id, state.materials[id]])),
         level: state.level, experience: state.experience, skillPoints: state.skillPoints,
+        experienceRemainder: state.experienceRemainder, defeatedBossWorldIds: state.defeatedBossWorldIds,
         playerHp: state.playerHp, combatPaused: state.combatPaused,
         attackTimer: state.attackTimer, monsterStates: state.monsterStates,
         target: state.targetMonsterId, owned: state.ownedItemIds,

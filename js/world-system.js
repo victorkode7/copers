@@ -4,7 +4,7 @@
     const object = value => value && typeof value === 'object' && !Array.isArray(value);
     const idPattern = /^[A-Za-z_][A-Za-z0-9_-]*$/;
     const statFields = ['health', 'accuracy', 'evasion', 'attackDamage', 'attackInterval', 'respawnSeconds', 'experience'];
-    const defaults = {health: 10, accuracy: 50, evasion: 0, attackDamage: 1, attackInterval: 2, respawnSeconds: 5, experience: 10, gold: [1, 2], drops: [], itemDrops: [], sprite: '',element:'physical'};
+    const defaults = {health: 10, accuracy: 50, evasion: 0, attackDamage: 1, attackInterval: 2, respawnSeconds: 5, experience: 10, gold: [0, 1], drops: [], itemDrops: [], sprite: '',element:'physical'};
     const appliedBackgrounds = new WeakMap();
     function safePath(value) {
         return typeof value === 'string' && /^(?![\/\\]|.*(?:[:\\?#]|\.\.))[a-z0-9_ ./-]+\.(png|jpe?g|webp|gif|svg)$/i.test(value) ? value : '';
@@ -158,6 +158,7 @@
         data.assets.forEach(asset => {
             if (!object(asset) || typeof asset.name !== 'string' || !safePath(asset.path) || !['monster', 'background'].includes(asset.kind)) errors.push('Invalid image-library entry.');
         });
+        if(window.MasterySystem)errors.push(...MasterySystem.validateContent(data));
         return errors;
     }
     window.WorldContent = {clone, defaults, statFields, safePath, chanceText, definitions, background, applyBackground, sources, validate};

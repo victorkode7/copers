@@ -6,7 +6,7 @@
     const previousDraftKey = 'idleAdventureWorldEditorPreviousDraft';
     const viewKey = 'idleAdventureWorldEditorView';
     const projectTextKey='idleAdventureWorldEditorProjectText';
-    const projectContent=clone(window.adventureWorld);
+    let projectContent=clone(window.adventureWorld);
     let projectText=null;
     try {projectText=JSON.parse(localStorage.getItem(projectTextKey)||'null');}catch { /* Older drafts have no project text baseline. */ }
     let data = clone(window.adventureWorld);
@@ -85,6 +85,17 @@
         if (kind === 'maps') return data.worlds.flatMap(world => world.mapIds.map(id => data.maps.find(map => map.id === id)).filter(Boolean));
         return data[kind];
     }
+    function monsterGroups() {
+        const maps = new Map(data.maps.map(map => [map.id,map])), assigned = new Set();
+        const groups = data.worlds.map((world,index) => {
+            const used = new Set(world.mapIds.flatMap(id => (maps.get(id)?.spawns || []).map(spawn => spawn.monsterId)));
+            const entries = data.monsters.filter(monster => used.has(monster.id));
+            entries.forEach(monster => assigned.add(monster.id));
+            return {id:world.id,name:'World ' + (index+1) + ': ' + world.name,entries};
+        });
+        groups.push({id:'uncategorized',name:'Uncategorized',entries:data.monsters.filter(monster => !assigned.has(monster.id))});
+        return groups;
+    }
     function renderList() {
         $('catalogueHeading').textContent = labels[selection.kind] + ' (' + data[selection.kind].length + ')';
         $('catalogueTabs').querySelectorAll('button').forEach(node => node.setAttribute('aria-pressed', String(node.dataset.kind === selection.kind)));
@@ -111,7 +122,18 @@
             ? ordered().filter(entry => selectedWorld.mapIds.includes(entry.id))
             : ordered();
         $('catalogueHeading').textContent = labels[selection.kind] + ' (' + entries.length + ')';
-        entries.filter(entry => entry.name.toLowerCase().includes(query)).forEach(entry => appendEntry(entry));
+        if (selection.kind === 'monsters') {
+            monsterGroups().forEach(group => {
+                const matches = group.entries.filter(entry => entry.name.toLowerCase().includes(query));
+                if (!matches.length) return;
+                const section = element('section', 'monster-catalogue-group');
+                section.dataset.monsterGroup = group.id;
+                section.setAttribute('aria-label',group.name);
+                section.append(element('h3','monster-catalogue-heading',group.name + ' (' + matches.length + ')'));
+                matches.forEach(entry => appendEntry(entry,section));
+                $('entryList').append(section);
+            });
+        } else entries.filter(entry => entry.name.toLowerCase().includes(query)).forEach(entry => appendEntry(entry));
         if (!$('entryList').children.length) $('entryList').append(element('p', null, 'No matches.'));
         const sequence = orderSequence(), index = sequence.indexOf(selection.id);
         $('moveUp').disabled = index <= 0; $('moveDown').disabled = index < 0 || index === sequence.length - 1;
@@ -247,12 +269,14 @@
             }, 'mapWorld'));
             $('entryForm').append(field('Description', entry.description, value => { entry.description = value; }, {id: 'mapDescription', multiline: true}));
             $('entryForm').append(field('Kills required to clear this map', entry.goal, value => { entry.goal = value; }, {type: 'number', min: 0, step: 1, id: 'mapGoal'}), hint('Clearing a map unlocks the next one in its world. Clearing the final map unlocks the next world. Use the arrow buttons to change order.'), backgrounds(entry, true), spawns(entry));
+            const mastery=MasteryEditor.forMap(data,entry,commit);mastery.dataset.detailKey=entry.id+'-mastery';$('entryForm').append(mastery);
             const area = element('details', 'form-section'); area.dataset.detailKey = entry.id + '-area-drops'; area.append(element('summary', null, 'Additional area drops'), hint('These roll on every defeat here, in addition to each monster’s drops.'), drops(entry, 'drops', 'Area material drops'), drops(entry, 'itemDrops', 'Area equipment drops')); $('entryForm').append(area);
         } else {
             $('entryForm').append(backgrounds(entry, false));
             const maps = section('Map progression');
             entry.mapIds.forEach((id, index) => { const map = data.maps.find(map => map.id === id); if (map) maps.append(button((index + 1) + '. ' + map.name, () => { selection = {kind: 'maps', id}; snapshotSelection = {...selection}; render(); saveView(); })); });
             maps.append(hint('Select a map to edit it. World order controls which world unlocks next.')); $('entryForm').append(maps);
+            const mastery=MasteryEditor.forWorld(data,entry,commit);mastery.dataset.detailKey=entry.id+'-mastery';$('entryForm').append(mastery);
         }
         const advanced = element('details', 'form-section'); advanced.dataset.detailKey = entry.id + '-advanced'; advanced.append(element('summary', null, 'Advanced settings'));
         const label = element('label', null, 'Permanent internal ID'), internal = element('input'); internal.id = 'entryId'; internal.value = entry.id; internal.readOnly = true; label.append(internal);
@@ -428,19 +452,43 @@
         try { replaceData(JSON.parse(localStorage.getItem(draftKey)), true); await restoreImages(); status('Local draft restored.'); }
         catch (error) { status('Could not restore draft: ' + error.message); }
     });
+    function readProjectContent() {
+        return new Promise((resolve,reject) => {
+            const previous = window.adventureWorld, script = document.createElement('script');
+            const source = new URL('js/world-content.js', document.baseURI);
+            source.searchParams.set('reload',Date.now()); script.src = source.href;
+            const fail = message => { window.adventureWorld = previous; script.remove(); reject(new Error(message)); };
+            script.onerror = () => fail('Could not read js/world-content.js. Your current draft was kept.');
+            script.onload = () => {
+                const incoming = window.adventureWorld;
+                if (incoming === previous || !editableDraft(incoming)) { fail('The project file has an invalid content structure. Your current draft was kept.'); return; }
+                script.remove(); resolve(clone(incoming));
+            };
+            document.head.appendChild(script);
+        });
+    }
     $('loadProject').addEventListener('click', async () => {
+        $('loadProject').disabled = true;
         try {
-            const errors = WorldContent.validate(projectContent, items);
-            if (errors.length) throw new Error(errors.slice(0, 3).join(' '));
             // Keep a separate backup across reloads before replacing a browser draft.
             localStorage.setItem(previousDraftKey, JSON.stringify(data));
             $('restorePreviousDraft').hidden = false;
+            const selected = {...selection}, incoming = await readProjectContent();
+            const errors = WorldContent.validate(incoming, items);
+            // Validation warnings belong in the editor, not in front of loading
+            // the current project values. Keep missing drop references intact.
+            localStorage.setItem(draftKey, JSON.stringify(incoming));
             $('search').value = '';
+            projectContent = clone(incoming);
             projectText = WorldEditorSync.snapshot(projectContent);
-            replaceData(clone(projectContent));
+            replaceData(incoming, true);
+            if (data[selected.kind]?.some(entry => entry.id === selected.id)) {
+                selection = selected; snapshotSelection = {...selected}; render(); saveView();
+            }
             await restoreImages();
-            status('Loaded project content: ' + data.worlds.length + ' worlds, ' + data.maps.length + ' maps, ' + data.monsters.length + ' monsters. Your previous draft is saved; use Restore previous draft to recover it.');
+            status('Loaded project content: ' + data.worlds.length + ' worlds, ' + data.maps.length + ' maps, ' + data.monsters.length + ' monsters. Your previous draft is saved; use Restore previous draft to recover it.' + (errors.length ? ' ' + errors.length + ' validation issue(s) remain; see Validation before saving or exporting.' : ''));
         } catch (error) { status('Could not load project content: ' + error.message); }
+        finally { $('loadProject').disabled = false; }
     });
     $('restorePreviousDraft').addEventListener('click', async () => {
         try {
@@ -487,6 +535,12 @@
                 return projectContent[kind].filter(entry => !ids.has(entry.id)).length;
             });
             if (missing.some(Boolean)) status('Your browser draft omits ' + missing[0] + ' worlds, ' + missing[1] + ' maps and ' + missing[2] + ' monsters found in the project. Use Load project content to see the current files and keep a backup of this draft.');
+            const projectMonsters = new Map(projectContent.monsters.map(monster => [monster.id,monster]));
+            const differing = data.monsters.filter(monster => {
+                const source = projectMonsters.get(monster.id);
+                return source && [...WorldContent.statFields,'gold','element'].some(field => JSON.stringify(monster[field] ?? WorldContent.defaults[field]) !== JSON.stringify(source[field] ?? WorldContent.defaults[field]));
+            }).length;
+            if (differing) status($('status').textContent + ' ' + differing + ' monster definition(s) have draft stats that differ from the game files. Load project content to use the project values.');
         }
         const view = JSON.parse(localStorage.getItem(viewKey) || 'null');
         if (view && Object.hasOwn(labels, view.selection?.kind) && data[view.selection.kind].some(entry => entry.id === view.selection.id)) selection = view.selection;

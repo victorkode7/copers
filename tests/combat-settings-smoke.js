@@ -43,6 +43,10 @@
             sessionStorage.removeItem(phaseKey);
             check('master and individual choices persist after reload', !CombatSettings.enabled() && !JSON.parse(localStorage.getItem(storageKey)).projectiles && !JSON.parse(localStorage.getItem(storageKey)).glows);
             check('master off is applied before game visuals start', document.body.classList.contains('combat-effects-off'));
+            const navigationToggle=document.getElementById('hideDeveloperNavigation');
+            check('developer navigation preference persists after reload',navigationToggle.checked&&document.querySelector('.app-nav').hidden);
+            navigationToggle.checked=false;navigationToggle.dispatchEvent(new Event('change'));
+            check('developer links can be restored while combat effects are off',!document.querySelector('.app-nav').hidden&&!CombatSettings.enabled());
             set('all', true);
             check('reenabling master restores the saved individual choices', !CombatSettings.enabled('projectiles') && !CombatSettings.enabled('glows') && CombatSettings.enabled('abilities') && CombatSettings.enabled('shaking'));
             check('no runtime errors after reload', !window.smokeErrors.length);
@@ -52,6 +56,11 @@
             document.getElementById('openCombatSettings').click();
             const dialog = document.getElementById('combatSettingsDialog');
             check('Settings opens an accessible modal', dialog.open && dialog.getAttribute('aria-labelledby') === 'combatSettingsHeading');
+            check('Reset Game is in Settings instead of the navigation bar',dialog.contains(document.getElementById('resetGame'))&&!document.querySelector('.nav-header').contains(document.getElementById('resetGame')));
+            const navigationToggle=document.getElementById('hideDeveloperNavigation');
+            check('developer navigation starts visible',!navigationToggle.checked&&!document.querySelector('.app-nav').hidden);
+            navigationToggle.checked=true;navigationToggle.dispatchEvent(new Event('change'));
+            check('hiding editor links leaves the game navigation available',document.querySelector('.app-nav').getClientRects().length===0&&document.querySelector('.nav-header').getClientRects().length>0&&document.getElementById('openCombatSettings').getClientRects().length>0);
             check('settings panel fits the viewport', dialog.getBoundingClientRect().width <= innerWidth && dialog.clientHeight <= innerHeight);
             const monster = fresh(), id = monster.id, card = elements.enemyRoster.firstElementChild;
             showCombatArrow(null, id, 'multiShot', 0);

@@ -1,15 +1,23 @@
+param(
+    [string]$ProjectPath = (Join-Path $PSScriptRoot '..'),
+    [ValidateSet('Development','Playtest')][string]$Build = 'Development'
+)
 $ErrorActionPreference = 'Stop'
-$projectPath = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$projectPath = (Resolve-Path -LiteralPath $ProjectPath).Path
 $files = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 $null = $files.Add('offline-worker.js')
 foreach ($page in Get-ChildItem -LiteralPath $projectPath -File -Filter '*.html' | Where-Object { !$_.Name.StartsWith('.') }) {
     $null = $files.Add($page.Name)
     $html = [IO.File]::ReadAllText($page.FullName)
+    if ($Build -eq 'Playtest' -and ($html -match 'data-developer-module|src="dev/')) { throw 'Developer module reference found in playtest HTML.' }
     foreach ($match in [regex]::Matches($html, '(?:src|href)="([^"#]+)"')) {
         $url = $match.Groups[1].Value
         if ($url -notmatch '^(?:https?:|data:|#)' -and $url -match '\.(?:js|css|png|jpe?g|svg|webp|gif)(?:\?|$)') { $null = $files.Add($url) }
     }
 }
+# The optional module is outside these folders. Development HTML explicitly
+# includes it; playtest packaging must omit the file and its HTML reference.
+if ($Build -eq 'Playtest' -and (Test-Path -LiteralPath (Join-Path $projectPath 'dev'))) { throw 'The dev folder must not ship in a playtest package.' }
 foreach ($folder in @('assets', 'css', 'js')) {
     foreach ($file in Get-ChildItem -LiteralPath (Join-Path $projectPath $folder) -Recurse -File) {
         $path = $file.FullName.Substring($projectPath.Length + 1).Replace('\', '/')
@@ -17,6 +25,7 @@ foreach ($folder in @('assets', 'css', 'js')) {
     }
 }
 $ordered = @($files | Sort-Object)
+if ($Build -eq 'Playtest' -and @($ordered | Where-Object { $_ -match '^dev/|developer-tools' }).Count) { throw 'Developer tooling found in playtest offline assets.' }
 $fingerprints = foreach ($url in $ordered) {
     $path = Join-Path $projectPath (($url -split '\?', 2)[0])
     if (!(Test-Path -LiteralPath $path -PathType Leaf)) { throw "Offline file is missing: $url" }

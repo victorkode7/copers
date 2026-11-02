@@ -30,8 +30,9 @@ function getProfileMaxMana(profile) {
     const equipment=Object.values(profile.gear).filter(id=>ownsItem(id,profile)).map(id=>ItemCrafting.effective(itemById[id],profile));
     const skillMultiplier=Object.entries(profile.skillRanks).reduce((total,[id,rank])=>
         total*Math.pow(skillNodeById[id]?.stats.manaMultiplier||1,rank),1);
-    return Math.max(0,Math.round((getSkillStatFromRanks('mana',profile.skillRanks)+Equipment.aggregate(equipment,'mana'))*
-        skillMultiplier*Equipment.aggregate(equipment,'manaMultiplier')));
+    const map=mapData.find(map=>map.id===profile.selectedMap)||mapData[0];
+    return Math.max(0,Math.round((getSkillStatFromRanks('mana',profile.skillRanks)+Equipment.aggregate(equipment,'mana')+MasterySystem.bonus(worldContent,map,profile,'mana'))*
+        skillMultiplier*Equipment.aggregate(equipment,'manaMultiplier')*MasterySystem.bonus(worldContent,map,profile,'manaMultiplier')));
 }
 
 function getPlayerManaRegen() {
@@ -177,7 +178,7 @@ function showVoidVortex(targetIds,visualDelay=0) {
     if (!combatEffectEnabled('abilities')) return;
     const mapId=state.selectedMap;
     presentCombatEffect(()=>{
-        if (state.currentView!=='map' || state.selectedMap!==mapId) return;
+        if (!isCombatView() || state.selectedMap!==mapId) return;
         if(window.CombatWebGLEffects?.vortex(targetIds,visualDelay))return;
         const cards=targetIds.map(id=>getCombatEffectCard(id)).filter(Boolean);
         if (!cards.length) return;
@@ -233,7 +234,15 @@ function renderPlayerMana() {
     document.getElementById('playerManaBar').style.width=(maximum?state.playerMana/maximum*100:0)+'%';
     updateCombatAttribute(track,'aria-valuemax',maximum);
     updateCombatAttribute(track,'aria-valuenow',Math.floor(state.playerMana));
-    panel.title=combatStatFormatter.format(getPlayerManaRegen())+' mana/s. Rime Brand and Ember Brand: 5 mana each. Void Bolt: 5 mana per cast. Void Vortex: 20 mana per cast. Void Volley: 5 charges and 10 mana.';
+    const costs=[];
+    // Allocated abilities cast automatically; omit costs from unused skill branches.
+    for(const brand of elementalBrands)if(getSkillNodeRank(brand.id)>0)
+        costs.push(brand.name+': '+elementalSkillSettings.manaCost+' mana per cast.');
+    for(const [id,settings]of Object.entries(spellSettings))if(getSkillNodeRank(id)>0){
+        const cost=id==='voidVolley'?settings.charges+' charges and '+settings.manaCost+' mana.':settings.manaCost+' mana per cast.';
+        costs.push(skillNodeById[id].name+': '+cost);
+    }
+    updateCombatAttribute(panel,'title',[combatStatFormatter.format(getPlayerManaRegen())+' mana/s.',...costs].join(' '));
 }
 
 function getVoidVolleyCurve(start,target,index,count,noise,frame) {
@@ -293,7 +302,7 @@ function showSpellCast(kind,hits,visualDelay=0) {
         return visual;
     });
     presentCombatEffect(() => {
-        if (state.currentView!=='map' || state.selectedMap!==mapId || !hits.length) return;
+        if (!isCombatView() || state.selectedMap!==mapId || !hits.length) return;
         if(window.CombatWebGLEffects?.spells(kind,hits,visualDelay,visuals))return;
         const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
         svg.classList.add('spell-effect',kind==='voidVolley'?'spell-void-volley':'spell-void-bolt');svg.setAttribute('aria-hidden','true');
@@ -377,7 +386,7 @@ function showVoidMissileImpact(targetId,missile) {
     if(missile&&voidMissileVisuals.has(missile)){voidMissileVisuals.delete(missile);return;}
     const mapId=state.selectedMap;
     presentCombatEffect(()=>{
-        if(state.currentView!=='map'||state.selectedMap!==mapId)return;
+        if(!isCombatView()||state.selectedMap!==mapId)return;
         if(window.CombatWebGLEffects?.impact(targetId))return;
         const card=getCombatEffectCard(targetId);if(!card)return;
         const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');

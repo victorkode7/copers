@@ -32,11 +32,13 @@
     const strings = value => Array.isArray(value) && value.every(id => typeof id === 'string');
 
     function assertCollections(saved) {
+        if(window.MasterySystem)MasterySystem.assertProfile(saved.mapMastery);
         for (const key of ['kills','materials','upgrades']) {
             if (saved[key] !== undefined && (!record(saved[key]) || !Object.values(saved[key]).every(integer))) throw new Error('Invalid '+key+' in profile.');
         }
         if (saved.skillRanks !== undefined && (!record(saved.skillRanks) || !Object.values(saved.skillRanks).every(rank => integer(rank) && rank > 0))) throw new Error('Invalid skill allocations in profile.');
-        for (const key of ['ownedItemIds','crafted','skillNodes','unlockedMapIds','unlockedWorldIds']) {
+        if (saved.skillPointRecoveryRanks !== undefined && saved.skillPointRecoveryRanks !== null && (!record(saved.skillPointRecoveryRanks) || !Object.values(saved.skillPointRecoveryRanks).every(rank => integer(rank) && rank > 0))) throw new Error('Invalid recoverable skill build.');
+        for (const key of ['ownedItemIds','crafted','skillNodes','unlockedMapIds','unlockedWorldIds','defeatedBossWorldIds']) {
             if (saved[key] !== undefined && !strings(saved[key])) throw new Error('Invalid '+key+' in profile.');
         }
         if (saved.gear !== undefined && (!record(saved.gear) || !Object.values(saved.gear).every(id => id === null || typeof id === 'string'))) throw new Error('Invalid equipment in profile.');
@@ -147,17 +149,32 @@
             report.refundedPoints += rank;report.refundedNodes.push(id);delete ranks[id];
         }
         saved.skillRanks = ranks;saved.skillPoints += report.refundedPoints;
+        if (saved.skillPointRecoveryRanks) {
+            const recovery = Object.create(null);
+            for (const [oldId,rank] of Object.entries(saved.skillPointRecoveryRanks)) {
+                const id = resolve(oldId,skillRules,context.skills,true);
+                if (id !== null && own(context.skills,id) && !context.skills[id].start)
+                    recovery[id] = Math.min(context.skills[id].maxRank,(recovery[id] || 0) + rank);
+            }
+            const connected = new Set(Object.values(context.skills).filter(node => node.start).map(node => node.id)), pending = [...connected];
+            for (let index=0; index<pending.length; index++) for (const id of context.connections[pending[index]] || []) {
+                if (!connected.has(id) && recovery[id]) { connected.add(id); pending.push(id); }
+            }
+            saved.skillPointRecoveryRanks = Object.fromEntries(Object.entries(recovery).filter(([id,rank]) => rank > 0 && connected.has(id)));
+        }
 
         const itemRules=rulesFor('items',migrations), oldKept=saved.preservedContent || {ownedItemIds:[],crafted:[],gear:{}};
-        if (saved.itemCrafts) saved.itemCrafts = Object.fromEntries(Object.entries(saved.itemCrafts).map(([oldId,rolls]) =>
+        for (const key of ['itemCrafts','itemRollSaves']) if (saved[key]) saved[key] = Object.fromEntries(Object.entries(saved[key]).map(([oldId,rolls]) =>
             [resolve(oldId,itemRules,context.items),rolls]).filter(([id]) => id !== null));
         const ids = values => [...new Set(values.map(id => resolve(id,itemRules,context.items)).filter(id => id !== null))];
         const owned=ids([...saved.ownedItemIds,...oldKept.ownedItemIds]), crafted=ids([...saved.crafted,...oldKept.crafted]);
         const kept={ownedItemIds:owned.filter(id => !own(context.items,id)),crafted:[],gear:Object.create(null)};
         saved.ownedItemIds=owned.filter(id => own(context.items,id));
         const ownsCurrent = id => context.items[id] && (context.items[id].developerOnly
-            ? saved.developerItemsEnabled === true : saved.ownedItemIds.includes(id));
-        saved.crafted=crafted.filter(id => saved.ownedItemIds.includes(id) && context.items[id].recipe);
+            ? window.DeveloperTools?.owns(context.items[id],saved) === true : saved.ownedItemIds.includes(id));
+        // Completion history is independent of current ownership, including after
+        // developer deletion. Reacquiring equipment must not repeat rewards.
+        saved.crafted=crafted.filter(id => context.items[id]?.recipe);
         kept.crafted=crafted.filter(id => !saved.crafted.includes(id));
         const gear=Object.create(null);
         context.slots.forEach(slot => {gear[slot]=null;});
@@ -178,6 +195,7 @@
         }
         const mapRules=rulesFor('maps',migrations), worldRules=rulesFor('worlds',migrations);
         saved.kills=remapCounts(saved.kills,mapRules,context.maps);
+        if(saved.mapMastery)saved.mapMastery=Object.fromEntries(Object.entries(saved.mapMastery).map(([oldId,value])=>[resolve(oldId,mapRules,context.maps),value]).filter(([id])=>id!==null));
         saved.materials=remapCounts(saved.materials,rulesFor('materials',migrations),context.materials);
         for (const id of Object.keys(context.maps)) if (!own(saved.kills,id)) saved.kills[id]=0;
         for (const id of Object.keys(context.materials)) if (!own(saved.materials,id)) saved.materials[id]=0;
@@ -186,6 +204,7 @@
         saved.lastMapByWorld=Object.fromEntries(Object.entries(saved.lastMapByWorld || {}).map(([world,id]) => [resolve(world,worldRules,context.worldById),resolve(id,mapRules,context.maps)]).filter(([world,id]) => world !== null && id !== null));
         saved.unlockedMapIds=(saved.unlockedMapIds || []).map(id => resolve(id,mapRules,context.maps)).filter(id => id !== null);
         saved.unlockedWorldIds=(saved.unlockedWorldIds || []).map(id => resolve(id,worldRules,context.worldById)).filter(id => id !== null);
+        saved.defeatedBossWorldIds=(saved.defeatedBossWorldIds || []).map(id => resolve(id,worldRules,context.worldById)).filter(id => id !== null);
         Object.assign(saved,unlocks(saved,context));
         if (!own(context.worldById,saved.selectedWorld)) saved.selectedWorld = context.worlds.find(world => world.mapIds.includes(saved.selectedMap))?.id || context.worlds[0].id;
         if (!own(context.maps,saved.selectedMap)) {
@@ -205,7 +224,7 @@
     }
 
     const protection={blocked:false,raw:null,error:null};
-    const backupPrefix='idleAdventureSave:backup:';
+    const backupPrefix=(window.DeveloperTools?.saveKey||'idleAdventureSave')+':backup:';
     function backups() {
         const found=[];
         for (let index=0; index<localStorage.length; index++) {

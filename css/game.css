@@ -1,21 +1,26 @@
 @font-face {
-    font-family: "Pixeloid Sans";
-    src: url("../assets/fonts/pixeloid-sans.ttf") format("truetype");
+    font-family: "Copers Sans";
+    src: url("../assets/fonts/copers-sans.ttf") format("truetype");
     font-style: normal;
     font-weight: 400;
     font-display: swap;
 }
 
 @font-face {
-    font-family: "Pixeloid Sans";
-    src: url("../assets/fonts/pixeloid-sans-bold.ttf") format("truetype");
+    font-family: "Copers Sans";
+    src: url("../assets/fonts/copers-sans-bold.ttf") format("truetype");
     font-style: normal;
     font-weight: 700;
     font-display: swap;
 }
 
 html {
-    scrollbar-gutter: stable;
+    /* Keep page scrolling without a visible scrollbar or an empty gutter. */
+    scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+    display: none;
 }
 
 .idle-adventure,
@@ -24,7 +29,10 @@ html {
 }
 
 .idle-adventure {
-    font-family: "Pixeloid Sans", var(--font-default);
+    /* Game labels stay unselectable; keep text selection in editable fields below. */
+    -webkit-user-select: none;
+    user-select: none;
+    font-family: "Copers Sans", var(--font-default);
     font-weight: 400;
     line-height: 1.4;
     --game-text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
@@ -50,6 +58,11 @@ html {
     min-height: 100vh;
     background: var(--adventure-bg);
     color: var(--adventure-text);
+}
+
+.idle-adventure :is(input, textarea, [contenteditable=""], [contenteditable="true"], [contenteditable="plaintext-only"]) {
+    -webkit-user-select: text;
+    user-select: text;
 }
 
 .idle-adventure .app-nav,
@@ -222,6 +235,7 @@ html {
 
 .idle-adventure .experience-meta {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.85rem;
     color: var(--adventure-muted);
@@ -233,9 +247,61 @@ html {
     color: var(--adventure-amber);
 }
 
+.idle-adventure #experiencePenalty { color: var(--adventure-amber); }
+
 .idle-adventure #skillPointDisplay {
     margin-left: auto;
     color: var(--adventure-green);
+}
+
+.idle-adventure #skillPointCapValue {
+    position: relative;
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
+    transform-origin: center;
+}
+
+.idle-adventure #skillPointCapValue.has-new-cap {
+    color: var(--adventure-amber);
+    text-shadow: 0 0 12px rgba(241, 189, 102, .8);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+}
+
+.idle-adventure #skillPointCapValue.is-increased {
+    z-index: 12;
+    animation: skill-point-cap-unlock 3.5s ease-out;
+}
+
+.idle-adventure #skillPointCapValue.is-increased::after {
+    content: attr(data-cap-gain);
+    position: absolute;
+    top: calc(100% + .6rem);
+    right: 0;
+    padding: .5rem .7rem;
+    border: 1px solid var(--adventure-amber);
+    border-radius: 8px;
+    background: #152b25;
+    box-shadow: 0 0 24px rgba(241, 189, 102, .45);
+    color: #ffe4a7;
+    font-size: .8rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    pointer-events: none;
+    text-decoration: none;
+}
+
+@keyframes skill-point-cap-unlock {
+    0%, 26%, 52%, 100% { transform: scale(1); }
+    12% { transform: scale(1.8); text-shadow: 0 0 18px #ffe4a7; }
+    39% { transform: scale(1.5); }
+    68% { transform: scale(1.25); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .idle-adventure #skillPointCapValue.is-increased { animation: none; }
 }
 
 .idle-adventure .dev-level-button {
@@ -477,6 +543,8 @@ html {
     margin: 0;
 }
 
+.idle-adventure .app-nav[hidden] { display: none; }
+
 .idle-adventure .side-panel {
     min-width: 0;
     padding: 0.8rem;
@@ -641,6 +709,17 @@ html {
     padding: 0.75rem 0.9rem;
     transition: padding 220ms ease, border-radius 220ms ease, background-color 220ms ease;
 }
+
+.idle-adventure .map-selector-controls { display:flex; justify-content:flex-end; margin-top:.35rem; }
+.idle-adventure .map-panel.is-collapsed .map-selector-controls { display:none; }
+.idle-adventure .map-selector-lock { display:grid; place-items:center; width:30px; height:30px; padding:5px; border:1px solid var(--adventure-border); border-radius:6px; background:transparent; color:var(--adventure-muted); cursor:pointer; }
+.idle-adventure .map-selector-lock svg { width:18px; height:18px; }
+.idle-adventure .map-selector-lock:hover { color:var(--adventure-text); border-color:var(--adventure-amber); }
+.idle-adventure .map-selector-lock:focus-visible { outline:2px solid var(--adventure-amber); outline-offset:3px; }
+.idle-adventure .map-selector-lock[aria-pressed="true"] { color:var(--adventure-amber); border-color:var(--adventure-amber); background:#ffc56f14; }
+.idle-adventure .map-selector-lock .map-lock-closed,
+.idle-adventure .map-selector-lock[aria-pressed="true"] .map-lock-open { display:none; }
+.idle-adventure .map-selector-lock[aria-pressed="true"] .map-lock-closed { display:initial; }
 
 .idle-adventure .map-panel .section-heading {
     margin-bottom: 0.35rem;

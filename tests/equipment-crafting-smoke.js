@@ -117,8 +117,8 @@
         state.gold = 0; const beforePoor = JSON.stringify(state.itemCrafts);
         check('insufficient gold keeps existing rolls', !ItemCrafting.reroll(wand.id).ok && JSON.stringify(state.itemCrafts) === beforePoor);
         state.gold = 100000; state.ownedItemIds = [wand.id];
-        document.querySelector('[data-reroll-item="' + items[5].id + '"]').click();
-        check('unowned equipment can be previewed but cannot be rerolled', document.getElementById('rerollEquipment').disabled && !ItemCrafting.reroll(items[5].id).ok);
+        renderCrafting();
+        check('unowned equipment is hidden and cannot be rerolled', !document.querySelector('[data-reroll-item="' + items[5].id + '"]') && !ItemCrafting.reroll(items[5].id).ok);
         const profile = createGameSave(); delete profile.itemCrafts;
         check('older saves get empty crafted slots without resetting progress', Object.keys(parseGameSave(JSON.stringify(profile)).itemCrafts).length === 0);
         const returningProfile = createGameSave();

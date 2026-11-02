@@ -136,8 +136,7 @@
             shownTutorialNotifications.clear();
             elements.inventory.querySelectorAll('details[open]').forEach(detail => { detail.open = false; });
             state.mapListExpanded = true;
-            document.getElementById('developerItems').checked = state.developerItemsEnabled;
-            document.getElementById('developerTravel').checked = state.developerTravelEnabled;
+            window.DeveloperTools?.render();
             startOfflineRecap();
             render();
             if (state.currentView === 'upgrades') {

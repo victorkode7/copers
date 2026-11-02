@@ -14,7 +14,8 @@
         state.ownedItemIds = []; state.crafted = []; resetMonsterStates(start); render();
         const openSources = () => {
             const label = [...elements.crafts.querySelectorAll('.craft-material-label')].find(node => node.textContent.includes(materialNames.gel));
-            const info = label.querySelector('.craft-material-info'); info.click();
+            const info = label.querySelector('.craft-material-info');
+            if(!document.getElementById(info.dataset.materialInfo).matches(':popover-open'))info.click();
             return {info, panel: document.getElementById(info.dataset.materialInfo)};
         };
         let {info, panel} = openSources();

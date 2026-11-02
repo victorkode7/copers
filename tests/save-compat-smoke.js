@@ -124,7 +124,7 @@
             mapData.forEach((map,index)=>{map.goal=originalGoals[index];});
             const setItem=Storage.prototype.setItem;const rawLegacy=JSON.stringify(removed);localStorage.setItem(primaryKey,rawLegacy);const beforeFailure=JSON.stringify(state);
             try {
-                Storage.prototype.setItem=function(key,value){if(key.startsWith('idleAdventureSave:backup:'))throw new DOMException('Full','QuotaExceededError');return setItem.call(this,key,value);};
+                Storage.prototype.setItem=function(key,value){if(key.startsWith(saveKey+':backup:'))throw new DOMException('Full','QuotaExceededError');return setItem.call(this,key,value);};
                 // Force a new backup payload, so an earlier deduplicated copy cannot bypass storage.
                 const uniqueRaw=rawLegacy+' ';localStorage.setItem(primaryKey,uniqueRaw);
                 check('failed backup storage blocks migration without changing live progress',!loadGame()&&SaveCompatibility.protection.blocked&&localStorage.getItem(primaryKey)===uniqueRaw&&JSON.stringify(state)===beforeFailure);

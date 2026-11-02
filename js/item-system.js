@@ -4,6 +4,10 @@
         geobreakerShockwave: {
             description: 'Shockwave Slash has a 50% chance to trigger and activates twice per successful proc. Requires Shockwave Slash.',
             shockwaveSlash: {chance: 0.5, triggers: 2}
+        },
+        blackSun: {
+            description: 'Black Sun: Fire of the Righteous heals only up to 1% of maximum HP and deals double burning damage. Its 10% maximum-HP drain per second is unchanged. Requires Fire of the Righteous.',
+            righteousFire: {regenHealthCap: 0.01, damageMultiplier: 2}
         }
     };
     function uniqueEffect(item) {
@@ -156,7 +160,7 @@
             const costs = data.items.filter(item => item?.equipmentType === preset.equipmentType && item?.tier === preset.tier)
                 .map(item => item.crafting?.cost?.gold).filter(value => Number.isSafeInteger(value) && value > 0).sort((a,b) => a-b);
             if (Number.isSafeInteger(preset.tier) && preset.tier > 0)
-                preset.gold = costs[Math.floor(costs.length / 2)] ?? preset.tier * 1000;
+                preset.gold = costs[Math.floor(costs.length / 2)] ?? preset.tier * 100;
         }
         delete data.maps;
         data.schemaVersion = 2;

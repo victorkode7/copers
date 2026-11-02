@@ -1,5 +1,77 @@
 COPERS PROGRESSION BUILDS — 27 OCTOBER 2026
 
+ORE AND SMELTERY
+Mine output is now half the matching Lumber Outpost: 360 Ore/hour per production
+step (tier x 10 + level), before Town Hall productivity.
+W2 building 3 is Smeltery, unlocked by the W2 Town Hall reaching T1 and owning
+a Mine. Purchase costs 50000 gold + 500 Planks + 1000 Ore.
+Smelting uses exactly 10 Ore per Bar. Output starts at 10 Bars/hour per level,
+reaching 100/hour at level 10, before Town productivity. Hourly output and upgrade
+gains stay whole with Town Hall bonuses (19/hour at level 1 and 190/hour at level
+10 with a T1 level-1 W1 Town Hall). Upgrades require the Mine
+to keep pace and cost 100 Planks + 10 Bars + 10000 base gold with level scaling.
+Bars are a Town resource with a 10000 storage cap. Full storage pauses smelting
+without consuming Ore. Existing Mine levels, Ore stock and partial progress stay.
+
+TIMBER DEPOT AND TOWN STORAGE
+Building 5 unlocks as Timber Depot at Town Hall T3. Purchase costs:
+250000 gold + 10000 Planks + 25000 Ore.
+Base Town caps: 50000 Logs, 50000 Planks, 100000 Ore, 10000 Bars.
+The Depot raises Log capacity to 100000 at level 1 and 1000000 at level 10.
+Each upgrade costs 5000 x current level Planks, 10000 x current level Ore,
+and 100000 base gold with normal 15% level growth. Every upgrade fits inside
+the Plank/Ore caps. Resource cards show current amount and capacity.
+Full stores pause production; a full Plank store does not consume Logs.
+Existing over-cap stockpiles are preserved and remain spendable. Production
+resumes after spending below the cap or increasing storage capacity.
+
+BOSS MASTERY BALANCE
+Menagerie bonus kills apply to non-boss encounters only. Each boss defeat
+counts as exactly one kill. Boss mastery awards 2 points at 2x / 20x / 200x /
+2000x the map kill goal, versus 10x / 100x / 1000x / 10000x for regular maps.
+This is a fivefold reduction in boss thresholds, partially compensating for
+the removed 10x kill bonus. Existing credited kills and earned points are kept.
+
+TOWN COSTS AND RESOURCE DISPLAY
+W1 Town Hall T0 upgrades cost 500 Logs each, plus the existing gold costs.
+Lumber Outpost material costs now double per prestige tier, like gold:
+T1 upgrades use 20 Planks, T2 uses 40, T3 uses 80. Ore starts at 160 per
+upgrade at T4 and doubles after that. Prestige plank costs scale too.
+Saw Mill's first prestige requires a T1 Outpost and costs 2500 gold,
+1000 Planks and 10000 Ore. T1 upgrades cost 10 Planks + 10 Ore and scaled gold.
+T1 plank output runs from 990 to 1800/hour before Town Hall bonuses. Mill
+level upgrades do not require specific Lumber Outpost levels.
+Resource cards keep fixed widths so changing numbers do not shift them.
+
+TOWN PRODUCTION BALANCE
+Town production and upgrade previews now display rates per hour.
+Lumber Outpost output is reduced by 80%, to 720 Logs/hour per production step
+(tier * 10 + level). The Saw Mill keeps 90 Planks/hour per step and uses 2 Logs
+per Plank. At matching tier/level, log production is 4x the mill's consumption,
+leaving 75% of the logs as surplus. T0 level-10 buildings produce 7200 Logs/hour
+and 900 Planks/hour; after feeding the mill, 5400 Logs/hour remain.
+Town Hall productivity boosts both rates equally. Stockpiles, existing Outpost
+costs and levels are preserved. If a mill is ahead of
+its Outpost, upgrade the Outpost to restore the intended surplus.
+
+DEVELOPMENT TOOLS AND PLAYTEST PACKAGES
+The source index.html loads optional dev/developer-tools.js. Developer mode
+provides free spending and normal equipment Add/Delete tools. Admin equipment
+is supplied automatically. Saved resource balances stay finite.
+Development uses a separate save slot. Use "Copy playtest profile into
+development" in the developer panel to copy existing progress explicitly;
+the normal profile is preserved. Development exports cannot be imported into
+the playtest build. Deleting equipment preserves crafting history and stored
+rolls and allows the equipment to be obtained again.
+
+To package a playtest from the project root:
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-playtest.ps1
+This creates a new timestamped folder and ZIP inside the project's playtest/
+folder, without developer tooling
+or editor pages, and with its own verified offline manifest. Share that ZIP.
+Saved developer flags cannot enable tools when the module is absent. This is
+build separation, not protection against editing a local browser game.
+
 BALANCE UPDATE - 30 OCTOBER 2026
 Monster packs and attacks now scale more smoothly across all three worlds.
 Cold Stare Gallery has 9 enemies; World 3 now has regular encounters and a final

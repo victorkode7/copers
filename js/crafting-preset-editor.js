@@ -71,7 +71,7 @@
         $('addEquipmentType').addEventListener('click',() => {
             const name = $('newEquipmentTypeName').value.trim(); if (!name) { $('newEquipmentTypeName').focus(); return; }
             const pool = clone(current()?.pool || [defaults('healthMultiplier'),defaults('evasionMultiplier')]);
-            const gold = current()?.gold ?? 1000;
+            const gold = current()?.gold ?? 100;
             type = 'type_' + crypto.randomUUID().replace(/-/g,''); tier = 1;
             data().equipmentTypes ||= []; data().craftingPresets ||= [];
             data().equipmentTypes.push({id:type,name}); data().craftingPresets.push({equipmentType:type,tier,gold,pool});

@@ -69,15 +69,17 @@
             let rejected=false;try{parseGameSave(JSON.stringify(bad));}catch(_){rejected=true;}
             check('invalid saved application data is rejected: '+JSON.stringify(invalid),rejected);
         }
+        let simulationMutations=0;
         function simulate(effects) {
             fresh({deepWounds:1,singledOff:1,multiShot:1,shockwaveSlash:1},8);Object.assign(itemById.testAmulet.stats,{damage:40,attackSpeedMultiplier:4});
             let seed=9453;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+            const observer=new MutationObserver(()=>{});observer.observe(document.body,{subtree:true,childList:true,attributes:true,characterData:true});
             for(let i=0;i<600;i++)simulateCombatStep(.1,effects);
+            simulationMutations+=observer.takeRecords().length;observer.disconnect();
             return JSON.stringify({monsters:state.monsterStates,hp:state.playerHp,kills:state.kills,gold:state.gold,meter:getDamageBreakdown()});
         }
-        const observer=new MutationObserver(()=>{});observer.observe(document.body,{subtree:true,childList:true,attributes:true,characterData:true});
         check('foreground and offline simulation produce identical Deep Wounds damage and rewards',simulate(true)===simulate(false)&&state.kills[map.id]>0);
-        check('simulation does not mutate the DOM',observer.takeRecords().length===0);observer.disconnect();
+        check('simulation does not mutate the DOM',simulationMutations===0);
         [a]=fresh();for(let i=0;i<6;i++)tryApplyBleed(a,100);render();
         const badge=elements.enemyRoster.firstElementChild.querySelector('[data-enemy-bleed-status]');
         check('monster plates show capped stacks and the correct per-tick damage',badge.querySelector('strong').textContent==='3x'&&badge.title.includes('150 damage per tick'));

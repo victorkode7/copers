@@ -5,7 +5,7 @@ function showShieldSlamWave(hitIds) {
     if (!hitIds.length) return;
     const mapId = state.selectedMap;
     presentCombatEffect(() => {
-        if (document.hidden || state.currentView !== 'map' || state.selectedMap !== mapId) return;
+        if (document.hidden || !isCombatView() || state.selectedMap !== mapId) return;
         if(window.CombatWebGLEffects?.shield(hitIds))return;
         const cards = hitIds.map(id => getCombatEffectCard(id)).filter(Boolean);
         if (!cards.length) return;

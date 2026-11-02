@@ -65,7 +65,7 @@ function showVolcanicEruption(centerId, targetIds) {
     if (!combatEffectEnabled('abilities')) return;
     const mapId = state.selectedMap;
     presentCombatEffect(() => {
-        if (document.hidden || state.currentView !== 'map' || state.selectedMap !== mapId) return;
+        if (document.hidden || !isCombatView() || state.selectedMap !== mapId) return;
         if(window.CombatWebGLEffects?.eruption(centerId,targetIds))return;
         const ids = new Set([centerId, ...targetIds]);
         ids.forEach(id => {
@@ -147,7 +147,7 @@ function showEruptionChain(sourceId, targetId, delay) {
     if (sourceId === targetId) return;
     const mapId = state.selectedMap;
     presentCombatEffect(() => {
-        if (document.hidden || state.currentView !== 'map' || state.selectedMap !== mapId) return;
+        if (document.hidden || !isCombatView() || state.selectedMap !== mapId) return;
         const source = getCombatEffectCard(sourceId);
         const target = getCombatEffectCard(targetId);
         if (!source || !target) return;

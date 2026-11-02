@@ -12,6 +12,7 @@
     };
     const data=ranks=>({format:'copers-skill-build',version:1,name:'Shared test build',description:'Skills only.',skillRanks:ranks});
     try {
+        state.defeatedBossWorldIds=worldData.map(world=>world.id);
         state.currentView='upgrades';state.skillRanks={};state.level=60;state.skillPoints=60;state.playerHp=100;state.combatPaused=false;pendingSkillRanks={};render();
         check('skill tree exposes import and export controls',Boolean($('importSkillBuild')&&$('exportSkillBuild')));
         const ranks=Object.fromEntries(pathTo('gatheringPower').map(id=>[id,1]));

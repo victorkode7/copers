@@ -61,6 +61,8 @@
 
         state.combatPaused = true;
         pendingOfflineRecap = {startedAt: Date.now() - 86400000, returnedAt: Date.now(), before: captureOfflineRecapProgress()};
+        check('pausing while alive is not reported as a defeat', !buildOfflineRecap(pendingOfflineRecap).dead);
+        state.playerHp=0;
         showOfflineRecap();
         check('zero-reward absences and death have clear messages', document.getElementById('offlineRecapGold').textContent === '+0' && document.getElementById('offlineRecapXp').textContent === '+0 XP' && document.getElementById('offlineRecapMaterials').textContent.includes('No materials found.') && document.getElementById('offlineRecapItems').textContent.includes('No equipment found.') && !document.getElementById('offlineRecapDeath').hidden && document.getElementById('offlineRecapTime').textContent.includes('1d'));
         dialog.close(); await settle();

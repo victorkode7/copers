@@ -158,7 +158,7 @@
     }
     function sync() {
         if(typeof elements==='undefined')return;
-        const full=state.currentView==='map'&&available();
+        const full=isCombatView()&&available();
         document.body.classList.toggle('combat-webgl-active',full);
         if(!full)return;
         const descriptors=[];

@@ -6,10 +6,15 @@ param(
     [string]$ScreenshotPath,
     [string]$WindowSize = '1440,1000',
     [int]$TimeoutSeconds = 25,
+    [string]$ProjectRoot,
+    [switch]$WithoutDeveloperTools,
+    [switch]$MissingDeveloperModule,
     [switch]$EnableGpu
 )
 $ErrorActionPreference = 'Stop'
 $workspacePath = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$sourcePath = $workspacePath
+if ($ProjectRoot) { $workspacePath = (Resolve-Path -LiteralPath $ProjectRoot).Path }
 $fixturePath = Join-Path $workspacePath '.equipment-smoke.html'
 $skillFixturePath = Join-Path $workspacePath '.skill-editor-smoke.html'
 $profilePath = Join-Path ([IO.Path]::GetTempPath()) ('copers-browser-' + [guid]::NewGuid().ToString('N'))
@@ -17,6 +22,8 @@ $html = [IO.File]::ReadAllText((Join-Path $workspacePath $Page))
 $prelude = '<script>window.smokeErrors=[];window.smokeIntervals=[];window.addEventListener("error",e=>smokeErrors.push(e.message));window.setInterval=callback=>{smokeIntervals.push(callback);return 0;};</script>'
 $html = $html.Replace('<head>', '<head>' + $prelude)
 $html = [regex]::Replace($html, '<script src="https://ajax.googleapis.com[^>]+></script>', '')
+if ($WithoutDeveloperTools) { $html = [regex]::Replace($html, '<script[^>]*data-developer-module[^>]*></script>', '') }
+if ($MissingDeveloperModule) { $html = $html.Replace('src="dev/developer-tools.js"', 'src="dev/missing-developer-tools.js"') }
 if ($Page -eq 'index.html') {
     # These suites inspect retained SVG paths and CSS timelines explicitly.
     # GPU pixels, timing, switches and fallback have dedicated WebGL suites.
@@ -27,7 +34,12 @@ if ($Page -eq 'index.html') {
     $html = $html.Replace('<script src="js/item-system.js', '<script src="tests/equipment-content-fixture.js"></script><script src="js/item-system.js')
     $html = $html.Replace('<script src="js/skill-sprites.js', '<script src="tests/skill-sprite-content-fixture.js"></script><script src="js/skill-sprites.js')
 }
-$html = $html.Replace('</body>', '<script src="' + $TestScript + '"></script></body>')
+if ($ProjectRoot) {
+    $html = $html.Replace('src="tests/equipment-content-fixture.js"', 'src="' + ([uri](Join-Path $sourcePath 'tests/equipment-content-fixture.js')).AbsoluteUri + '"')
+    $html = $html.Replace('src="tests/skill-sprite-content-fixture.js"', 'src="' + ([uri](Join-Path $sourcePath 'tests/skill-sprite-content-fixture.js')).AbsoluteUri + '"')
+    $TestUrl = ([uri](Join-Path $sourcePath $TestScript)).AbsoluteUri
+} else { $TestUrl = $TestScript }
+$html = $html.Replace('</body>', '<script src="' + $TestUrl + '"></script></body>')
 [IO.File]::WriteAllText($fixturePath, $html, [Text.UTF8Encoding]::new($false))
 if ($TestScript -eq 'tests/editor-persistence-smoke.js') {
     $skillHtml = [IO.File]::ReadAllText((Join-Path $workspacePath 'skill-tree-editor.html'))
@@ -42,7 +54,25 @@ try {
     $realtime = $TestScript -in @('tests/editor-persistence-smoke.js', 'tests/skill-sprites-smoke.js', 'tests/item-editor-smoke.js', 'tests/material-editor-smoke.js', 'tests/inventory-categories-smoke.js', 'tests/loot-effects-smoke.js', 'tests/crowded-background-smoke.js', 'tests/world-editor-smoke.js', 'tests/world-quick-save-smoke.js', 'tests/editor-quick-save-smoke.js')
     $realtime = $realtime -or $TestScript -in @('tests/background-reload-smoke.js', 'tests/game-profiles-smoke.js', 'tests/skill-editor-selection-smoke.js')
     $realtime = $realtime -or $TestScript -eq 'tests/save-compat-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/world-progression-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/black-sun-smoke.js'
+    $realtime = $realtime -or $TestScript -in @('tests/monster-mastery-smoke.js','tests/mastery-editor-smoke.js')
     $realtime = $realtime -or $TestScript -eq 'tests/equipment-crafting-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/weapon-roll-save-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/auto-reroll-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/persistent-tooltips-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/retired-town-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/town-page-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/town-production-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/town-sawmill-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/town-mine-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/town-menagerie-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/map-selector-lock-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/boss-mastery-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/town-costs-layout-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/town-storage-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/town-smeltery-smoke.js'
+    $realtime = $realtime -or $TestScript -in @('tests/developer-tools-smoke.js','tests/playtest-build-smoke.js')
     $realtime = $realtime -or $TestScript -eq 'tests/item-crafting-editor-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-settings-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-smoke.js'
