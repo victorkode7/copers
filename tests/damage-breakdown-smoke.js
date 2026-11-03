@@ -75,11 +75,9 @@
         }
         check('foreground and offline simulation produce identical damage shares and combat',run(true)===run(false));
         state.currentView='map'; render();
-        const panel=document.querySelector('.damage-breakdown'),loot=document.querySelector('.loot-panel');
-        check('the breakdown is placed directly below the loot panel',panel.previousElementSibling===loot && panel.getBoundingClientRect().top>=loot.getBoundingClientRect().bottom);
+        const panel=document.querySelector('.damage-breakdown'),stack=document.querySelector('.combat-report-stack');
+        check('the removed loot window leaves the breakdown at the top of the right column',!document.querySelector('.loot-panel')&&!document.getElementById('lootLog')&&stack.firstElementChild===panel&&Math.abs(panel.getBoundingClientRect().top-stack.getBoundingClientRect().top)<1);
         check('the panel fits the viewport at this screen size',panel.getBoundingClientRect().left>=0 && panel.getBoundingClientRect().right<=innerWidth);
-        loot.open=true;await new Promise(resolve=>setTimeout(resolve,350));
-        check('expanding loot keeps the breakdown below it',panel.getBoundingClientRect().top>=loot.getBoundingClientRect().bottom);
         check('no runtime errors: '+window.smokeErrors.join('; '),!window.smokeErrors.length);
         checks.push('SMOKE PASSED');
     } catch(error) {checks.push('ERROR '+error.stack);}

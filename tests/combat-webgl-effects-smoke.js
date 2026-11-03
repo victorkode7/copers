@@ -17,7 +17,12 @@
         const [a,b]=state.monsterStates,card=elements.enemyRoster.firstElementChild;
         const before=JSON.stringify({monsters:state.monsterStates,hp:state.playerHp,mana:state.playerMana,pending:state.pendingVoidMissiles});
         Math.random=()=>{throw new Error('Visuals consumed combat randomness');};
-        showCombatArrow(null,a.id,'piercingArrow',0);
+        const arrowTrails=[],originalTrail=CombatWebGL.trail;
+        try{
+            CombatWebGL.trail=spec=>{arrowTrails.push(spec);return originalTrail(spec);};
+            showCombatArrow(null,a.id,'piercingArrow',0);
+        }finally{CombatWebGL.trail=originalTrail;}
+        check('GPU Piercing Arrow keeps a tight glow on both shaft and tip',arrowTrails.length===2&&arrowTrails.every(trail=>trail.glowRadius===1&&trail.strokeWidth===3));
         showCombatArrow(a.id,b.id,'forkingArrow',0);
         showVolcanicEruption(a.id,[a.id,b.id]);showEruptionChain(a.id,b.id,0);
         showShieldSlamWave([a.id,b.id]);showVoidVortex([a.id,b.id]);
@@ -65,6 +70,50 @@
         elements.playerHealthPanel.classList.add('is-righteous-fire');CombatWebGLEffects.sync();
         check('persistent status and fire effects use GPU auras',CombatWebGL.status().ambient>=6&&['poisonAura','bleedAura','coldAura','emberAura','righteousFire'].every(type=>types().includes(type)));
         check('original portrait particles and fire layers are suppressed in full GPU mode',document.body.classList.contains('combat-webgl-active')&&getComputedStyle(card.querySelector('.enemy-dot-sprite-effect')).display==='none'&&getComputedStyle(card,'::before').display==='none');
+        CombatWebGL.clear();
+        card.classList.remove('is-poisoned','is-bleeding','has-rimeBrand','has-emberBrand','is-righteous-fire');
+        elements.playerHealthPanel.classList.remove('is-righteous-fire');
+        const testBuff=document.createElement('li');testBuff.className='combat-buff is-proccing';testBuff.dataset.buffId='voidCharges';
+        const buffLabel=document.createElement('span');buffLabel.className='buff-stacks';buffLabel.textContent='5/5';testBuff.append(buffLabel);elements.buffList.append(testBuff);
+        const buffRect=testBuff.getBoundingClientRect(),playerRect=elements.playerHealthPanel.getBoundingClientRect(),panelRect=elements.combatPanel.getBoundingClientRect(),observed=[];
+        const labelRect=buffLabel.getBoundingClientRect();
+        check('buff stack label stays inside the frame with an opaque background',labelRect.left>=buffRect.left+1&&labelRect.top>=buffRect.top+1&&labelRect.right<=buffRect.right-1&&labelRect.bottom<=buffRect.bottom-1&&getComputedStyle(buffLabel).backgroundColor==='rgb(9, 17, 23)');
+        const originalSetAmbient=CombatWebGL.setAmbient,originalEmit=CombatWebGL.emit,emitted=[];
+        CombatWebGL.setAmbient=descriptors=>{observed.push(...descriptors);originalSetAmbient(descriptors);};
+        CombatWebGL.emit=spec=>{emitted.push(spec);return originalEmit(spec);};
+        try{CombatWebGLEffects.sync();showVoidVolleyPlayerGlow(2,0);}finally{CombatWebGL.setAmbient=originalSetAmbient;CombatWebGL.emit=originalEmit;}
+        const buffGlow=observed.find(effect=>effect.type==='buffGlow'),relativeBox=(rect)=>({x:rect.left+rect.width/2-panelRect.left,y:rect.top+rect.height/2-panelRect.top,width:rect.width,height:rect.height});
+        check('WebGL buff glow uses the buff frame radius and bounds',Boolean(buffGlow)&&buffGlow.style===18&&buffGlow.cutouts.length===1&&['x','y','width','height'].every(key=>Math.abs(buffGlow[key]-relativeBox(buffRect)[key])<1));
+        check('flashing buff frame and its text layer above the WebGL canvas',Number(getComputedStyle(testBuff).zIndex)>Number(getComputedStyle(canvas).zIndex)&&getComputedStyle(buffLabel).zIndex==='2');
+        const playerGlow=emitted.find(effect=>effect.type==='playerGlow');
+        check('WebGL player glow uses exactly the player frame bounds',Boolean(playerGlow)&&Math.abs(playerGlow.width-playerRect.width)<1&&Math.abs(playerGlow.height-playerRect.height)<1);
+        check('WebGL buff glow reaches the GPU ambient batch',types().includes('buffGlow'));
+        await wait(80);await nextFrame();
+        const glowPixels=new Uint8Array(canvas.width*canvas.height*4);gl.readPixels(0,0,canvas.width,canvas.height,gl.RGBA,gl.UNSIGNED_BYTE,glowPixels);
+        const ratioX=canvas.width/document.documentElement.clientWidth,ratioY=canvas.height/innerHeight;
+        const glowRects=[buffRect,playerRect];
+        let strayGlowPixel=false;
+        for(let y=0;y<canvas.height&&!strayGlowPixel;y++)for(let x=0;x<canvas.width;x++){
+            if(glowPixels[(y*canvas.width+x)*4+3]<=24)continue;
+            const cssX=(x+.5)/ratioX,cssY=innerHeight-(y+.5)/ratioY;
+            if(!glowRects.some(rect=>cssX>=rect.left-1&&cssX<=rect.right+1&&cssY>=rect.top-1&&cssY<=rect.bottom+1)){strayGlowPixel=true;break;}
+        }
+        check('WebGL buff and player glows stay inside their frames',!strayGlowPixel);
+        const centerIsClear=rect=>{
+            const x=Math.floor((rect.left+rect.width/2)*ratioX),y=canvas.height-1-Math.floor((rect.top+rect.height/2)*ratioY);
+            return glowPixels[(y*canvas.width+x)*4+3]<=24;
+        };
+        check('WebGL glows leave the buff and player frame contents clear',glowRects.every(centerIsClear));
+        const cornerX=Math.floor((buffRect.left+1.5)*ratioX),cornerY=canvas.height-1-Math.floor((buffRect.top+3.5)*ratioY);
+        const cornerAlpha=glowPixels[(cornerY*canvas.width+cornerX)*4+3];
+        check('WebGL buff glow follows the frame’s tighter rounded corners',cornerAlpha>24);
+        const labelX=Math.floor((labelRect.left+labelRect.width/2)*ratioX),labelY=canvas.height-1-Math.floor((labelRect.top+labelRect.height/2)*ratioY);
+        let labelCovered=false;
+        for(let y=Math.max(0,Math.floor((innerHeight-labelRect.bottom)*ratioY));y<Math.min(canvas.height,Math.ceil((innerHeight-labelRect.top)*ratioY))&&!labelCovered;y++)
+            for(let x=Math.max(0,Math.floor(labelRect.left*ratioX));x<Math.min(canvas.width,Math.ceil(labelRect.right*ratioX));x++)
+                if(glowPixels[(y*canvas.width+x)*4+3]>24){labelCovered=true;break;}
+        check('WebGL buff glow leaves the entire top-right label area clear',glowPixels[(labelY*canvas.width+labelX)*4+3]<=24&&!labelCovered);
+        CombatWebGL.clear();testBuff.remove();
         toggle('glows',false);
         check('glow switch removes persistent auras immediately',CombatWebGL.status().ambient===0);
         toggle('glows',true);toggle('all',false);
@@ -72,7 +121,17 @@
         toggle('all',true);choose('webgl-cracks');
         showCombatArrow(null,a.id,'multiShot',0);showEruptionChain(a.id,b.id,0);
         check('cracks-only comparison retains original projectiles',!!document.querySelector('.combat-arrow')&&types().includes('eruptionChain')&&!document.body.classList.contains('combat-webgl-active'));
-        choose('svg');showShieldSlamWave([a.id]);showSpellCast('voidBolt',[{targetId:a.id}]);showElementalBurst([a.id],'fire',true);
+        choose('svg');
+        const cssBuff=document.createElement('li');cssBuff.className='combat-buff is-proccing';cssBuff.dataset.buffId='voidCharges';elements.buffList.append(cssBuff);
+        await nextFrame();
+        const buffAnimation=cssBuff.getAnimations().find(animation=>animation.effect.getKeyframes().some(keyframe=>keyframe.boxShadow));
+        check('original buff glow retains its halo without scaling over the label',Boolean(buffAnimation)&&buffAnimation.effect.getKeyframes().every(keyframe=>!keyframe.transform)&&buffAnimation.effect.getKeyframes().some(keyframe=>keyframe.boxShadow?.includes('24px')&&!keyframe.boxShadow.includes('inset')));
+        showVoidVolleyPlayerGlow(1,0);
+        const cssPlayerGlow=elements.playerHealthPanel.querySelector('.void-volley-player-glow');
+        const playerRadius=parseFloat(getComputedStyle(elements.playerHealthPanel).borderTopLeftRadius),glowRadius=parseFloat(getComputedStyle(cssPlayerGlow).borderTopLeftRadius);
+        check('original player glow corner radius matches its expanded frame',Math.abs(glowRadius-playerRadius-2)<1);
+        cssPlayerGlow.remove();cssBuff.remove();
+        showShieldSlamWave([a.id]);showSpellCast('voidBolt',[{targetId:a.id}]);showElementalBurst([a.id],'fire',true);
         check('original renderer retains shields, spells and elemental effects',!!document.querySelector('.shield-slam-wave')&&!!document.querySelector('.spell-effect')&&!!document.querySelector('.elemental-effect-layer')&&!CombatWebGL.status().running);
         choose('webgl');render();const extension=gl.getExtension('WEBGL_lose_context');extension.loseContext();await wait(100);
         showCombatArrow(null,a.id,'multiShot',0);showShieldSlamWave([a.id]);showSpellCast('voidBolt',[{targetId:a.id}]);

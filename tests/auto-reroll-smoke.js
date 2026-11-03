@@ -1,5 +1,5 @@
 (async function () {
-    const preview = new URL(document.currentScript.src).searchParams.has('preview');
+    const preview = new URL(document.currentScript.src || location.href, location.href).searchParams.has('preview');
     const checks=[], $=id=>document.getElementById(id), clone=value=>JSON.parse(JSON.stringify(value));
     const check=(name,ok)=>{checks.push((ok?'PASS ':'FAIL ')+name);if(!ok)throw new Error(name);};
     const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -19,9 +19,10 @@
         const replenish=()=>{state.gold=1000000;state.materials=Object.fromEntries(Object.keys(materialNames).map(id=>[id,1000]));};
         const choice=stat=>$('potentialRolls').querySelector('[data-auto-roll-stat="'+stat+'"]');
         const running=()=>$('autoRollEquipment').getAttribute('aria-pressed')==='true';
+        const targetsMatched=()=>['damage','multiHit'].every(stat=>state.itemCrafts[item.id]?.some(roll=>roll.stat===stat));
         const misses=()=>{Math.random=()=>.999999;state.itemCrafts={...state.itemCrafts,[item.id]:[{stat:'health',value:20},{stat:'mana',value:20}]};};
         const prepare=()=>{ItemCrafting.stopAuto();replenish();misses();state.currentView='town';state.isInTown=true;ItemCrafting.setMode('stats');render();document.querySelector('[data-reroll-item="'+item.id+'"]').click();};
-        replenish();ItemCrafting.setMode('stats');render();document.querySelector('[data-reroll-item="'+item.id+'"]').click();
+        replenish();Math.random=()=>.999999;ItemCrafting.setMode('stats');render();document.querySelector('[data-reroll-item="'+item.id+'"]').click();
         check('auto roll needs selected potential stats',$('autoRollEquipment').disabled);
         choice('damage').click();choice('multiHit').click();
         check('clicking potential stats highlights both selections',choice('damage').getAttribute('aria-pressed')==='true'&&choice('multiHit').getAttribute('aria-pressed')==='true');
@@ -34,11 +35,18 @@
         await until(()=>state.gold<startGold);
         check('one half-second roll charges exactly one normal cost',performance.now()-started>=480&&state.gold===startGold-1000&&state.materials.gel===startGel-2&&running());
         check('permanent stats do not satisfy crafted stat targets',running()&&state.itemCrafts[item.id].every(roll=>!['damage','multiHit'].includes(roll.stat)));
-        Math.random=()=>0;await until(()=>!running());
-        check('auto stops when all selected stats appear together',state.itemCrafts[item.id].map(roll=>roll.stat).join(',')==='damage,multiHit'&&state.gold===startGold-2000&&$('rerollStatus').textContent.includes('all selected stats'));
+        Math.random=()=>0;await until(()=>targetsMatched()&&state.gold===startGold-2000);
+        check('auto stops when all selected stats appear and can be restarted',!running()&&!$('autoRollEquipment').disabled&&$('autoRollEquipment').textContent==='Auto roll'&&state.gold===startGold-2000);
         check('auto rolls preserve saved weapon rolls',JSON.stringify(state.itemRollSaves[item.id])===JSON.stringify(saved));
-        const matchedGold=state.gold;await sleep(560);
-        check('the matching result is kept without another charge',state.gold===matchedGold&&$('autoRollEquipment').disabled&&JSON.stringify(JSON.parse(localStorage.getItem(saveKey)).itemCrafts[item.id])===JSON.stringify(state.itemCrafts[item.id]));
+        const matchedRolls=clone(state.itemCrafts[item.id]),restartValues=[0,.999999,0,.999999];Math.random=()=>restartValues.shift()??.999999;$('autoRollEquipment').click();await until(()=>state.gold===startGold-3000);
+        check('restarting auto roll can replace a matched set and stops on the next match',!running()&&!$('autoRollEquipment').disabled&&targetsMatched()&&JSON.stringify(state.itemCrafts[item.id])!==JSON.stringify(matchedRolls));
+        check('auto roll restart persists the replacement',JSON.stringify(JSON.parse(localStorage.getItem(saveKey)).itemCrafts[item.id])===JSON.stringify(state.itemCrafts[item.id]));
+        state.itemCrafts[item.id]=[{stat:'damage',value:15},{stat:'multiHit',value:2}];Math.random=()=>0;render();
+        const alreadyMatchedGold=state.gold;
+        check('auto remains available when the selected stats are already present',$('autoRollEquipment').disabled===false);
+        $('autoRollEquipment').click();await until(()=>!running());
+        check('auto rerolls an already-matching set and stops when the selected stats return',state.gold===alreadyMatchedGold-1000&&targetsMatched()&&!$('autoRollEquipment').disabled);
+        $('autoRollEquipment').click();
         prepare();const stoppedGold=state.gold;$('autoRollEquipment').click();$('autoRollEquipment').click();await sleep(560);
         check('Stop rolling cancels a pending roll without charging',!running()&&state.gold===stoppedGold&&$('autoRollEquipment').textContent==='Auto roll');
         prepare();$('autoRollEquipment').click();await until(()=>state.gold===999000);$('autoRollEquipment').click();const earlyGold=state.gold;await sleep(560);
@@ -50,7 +58,8 @@
         prepare();const beforeFailure=JSON.stringify(createGameSave());
         Storage.prototype.setItem=function(key,value){if(key===saveKey)throw new Error('Storage full');return originalWrite.call(this,key,value);};
         $('autoRollEquipment').click();await until(()=>!running());
-        check('save failure stops auto roll and restores resources and rolls',JSON.stringify(createGameSave())===beforeFailure&&$('rerollStatus').textContent.includes('Could not save'));
+        const saveFailureAfter=createGameSave(),saveFailureBefore=JSON.parse(beforeFailure),saveFailureRestored=['gold','materials','itemCrafts','playerHp','playerMana'].every(key=>JSON.stringify(saveFailureAfter[key])===JSON.stringify(saveFailureBefore[key]));
+        check('save failure stops auto roll and restores resources and rolls',saveFailureRestored&&$('rerollStatus').textContent.includes('Could not save'));
         Storage.prototype.setItem=originalWrite;
         prepare();const beforeSwitch=state.gold;$('autoRollEquipment').click();document.querySelector('[data-reroll-item="'+other.id+'"]').click();
         check('switching equipment stops auto roll and keeps selections separate',!running()&&$('autoRollEquipment').disabled&&choice('damage').getAttribute('aria-pressed')==='false');

@@ -5,6 +5,12 @@ The game uses css/game-theme.css for shared navy surfaces, vivid accents and
 pixel-style frames. Only the game loads this layer; editor pages keep their UI.
 Town retains green, ice-blue and turquoise world palettes, with brighter scenery
 and a neutral navigation bar. Gameplay, resource costs and save formats are unchanged.
+Available skill nodes keep their stat colors with a quiet dashed border; learned
+nodes have a solid inner ring. Equipped sprites select their slot, while sprite
+zoom remains available in the inventory list and crafting. The right-hand Loot
+Drops window is removed; Damage Breakdown remains.
+Skill-tree connectors are clipped outside node edges, including when zooming.
+Piercing Arrow uses a tighter white glow in both SVG and GPU rendering.
 Geometry, resource-card stability, text selection and map locking are covered by
 tests/game-theme-smoke.js. Use -ViewportSize 390,844 with run-equipment-smoke.ps1
 to check a real phone viewport independently of Chrome's desktop window minimum.

@@ -6,7 +6,7 @@
     const originalRender = renderUpgrades;
     let renders = 0;
     try {
-        state.currentView = 'upgrades'; state.skillRanks = {}; state.skillPoints = 10;
+        state.currentView = 'upgrades'; state.combatPaused = true; state.skillRanks = {}; state.skillPoints = 10;
         pendingSkillRanks = {}; refundMode = false; render(); centerSkillTreeOnOrigin(true);
         const viewport = elements.upgrades.querySelector('.skill-tree-viewport');
         const board = viewport.querySelector('.skill-tree-board');
@@ -27,12 +27,28 @@
         node.dispatchEvent(new PointerEvent('pointerover', {bubbles: true}));
         const tooltip = viewport.querySelector('#skillNodeTooltip');
         check('node tooltips still open', !tooltip.hidden && tooltip.querySelector('strong').textContent === skillNodeById[node.dataset.skillNode].name);
+        const nodeRectForHover = node.getBoundingClientRect();
+        const nodeCenterX = nodeRectForHover.left + nodeRectForHover.width / 2;
+        const nodeCenterY = nodeRectForHover.top + nodeRectForHover.height / 2;
+        node.dispatchEvent(new PointerEvent('pointerout', {
+            bubbles: true, relatedTarget: document.body, clientX: nodeCenterX, clientY: nodeCenterY
+        }));
+        check('node tooltip stays visible while the pointer remains over the node', !tooltip.hidden);
+        node.dispatchEvent(new PointerEvent('pointerout', {
+            bubbles: true, relatedTarget: document.body,
+            clientX: nodeRectForHover.right + 4, clientY: nodeCenterY
+        }));
+        check('node tooltip hides after the pointer leaves the node', tooltip.hidden);
+        node.dispatchEvent(new PointerEvent('pointerover', {bubbles: true}));
         const viewportCenter = center(viewport), oldZoom = skillTreeZoom, beforeZoom = center(node);
         const wheel = (deltaY, point = viewportCenter) => viewport.dispatchEvent(new WheelEvent('wheel', {bubbles: true, cancelable: true, deltaY, clientX: point.x, clientY: point.y}));
         wheel(-100);
         const zoomed = center(node), ratio = skillTreeZoom / oldZoom;
         check('zoom stays anchored at the cursor', near(zoomed.x - viewportCenter.x, (beforeZoom.x - viewportCenter.x) * ratio) && near(zoomed.y - viewportCenter.y, (beforeZoom.y - viewportCenter.y) * ratio));
-        check('camera movement clears a tooltip at the old position', tooltip.hidden);
+        const viewportRect = viewport.getBoundingClientRect(), nodeRect = node.getBoundingClientRect();
+        const expectedTooltipLeft = Math.max(8, Math.min(viewport.clientWidth - tooltip.offsetWidth - 8,
+            nodeRect.left - viewportRect.left + (nodeRect.width - tooltip.offsetWidth) / 2));
+        check('camera movement keeps the tooltip visible and anchored to its node', !tooltip.hidden && near(parseFloat(tooltip.style.left), expectedTooltipLeft));
         check('the center node retains its zoom-specific sizing', near(origin.offsetWidth * skillTreeZoom, 78 * Number(skillNodeById.origin.size || 1)));
         wheel(100000);
         check('zoom out is limited to 0.1 with the center-node size cap', skillTreeZoom === .1 && origin.offsetWidth === 130);
@@ -50,7 +66,10 @@
         // Centering uses integer offset/client dimensions, so allow pixel rounding.
         check('recentering keeps the origin centered', Math.abs(center(origin).x - center(viewport).x) < 1 && Math.abs(center(origin).y - center(viewport).y) < 1);
         const records = observer.takeRecords(); observer.disconnect();
-        check('navigation does not refresh node labels or connection state', records.every(record => record.type === 'attributes' && record.attributeName === 'style' && (record.target === board || origin.contains(record.target))));
+        check('navigation does not refresh node labels or connection state', records.every(record =>
+            record.type === 'attributes' &&
+            (record.attributeName === 'style' && (record.target === board || record.target.closest?.('.skill-node')) ||
+                record.attributeName === 'd' && record.target.tagName === 'path')));
         check('navigation never calls the full tree renderer', renders === 0);
         check('camera changes preserve skill choices', ranksBefore === JSON.stringify([state.skillRanks, pendingSkillRanks]));
         check('nodes and connections retain their DOM identity', board.querySelector('[data-skill-node="' + node.dataset.skillNode + '"]') === node);

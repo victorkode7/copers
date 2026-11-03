@@ -42,15 +42,16 @@
         const color=kind==='piercingArrow'?[1,1,1]:freezing?[.6,.929,1]:[1,.886,.588];
         const duration=arrowVisualDurations[kind]||450,flight=getArrowFlightTime(kind,sourceId);
         const angle=Math.atan2(end.y-start.y,end.x-start.x);
+        const glowRadius=kind==='piercingArrow'?1:4;
         gpu().trail({points:[start,end],flight,duration,delay,color,strokeWidth:directed?(source?4:5):3,
-            glowRadius:4,style:directed?16:12,type:'arrow'});
+            glowRadius,style:directed?16:12,type:'arrow'});
         if(directed)emit('arrow',{...start,width:64,height:48,endX:end.x,endY:end.y,move:1,rotation:angle,
             style:4,flight,duration,delay,color,category:'projectiles'});
         else {
             const dx=Math.cos(angle),dy=Math.sin(angle);
             gpu().trail({points:[{x:end.x-dx*11-dy*5,y:end.y-dy*11+dx*5},end,
                 {x:end.x-dx*11+dy*5,y:end.y-dy*11-dx*5}],flight:1,duration:duration-flight,
-                delay:delay+flight,color,strokeWidth:3,glowRadius:4,type:'arrow'});
+                delay:delay+flight,color,strokeWidth:3,glowRadius,type:'arrow'});
         }
         if(directed)ring('arrowImpact',end,color,32,delay+flight,'projectiles');
         return true;
@@ -87,14 +88,23 @@
             sparks('shield',rect,colors.shield,6,delay);
         }return true;
     }
-    function vortex(targetIds,delay) {
+    function vortex(plan) {
         if(!available())return false;
-        const boxes=targetIds.map(id=>getCombatEffectCard(id)).filter(Boolean).map(card=>box(card));if(!boxes.length)return true;
-        const left=Math.min(...boxes.map(b=>b.x-b.width/2)),right=Math.max(...boxes.map(b=>b.x+b.width/2));
-        const top=Math.min(...boxes.map(b=>b.y-b.height/2)),bottom=Math.max(...boxes.map(b=>b.y+b.height/2));
-        for(let i=0;i<3;i++)emit('vortex',{x:(left+right)/2,y:(top+bottom)/2,width:(right-left)*(1-i*.15)*1.3,height:(bottom-top)*(1-i*.2)*1.3,
-            style:10,rotation:(i-1)*.16,color:colors.void,duration:650,delay:delay+i*70,startScale:1.15,scale:.05});
-        return true;
+        const handles=[];
+        for(const {points,local} of plan.paths)for(const layer of ['shadow','edge']) {
+            const edge=layer==='edge';
+            handles.push(gpu().trail({points,flight:plan.duration,duration:plan.duration,delay:plan.delay,
+                strokeWidth:edge?2.5:5.5,glowRadius:1.5,style:local?17:14,color:edge?[.78,.63,1]:[.22,.06,.42],
+                glowColor:[.46,.2,.8],opacity:(edge?.9:.72)*(local?1:.55),category:'abilities',type:'vortex'}));
+        }
+        for(const target of plan.targets) {
+            const radius=target.radius*(plan.echo?.75:1);
+            handles.push(emit('vortexImpact',{x:target.x,y:target.y,width:radius*2/.75,height:radius*2/.75,
+                style:1,color:[.82,.69,1],opacity:.96,duration:plan.impactDuration,startScale:.72,scale:1.16}));
+            handles.push(emit('vortexImpact',{x:target.x,y:target.y,width:12,height:12,
+                style:3,color:[.9,.8,1],opacity:.95,duration:110}));
+        }
+        return {remove(){for(const handle of handles)handle.remove();}};
     }
     function bezierPoints(start,end,a,b) {
         const points=[];for(let i=0;i<=24;i++){const t=i/24,q=1-t;points.push({x:q*q*q*start.x+3*q*q*t*a.x+3*q*t*t*b.x+t*t*t*end.x,y:q*q*q*start.y+3*q*q*t*a.y+3*q*t*t*b.y+t*t*t*end.y});}return points;
@@ -180,7 +190,14 @@
                 if(card.classList.contains('is-righteous-fire'))fire(id+'-fire','righteousFire',card);
             }
             if(elements.playerHealthPanel.classList.contains('is-righteous-fire'))fire('player-fire','righteousFire',elements.playerHealthPanel);
-            for(const buff of elements.buffList.children)if(buff.classList.contains('is-proccing'))descriptors.push({key:'buff-'+buff.dataset.buffId,type:'buffGlow',...box(buff),style:2,color:colors.void,opacity:.85,category:'glows'});
+            for(const buff of elements.buffList.children)if(buff.classList.contains('is-proccing')) {
+                const rect=getCombatEffectBounds(buff),centerX=rect.left+rect.width/2,centerY=rect.top+rect.height/2;
+                const cutouts=[...buff.querySelectorAll('.buff-stacks,.buff-value')].map(label=>{
+                    const bounds=getCombatEffectBounds(label);
+                    return [bounds.left-centerX-8,bounds.top-centerY-8,bounds.right-centerX+8,bounds.bottom-centerY+8];
+                });
+                descriptors.push({key:'buff-'+buff.dataset.buffId,type:'buffGlow',...box(buff),style:18,cutouts,color:colors.void,opacity:.85,category:'glows'});
+            }
         }
         gpu().setAmbient(descriptors);
     }

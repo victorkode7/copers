@@ -10,6 +10,7 @@ param(
     [string]$ProjectRoot,
     [switch]$WithoutDeveloperTools,
     [switch]$MissingDeveloperModule,
+    [switch]$ReducedMotion,
     [switch]$EnableGpu
 )
 $ErrorActionPreference = 'Stop'
@@ -65,6 +66,9 @@ try {
     $realtime = $realtime -or $TestScript -eq 'tests/retired-town-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/town-page-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/game-theme-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/skill-node-states-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/skill-link-clipping-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/void-vortex-visuals-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/town-production-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/town-sawmill-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/town-mine-smoke.js'
@@ -84,9 +88,9 @@ try {
     $realtime = $realtime -or $TestScript -eq 'tests/world-project-load-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/spell-skills-smoke.js'
     $realtime = $realtime -or ($Page -eq 'skill-tree-editor.html' -and $TestScript -eq 'tests/shield-expansion-smoke.js')
-    $realtime = $realtime -or [bool]$ViewportSize
+    $realtime = $realtime -or [bool]$ViewportSize -or [bool]$ReducedMotion
     if ($realtime) {
-        $startUrl = if ($ViewportSize) { 'about:blank' } else { ([uri]$fixturePath).AbsoluteUri }
+        $startUrl = if ($ViewportSize -or $ReducedMotion) { 'about:blank' } else { ([uri]$fixturePath).AbsoluteUri }
         $processInfo.Arguments = '--headless --disable-gpu --no-first-run --allow-file-access-from-files --remote-debugging-port=0 --user-data-dir="' + $profilePath + '" "' + $startUrl + '"'
     }
     if ($EnableGpu) { $processInfo.Arguments = $processInfo.Arguments.Replace('--disable-gpu ', '') }
@@ -111,14 +115,16 @@ try {
         try {
             $null = $socket.ConnectAsync([uri]$target.webSocketDebuggerUrl, $cancellation.Token).GetAwaiter().GetResult()
             $messageId = 0
-            if ($ViewportSize) {
+            if ($ViewportSize -or $ReducedMotion) {
                 # Chrome's minimum desktop window can exceed phone widths.
                 # Set the actual viewport before loading the page and its tests.
-                $dimensions = $ViewportSize.Split(',')
-                $startupCommands = @(
-                    @{method='Emulation.setDeviceMetricsOverride'; params=@{width=[int]$dimensions[0]; height=[int]$dimensions[1]; deviceScaleFactor=1; mobile=$true}},
-                    @{method='Page.navigate'; params=@{url=([uri]$fixturePath).AbsoluteUri}}
-                )
+                $startupCommands = @()
+                if ($ViewportSize) {
+                    $dimensions = $ViewportSize.Split(',')
+                    $startupCommands += @{method='Emulation.setDeviceMetricsOverride'; params=@{width=[int]$dimensions[0]; height=[int]$dimensions[1]; deviceScaleFactor=1; mobile=$true}}
+                }
+                if ($ReducedMotion) { $startupCommands += @{method='Emulation.setEmulatedMedia'; params=@{features=@(@{name='prefers-reduced-motion';value='reduce'})}} }
+                $startupCommands += @{method='Page.navigate'; params=@{url=([uri]$fixturePath).AbsoluteUri}}
                 foreach ($startup in $startupCommands) {
                     $messageId++
                     $command = @{id=$messageId; method=$startup.method; params=$startup.params} | ConvertTo-Json -Depth 6 -Compress

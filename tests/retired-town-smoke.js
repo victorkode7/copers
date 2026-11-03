@@ -19,7 +19,7 @@
             document.getElementById('townButton').click();
             check('the historical town view still opens Crafting',state.currentView==='town'&&!elements.townView.hidden&&elements.townView.textContent.includes('Crafting'));
             document.getElementById('mapButton').click();
-            check('the Map and combat side panels remain usable',state.currentView==='map'&&isCombatView()&&document.querySelector('.stats-panel').getClientRects().length>0&&document.querySelector('.loot-panel').getClientRects().length>0);
+            check('the Map and combat side panels remain usable',state.currentView==='map'&&isCombatView()&&document.querySelector('.stats-panel').getClientRects().length>0&&document.querySelector('.damage-breakdown').getClientRects().length>0);
             check('no runtime errors',!window.smokeErrors.length);checks.push('SMOKE PASSED');
         }else{
             state.gold=24680;state.materials.gel=44;state.materials.hide=17;state.level=4;state.experience=7;state.skillPoints=4;state.skillRanks={};

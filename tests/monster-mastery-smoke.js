@@ -28,6 +28,12 @@
         const boss=mapData.find(entry=>entry.id===worldData[0].mapIds.at(-1));
         check('boss and ordinary maps inherit different world presets',MasterySystem.kind(worldContent,boss)==='boss'&&MasterySystem.tree(worldContent,boss)!==dataTree());
         fresh([],99);state.mapMastery={};render();
+        const masteryButton=$('openMapMastery');
+        delete state.townProgress.buildings.menagerie;render();
+        check('Mastery stays hidden until its world unlocks',masteryButton.hidden);
+        state.townProgress.buildings.menagerie={tier:0,level:1};render();
+        check('unlocking mastery reveals the button with a temporary callout',!masteryButton.hidden&&masteryButton.classList.contains('is-newly-unlocked'));
+        check('the map-header Mastery button has a clear click affordance',getComputedStyle(masteryButton).cursor==='pointer');
         check('mastery starts with no points before ten times the kill goal',MasterySystem.available(state,map)===0);
         defeatEnemy(state.monsterStates[0]);render();
         check('the first mastery milestone awards exactly two separate points',state.mapMastery[map.id].earned===2&&state.skillPoints===0&&$('openMapMastery').textContent==='Mastery (2)');

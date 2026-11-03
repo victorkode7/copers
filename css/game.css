@@ -80,6 +80,14 @@ html::-webkit-scrollbar {
     background: var(--adventure-panel);
 }
 
+.idle-adventure .app-nav {
+    padding-block: 0.25rem;
+}
+
+.idle-adventure .app-nav a {
+    padding-block: 0.25rem;
+}
+
 /* Fallback symbols stay clear of text effects intended for labels. */
 .idle-adventure :is(.item-sprite, .skill-node-icon, .equipment-slot-icon) {
     text-shadow: none;
@@ -94,19 +102,22 @@ html::-webkit-scrollbar {
     column-gap: 2rem;
     align-items: center;
     justify-content: center;
-    min-height: 88px;
+    min-height: 0;
     margin: 0;
-    padding: 0.7rem 1.25rem;
+    padding: 0.35rem 1.25rem;
 }
 
 .idle-adventure .logo {
     position: absolute;
+    top: 0;
     left: var(--nav-logo-left);
-    width: var(--nav-logo-size);
-    height: var(--nav-logo-size);
+    width: auto;
+    height: calc(100% + 40px);
+    aspect-ratio: 1;
     overflow: hidden;
     border: 1px solid var(--adventure-border);
     border-radius: 18px;
+    background: var(--adventure-panel);
 }
 
 .idle-adventure .logo img {
@@ -462,10 +473,7 @@ html::-webkit-scrollbar {
     .idle-adventure .tutorial-notice--pulse,
     .idle-adventure .skill-tree-link.tutorial-skill-link,
     .idle-adventure .skill-tree-control.tutorial-skill-confirm,
-    .idle-adventure .combat-status.is-fighting::before,
-    .idle-adventure .loot-panel,
-    .idle-adventure .loot-panel-toggle::after,
-    .idle-adventure .loot-panel-content {
+    .idle-adventure .combat-status.is-fighting::before {
         animation: none;
         transition: none;
     }
@@ -523,11 +531,11 @@ html::-webkit-scrollbar {
 
 .idle-adventure .adventure-layout {
     display: grid;
-    width: min(1500px, calc(100% - 2rem));
+    width: calc(100% - 2rem);
     grid-template-columns:
-        minmax(145px, 0.55fr)
-        minmax(0, 3fr)
-        minmax(145px, 0.55fr);
+        minmax(145px, min(15vw, 260px))
+        minmax(0, 1fr)
+        minmax(145px, min(15vw, 260px));
     grid-template-areas: "side main loot";
     align-items: start;
     gap: 1rem;
@@ -565,18 +573,6 @@ html::-webkit-scrollbar {
     display: none;
 }
 
-.idle-adventure .loot-panel {
-    grid-area: loot;
-    display: grid;
-    width: 64px;
-    min-height: 52px;
-    grid-template-columns: 42px 0fr;
-    align-items: stretch;
-    gap: 0;
-    padding: 0.35rem;
-    overflow: hidden;
-    transition: width 280ms ease, grid-template-columns 280ms ease;
-}
 .idle-adventure .combat-report-stack {
     grid-area: loot; display: flex; min-width: 0; flex-direction: column; gap: 1rem;
 }
@@ -600,63 +596,6 @@ html::-webkit-scrollbar {
 .idle-adventure .damage-source-percentage { flex: 0 0 auto; white-space: nowrap; font-size: .62rem; color: var(--damage-source-color); font-variant-numeric: tabular-nums; }
 .idle-adventure .damage-source-track { height: 4px; margin-top: .25rem; overflow: hidden; border-radius: 4px; background: #0d1b24; }
 .idle-adventure .damage-source-fill { height: 100%; border-radius: inherit; background: var(--damage-source-color); }
-
-.idle-adventure .loot-panel[open] {
-    width: 100%;
-    grid-template-columns: 42px minmax(0, 1fr);
-}
-
-.idle-adventure .loot-panel-toggle {
-    display: flex;
-    min-width: 0;
-    align-items: center;
-    justify-content: center;
-    padding: 0.45rem;
-    border-radius: 10px;
-    cursor: pointer;
-    list-style: none;
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-}
-
-.idle-adventure .loot-panel-toggle::-webkit-details-marker {
-    display: none;
-}
-
-.idle-adventure .loot-panel-toggle::after {
-    width: 0.45rem;
-    height: 0.45rem;
-    flex: 0 0 auto;
-    margin-top: 0.5rem;
-    border-right: 2px solid var(--adventure-green);
-    border-bottom: 2px solid var(--adventure-green);
-    content: "";
-    transform: rotate(45deg);
-    transition: transform 220ms ease;
-}
-
-.idle-adventure .loot-panel[open] .loot-panel-toggle::after {
-    transform: rotate(225deg);
-}
-
-.idle-adventure .loot-panel-content {
-    min-width: 0;
-    display: block;
-    overflow: hidden;
-    opacity: 0;
-    transition: opacity 160ms ease;
-}
-
-.idle-adventure .loot-panel[open] .loot-panel-content {
-    opacity: 1;
-}
-
-.idle-adventure .loot-list {
-    max-height: 360px;
-    margin: 0;
-    padding: 0.8rem 0.5rem 0.8rem 0;
-    overflow: auto;
-}
 
 .idle-adventure .side-panel-heading {
     display: block;
@@ -979,22 +918,12 @@ html::-webkit-scrollbar {
 }
 
 .idle-adventure .map-button:hover:not(:disabled) {
-    box-shadow: inset 0 0 0 1px rgba(99, 223, 197, 0.15);
+    border-color: var(--adventure-blue);
+    box-shadow: inset 0 0 0 1px rgba(115, 186, 255, 0.3);
 }
 
-.idle-adventure .map-button.incomplete.selected,
-.idle-adventure .map-button.incomplete:hover:not(:disabled) {
-    border-color: #f1a04b;
-    box-shadow: inset 0 0 0 1px rgba(241, 160, 75, 0.22);
-}
-
-.idle-adventure .map-button.completed.selected,
-.idle-adventure .map-button.completed:hover:not(:disabled) {
-    border-color: var(--adventure-green);
-    box-shadow: inset 0 0 0 1px rgba(99, 223, 197, 0.2);
-}
-
-.idle-adventure .map-button.selected {
+.idle-adventure .map-button.selected,
+.idle-adventure .map-button.selected:hover:not(:disabled) {
     z-index: 2;
     border: 2px solid #ffe09a;
     background: linear-gradient(135deg, rgba(241, 189, 102, 0.24), rgba(46, 53, 43, 0.96));
@@ -1063,6 +992,8 @@ html::-webkit-scrollbar {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
     gap: 0.65rem;
     margin-top: 1rem;
+    margin-inline: auto;
+    max-width: calc(4 * 290px + 3 * 0.65rem + 0.9rem);
     align-content: start;
     padding: 0.65rem 0.45rem;
 }
@@ -1153,6 +1084,7 @@ html::-webkit-scrollbar {
 .idle-adventure .enemy-roster.is-crowded {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
     gap: 0.4rem;
+    max-width: calc(4 * 220px + 3 * 0.4rem + 0.9rem);
 }
 
 .idle-adventure .enemy-roster.is-crowded .enemy-mark {
@@ -1516,6 +1448,13 @@ html::-webkit-scrollbar {
     white-space: nowrap;
     color: var(--adventure-muted);
     font-variant-numeric: tabular-nums;
+}
+
+/* Empty messages are also used by the combat reward display. */
+.idle-adventure .loot-empty {
+    padding-left: 0.1rem;
+    color: var(--adventure-muted);
+    list-style: none;
 }
 
 .idle-adventure .loot-table-panel {
@@ -2058,124 +1997,6 @@ html::-webkit-scrollbar {
     white-space: nowrap;
 }
 
-.idle-adventure .loot-notice {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    gap: 0.7rem;
-    padding: 0.85rem 1rem;
-    border: 1px solid rgba(255, 197, 111, 0.3);
-    border-radius: 12px;
-    background: #13232e;
-}
-
-.idle-adventure .loot-notice-title {
-    margin: 0;
-    color: var(--adventure-amber);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-}
-
-.idle-adventure .loot-empty {
-    margin: 0;
-    color: var(--adventure-muted);
-    font-size: 0.9rem;
-}
-
-.idle-adventure .loot-equipment {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
-    gap: 0.65rem;
-}
-
-.idle-adventure .loot-equipment-drop {
-    display: flex;
-    min-width: 0;
-    align-items: center;
-    gap: 0.8rem;
-    padding: 0.75rem;
-    border: 1px solid var(--item-rarity);
-    border-left-width: 3px;
-    border-radius: 8px;
-    background: #0c1a24;
-}
-
-.idle-adventure .loot-equipment-drop:is([data-rarity="rare"], [data-rarity="epic"], [data-rarity="unique"]) {
-    box-shadow: inset 0 0 20px color-mix(in srgb, var(--item-rarity) 10%, transparent), 0 0 12px color-mix(in srgb, var(--item-rarity) 12%, transparent);
-}
-
-.idle-adventure .loot-equipment-drop .item-sprite {
-    width: 68px;
-    height: 68px;
-    flex: 0 0 68px;
-    border: 2px solid var(--item-rarity);
-    border-radius: 6px;
-    background: #071624;
-    color: var(--item-rarity);
-}
-
-.idle-adventure .loot-equipment-drop .item-sprite img {
-    width: 100%;
-    height: 100%;
-}
-
-.idle-adventure .loot-equipment-copy {
-    min-width: 0;
-    overflow-wrap: anywhere;
-}
-
-.idle-adventure .loot-equipment-copy strong {
-    display: block;
-    color: var(--item-rarity);
-    font-size: 1.05rem;
-}
-
-.idle-adventure .loot-equipment-copy > span {
-    display: block;
-    margin-top: 0.3rem;
-    color: var(--adventure-muted);
-    font-size: 0.75rem;
-}
-
-.idle-adventure .loot-rewards {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.idle-adventure .loot-reward {
-    display: inline-flex;
-    max-width: 100%;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.45rem 0.65rem;
-    border: 1px solid var(--adventure-border);
-    border-radius: 6px;
-    background: #1b303d;
-    font-size: 0.9rem;
-}
-
-.idle-adventure .loot-reward > span {
-    min-width: 0;
-    overflow-wrap: anywhere;
-}
-
-.idle-adventure .loot-reward strong {
-    flex: 0 0 auto;
-    color: var(--adventure-green);
-    font-size: 1rem;
-}
-
-.idle-adventure .loot-reward--gold {
-    border-color: rgba(255, 197, 111, 0.3);
-}
-
-.idle-adventure .loot-reward--gold strong {
-    color: var(--adventure-amber);
-}
-
 .idle-adventure .combat-note {
     margin: 0.85rem 0 0;
     color: var(--adventure-muted);
@@ -2269,7 +2090,7 @@ html::-webkit-scrollbar {
 .idle-adventure .crafting-heading {
     display: grid;
     grid-template-columns: minmax(0, max-content);
-    margin: 0.2rem 0 0.15rem;
+    margin: 0 0 0.1rem;
 }
 
 .idle-adventure .crafting-heading h2 {
@@ -2278,7 +2099,7 @@ html::-webkit-scrollbar {
 }
 
 .idle-adventure .crafting-heading p {
-    margin: 0.25rem 0 0;
+    margin: 0;
     font-size: 0.8rem;
 }
 
@@ -2286,23 +2107,23 @@ html::-webkit-scrollbar {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.55rem;
-    margin: 0.3rem 0 0.2rem;
+    gap: 0.35rem;
+    margin: 0.2rem 0;
 }
 
 .idle-adventure .craft-category-filters {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.35rem;
-    padding: 0.2rem;
+    gap: 0.2rem;
+    padding: 0.1rem;
     border: 1px solid var(--adventure-border);
     border-radius: 10px;
     background: rgba(10, 22, 27, 0.5);
 }
 
 .idle-adventure .craft-filter {
-    min-height: 34px;
-    padding: 0.4rem 0.65rem;
+    min-height: 30px;
+    padding: 0.25rem 0.5rem;
     border: 1px solid transparent;
     border-radius: 7px;
     background: transparent;
@@ -2344,7 +2165,7 @@ html::-webkit-scrollbar {
 .idle-adventure .crafting-grid {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.6rem;
 }
 
 .idle-adventure .crafting-category-section {
@@ -2356,8 +2177,8 @@ html::-webkit-scrollbar {
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    margin-bottom: 0.55rem;
-    padding-bottom: 0.45rem;
+    margin-bottom: 0.3rem;
+    padding-bottom: 0.25rem;
     border-bottom: 1px solid var(--adventure-border);
 }
 
@@ -2379,7 +2200,7 @@ html::-webkit-scrollbar {
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 320px));
     align-items: stretch;
     justify-content: start;
-    gap: 0.7rem;
+    gap: 0.45rem;
 }
 
 .idle-adventure .crafting-empty {
@@ -2394,8 +2215,8 @@ html::-webkit-scrollbar {
     display: flex;
     min-width: 0;
     flex-direction: column;
-    gap: 0.55rem;
-    padding: 0.85rem;
+    gap: 0.35rem;
+    padding: 0.6rem;
     border: 1px solid var(--adventure-border);
     border-radius: 12px;
     background: linear-gradient(150deg, rgba(43, 68, 71, 0.86), rgba(24, 42, 46, 0.96));
@@ -2844,29 +2665,6 @@ html::-webkit-scrollbar {
     font-weight: 700;
 }
 
-.idle-adventure .loot-list {
-    display: flex;
-    max-height: 360px;
-    flex-direction: column;
-    gap: 0.35rem;
-    margin: 0;
-    padding: 0;
-    overflow: auto;
-    color: var(--adventure-muted);
-    font-size: 0.82rem;
-    list-style: none;
-}
-
-.idle-adventure .loot-list li::marker {
-    color: var(--adventure-green);
-}
-
-.idle-adventure .loot-empty {
-    padding-left: 0.1rem;
-    color: var(--adventure-muted);
-    list-style: none;
-}
-
 .idle-adventure .stats-panel {
     width: 100%;
     container-type: inline-size;
@@ -3223,26 +3021,9 @@ html::-webkit-scrollbar {
     filter: brightness(1.13);
 }
 
-.idle-adventure .skill-node.is-available {
-    border-color: rgba(241, 189, 102, 0.75);
-    background: linear-gradient(160deg, rgba(112, 83, 43, 0.9), #1b2d30);
-    color: var(--adventure-text);
-    box-shadow: 0 0 15px rgba(241, 189, 102, 0.1);
-}
-
 .idle-adventure .skill-node.is-available:not(.is-pending):not(.is-allocated) {
-    animation: available-skill-node-pulse 2.4s ease-in-out infinite;
-}
-
-@keyframes available-skill-node-pulse {
-    0%, 100% {
-        filter: grayscale(0) brightness(1);
-        box-shadow: 0 0 10px rgba(241, 189, 102, 0.12);
-    }
-    50% {
-        filter: grayscale(0.65) brightness(0.82);
-        box-shadow: 0 0 18px rgba(177, 184, 184, 0.3);
-    }
+    border-style: dashed;
+    box-shadow: none;
 }
 
 .idle-adventure .skill-node.is-pending {
@@ -3381,9 +3162,9 @@ html::-webkit-scrollbar {
 .idle-adventure .combat-buff[data-buff-id="voidCharges"] .buff-stacks { color:#f0ddff; }
 .idle-adventure .combat-buff[data-buff-id="voidCharges"].is-proccing { z-index:2; pointer-events:none; animation:void-buff-release 650ms ease-out both; }
 @keyframes void-buff-release {
-    0% { opacity:1; transform:scale(1); box-shadow:0 0 7px #c178ff; }
-    25% { opacity:1; transform:scale(1.12); filter:brightness(1.8); box-shadow:0 0 9px #f7ddff,0 0 24px #bb65ff; }
-    100% { opacity:0; transform:scale(1.2); filter:brightness(1); box-shadow:0 0 3px #bc70ff00; }
+    0% { opacity:1; box-shadow:0 0 7px #c178ff; }
+    25% { opacity:1; filter:brightness(1.8); box-shadow:0 0 9px #f7ddff,0 0 24px #bb65ff; }
+    100% { opacity:0; filter:brightness(1); box-shadow:0 0 3px #bc70ff00; }
 }
 @media (prefers-reduced-motion:reduce) {
     .idle-adventure .combat-buff[data-buff-id="voidCharges"].is-proccing { animation-name:void-buff-release-reduced; }
@@ -3394,7 +3175,7 @@ html::-webkit-scrollbar {
 }
 .idle-adventure .void-volley-player-glow {
     position:absolute; inset:-2px; z-index:3; border:1px solid #e3b5ff;
-    border-radius:inherit; pointer-events:none;
+    border-radius:calc(var(--ui-radius, 12px) + 2px); pointer-events:none;
     background:radial-gradient(ellipse at 50% 100%,#ad50f522,transparent 75%);
     box-shadow:inset 0 0 10px #c178ff66,0 0 9px #f7ddff,0 0 24px #bb65ff;
 }
@@ -3414,9 +3195,16 @@ html::-webkit-scrollbar {
 .idle-adventure .spell-effect path { fill:none; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:.14 1.1; animation:void-projectile-flight 400ms linear both; }
 .idle-adventure .spell-effect circle { fill:none; stroke-width:2; transform-box:fill-box; transform-origin:center; animation:void-impact 450ms ease-out both; }
 .idle-adventure .spell-effect .void-impact { opacity:0; animation-fill-mode:forwards; }
-.idle-adventure .spell-void-vortex ellipse { fill:#280c4c44; stroke:#b489ff; stroke-width:3; filter:drop-shadow(0 0 7px #9855ff); transform-box:fill-box; transform-origin:center; animation:void-vortex-collapse 650ms ease-in both; }
-@keyframes void-vortex-collapse { from {transform:scale(1.15);opacity:0;} 25% {opacity:1;} to {transform:scale(.05) rotate(100deg);opacity:0;} }
-@media (prefers-reduced-motion:reduce) { .idle-adventure .spell-void-vortex ellipse {animation-name:void-impact;} }
+.idle-adventure .spell-void-vortex .vortex-stream { animation-name:void-projectile-flight; stroke-dasharray:.14 1.1; }
+.idle-adventure .spell-void-vortex .vortex-stream-shadow { stroke:#380f6b;stroke-width:5.5;stroke-opacity:.72; }
+.idle-adventure .spell-void-vortex .vortex-stream-edge { stroke:#c7a1ff;stroke-width:2.6;stroke-opacity:.9;filter:drop-shadow(0 0 1.5px #7633cc); }
+.idle-adventure .spell-void-vortex .vortex-link {stroke-opacity:.52;}
+.idle-adventure .spell-void-vortex .vortex-curl {stroke-dasharray:.38 1.1;animation-name:vortex-inward-curl;}
+.idle-adventure .spell-void-vortex .vortex-contact { fill:none;stroke:#d1b0ff;stroke-width:2.5;opacity:.96;filter:drop-shadow(0 0 1.5px #7633cc);animation:vortex-contact 220ms linear both; }
+.idle-adventure .spell-void-vortex .vortex-contact-core { fill:#e6ccff;opacity:.95;animation:vortex-contact-fade 110ms ease-out both; }
+@keyframes vortex-contact { from {transform:scale(.72);opacity:.9;} 35% {opacity:.9;} to {transform:scale(1.16);opacity:0;} }
+@keyframes vortex-inward-curl { from {stroke-dashoffset:.38;opacity:0;} 4%,72% {opacity:1;} to {stroke-dashoffset:-.62;opacity:0;} }
+@keyframes vortex-contact-fade { from {opacity:.85;} to {opacity:0;} }
 .idle-adventure .spell-effect .void-missile { fill:#f7d9ff; stroke:#c99aff; stroke-width:1; filter:drop-shadow(0 0 6px #b56cff); animation:void-missile-glow 400ms linear both; }
 .idle-adventure .spell-void-bolt path { stroke:#d9bbff; stroke-width:5; filter:drop-shadow(0 0 6px #9655ff); }
 .idle-adventure .spell-void-bolt circle { stroke:#c39aff; }
@@ -3426,6 +3214,7 @@ html::-webkit-scrollbar {
 @keyframes void-impact { from {transform:scale(.55);opacity:1;} to {transform:scale(1.8);opacity:0;} }
 @keyframes void-missile-glow { from {opacity:0;} 8%,90% {opacity:1;} to {opacity:0;} }
 @media (prefers-reduced-motion:reduce) { .idle-adventure .spell-effect path { opacity:0;animation:void-contact-flash 180ms ease-out forwards;stroke-dasharray:none; } .idle-adventure .spell-effect .void-impact { animation:void-contact-flash 180ms ease-out forwards; } }
+@media (prefers-reduced-motion:reduce) { .idle-adventure .spell-void-vortex .vortex-stream {display:none;} .idle-adventure .spell-void-vortex .vortex-contact {animation-name:vortex-contact-fade;transform:none;} }
 @keyframes void-contact-flash { from {opacity:1;} to {opacity:0;} }
 @media (prefers-reduced-motion:reduce) { .idle-adventure .spell-effect .void-missile { display:none; } }
 
@@ -3515,6 +3304,8 @@ html::-webkit-scrollbar {
     .idle-adventure .logo {
         position: static;
         left: auto;
+        width: var(--nav-logo-size);
+        height: var(--nav-logo-size);
     }
 
     .idle-adventure .tutorial-notifications {

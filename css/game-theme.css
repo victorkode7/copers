@@ -68,7 +68,10 @@
 .idle-adventure .action-button:not(:disabled) { background: #22684b; border-color: var(--adventure-green); color: #efffd8; }
 .idle-adventure .action-button:hover:not(:disabled) { background: #2a8057; border-color: #c2ff9b; }
 .idle-adventure :is(.craft-filter,.crafting-mode-tabs button,.reroll-gear-option)[aria-pressed="true"] { background: #674819; border-color: var(--adventure-amber); color: #fff1bc; }
+.idle-adventure .craft-filter[aria-pressed="true"]:hover:not(:disabled) { background: #674819; border-color: var(--adventure-amber); color: #fff1bc; }
 .idle-adventure .potential-roll-choice[aria-pressed="true"] { background: #57337c; border-color: var(--adventure-purple); }
+.idle-adventure :is(.crafting-mode-tabs button,.reroll-gear-option)[aria-pressed="true"]:hover:not(:disabled) { background: #57337c; border-color: var(--adventure-purple); color: #fff1ff; }
+.idle-adventure .potential-roll-choice[aria-pressed="true"]:hover:not(:disabled) { background: #8d3f83; border-color: #ff91d2; color: #fff1fb; box-shadow: inset 0 0 0 1px #ff91d280, 0 0 8px #f06bb955; }
 .idle-adventure .auto-roll-action[aria-pressed="true"],
 .idle-adventure .auto-roll-action[aria-pressed="true"]:hover:not(:disabled) { background: #873c50; border-color: var(--adventure-coral); color: #fff0e9; }
 .idle-adventure :is(.nav-button,.action-button,.craft-filter,.skill-tree-control,.mastery-actions button,.reroll-gear-option):disabled { background: #263952; border-color: #52637d; color: #bcc7d6; opacity: .55; }
@@ -113,10 +116,14 @@
 
 /* Map art and sprite colors remain untouched. */
 .idle-adventure :is(.map-button,.world-button) { border-radius: var(--ui-radius); box-shadow: var(--ui-frame); }
-.idle-adventure .map-button.incomplete { border-color: #4f8fc3; }
-.idle-adventure .map-button.completed { border-color: #63cc94; }
+/* Resting outlines show kill-goal progress; blue hover and gold current show interaction. */
+.idle-adventure .map-button.incomplete { border-color: #ffb45a; }
+.idle-adventure .map-button.completed { border-color: var(--adventure-green); }
+.idle-adventure .map-button:hover:not(:disabled) { border-color: var(--adventure-blue); box-shadow: var(--ui-frame), inset 0 0 0 1px #70dcff66; }
 .idle-adventure .map-button.selected,
+.idle-adventure .map-button.selected:hover:not(:disabled),
 .idle-adventure .world-button.selected { border-color: var(--adventure-amber); box-shadow: var(--ui-frame), inset 0 0 0 1px var(--adventure-amber); }
+.idle-adventure .map-button:focus-visible { outline-color: var(--adventure-blue); }
 .idle-adventure .map-button.selected strong { color: #fff3ba; }
 .idle-adventure .map-button.locked { border-color: #455e7a; }
 .idle-adventure .map-selector-lock[aria-pressed="true"] { color: var(--adventure-amber); border-color: var(--adventure-amber); background: #574522; }
@@ -159,19 +166,26 @@
 .idle-adventure .town-production-bar>span { background: linear-gradient(90deg,color-mix(in srgb,var(--town-accent) 65%,#057b80),var(--town-accent)); }
 .idle-adventure .town-resource-list { scrollbar-color: var(--town-border) transparent; }
 
-/* Gold available, green learned, purple planned; existing node shapes stay. */
+/* Keep stat colors in every state: dashed means available, a solid inset ring
+   means learned. Availability must not borrow a different node type's hue. */
 .idle-adventure .skill-tree-viewport { border-color: #5c81b9; border-radius: var(--ui-radius); box-shadow: var(--ui-panel-frame); }
 .idle-adventure :is(.skill-points-bar,.skill-build-file-controls) { border-radius: var(--ui-radius); background-color: #102850f2; border-color: #607cb1; }
 .idle-adventure .skill-tree-link { stroke: #6882a7; }
 .idle-adventure .skill-tree-link.is-active { stroke: var(--ui-teal); filter: none; }
-.idle-adventure .skill-node { border-color: #5678ab; background: linear-gradient(160deg,#31558a,#162b54); box-shadow: var(--ui-frame); }
-.idle-adventure .skill-node.is-available { border-color: var(--adventure-amber); background: linear-gradient(160deg,#805c24,#493b29); color: #fff0be; }
-.idle-adventure .skill-node.is-available:not(.is-pending):not(.is-allocated) { animation: none; }
-.idle-adventure .skill-node.is-allocated { border-color: var(--ui-teal); background: linear-gradient(160deg,#247b70,#15443e); color: #d5ffdf; box-shadow: var(--ui-frame), inset 0 0 0 1px #54e4b340; }
-.idle-adventure .skill-node.is-pending { border-color: var(--adventure-purple); box-shadow: var(--ui-frame), 0 0 0 2px #ae74d47a; }
-.idle-adventure .skill-node:is(.is-base-health,.is-origin.is-base-health) { border-color: var(--adventure-coral); background: radial-gradient(circle,#8e3b61,#482b4a 74%); }
-.idle-adventure .skill-node.is-base-attackSpeed { border-color: #a9ee60; background: radial-gradient(circle,#548d3a,#244b38 74%); }
-.idle-adventure .skill-node.is-base-mana { border-color: #9bafff; background: radial-gradient(circle,#454399,#222d62 74%); }
+.idle-adventure .skill-node { --node-border:#5678ab; --node-fill:linear-gradient(160deg,#31558a,#162b54); --node-icon:#c2d5ed; border-color:var(--node-border); background:var(--node-fill); box-shadow:var(--ui-frame); }
+.idle-adventure .skill-node.is-available { border-color:var(--node-border); background:var(--node-fill); color:var(--node-icon); }
+.idle-adventure .skill-node:not(.is-allocated):not(.is-pending) { box-shadow:none; }
+.idle-adventure .skill-node.is-available:not(.is-pending):not(.is-allocated) { border-style:dashed; animation:none; }
+.idle-adventure .skill-node.is-allocated { border-color:var(--node-border); border-style:solid; background:var(--node-fill); color:var(--node-icon); box-shadow:var(--ui-frame),inset 0 0 0 2px var(--node-border); }
+.idle-adventure .skill-node.is-pending { border-color:var(--node-border); border-style:solid; box-shadow:var(--ui-frame),0 0 0 2px #ae74d47a; }
+.idle-adventure .skill-node:is(.is-base-health,.is-origin.is-base-health) { --node-border:#ff8175; --node-fill:radial-gradient(circle,#8e3b61,#482b4a 74%); --node-icon:#ff9c98; border-color:var(--node-border); background:var(--node-fill); }
+.idle-adventure .skill-node.is-base-attackSpeed { --node-border:#a9ee60; --node-fill:radial-gradient(circle,#548d3a,#244b38 74%); --node-icon:#c5f28d; border-color:var(--node-border); background:var(--node-fill); }
+.idle-adventure .skill-node.is-base-accuracy { --node-border:#79c7ff; --node-fill:radial-gradient(circle,#285b8c,#142e53 74%); --node-icon:#99d5ff; border-color:var(--node-border); background:var(--node-fill); }
+.idle-adventure .skill-node:is(.is-base-damage,.is-origin.is-base-damage) { --node-border:#edbf56; --node-fill:radial-gradient(circle,#715222,#352b1d 74%); --node-icon:#ffdc71; border-color:var(--node-border); background:var(--node-fill); }
+.idle-adventure .skill-node.is-base-mana { --node-border:#9bafff; --node-fill:radial-gradient(circle,#454399,#222d62 74%); --node-icon:#c2baff; border-color:var(--node-border); background:var(--node-fill); }
+.idle-adventure .skill-node[data-skill-node="bleed"] { --node-border:#bd5969; --node-fill:radial-gradient(circle at 50% 35%,#602637,#221d29 80%); --node-icon:#ff909f; }
+.idle-adventure .skill-node:is([data-skill-node="righteousFire"],[data-skill-node="fireOfTheRighteous"]) { --node-border:#ed783b; --node-fill:radial-gradient(circle at 50% 35%,#8c3d23,#361b1d 76%); --node-icon:#ffb360; }
+.idle-adventure .skill-node:is(.is-available,.is-allocated,.is-pending,.is-locked) .skill-node-icon { color:var(--node-icon); }
 .idle-adventure .mastery-node { border-color: #6084bd; background: #173460; color: #b0c8ec; box-shadow: var(--ui-frame); }
 .idle-adventure .mastery-node.is-available { border-color: var(--ui-teal); background: #175953; color: #ccffdf; }
 .idle-adventure .mastery-node.is-allocated { border-color: var(--adventure-amber); background: #715023; color: #fff1b8; }

@@ -11,11 +11,12 @@
         state.materials = Object.fromEntries(Object.keys(materialNames).map(id => [id, 400]));
         render(); category('all');
         const tabs = [...page.querySelectorAll('[data-inventory-category]')];
-        await Promise.all(tabs.map(tab => {
-            const source = getComputedStyle(tab, '::before').backgroundImage.match(/url\(["']?([^"')]+)["']?\)/)[1];
-            const image = new Image(); image.src = source; return image.decode();
-        }));
-        check('all four category icons load with pixelated rendering', tabs.length === 4 && tabs.every(tab => getComputedStyle(tab, '::before').imageRendering === 'pixelated'));
+        check('category tabs are text-only and compact', tabs.length === 4 && tabs.every(tab =>
+            getComputedStyle(tab, '::before').backgroundImage === 'none' && tab.getBoundingClientRect().height < 44));
+        check('nonessential inventory descriptions are removed', !page.textContent.includes('Select a slot to browse gear') &&
+            !page.textContent.includes('watch your combat stats improve') &&
+            !page.textContent.includes('Select a material for its description'));
+        check('gear hint only appears for the first-gear tutorial', page.querySelector('#gearSelectionHint').hidden);
         check('inventory uses the shared navy theme and keeps its brick artwork', getComputedStyle(page).backgroundColor === 'rgb(16, 44, 83)' && getComputedStyle(page).borderImageSource === 'none' && getComputedStyle(page.querySelector('.town-section')).backgroundImage.includes('brick128.png') && !page.querySelector('.leather-frame, .cosmic-frame'));
         check('the redesign controls and item descriptions are removed', !page.querySelector('#inventorySearch, #inventoryRarity, .inventory-totals, .inventory-item-description'));
         check('gear displays the actual unequipped inventory', bag().length === state.ownedItemIds.length);

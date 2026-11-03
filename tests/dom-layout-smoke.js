@@ -30,8 +30,6 @@
                 render();
                 await capture(view);
             }
-            document.querySelector('.loot-panel').open = true;
-            await capture('loot-open');
         } else {
             await capture('editor');
         }

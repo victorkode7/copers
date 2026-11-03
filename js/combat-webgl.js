@@ -18,6 +18,7 @@
         varying mediump vec2 v_size;
         varying mediump vec4 v_color;
         varying mediump vec4 v_info;
+        varying mediump vec4 v_cutout1, v_cutout2;
         varying mediump vec3 v_glowColor;
         varying mediump float v_pathLength;
         void main() {
@@ -32,16 +33,18 @@
                     center = q*q*q*a_origin.xy + 3.0*q*q*p*a_curve.xy + 3.0*q*p*p*a_curve.zw + p*p*p*a_target.xy;
                 } else center = mix(a_origin.xy, a_target.xy, p);
             }
-            float scale = mix(a_uv.w, a_target.z, t);
+            bool buffGlow = a_timing.w > 17.5 && a_timing.w < 18.5;
+            float scale = buffGlow ? 1.0 : mix(a_uv.w, a_target.z, t);
             vec2 local = a_uv.xy * a_origin.zw * scale;
-            float angle=a_target.w+(a_timing.w>9.5&&a_timing.w<10.5?t*1.74533:0.0);
+            float angle=buffGlow?0.0:a_target.w+(a_timing.w>9.5&&a_timing.w<10.5?t*1.74533:0.0);
             float c = cos(angle), s = sin(angle);
             vec2 pos = center + vec2(c*local.x-s*local.y, s*local.x+c*local.y);
-            if (a_timing.w >= 12.0) pos = a_origin.xy;
+            if (a_timing.w >= 12.0 && !buffGlow) pos = a_origin.xy;
             vec2 p = (pos + u_origin) / u_viewport;
             gl_Position = vec4(p.x*2.0-1.0, 1.0-p.y*2.0, 0.0, 1.0);
             v_uv = a_uv.xy; v_size=a_timing.w>=12.0?a_origin.zw:a_origin.zw*scale; v_color = a_color;
             v_glowColor = a_timing.w >= 12.0 ? a_curve.xyz : a_color.rgb;
+            v_cutout1 = a_curve; v_cutout2 = a_target;
             v_pathLength = a_curve.w;
             v_info = vec4(a_uv.z > 0.5 ? 0.0 : age, a_uv.z > 0.5 ? 1.0 : a_timing.y, a_timing.w, a_target.z);
         }`;
@@ -51,6 +54,7 @@
         varying mediump vec2 v_uv;
         varying mediump vec2 v_size;
         varying mediump vec4 v_color, v_info;
+        varying mediump vec4 v_cutout1, v_cutout2;
         varying mediump vec3 v_glowColor;
         varying mediump float v_pathLength;
         float segmentDistance(vec2 p, vec2 a, vec2 b) {
@@ -63,7 +67,8 @@
             float t=clamp(age/duration,0.0,1.0), r=length(v_uv);
             float fade=(1.0-smoothstep(0.35,1.0,t)), alpha=0.0;
             vec3 color=v_color.rgb;
-            if(style>=12.0) {
+            bool buffGlow=style>17.5&&style<18.5;
+            if(style>=12.0&&!buffGlow) {
                 float flight=v_info.w, head=clamp(age/flight,0.0,1.0);
                 if(style>14.5 && style<15.5) head*=head;
                 float arrival=age-v_uv.x*flight, edge=abs(v_uv.y);
@@ -78,15 +83,18 @@
                     color=mix(vec3(0.18,0.025,0.035),vec3(1.0,0.48,0.12),max(core,halo));
                     color=mix(color,vec3(1.0,0.83,0.42),core);
                 } else {
-                    if(v_uv.x>head && (style<13.5 || style>15.5)) discard;
+                    if(v_uv.x>head && (style<13.5 || style>15.5 && style<16.5)) discard;
                     // Widths and blur radii are CSS pixels, independent of the
                     // padded strip needed to keep the glow from being clipped.
                     float lateral=edge*(v_size.x+v_size.y*3.0);
-                    float along=style>13.5 && style<15.5 ? max(0.0,max(head-0.14-v_uv.x,v_uv.x-head))*v_pathLength : 0.0;
+                    float tail=style>16.5?0.38:0.14;
+                    float along=style>13.5 && style<15.5 || style>16.5 ? max(0.0,max(head-tail-v_uv.x,v_uv.x-head))*v_pathLength : 0.0;
                     float distance=length(vec2(lateral,along));
                     float core=1.0-smoothstep(v_size.x-0.5,v_size.x+0.5,distance);
                     float halo=exp(-0.5*pow(max(0.0,distance-v_size.x)/v_size.y,2.0))*0.55*u_glow;
-                    if(style>15.5) {
+                    if(style>16.5) {
+                        fade=smoothstep(0.0,0.04,t)*(1.0-smoothstep(0.72,1.0,t));
+                    } else if(style>15.5) {
                         float lifetime=duration*0.5+v_uv.x*(duration*0.5-flight);
                         fade=1.0-smoothstep(lifetime*0.45,lifetime,max(0.0,arrival));
                     } else if(style>13.5) {
@@ -108,8 +116,14 @@
                 float d=abs(r-0.75)/max(gradient,0.001);
                 if(style>9.5)fade*=smoothstep(0.0,0.25,t);
                 alpha=((1.0-smoothstep(0.8,2.0,d))+exp(-d*0.6)*0.15*u_glow)*fade;
-            } else if(style<2.5 || (style>10.5 && style<11.5)) {
-                float radius=min(12.0,min(v_size.x,v_size.y)*0.25);
+            } else if(style<2.5 || (style>10.5 && style<11.5) || (style>17.5 && style<18.5)) {
+                if(style>17.5) {
+                    vec2 point=v_uv*v_size;
+                    bool inFirst=point.x>=v_cutout1.x&&point.y>=v_cutout1.y&&point.x<=v_cutout1.z&&point.y<=v_cutout1.w&&v_cutout1.z>v_cutout1.x&&v_cutout1.w>v_cutout1.y;
+                    bool inSecond=point.x>=v_cutout2.x&&point.y>=v_cutout2.y&&point.x<=v_cutout2.z&&point.y<=v_cutout2.w&&v_cutout2.z>v_cutout2.x&&v_cutout2.w>v_cutout2.y;
+                    if(inFirst||inSecond)discard;
+                }
+                float radius=style>17.5?5.0:min(12.0,min(v_size.x,v_size.y)*0.25);
                 vec2 q=abs(v_uv)*v_size-(v_size-vec2(radius));
                 float d=length(max(q,0.0))+min(max(q.x,q.y),0.0)-radius;
                 if(style>10.5)fade=1.0-smoothstep(0.85,1.0,t);
@@ -218,10 +232,14 @@
     function verticesFor(spec) {
         const {x,y,width=20,height=width,endX=x,endY=y,scale=1,rotation=0,style=0,duration=500,delay=0,
             color=[1,1,1],opacity=1,move=0,control1={x,y},control2={x:endX,y:endY},startScale=1,flight=0}=spec;
+        const buffGlow=style>17.5&&style<18.5,cutouts=spec.cutouts||[];
+        const firstCutout=cutouts[0]||[0,0,0,0],secondCutout=cutouts[1]||[0,0,0,0];
         const born=now()+delay/1000,seconds=duration/1000;
         const vertices=new Float32Array(144);
-        corners.forEach((uv,index)=>vertices.set([x,y,width/2,height/2,endX,endY,scale,rotation,
-            move===1?flight/1000:control1.x,control1.y,control2.x,control2.y,born,seconds,move,style,...color,opacity,...uv,spec.persistent?1:0,startScale],index*24));
+        corners.forEach((uv,index)=>vertices.set([x,y,width/2,height/2,
+            buffGlow?secondCutout[0]:endX,buffGlow?secondCutout[1]:endY,buffGlow?secondCutout[2]:scale,buffGlow?secondCutout[3]:rotation,
+            buffGlow?firstCutout[0]:move===1?flight/1000:control1.x,buffGlow?firstCutout[1]:control1.y,
+            buffGlow?firstCutout[2]:control2.x,buffGlow?firstCutout[3]:control2.y,born,seconds,move,style,...color,opacity,...uv,spec.persistent?1:0,startScale],index*24));
         return {vertices,expires:born+seconds,category:spec.category||'abilities',type:spec.type||'shape',requiresAbilities:spec.requiresAbilities===true};
     }
     function emit(spec) {
@@ -237,7 +255,7 @@
         }
         ambient=next;if(changed)wake();
     }
-    function trail({points,flight=400,duration=flight,delay=0,width=6,strokeWidth=3,glowRadius=4,style=12,color=[1,1,1],glowColor=color,category='projectiles',type='trail',parametric=false}) {
+    function trail({points,flight=400,duration=flight,delay=0,width=6,strokeWidth=3,glowRadius=4,style=12,color=[1,1,1],glowColor=color,opacity=1,category='projectiles',type='trail',parametric=false}) {
         const halfStroke=strokeWidth/2,blur=Math.max(1,glowRadius);
         if(style!==13)width=halfStroke+blur*3;
         const distances=[0];for(let i=1;i<points.length;i++)distances.push(distances[i-1]+Math.hypot(points[i].x-points[i-1].x,points[i].y-points[i-1].y));
@@ -246,7 +264,7 @@
             const before=points[Math.max(0,index-1)],after=points[Math.min(points.length-1,index+1)];
             const dx=after.x-before.x,dy=after.y-before.y,size=Math.hypot(dx,dy)||1;
             return [-1,1].map(side=>[point.x-dy/size*side*width,point.y+dx/size*side*width,halfStroke,blur,
-                0,0,flight/1000,0,...glowColor,length,born,duration/1000,0,style,...color,1,parametric?index/(points.length-1):distances[index]/length,side,0,1]);
+                0,0,flight/1000,0,...glowColor,length,born,duration/1000,0,style,...color,opacity,parametric?index/(points.length-1):distances[index]/length,side,0,1]);
         });
         const vertices=new Float32Array((points.length-1)*144);let offset=0;
         for(let i=1;i<strip.length;i++)for(const vertex of [strip[i-1][0],strip[i-1][1],strip[i][0],strip[i][0],strip[i-1][1],strip[i][1]]){vertices.set(vertex,offset);offset+=24;}

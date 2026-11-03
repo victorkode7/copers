@@ -33,6 +33,7 @@
 .combat-webgl-active :is(.enemy-dot-status,.enemy-bleed-status).is-applying { animation: none !important; }
 .combat-webgl-active :is(.enemy-mark,.health-track,.enemy-dot-status,.enemy-bleed-status,.combat-buff),
 .combat-webgl-active .enemy-mark img { filter: none !important; box-shadow: none !important; }
+.idle-adventure.combat-webgl-active .combat-buff.is-proccing[data-buff-id] { z-index: 5; }
 
 /* Keep health, quantities and status labels; suppress only decorative visuals. */
 .combat-no-shaking .enemy-card { animation: none !important; }

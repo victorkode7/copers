@@ -41,6 +41,7 @@
         check('Piercing Arrow deals twice normal physical damage to the target row only',
             monsters.slice(0, 3).every(monster => monster.hp === 100 - piercingDamage) && monsters.slice(3).every(monster => monster.hp === 100));
         check('piercing arrows have an on-screen effect', Boolean(elements.combatPanel.querySelector('[data-arrow-kind="piercingArrow"] path')));
+        check('Piercing Arrow uses a tight glow instead of blooming around its tip',getComputedStyle(elements.combatPanel.querySelector('[data-arrow-kind="piercingArrow"] path')).filter.includes('1px'));
         check('piercing hits show their beam without labels above plates', !elements.enemyRoster.querySelector('[data-combat-hit-badge].is-visible'));
 
         monsters = fresh({forkingArrow: 1}, 9);

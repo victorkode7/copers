@@ -1,8 +1,11 @@
 (function () {
     'use strict';
     const $=id=>document.getElementById(id);
-    let opened=false, selected='root', signature='', message='';
     const unlocked=map=>TownProgression.masteryUnlocked(state,worldData.findIndex(world=>world.mapIds.includes(map.id)));
+    let opened=false, selected='root', signature='', message='', wasAccessible=unlocked(currentMap()), unlockCalloutTimer;
+    function clearUnlockCallout(button=$('openMapMastery')) {
+        clearTimeout(unlockCalloutTimer);unlockCalloutTimer=null;button.classList.remove('is-newly-unlocked');
+    }
     function award(map) {
         if(!unlocked(map))return false;
         const earned=MasterySystem.milestone(map,state.kills[map.id]||0,0,worldContent).earned, previous=state.mapMastery?.[map.id];
@@ -38,12 +41,18 @@
         return transact(remaining.filter(node=>!known.has(node)||active.has(node)));
     }
     function close(repaint=true) {opened=false;signature='';message='';if(repaint){window.render();$('openMapMastery').focus({preventScroll:true});}}
-    function open() {if(!unlocked(currentMap()))return false;opened=true;selected=MasterySystem.tree(worldContent,currentMap()).nodes.find(node=>!node.start)?.id||null;signature='';message='';window.render();$('mapMasteryTitle').focus({preventScroll:true});}
+    function open() {if(!unlocked(currentMap()))return false;clearUnlockCallout();opened=true;selected=MasterySystem.tree(worldContent,currentMap()).nodes.find(node=>!node.start)?.id||null;signature='';message='';window.render();$('mapMasteryTitle').focus({preventScroll:true});}
     function render() {
         const map=currentMap(), record=MasterySystem.record(state,map,worldContent),available=MasterySystem.available(state,map,worldContent),tree=MasterySystem.tree(worldContent,map);
         const complete=tree.nodes.every(node=>node.start||record.nodes.includes(node.id));
         const button=$('openMapMastery');updateCombatText(button,complete?'Mastery ✓':'Mastery'+(available>0?' ('+available+')':''));button.classList.toggle('has-points',available>0&&!complete);
-        const accessible=unlocked(map);button.hidden=!accessible;button.disabled=!accessible;
+        const accessible=unlocked(map);
+        if(accessible&&!wasAccessible) {
+            clearUnlockCallout(button);button.classList.add('is-newly-unlocked');
+            unlockCalloutTimer=setTimeout(()=>{button.classList.remove('is-newly-unlocked');unlockCalloutTimer=null;},3800);
+        } else if(!accessible)clearUnlockCallout(button);
+        wasAccessible=accessible;
+        button.hidden=!accessible;button.disabled=!accessible;
         const worldIndex=worldData.findIndex(world=>world.mapIds.includes(map.id));
         button.title=accessible?'Monster mastery':worldIndex===0?'Build the Menagerie after reaching Town Hall T2 to unlock mastery.':worldIndex===1?'Prestige the Menagerie to unlock World 2 mastery.':'Mastery is not yet available for this world.';
         if(!accessible)opened=false;

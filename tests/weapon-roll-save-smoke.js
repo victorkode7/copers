@@ -19,7 +19,7 @@
         ItemCrafting.setMode('stats');render();
         const pick = item => document.querySelector('[data-reroll-item="'+item.id+'"]').click();
         pick(wand);
-        check('weapon saving explains its exact price and free restoration',!$('weaponRollSave').hidden&&$('saveWeaponRoll').textContent.includes('10,000')&&$('restoreWeaponRoll').textContent.includes('Free'));
+        check('weapon saving shows its price on a separate line and restoration is free',!$('weaponRollSave').hidden&&$('saveWeaponRollLabel').textContent==='Save current roll'&&$('saveWeaponRoll').querySelector('.weapon-roll-save-price')?.textContent==='10,000 gold'&&getComputedStyle($('saveWeaponRoll')).flexDirection==='column'&&$('restoreWeaponRoll').textContent.includes('Free'));
         check('empty weapons cannot purchase a save or restore',!ItemCrafting.saveRoll(wand.id).ok&&$('saveWeaponRoll').disabled&&$('restoreWeaponRoll').disabled);
         Math.random=()=>0;
         check('weapon can first craft its normal stats',ItemCrafting.reroll(wand.id).ok);
@@ -50,7 +50,14 @@
         check('saving a reclaimed roll purchases a fresh snapshot',ItemCrafting.saveRoll(wand.id).ok);
         Math.random=()=>0;ItemCrafting.reroll(bow.id);const wandSave=clone(state.itemRollSaves[wand.id]);
         check('each weapon has its own independent saved roll',ItemCrafting.saveRoll(bow.id).ok&&same(state.itemRollSaves[wand.id],wandSave)&&same(state.itemRollSaves[bow.id],state.itemCrafts[bow.id]));
-        pick(armor);check('armor has no weapon snapshot controls and cannot buy or restore one',$('weaponRollSave').hidden&&!ItemCrafting.saveRoll(armor.id).ok&&!ItemCrafting.restoreRoll(armor.id).ok);
+        pick(armor);
+        check('rerollable armor shows saved-roll controls',!$('weaponRollSave').hidden&&$('weaponRollSaveHeading').textContent==='Saved roll');
+        check('armor can craft and save its own roll',ItemCrafting.reroll(armor.id).ok&&ItemCrafting.saveRoll(armor.id).ok&&same(state.itemRollSaves[armor.id],state.itemCrafts[armor.id]));
+        const armorSaved=clone(state.itemRollSaves[armor.id]);
+        Math.random=()=>.999999;
+        check('armor roll can change and restore independently',ItemCrafting.reroll(armor.id).ok&&!same(state.itemCrafts[armor.id],armorSaved)&&ItemCrafting.restoreRoll(armor.id).ok&&same(state.itemCrafts[armor.id],armorSaved)&&!Object.hasOwn(state.itemRollSaves,armor.id));
+        Math.random=()=>0;
+        check('weapon snapshot remains after restoring armor roll',same(state.itemRollSaves[wand.id],wandSave));
         pick(wand);state.itemCrafts={...state.itemCrafts,[wand.id]:clone(first)};state.gold=9999;const poor=clone(createGameSave());
         check('insufficient funds preserve gold, current stats and the previous saved roll',!ItemCrafting.saveRoll(wand.id).ok&&same(createGameSave(),poor));
         state.gold=1000000;ItemCrafting.reroll(wand.id);
@@ -60,27 +67,27 @@
         check('failed restoration retains the saved roll and current stats, health and mana',!ItemCrafting.restoreRoll(wand.id).ok&&same(createGameSave(),before)&&same(state.itemRollSaves[wand.id],before.itemRollSaves[wand.id])&&localStorage.getItem(saveKey)===stored);
         Storage.prototype.setItem=originalWrite;
         const owned=state.ownedItemIds;state.ownedItemIds=[];const unowned=clone(createGameSave());
-        check('unowned weapons cannot purchase or restore saved rolls',!ItemCrafting.saveRoll(wand.id).ok&&!ItemCrafting.restoreRoll(wand.id).ok&&same(createGameSave(),unowned));state.ownedItemIds=owned;
+        check('unowned equipment cannot purchase or restore saved rolls',!ItemCrafting.saveRoll(wand.id).ok&&!ItemCrafting.restoreRoll(wand.id).ok&&same(createGameSave(),unowned));state.ownedItemIds=owned;
         const profile=clone(createGameSave()), transfer=new DataTransfer();
         transfer.items.add(new File([JSON.stringify({format:'idle-adventure-profile',version:1,save:profile})],'weapon-rolls.json',{type:'application/json'}));
         state.itemRollSaves={};$('importProfileFile').files=transfer.files;$('importProfileFile').dispatchEvent(new Event('change'));
         for(let i=0;$('importProfile').disabled&&i<200;i++)await new Promise(resolve=>setTimeout(resolve,5));
-        check('profile imports recover saved rolls for every weapon',same(state.itemRollSaves,profile.itemRollSaves));
+        check('profile imports recover saved rolls for every equipment item',same(state.itemRollSaves,profile.itemRollSaves));
         const legacy=clone(profile);delete legacy.itemRollSaves;
         check('older saves start with no snapshots and preserve other progress',Object.keys(parseGameSave(JSON.stringify(legacy)).itemRollSaves).length===0&&parseGameSave(JSON.stringify(legacy)).gold===profile.gold);
-        const future=clone(profile);future.itemRollSaves.futureWeapon=[{stat:'futureStat',value:7},null];
-        check('unavailable weapons and unknown stats remain recoverable',same(parseGameSave(JSON.stringify(future)).itemRollSaves.futureWeapon,future.itemRollSaves.futureWeapon));
+        const future=clone(profile);future.itemRollSaves.futureEquipment=[{stat:'futureStat',value:7},null];
+        check('unavailable equipment and unknown stats remain recoverable',same(parseGameSave(JSON.stringify(future)).itemRollSaves.futureEquipment,future.itemRollSaves.futureEquipment));
         const aliases=clone(profile);aliases.itemRollSaves.oldWeapon=aliases.itemRollSaves[wand.id];delete aliases.itemRollSaves[wand.id];
         const migrated=SaveCompatibility.migrate(aliases,saveCompatibilityContext(),[{version:99,items:{aliases:{oldWeapon:wand.id},removed:[]}}]);
         check('item renames preserve their saved crafted rolls',same(migrated.itemRollSaves[wand.id],profile.itemRollSaves[wand.id])&&!migrated.itemRollSaves.oldWeapon);
         for(const bad of [null,[],{bad:[]},{bad:[{stat:'mana',value:-1}]},{bad:[{stat:'mana',value:1},{stat:'mana',value:2}]}]) {
             let rejected=false;try{parseGameSave(JSON.stringify({...profile,itemRollSaves:bad}));}catch{rejected=true;}
-            check('malformed saved weapon rolls are rejected safely',rejected);
+            check('malformed saved equipment rolls are rejected safely',rejected);
         }
         const count=wand.crafting.slots;wand.crafting.slots=1;
         check('slot-count edits preserve reclaimed surplus stats and consume the snapshot',ItemCrafting.restoreRoll(wand.id).ok&&state.itemCrafts[wand.id].length===profile.itemRollSaves[wand.id].length&&ItemCrafting.rollsFor(wand).length===1&&!Object.hasOwn(state.itemRollSaves,wand.id));
         wand.crafting.slots=count;ItemCrafting.setMode('stats');render();pick(wand);
-        check('saved weapon roll controls fit the viewport',document.documentElement.scrollWidth<=innerWidth);
+        check('saved roll controls fit the viewport',document.documentElement.scrollWidth<=innerWidth);
         if(preview){$('weaponRollSave').scrollIntoView({block:'center'});}
         else {
             window.confirm=()=>true;$('resetGame').click();
