@@ -1,0 +1,8 @@
+PASS loot appears beside combat status without a separate window
+PASS gold uses a rising number and materials use their configured sprites
+PASS material quantities sit at the top right of the sprite
+PASS ordinary loot fades in and drifts upwards while fading out
+FAIL rare equipment has its name, sprite, and a matching plate highlight
+ERROR Error: rare equipment has its name, sprite, and a matching plate highlight
+    at check (file:///D:/victo/Desktop/copers/tests/loot-effects-smoke.js:3:98)
+    at file:///D:/victo/Desktop/copers/tests/loot-effects-smoke.js:36:9

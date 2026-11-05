@@ -1,0 +1,40 @@
+PASS loot appears beside combat status without a separate window
+PASS gold uses a rising number and materials use their configured sprites
+PASS material quantities sit at the top right of the sprite
+PASS ordinary loot fades in and drifts upwards while fading out
+PASS rare equipment has its name, sprite, and a matching plate highlight
+PASS the loot row follows the status badge with a narrow-screen fallback
+PASS rapid matching drops merge beside the status
+PASS later materials do not replay an old equipment reveal
+PASS different monsters combine matching drops in the shared status area
+PASS a missing sprite keeps its material quantity badge
+PASS equipment labels remain inside the viewport
+PASS loot lines up horizontally without overlapping
+PASS ordinary effects leave combat layout and clicks untouched
+PASS visual rewards do not change awarded gold or materials
+PASS floating rewards remove themselves after fading
+PASS combat updates do not replay previous drops
+PASS a kill dropping five materials displays all five rewards
+PASS five materials plus gold fit in a compact horizontal row
+PASS crowded drops keep a bounded number of sprites
+PASS leaving combat clears all transient effects
+PASS returning to combat does not replay saved loot
+PASS reduced motion keeps fades but removes upward movement
+PASS reduced-motion rewards also disappear automatically
+PASS scrolling the status out of view clears ordinary floating rewards
+PASS changing maps clears the effects
+PASS unique loot is a clickable and keyboard-accessible reward
+PASS unique loot fades in without moving or fading back out
+PASS unique rewards remain after their entry animation and normal fade duration
+PASS later kills preserve the existing unique reward
+PASS scrolling and resizing do not dismiss unique loot
+PASS clicking starts a unique fade-out before removing it
+PASS the clicked unique becomes translucent during dismissal
+PASS finishing the fade removes only the display and keeps the item
+PASS reduced-motion unique loot also has no expiry timer
+PASS switching game views dismisses unique loot
+PASS switching browser windows dismisses unique loot
+PASS changing maps also dismisses unique loot
+PASS the viewport has no horizontal overflow
+PASS no runtime errors
+SMOKE PASSED

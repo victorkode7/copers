@@ -5,7 +5,7 @@
     const originalUpgrade=TownContent.buildings.lumberOutpost.upgradeCost,originalPrestige=TownContent.buildings.lumberOutpost.prestigeCost;
     const originalRequires=TownContent.buildings.lumberOutpost.prestigeRequires;
     try {
-        await document.fonts.ready;
+        await document.fonts.ready;state.defeatedBossWorldIds=[worldData[0].id];
         state.townProgress=TownProgression.defaults();state.gold=12345;state.materials.gel=25;state.materials.hide=8;state.currentView='map';state.isInTown=false;state.combatPaused=true;resetCombatClock();clearOfflineRecap();render();
         const pages=['mapButton','townButton','upgradesButton','inventoryButton'],positions=pages.map(id=>$(id).getBoundingClientRect());$('townPageButton').hidden=true;
         check('Town does not shift the existing game navigation',pages.every((id,index)=>{const rect=$(id).getBoundingClientRect();return Math.abs(rect.left-positions[index].left)<1&&Math.abs(rect.top-positions[index].top)<1;}));$('townPageButton').hidden=false;
@@ -93,6 +93,8 @@
         check('Town reset persists immediately',JSON.stringify(parseGameSave(localStorage.getItem(saveKey)).townProgress)===JSON.stringify(TownProgression.defaults()));
         $('mapButton').click();check('leaving Town restores the normal combat side panels',panels.slice(1).every(panel=>panel.getClientRects().length>0)&&elements.worldPanel.hidden===!worldSelectorIsUnlocked());
         window.confirm=()=>true;$('resetGame').click();check('full reset clears the purchased unlock',!state.townProgress.buildings.lumberOutpost&&Object.keys(state.townProgress.resources).length===0);
+        check('full reset locks Town again',$('townPageButton').hidden);
+        state.defeatedBossWorldIds=[worldData[0].id];render();
         $('townPageButton').click();$('townWorldList').firstElementChild.click();check('Town Hall stays unlocked after reset while the outpost is locked',$('townBuildingGrid').children[0].querySelector('.town-building-level').textContent==='T0 · Lv 1/10'&&!outpost.querySelector('button').hidden);$('townPageView').scrollIntoView({block:'start'});await pause();
         const plotCards=Array.from($('townBuildingGrid').children);
         if(innerWidth>1150)check('desktop shows four plots in each row',plotCards.slice(0,4).every(card=>card.getBoundingClientRect().top===plotCards[0].getBoundingClientRect().top)&&plotCards[4].getBoundingClientRect().top>plotCards[0].getBoundingClientRect().top);

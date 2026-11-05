@@ -1,0 +1,38 @@
+PASS removed skill nodes refund their exact cost without resetting unrelated progress
+PASS migrations are idempotent after a profile is updated
+PASS renamed IDs retain allocations and points on a valid path
+PASS reduced rank limits refund excess ranks and retain downstream skills
+PASS rank migration honors the actual new maximum rather than assuming one rank
+PASS normal loading succeeds after an allocated branch becomes disconnected
+PASS the pre-migration original is backed up exactly
+PASS imports use the same topology migration and preserve progression
+PASS unknown unrelated save fields survive migration and the next save
+PASS older profiles gain safe defaults for new fields and stats
+PASS enabled developer equipment remains equipped without normal ownership entries
+PASS disabled developer equipment safely unequips without invalidating normal progress
+PASS rename history exported by the editor preserves allocations
+PASS editor removal history refunds the removed node without changing progression
+PASS renamed abilities retain their runtime identity, rank and targeting tag
+PASS invalid alias cycles fail safely instead of losing skill allocations
+PASS unavailable equipment and crafting history are preserved instead of deleted
+PASS returning content restores item ownership, crafting history and equipment
+PASS documented removals apply to active and preserved ownership only for the retired item
+PASS explicit item and material renames retain ownership and merge quantities
+PASS world and map renames retain destination, kill history and unlocks
+PASS retired maps choose an unlocked destination and reset only encounter state
+PASS earned map and world unlocks survive higher kill requirements
+PASS legacy visited destinations preserve unlocks even without newer unlock fields
+PASS failed backup storage blocks migration without changing live progress
+PASS retrying after storage recovers loads and unlocks saving
+PASS normal loading accepts a legacy byte order mark and backs up the exact bytes
+PASS failed migration persistence rolls back live progress and retains the primary original
+PASS retrying a failed migration write safely completes recovery
+PASS an import apply failure rolls back both storage and the running profile
+PASS startup preserves an unsupported save byte for byte
+PASS autosave, combat and page exit cannot replace a failed startup save
+PASS the recovery download contains the exact original input
+PASS automatic backups are accessible inside the recovery screen
+PASS a valid imported backup exits recovery and restores progression
+PASS recovery never deletes the preserved original
+PASS no unexpected runtime errors:
+SMOKE PASSED

@@ -1,0 +1,45 @@
+(async function(){
+    const checks=[],$=id=>document.getElementById(id),check=(name,ok)=>{checks.push((ok?'PASS ':'FAIL ')+name);if(!ok)throw new Error(name);};
+    const notice=id=>elements.tutorialNotifications.querySelector('[data-tutorial-notification="'+id+'"]');
+    const originalWrite=Storage.prototype.setItem;
+    try{
+        await document.fonts.ready;clearOfflineRecap();state.combatPaused=true;
+        state.kills=Object.fromEntries(mapData.map(map=>[map.id,0]));state.defeatedBossWorldIds=[];
+        state.townProgress=TownProgression.defaults();state.tutorials=createTutorialState();state.gold=10000;
+        state.currentView='map';state.isInTown=false;render();
+        check('Town is completely hidden before the World 1 boss',$('townPageButton').hidden&&getComputedStyle($('townPageButton')).display==='none'&&$('townPageView').hidden);
+        $('townPageButton').click();check('hidden Town control cannot open Town',state.currentView==='map');
+        state.currentView='townPage';render();check('locked Town views fall back to the map',state.currentView==='map'&&$('townPageView').hidden);
+        state.defeatedBossWorldIds=[worldData[1].id];render();check('another world boss does not unlock Town',$('townPageButton').hidden);
+        state.defeatedBossWorldIds=[];
+        const boss=mapData.find(map=>map.id===worldData[0].mapIds.at(-1));state.selectedMap=boss.id;state.selectedWorld=worldData[0].id;
+        resetMonsterStates(boss);defeatEnemy(state.monsterStates[0]);render();
+        check('first World 1 boss kill reveals Town with an indicator',!$('townPageButton').hidden&&$('townPageButton').classList.contains('tutorial-attention'));
+        check('Town unlock message names the actual world',notice('townUnlocked')?.textContent.includes('You killed the '+worldData[0].name+' boss! Town is now unlocked.'));
+        check('separate notification requests a Lumber Outpost',notice('lumberOutpost')?.textContent.includes('purchase a Lumber Outpost'));
+        saveGame();applyGameSave(parseGameSave(localStorage.getItem(saveKey)));render();
+        check('Town unlock and notifications survive save loading',townIsUnlocked()&&!!notice('townUnlocked')&&!!notice('lumberOutpost'));
+        $('townPageButton').click();
+        check('visiting Town completes the unlock notification',state.currentView==='townPage'&&!$('townPageView').hidden&&!notice('townUnlocked'));
+        check('Lumber Outpost reminder and indicator remain until purchase',!!notice('lumberOutpost')&&$('townPageButton').classList.contains('tutorial-attention'));
+        const purchase=$('townBuildingGrid').querySelector('[data-building="lumberOutpost"] .town-unlock-button');
+        check('the Lumber Outpost purchase is highlighted',purchase.classList.contains('tutorial-attention'));
+        const beforeGold=state.gold;
+        Storage.prototype.setItem=function(key,value){if(key===saveKey)throw new Error('Storage full');return originalWrite.call(this,key,value);};
+        purchase.click();Storage.prototype.setItem=originalWrite;
+        check('failed purchase keeps the reminder and resources',!state.townProgress.buildings.lumberOutpost&&!!notice('lumberOutpost')&&state.gold===beforeGold);
+        purchase.click();
+        check('buying the outpost completes the reminder and indicator',!!state.townProgress.buildings.lumberOutpost&&!notice('lumberOutpost')&&!$('townPageButton').classList.contains('tutorial-attention'));
+        state.selectedMap=boss.id;resetMonsterStates(boss);defeatEnemy(state.monsterStates[0]);render();
+        check('repeat boss kills do not replay the Town tutorial',!notice('townUnlocked')&&!notice('lumberOutpost'));
+        state.townProgress=TownProgression.defaults();state.tutorials.lumberOutpostDismissed=false;render();
+        notice('lumberOutpost').click();
+        check('Lumber Outpost reminder can be dismissed and stays dismissed',!notice('lumberOutpost')&&parseGameSave(localStorage.getItem(saveKey)).tutorials.lumberOutpostDismissed);
+        const legacy=JSON.parse(JSON.stringify(createGameSave()));delete legacy.tutorials.townUnlockedPending;delete legacy.tutorials.townUnlockedDismissed;delete legacy.tutorials.lumberOutpostDismissed;delete legacy.defeatedBossWorldIds;
+        check('legacy boss kill history still unlocks Town',townIsUnlocked(parseGameSave(JSON.stringify(legacy))));
+        legacy.kills[boss.id]=0;legacy.currentView='townPage';
+        check('legacy Town views without a boss victory load on the map',parseGameSave(JSON.stringify(legacy)).currentView==='map');
+        check('no runtime errors',!smokeErrors.length);checks.push('SMOKE PASSED');
+    }catch(error){checks.push('ERROR '+error.stack);}finally{Storage.prototype.setItem=originalWrite;}
+    const report=document.createElement('pre');report.id='smoke-results';report.textContent=checks.join('\n');document.body.append(report);
+}());

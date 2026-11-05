@@ -1,0 +1,20 @@
+PASS high-refresh callbacks retain visible sprite pixels without clearing or drawing
+PASS the next source frame redraws immediately
+PASS a paused peak frame retains both layers without repeated drawing
+PASS seeking still updates the blood-only final frames
+PASS the final transparent frame clears old blood once
+PASS completion still runs once after an unchanged transparent frame
+PASS moving a target redraws even when the sprite frame is unchanged
+PASS a stationary target does not trigger another redraw
+PASS resizing a target refreshes its center
+PASS scrolling redraws the effect at its new screen position
+PASS cancelling one overlapping cast clears its old pixels while preserving the other
+PASS removing the final target cancels and releases the cached scene
+PASS a paused reduced-motion fade can reuse identical pixels
+PASS a live reduced-motion fade redraws even inside the same source frame
+PASS DPR and viewport changes redraw even when backing dimensions stay identical
+PASS backing-store resize invalidates retained pixels
+PASS hit callbacks may cancel a cast without leaving stale pixels or a running loop
+PASS restarting an identical cast always paints the new canvas at frame zero
+PASS no runtime errors
+SMOKE PASSED

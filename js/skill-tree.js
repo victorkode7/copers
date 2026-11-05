@@ -3,6 +3,35 @@ window.adventureSkillTree = {
     "experiencePerLevel": 100,
     "nodes": [
         {
+            "id": "reapPreview",
+            "name": "Reap",
+            "icon": "☾",
+            "effect": "Every attack triggers Reap, dealing 100% of physical damage to the target and 300% to up to 3 immediately adjacent enemies in one quadrant: two cardinal neighbors and their shared diagonal. Hits at the peak of the swing. Maximum 4 targets.",
+            "requires": ["origin"],
+            "column": -13,
+            "row": -14,
+            "maxRank": 1,
+            "stats": {},
+            "uniqueEffect": "reapPreview",
+            "abilityTargeting": "aoe",
+            "customDescription": true,
+            "size": 1.25
+        },
+        {
+            "id": "reapingEcho",
+            "name": "Reaping Echo",
+            "icon": "☾",
+            "effect": "Enemies killed by Reap spawn another Reap from their location. Each echo deals 300% of physical damage to up to 3 immediately adjacent living enemies in one quadrant. Echo kills can spawn further Reaps.",
+            "requires": ["reapPreview"],
+            "column": -13,
+            "row": -12,
+            "maxRank": 1,
+            "stats": {},
+            "uniqueEffect": "reapingEcho",
+            "customDescription": true,
+            "size": 1.1
+        },
+        {
             "id": "origin",
             "name": "Wayfarer",
             "icon": "✦",

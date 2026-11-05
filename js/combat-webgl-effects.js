@@ -157,7 +157,7 @@
     }
     function pulse(element,className) {
         if(!available('glows'))return false;
-        const color=className==='is-damaged'||element.classList.contains('enemy-bleed-status')?colors.bleed:
+        const color=className==='is-dodging'?[1,1,1]:className==='is-damaged'||element.classList.contains('enemy-bleed-status')?colors.bleed:
             className==='is-shield-blocking'?colors.shield:className==='is-applying'?colors.poison:colors.void;
         emit('pulse',{...box(element),style:2,color,duration:500,category:'glows',startScale:.95,scale:1.05});return true;
     }

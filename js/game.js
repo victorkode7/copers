@@ -53,6 +53,9 @@ const createTutorialState = () => ({
     firstNextMapDismissed: false,
     firstMapGoalPending: false,
     firstMapGoalDismissed: false,
+    townUnlockedPending: false,
+    townUnlockedDismissed: false,
+    lumberOutpostDismissed: false,
     firstGearPrompted: false,
     firstGearPending: false,
     firstGearDismissed: false,
@@ -157,6 +160,7 @@ const state = {
     monsterStates: [],
     pendingEruptions: [],
     pendingVoidMissiles: [],
+    pendingReapAttacks: [],
     monsterColumns: 1,
     targetMonsterId: null,
     playerHp: basePlayerMaxHealth,
@@ -184,7 +188,6 @@ const elements = {
     skillPoints: document.querySelector('#skillPointDisplay'),
     skillPointTotal: document.querySelector('#skillPointTotal'),
     skillPointCap: document.querySelector('#skillPointCapValue'),
-    increaseLevel: document.querySelector('#increaseLevelButton'),
     damage: document.querySelector('#damageDisplay'),
     multiHit: document.querySelector('#multiHitDisplay'),
     poisonChance: document.querySelector('#poisonChanceDisplay'),
@@ -254,7 +257,9 @@ let combatStatCache = null;
 const skillBonusCache = {ranks: null, level: null, flat: new Map(), multipliers: new Map()};
 let combatPoisonForecasts = null;
 let combatAnimationRestarts = null;
+let combatGlowRestarts = null;
 let combatEffectLayout = null;
+const combatEffectCards = new Map();
 const combatBuffViews = new Map();
 let voidVolleyBuffProc = null;
 const detailedStatViews = new Map();
@@ -411,6 +416,12 @@ function restartCombatAnimation(element, className) {
     const category = ['is-defeating', 'is-shockwave-splashed'].includes(className) ? 'shaking'
         : ['is-applying', 'is-proccing', 'is-releasing', 'is-damaged', 'is-dodging', 'is-shockwave-hit', 'is-shield-blocking'].includes(className) ? 'glows' : 'general';
     if (!combatEffectEnabled(category)) return;
+    if (category === 'glows' && combatGlowRestarts) {
+        // Reveal/update every status first. Keep one entry per pulse so GPU
+        // effects retain their original count even when they share a target.
+        combatGlowRestarts.push([element, className]);
+        return;
+    }
     if(category==='glows'&&window.CombatWebGLEffects?.pulse(element,className))return;
     element.classList.remove(className);
     if (combatAnimationRestarts) {
@@ -426,16 +437,26 @@ function flushCombatEffects(effects) {
     if (!effects.length) return;
     const previousRestarts = combatAnimationRestarts;
     if (previousRestarts) { effects.forEach(effect => effect()); return; }
+    const previousGlows = combatGlowRestarts;
     combatAnimationRestarts = new Map();
+    combatGlowRestarts = [];
     combatEffectLayout = {
         cards: new Map(Array.from(elements.enemyRoster.children, card => [card.dataset.monsterId, card])),
         bounds: new WeakMap(),
         frame: null
     };
-    try { effects.forEach(effect => effect()); }
+    try {
+        const present = () => effects.forEach(effect => effect());
+        if (window.LootEffects?.batch) LootEffects.batch(present);
+        else present();
+        const glows = combatGlowRestarts;
+        combatGlowRestarts = previousGlows;
+        glows.forEach(([element, name]) => { if (element.isConnected) restartCombatAnimation(element, name); });
+    }
     finally {
         const restarts = combatAnimationRestarts;
         combatAnimationRestarts = previousRestarts;
+        combatGlowRestarts = previousGlows;
         combatEffectLayout = null;
         // Restart all hit flashes together after a single layout flush.
         if (restarts.size) void elements.combatPanel.offsetWidth;
@@ -444,8 +465,14 @@ function flushCombatEffects(effects) {
 }
 
 function getCombatEffectCard(id) {
-    return combatEffectLayout ? combatEffectLayout.cards.get(id) :
-        Array.from(elements.enemyRoster.children).find(card => card.dataset.monsterId === id);
+    if (combatEffectLayout) return combatEffectLayout.cards.get(id);
+    const card = combatEffectCards.get(id);
+    if (card?.parentElement === elements.enemyRoster && card.dataset.monsterId === id) return card;
+    // Animation frames run outside the synchronous effect batch. Retain a
+    // roster index, but never return a card removed by a map/mastery rerender.
+    combatEffectCards.clear();
+    for (const child of elements.enemyRoster.children) combatEffectCards.set(child.dataset.monsterId, child);
+    return combatEffectCards.get(id);
 }
 
 function getCombatEffectBounds(element) {
@@ -477,7 +504,6 @@ let recentEnemyDamage = 0;
 const dodgeFlashTimeouts = new Map();
 const monsterProcTimers = new WeakMap();
 const shockwaveHitTimers = new WeakMap();
-const shownTutorialNotifications = new Set();
 const enemyDamageIndicatorTimers = new WeakMap();
 elements.combatArt.addEventListener('error', () => {
     elements.combatArt.hidden = true;
@@ -538,7 +564,7 @@ function refreshMasteryMonsters(previousDefinitions) {
         const previous=byId.get(definition.id);
         return previous?{...previous,hp:Math.min(definition.health,previous.hp)}:fresh[index];
     });
-    state.pendingEruptions=[];state.pendingVoidMissiles=[];
+    state.pendingEruptions=[];state.pendingVoidMissiles=[];state.pendingReapAttacks=[];
     if(!state.monsterStates.some(monster=>monster.id===state.targetMonsterId))state.targetMonsterId=definitions[0]?.id||null;
     combatNeedsFullRender=true;combatLootSignature=null;syncLegacyEnemyState();
 }
@@ -593,6 +619,8 @@ function resetMonsterStates(map = currentMap()) {
     monsterDefinitionCache.delete(map);
     state.pendingEruptions = [];
     state.pendingVoidMissiles = [];
+    state.pendingReapAttacks = [];
+    window.ReapSprite?.clear();
     state.monsterStates = createMonsterStates(map);
     state.targetMonsterId = monsterDefinitions(map)[0].id;
     state.playerHp=Math.min(state.playerHp,getPlayerMaxHealth());
@@ -1454,6 +1482,10 @@ function getSkillPointCap(profile = state) {
     return Progression.skillPointCap(profile, worldData);
 }
 
+function townIsUnlocked(profile = state) {
+    return Progression.defeatedBosses(profile, worldData).includes(worldData[0].id);
+}
+
 function getEarnedSkillPoints(profile = state) {
     return Progression.earnedSkillPoints(profile, worldData);
 }
@@ -1536,6 +1568,7 @@ function refreshMaterialLocations(container) {
 function travelToMap(mapId) {
     const access = mapTravelAccess(mapId);
     if (!access.unlocked) return false;
+    window.MapMastery?.close(false);
     const {map: selected, world} = access;
     const changedMap = state.selectedMap !== selected.id;
     const tutorialNextMap = state.tutorials.firstNextMapPending || state.tutorials.firstMapGoalPending ? nextUnlockedMap() : null;
@@ -1636,6 +1669,7 @@ function createGameSave() {
         monsterStates: state.monsterStates,
         pendingEruptions: state.pendingEruptions,
         pendingVoidMissiles: state.pendingVoidMissiles,
+        pendingReapAttacks: state.pendingReapAttacks,
         monsterColumns: state.monsterColumns,
         targetMonsterId: state.targetMonsterId,
         playerHp: state.playerHp,
@@ -1721,7 +1755,10 @@ function parseGameSave(rawSave) {
             'firstNextMapDismissed',
             'firstMapGoalPending',
             'firstMapGoalDismissed',
-            'firstGearDismissed'
+            'firstGearDismissed',
+            'townUnlockedPending',
+            'townUnlockedDismissed',
+            'lumberOutpostDismissed'
         ]
             .forEach(key => {
                 if (saved.tutorials[key] === undefined) saved.tutorials[key] = false;
@@ -1816,7 +1853,7 @@ function parseGameSave(rawSave) {
     if(!window.DeveloperTools){saved.developerItemsEnabled=false;saved.developerTravelEnabled=false;}
     if(retiredTownBattle){
         saved.enemyHp=mapData.find(map=>map.id===saved.selectedMap).health;saved.enemyRespawnRemaining=0;
-        saved.monsterStates=[];saved.pendingEruptions=[];saved.pendingVoidMissiles=[];saved.targetMonsterId=null;saved.attackTimer=0;
+        saved.monsterStates=[];saved.pendingEruptions=[];saved.pendingVoidMissiles=[];saved.pendingReapAttacks=[];saved.targetMonsterId=null;saved.attackTimer=0;
         saved.voidCharges=0;saved.gatheringPower={stacks:0,progress:0,remaining:0};
         saved.furyStacks=0;saved.furyRemaining=0;saved.furyDecaying=false;saved.shieldStacks=0;
     }
@@ -1851,6 +1888,9 @@ function parseGameSave(rawSave) {
         typeof saved.tutorials.firstNextMapDismissed !== 'boolean' ||
         typeof saved.tutorials.firstMapGoalPending !== 'boolean' ||
         typeof saved.tutorials.firstMapGoalDismissed !== 'boolean' ||
+        typeof saved.tutorials.townUnlockedPending !== 'boolean' ||
+        typeof saved.tutorials.townUnlockedDismissed !== 'boolean' ||
+        typeof saved.tutorials.lumberOutpostDismissed !== 'boolean' ||
         typeof saved.tutorials.firstGearPrompted !== 'boolean' ||
         typeof saved.tutorials.firstGearPending !== 'boolean' ||
         typeof saved.tutorials.firstGearDismissed !== 'boolean' ||
@@ -1911,6 +1951,13 @@ function parseGameSave(rawSave) {
         (!Array.isArray(saved.pendingVoidMissiles) || !saved.pendingVoidMissiles.every(hit => hit &&
             typeof hit.targetId === 'string' && Number.isFinite(hit.damage) && hit.damage > 0 &&
             Number.isFinite(hit.remaining) && hit.remaining > 0)) ||
+        (!Array.isArray(saved.pendingReapAttacks) || !saved.pendingReapAttacks.every(attack => attack &&
+            typeof attack.mapId==='string' && mapData.some(map=>map.id===attack.mapId) &&
+            (attack.arrowTargetId===null||typeof attack.arrowTargetId==='string') &&
+            (attack.originId===undefined||typeof attack.originId==='string') &&
+            (attack.fromKill===undefined||typeof attack.fromKill==='boolean') &&
+            Array.isArray(attack.targetIds) && attack.targetIds.every(id=>typeof id==='string') && new Set(attack.targetIds).size===attack.targetIds.length &&
+            Number.isFinite(attack.remaining) && attack.remaining>0 && attack.remaining<=.2)) ||
         (saved.pendingEruptions !== undefined && (!Array.isArray(saved.pendingEruptions) ||
             !saved.pendingEruptions.every(hit => hit && typeof hit.targetId === 'string' &&
                 Number.isFinite(hit.damage) && hit.damage > 0 &&
@@ -1946,6 +1993,7 @@ function parseGameSave(rawSave) {
 
     if(saved.playerMana===undefined)saved.playerMana=getProfileMaxMana(saved);
     Progression.normalizeSave(saved, worldData);
+    if(saved.currentView==='townPage'&&!townIsUnlocked(saved)){saved.currentView='map';saved.isInTown=false;}
     return saved;
 }
 
@@ -2025,6 +2073,10 @@ function applyGameSave(saved) {
     state.pendingVoidMissiles = selectedMapChanged ? [] : saved.pendingVoidMissiles
         .filter(hit => state.monsterStates.some(monster => monster.id === hit.targetId))
         .map(hit => ({...hit}));
+    state.pendingReapAttacks = selectedMapChanged ? [] : saved.pendingReapAttacks
+        .filter(attack=>attack.mapId===state.selectedMap)
+        .map(attack=>({...attack,originId:attack.originId||attack.arrowTargetId||attack.targetIds[0],targetIds:attack.targetIds.filter(id=>state.monsterStates.some(monster=>monster.id===id)).slice(0,4)}));
+    window.ReapSprite?.clear();
     state.targetMonsterId = !selectedMapChanged && monsterDefinitions(currentMap())
         .some(definition => definition.id === saved.targetMonsterId)
         ? saved.targetMonsterId
@@ -2207,7 +2259,7 @@ function renderMaps() {
     elements.mapPanel.classList.toggle('is-collapsed', !state.mapListExpanded);
     updateCombatAttribute(elements.mapSelectorLock,'aria-pressed',String(state.mapListLocked));
     elements.mapSelectorLock.title=state.mapListLocked?'Unlock map selector to allow collapsing':'Lock map selector open';
-    elements.mapSelectionHint.textContent = state.mapListLocked?'Map selector locked open.':state.mapListExpanded
+    elements.mapSelectionHint.textContent = window.MapMastery?.isOpen()?'Click the current map to return to combat.':state.mapListLocked?'Map selector locked open.':state.mapListExpanded
         ? 'Click the current map to browse destinations.'
         : 'Click your current map to change destination.';
     elements.mapSelectionHint.setAttribute('aria-hidden', String(!state.mapListExpanded));
@@ -2228,7 +2280,7 @@ function renderMaps() {
         button.setAttribute('aria-pressed', String(state.selectedMap === map.id));
         button.setAttribute('aria-label', map.name + '. ' +
             (unlocked ? (completed ? progress + ' kills' : progress + ' / ' + map.goal + ' kills') : 'Unlock after ' + maps[index - 1].goal + ' kills') +
-            (state.selectedMap === map.id ? '. Current map.' + (state.mapListLocked?'':' Click to ' +
+            (state.selectedMap === map.id ? '. Current map.' + (window.MapMastery?.isOpen()?' Click to return to combat.':state.mapListLocked?'':' Click to ' +
                 (state.mapListExpanded ? 'collapse' : 'show all maps') + '.') : '.'));
         button.querySelector('strong').textContent = map.name;
         button.querySelector('span').textContent =
@@ -2910,6 +2962,12 @@ function renderInventory() {
 
 function renderTutorialNotifications() {
     const notifications = [];
+    if (townIsUnlocked() && state.tutorials.townUnlockedPending && !state.tutorials.townUnlockedDismissed) {
+        notifications.push({id:'townUnlocked',message:'You killed the '+worldData[0].name+' boss! Town is now unlocked.',dismissed:'townUnlockedDismissed',dismissLabel:'Dismiss Town unlock notification'});
+    }
+    if (townIsUnlocked() && !state.townProgress.buildings.lumberOutpost && !state.tutorials.lumberOutpostDismissed) {
+        notifications.push({id:'lumberOutpost',message:'Visit Town and purchase a Lumber Outpost to start producing Logs.',dismissed:'lumberOutpostDismissed',dismissLabel:'Dismiss Lumber Outpost notification'});
+    }
     if (state.tutorials.skillPointCapPending && !state.tutorials.skillPointCapDismissed) {
         notifications.push({
             id: 'skillPointCap-' + getSkillPointCap(),
@@ -2967,24 +3025,22 @@ function renderTutorialNotifications() {
             notice = document.createElement('div');
             notice.className = 'tutorial-notice';
             notice.dataset.tutorialNotification = notification.id;
-            if (!shownTutorialNotifications.has(notification.id)) {
-                notice.classList.add('tutorial-notice--flash');
-                shownTutorialNotifications.add(notification.id);
-            }
+            notice.tabIndex = 0;
+            notice.title = 'Click to dismiss';
+            notice.addEventListener('keydown', event => {
+                if (event.target === notice && (event.key === 'Enter' || event.key === ' ')) {
+                    event.preventDefault();notice.click();
+                }
+            });
             const message = document.createElement('p');
             const dismiss = document.createElement('button');
             dismiss.className = 'tutorial-dismiss';
             dismiss.type = 'button';
             notice.append(message, dismiss);
             elements.tutorialNotifications.appendChild(notice);
-            if (notice.classList.contains('tutorial-notice--flash')) {
-                window.setTimeout(() => {
-                    notice.classList.remove('tutorial-notice--flash');
-                    notice.classList.add('tutorial-notice--pulse');
-                }, 1100);
-            }
         }
         notice.setAttribute('role', 'status');
+        notice.dataset.dismissTutorial = notification.dismissed;
         notice.querySelector('p').textContent = notification.message;
         const dismiss = notice.querySelector('.tutorial-dismiss');
         dismiss.dataset.dismissTutorial = notification.dismissed;
@@ -3242,6 +3298,7 @@ function renderCombatContent() {
         elements.combatPanel.querySelectorAll('.poison-transfer, .combat-arrow, .eruption-chain, .shield-slam-wave, .spell-effect').forEach(effect => effect.remove());
         window.CombatWebGL?.clear();
         renderedCards = definitions.map(createEnemyCard);
+        combatEffectCards.clear();
         elements.enemyRoster.replaceChildren(...renderedCards);
         elements.enemyRoster.dataset.mapId = map.id;
     }
@@ -3422,6 +3479,7 @@ function renderSkillPointDisplay() {
 }
 
 function render() {
+    if(state.currentView==='townPage'&&!townIsUnlocked()){state.currentView='map';state.isInTown=false;}
     window.DeveloperTools?.render();
     if (state.currentView !== 'town') window.ItemCrafting?.stopAuto('Auto rolling stopped after leaving crafting.');
     const speedBonus = Math.round((getAttackSpeedMultiplier() - 1) * 10000) / 100;
@@ -3465,7 +3523,12 @@ function render() {
     const townPageOpen=state.currentView==='townPage';
     document.body.classList.toggle('town-page-open',townPageOpen);
     document.querySelector('#townPageView').hidden=!townPageOpen;
-    document.querySelector('#townPageButton').setAttribute('aria-pressed',String(townPageOpen));
+    const townPageButton=document.querySelector('#townPageButton');
+    townPageButton.hidden=!townIsUnlocked();
+    townPageButton.setAttribute('aria-pressed',String(townPageOpen));
+    const townNeedsAttention=townIsUnlocked()&&(state.tutorials.townUnlockedPending||!state.townProgress.buildings.lumberOutpost&&!state.tutorials.lumberOutpostDismissed);
+    townPageButton.classList.toggle('tutorial-attention',townNeedsAttention);
+    townPageButton.setAttribute('aria-label',townNeedsAttention?'Town — new unlock: purchase a Lumber Outpost':'Town');
     elements.worldPanel.hidden = townPageOpen || !worldSelectorIsUnlocked();
     document.querySelector('#mapButton').setAttribute('aria-pressed', String(state.currentView === 'map'));
     document.querySelector('#townButton').setAttribute('aria-pressed', String(state.currentView === 'town'));
@@ -3503,12 +3566,40 @@ function rollRange(range) {
     return Math.floor(Math.random() * (range[1] - range[0] + 1)) + range[0];
 }
 
+function triggerLevelUpEffect({level = state.level, skillPoints = 0} = {}) {
+    if (document.hidden || !combatEffectEnabled('glows')) return;
+    triggerLevelUpEffect.cleanup?.();
+    const targets = [elements.experienceBar, elements.experienceTrack, elements.level];
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const celebration = window.LevelUpCelebration?.show({level,skillPoints,reduced});
+    let cleanupTimer;
+    const cleanup = () => {
+        clearTimeout(cleanupTimer);
+        celebration?.clear();
+        targets.forEach(element => element.classList.remove('level-up-active'));
+        elements.level.removeEventListener('animationend', onEnd);
+        if (triggerLevelUpEffect.cleanup === cleanup) triggerLevelUpEffect.cleanup = null;
+    };
+    const onEnd = event => {
+        if (event.target === elements.level && event.animationName === 'level-up-duration') cleanup();
+    };
+    void elements.experienceTrack.offsetWidth;
+    targets.forEach(element => element.classList.add('level-up-active'));
+    elements.level.addEventListener('animationend', onEnd);
+    cleanupTimer = setTimeout(cleanup, 8200);
+    triggerLevelUpEffect.cleanup = cleanup;
+}
 function awardExperience(amount, map = currentMap()) {
     const previousLevel = state.level;
+    const previousPoints = getEarnedSkillPoints();
     const levelsGained = Progression.awardExperience(state, amount, worldData.findIndex(world => world.mapIds.includes(map.id)), experienceForNextLevel);
     if (levelsGained) syncSkillPoints();
     if (previousLevel === 0 && state.level > 0) state.tutorials.firstSkillPointPending = true;
     if (levelsGained && combatStatCache) combatStatCache.clear();
+    if (levelsGained) {
+        const reward = {level:state.level,skillPoints:Math.max(0,getEarnedSkillPoints()-previousPoints)};
+        presentCombatEffect(() => triggerLevelUpEffect(reward), 'glows');
+    }
     return levelsGained;
 }
 
@@ -3530,6 +3621,10 @@ function defeatEnemy(monster) {
     const defeatedBoss = world?.mapIds.at(-1) === map.id && !state.defeatedBossWorldIds.includes(world.id);
     if (defeatedBoss) {
         state.defeatedBossWorldIds.push(world.id);
+        if(world.id===worldData[0].id){
+            state.tutorials.townUnlockedPending=true;
+            state.tutorials.townUnlockedDismissed=false;
+        }
         syncSkillPoints();
         state.tutorials.skillPointCapPending = true;
         state.tutorials.skillPointCapDismissed = false;
@@ -3710,6 +3805,9 @@ function applyDamageToMonster(monster, damage, damageType = 'physical', abilityI
     recordMonsterDamage(previousHp - monster.hp, damageType, abilityId);
     syncLegacyEnemyState();
     if (monster.hp <= 0) {
+        // Attribute only the lethal Reap hit: poison, bleed and secondary procs
+        // cannot claim a Reap kill. Queue before defeatEnemy saves this death.
+        if(damageType==='physical'&&abilityId==='reapPreview'&&getSkillNodeRank('reapingEcho')>0)queueReapAttack(monster.id,{fromKill:true});
         defeatEnemy(monster);
         return true;
     }
@@ -3894,6 +3992,7 @@ document.querySelector('#upgradesButton').addEventListener('click', function() {
 });
 
 document.querySelector('#mapButton').addEventListener('click', function() {
+    window.MapMastery?.close(false);
     state.tutorials.firstNextMapPending = false;
     state.currentView = 'map';
     state.isInTown = false;
@@ -4016,6 +4115,7 @@ elements.mapList.addEventListener('click', function(event) {
     const selected = mapsForWorld(state.selectedWorld).find(map => map.id === button.dataset.map);
     if (!selected) return;
     if (selected.id === state.selectedMap) {
+        if(window.MapMastery?.isOpen()){window.MapMastery.close();return;}
         if(state.mapListLocked)return;
         state.mapListExpanded = !state.mapListExpanded;
         renderMaps();
@@ -4209,15 +4309,6 @@ elements.gearInventory.addEventListener('click', function(event) {
     saveGame();
 });
 
-elements.increaseLevel.addEventListener('click', function() {
-    state.level++;
-    state.experience = 0;
-    state.experienceRemainder = 0;
-    syncSkillPoints();
-    render();
-    saveGame();
-});
-
 elements.resumeCombat.addEventListener('click', function() {
     if (!state.combatPaused) return;
     const previousTargetId = state.targetMonsterId;
@@ -4248,6 +4339,39 @@ if (state.currentView === 'upgrades') {
     skillTreeNeedsInitialFraming = false;
 }
 if (!hasSavedGame) saveGame();
+
+function resolvePlayerAttack(attack) {
+    if(attack.mapId!==state.selectedMap||state.playerHp<=0)return;
+    const map=currentMap(),arrowTarget=state.monsterStates.find(monster=>monster.id===attack.arrowTargetId),arrowDamage=getDamage(),extraEruptionTargets=[];
+    attack.targetIds.forEach((id,index)=>{
+        if(attack.fromKill&&id===attack.originId)return;
+        const target=state.monsterStates.find(monster=>monster.id===id);if(!target||target.hp<=0)return;
+        if(Math.random()*100<getHitChance(getPlayerAccuracy(),monsterDefinition(target,map).evasion)){
+            const damage=getDamage()*(attack.reap&&id!==(attack.originId||attack.arrowTargetId||attack.targetIds[0])?3:1);
+            if(attack.reap)showMonsterHitBadge(target.id,'REAP',false);
+            else if(index>0)showMonsterHitBadge(target.id,'MULTI-HIT',true);
+            applyDamageToMonster(target,damage,'physical',attack.reap?'reapPreview':null);tryApplyBleed(target,damage);if(!attack.reap)tryApplyPoison(target);triggerShockwaveSlash(target,damage);
+            if(index>0)extraEruptionTargets.push({target,damage});
+        }else presentCombatEffect(()=>{const track=getCombatEffectCard(target.id)?.querySelector('.health-track');if(track)flashDodge(track);});
+    });
+    if(arrowTarget){triggerVolcanicEruption(arrowTarget,arrowDamage);extraEruptionTargets.forEach(hit=>triggerVolcanicEruption(hit.target,hit.damage));triggerAttackArrowSkills(arrowTarget,arrowDamage);triggerAttackSpells();}
+}
+
+function queueReapAttack(originId,{fromKill=false}={}) {
+    const plan=ReapTargeting.select(state.monsterStates,originId,state.monsterColumns,{allowDeadOrigin:fromKill});
+    if(!plan.targetIds.length)return;
+    state.pendingReapAttacks.push({mapId:state.selectedMap,originId,arrowTargetId:fromKill?null:originId,targetIds:plan.targetIds,fromKill,remaining:.2});
+    presentCombatEffect(()=>window.ReapSprite?.show(originId,plan),'abilities');
+}
+
+function tickPendingReapAttacks(elapsed) {
+    const ready=[];
+    state.pendingReapAttacks=state.pendingReapAttacks.filter(attack=>{
+        attack.remaining=Math.max(0,attack.remaining-elapsed);
+        if(attack.remaining<1e-8){ready.push(attack);return false;}return true;
+    });
+    ready.forEach(attack=>resolvePlayerAttack({...attack,reap:true,targetIds:attack.targetIds.slice(0,ReapTargeting.maxTargets)}));
+}
 
 // All combat rules use the same 100 ms steps, including background catch-up.
 // Visual effects are returned to the caller; this function does not touch the DOM.
@@ -4294,6 +4418,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
         });
         tickPendingEruptions(elapsed);
         tickPendingVoidMissiles(elapsed);
+        tickPendingReapAttacks(elapsed);
         tryShieldSlam();
         tickPlayerMana(elapsed);
         if (!state.combatPaused) {
@@ -4330,36 +4455,12 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                 state.attackTimer += elapsed;
                 while (state.attackTimer >= attackInterval && !state.combatPaused) {
                     state.attackTimer -= attackInterval;
-                    const arrowTarget = activeMonster();
-                    const arrowDamage = getDamage();
-                    const attackTargets = getPlayerAttackTargets();
-                    const extraEruptionTargets = [];
-                    for (let attackIndex = 0; attackIndex < attackTargets.length; attackIndex++) {
-                        const attackTarget = attackTargets[attackIndex];
-                        if (attackTarget.hp <= 0) continue;
-                        if (Math.random() * 100 < getHitChance(getPlayerAccuracy(), monsterDefinition(attackTarget, map).evasion)) {
-                            const hitDamage = getDamage();
-                            if (attackIndex > 0) showMonsterHitBadge(attackTarget.id, 'MULTI-HIT', true);
-                            applyDamageToMonster(attackTarget, hitDamage, 'physical');
-                            // Basic attacks also roll Bleed, including multihits.
-                            tryApplyBleed(attackTarget, hitDamage);
-                            tryApplyPoison(attackTarget);
-                            triggerShockwaveSlash(attackTarget, hitDamage);
-                            if (attackIndex > 0) extraEruptionTargets.push({target: attackTarget, damage: hitDamage});
-                        } else {
-                            presentCombatEffect(() => {
-                                const targetCard = getCombatEffectCard(attackTarget.id);
-                                const targetTrack = targetCard && targetCard.querySelector('.health-track');
-                                if (targetTrack) flashDodge(targetTrack);
-                            });
-                        }
-                    }
-                    if (arrowTarget) {
-                        triggerVolcanicEruption(arrowTarget, arrowDamage);
-                        extraEruptionTargets.forEach(hit => triggerVolcanicEruption(hit.target, hit.damage));
-                        triggerAttackArrowSkills(arrowTarget, arrowDamage);
-                        triggerAttackSpells();
-                    }
+                    const arrowTarget=activeMonster();
+                    const attack={mapId:map.id,arrowTargetId:arrowTarget?.id||null};
+                    if(arrowTarget&&getSkillNodeRank('reapPreview')>0){
+                        // 200 ms is frame 5 of the 600 ms, sixteen-frame swing.
+                        queueReapAttack(arrowTarget.id);
+                    }else resolvePlayerAttack({...attack,targetIds:getPlayerAttackTargets().map(monster=>monster.id)});
                 }
             }
         } else {
@@ -4424,7 +4525,7 @@ function processCombatBacklog() {
         // retained and continued in another task so input and painting can run.
         for (let steps = 0; pendingCombatSeconds + 1e-8 >= gameTickSeconds && steps < 250; steps++) {
             let elapsed = gameTickSeconds;
-            if (state.combatPaused && !TownProgression.hasConverters(state) && !state.furyStacks && !state.gatheringPower?.stacks && !state.pendingEruptions.length && !state.pendingVoidMissiles.length && state.monsterStates.every(monster => !monster.poisonStacks.length && !monster.bleed && !monster.rimeBrand && !monster.emberBrand)) {
+            if (state.combatPaused && !TownProgression.hasConverters(state) && !state.furyStacks && !state.gatheringPower?.stacks && !state.pendingEruptions.length && !state.pendingVoidMissiles.length && !state.pendingReapAttacks.length && state.monsterStates.every(monster => !monster.poisonStacks.length && !monster.bleed && !monster.rimeBrand && !monster.emberBrand)) {
                 // Once Fury, DOTs, travelling eruptions and missiles finish, only respawns
                 // can change a dead player's state. Preserve 100 ms boundaries.
                 const nextRespawn = Math.min(...state.monsterStates

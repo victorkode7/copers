@@ -1,6 +1,7 @@
 .idle-adventure .town-map-nav { position:relative; }
 .idle-adventure #townPageButton { position:absolute; right:calc(100% + .65rem); top:0; --view-accent:#a7c696; }
-.idle-adventure .town-page[hidden] { display:none; }
+.idle-adventure .town-page[hidden],.idle-adventure #townPageButton[hidden] { display:none; }
+.idle-adventure .town-unlock-button.tutorial-attention { outline:2px solid var(--adventure-amber); outline-offset:3px; }
 .idle-adventure.town-page-open { background:var(--town-page-background,#14251a); }
 .idle-adventure.town-page-open>header { --adventure-panel:#1c2323; --adventure-raised:#293232; --adventure-border:#465252; background:var(--adventure-panel); }
 .idle-adventure.town-page-open .app-nav { background:#141b1b; border-color:#343e3e; }

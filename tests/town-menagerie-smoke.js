@@ -2,7 +2,7 @@
     const checks=[],$=id=>document.getElementById(id),check=(name,ok)=>{checks.push((ok?'PASS ':'FAIL ')+name);if(!ok)throw new Error(name);};
     const originalWrite=Storage.prototype.setItem;
     try{
-        await document.fonts.ready;
+        await document.fonts.ready;state.defeatedBossWorldIds=[worldData[0].id];
         state.townProgress=TownProgression.defaults();state.gold=1e8;state.combatPaused=true;state.currentView='townPage';state.isInTown=true;resetCombatClock();render();
         const plot=$('townBuildingGrid').children[3];
         state.townProgress.buildings.townHall={tier:1,level:10};render();

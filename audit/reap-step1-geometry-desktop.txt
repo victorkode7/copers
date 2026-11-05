@@ -1,0 +1,17 @@
+PASS card lookup follows a replacement in the middle of an unchanged-size roster
+PASS renaming a card does not return it under its old ID
+PASS removed targets cannot be returned from the retained lookup
+PASS rerender restores lookups to the current roster
+PASS a single-target cast starts in a large formation
+PASS single-target setup does not measure unrelated enemy cards
+PASS one-target encounters retain the large-formation sprite size
+PASS sixteen overlapping casts measure their two unique targets only once per frame
+PASS geometry sharing retains every weapon and foreground blood layer
+PASS sharing a target preserves a separate hit callback for each cast
+PASS the next frame remeasures moved and resized targets
+PASS target movement preserves cast size and does not repeat hits
+PASS disconnected targets cancel their casts without geometry reads
+PASS cleanup completes every cast and removes the shared animation layer
+PASS a hidden target still cancels cleanly
+PASS no runtime errors
+SMOKE PASSED

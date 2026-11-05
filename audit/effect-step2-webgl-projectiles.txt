@@ -1,0 +1,10 @@
+PASS fork arrowheads remain filled and outlined at the destination after flight
+PASS arrowheads retain their notch rather than becoming triangles
+PASS left, down and up arrowheads follow their actual flight direction
+PASS piercing beams keep the original three-pixel core
+PASS Void Volley keeps its original four-pixel core
+PASS Void Bolt keeps its original five-pixel core
+PASS beam and spell glows extend beyond their solid cores
+PASS turning glows off removes halos while preserving solid projectile cores
+PASS projectiles draw without WebGL or script errors
+SMOKE PASSED

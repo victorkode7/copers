@@ -34,6 +34,18 @@
         check('older profiles default to an unlocked selector',parseGameSave(JSON.stringify(legacy)).mapListLocked===false);
         let rejected=false;try{parseGameSave(JSON.stringify({...legacy,mapListLocked:'true'}));}catch{rejected=true;}
         check('malformed lock preferences are rejected',rejected);
+        state.townProgress=TownProgression.defaults();state.townProgress.buildings.menagerie={tier:0,level:1};
+        const encounter=JSON.stringify(state.monsterStates),mastery=JSON.stringify(state.mapMastery);
+        for(const locked of [false,true]){
+            state.mapListLocked=locked;state.mapListExpanded=true;MapMastery.open();
+            check('current map announces returning to combat from mastery',elements.mapList.querySelector('[data-map="'+state.selectedMap+'"]').getAttribute('aria-label').includes('return to combat'));
+            select(state.selectedMap);
+            check('current map returns to combat with selector '+(locked?'locked':'unlocked'),!MapMastery.isOpen()&&document.getElementById('mapMasteryPanel').hidden&&!elements.combatPanel.hidden&&state.mapListLocked===locked&&state.mapListExpanded);
+        }
+        MapMastery.open();document.getElementById('mapButton').click();
+        check('Map navigation also returns from mastery to combat',!MapMastery.isOpen()&&!elements.combatPanel.hidden&&state.currentView==='map');
+        MapMastery.open();travelToMap(state.selectedMap);
+        check('travel to the same map closes mastery without resetting the encounter',!MapMastery.isOpen()&&JSON.stringify(state.monsterStates)===encounter&&JSON.stringify(state.mapMastery)===mastery);
         check('layout fits the viewport',document.documentElement.scrollWidth<=innerWidth);
         check('no runtime errors',!smokeErrors.length);checks.push('SMOKE PASSED');
     }catch(error){checks.push('ERROR '+error.stack);}finally{window.scrollTo=originalScroll;}

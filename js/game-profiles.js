@@ -5,7 +5,6 @@
     const importButton = document.getElementById('importProfile');
     const fileInput = document.getElementById('importProfileFile');
     const status = document.getElementById('profileStatus');
-    let statusTimeout;
     let importing = false;
 
     function downloadText(text,name) {
@@ -45,11 +44,9 @@
     document.getElementById('resetProtectedSave').addEventListener('click',()=>document.getElementById('resetGame').click());
 
     function showStatus(message, error = false) {
-        window.clearTimeout(statusTimeout);
         status.textContent = message;
         status.classList.toggle('is-error', error);
         status.hidden = false;
-        if (!error) statusTimeout = window.setTimeout(() => { status.hidden = true; }, 8000);
     }
 
     function readBackup(text) {
@@ -129,11 +126,9 @@
             showCraftableRecipesOnly = false;
             showCraftedRecipes = false;
             lastRenderedGearSignature = null;
-            renderedLoot = renderedLootMessage = undefined;
             recentPlayerDamage = 0;
             clearEnemyDamageIndicator();
             window.LootEffects?.clear();
-            shownTutorialNotifications.clear();
             elements.inventory.querySelectorAll('details[open]').forEach(detail => { detail.open = false; });
             state.mapListExpanded = true;
             window.DeveloperTools?.render();

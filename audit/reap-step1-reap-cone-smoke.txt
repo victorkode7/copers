@@ -1,0 +1,36 @@
+PASS cone always includes the primary and caps at four unique targets
+PASS secondary targets lie in a cone within range
+PASS dead monsters are excluded
+PASS targeting is deterministic without randomness
+PASS cone cannot jump across distant empty slots
+PASS quadrant 1,-1 hits only its two cardinal neighbors and diagonal
+PASS quadrant 1,-1 never replaces a dead neighbor with a distant target
+PASS quadrant 1,1 hits only its two cardinal neighbors and diagonal
+PASS quadrant 1,1 never replaces a dead neighbor with a distant target
+PASS quadrant -1,1 hits only its two cardinal neighbors and diagonal
+PASS quadrant -1,1 never replaces a dead neighbor with a distant target
+PASS quadrant -1,-1 hits only its two cardinal neighbors and diagonal
+PASS quadrant -1,-1 never replaces a dead neighbor with a distant target
+PASS a single row hits only the immediately adjacent enemy
+PASS mid-swing blade crosses the 1,-1 diagonal center with 180x220 cards
+PASS mid-swing blade crosses the 1,1 diagonal center with 180x220 cards
+PASS mid-swing blade crosses the -1,1 diagonal center with 180x220 cards
+PASS mid-swing blade crosses the -1,-1 diagonal center with 180x220 cards
+PASS mid-swing blade crosses the 1,-1 diagonal center with 300x140 cards
+PASS mid-swing blade crosses the 1,1 diagonal center with 300x140 cards
+PASS mid-swing blade crosses the -1,1 diagonal center with 300x140 cards
+PASS mid-swing blade crosses the -1,-1 diagonal center with 300x140 cards
+PASS adjacency never wraps across row edges
+PASS Reap ignores excessive multihit and queues only four targets
+PASS damage waits for the peak window
+PASS Reap deals 100% to the primary and 300% to each chosen neighbor
+PASS monsters outside the cone stay untouched
+PASS visual scales beyond a monster frame
+PASS hilt pivot is anchored to the primary target center
+PASS visual radius reaches all adjacent targets without the old oversized padding
+PASS every animation layer uses the same grip pivot
+PASS the whole cast keeps one facing without adding an animated spin
+PASS the gameplay trigger preserves the compact size and aimed facing
+PASS foreground and offline cone damage agree
+PASS no runtime errors
+SMOKE PASSED

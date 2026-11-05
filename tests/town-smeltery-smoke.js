@@ -2,7 +2,7 @@
     const checks=[],check=(name,ok)=>{checks.push((ok?'PASS ':'FAIL ')+name);if(!ok)throw new Error(name);},$=id=>document.getElementById(id);
     const originalWrite=Storage.prototype.setItem,fresh=()=>({gold:1e6,townProgress:TownProgression.defaults()});
     try{
-        await document.fonts.ready;
+        await document.fonts.ready;state.defeatedBossWorldIds=[worldData[0].id];
         let half=true,surplus=true,wholeRates=true;
         for(const hall of [{tier:0,level:1},{tier:1,level:1},{tier:3,level:10}])for(const tier of [0,1,4])for(let level=1;level<=10;level++){
             const profile=fresh();profile.townProgress.buildings.townHall=hall;

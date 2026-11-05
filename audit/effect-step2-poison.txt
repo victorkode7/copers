@@ -1,0 +1,27 @@
+PASS multiShot applies exactly one Poison stack per direct hit
+PASS shockwaveSlash applies exactly one Poison stack per direct hit
+PASS voidBolt applies exactly one Poison stack per direct hit
+PASS voidVolley applies exactly one Poison stack per direct hit
+PASS Multishot does not roll Poison twice after centralizing ability hits
+PASS Piercing Arrow applies one stack to each enemy it hits
+PASS every landed fork applies one stack without double applications
+PASS Shockwave applies one stack per splash target
+PASS Eruption applies Poison once to its center and cardinal splash targets
+PASS Shield Slam applies one Poison stack
+PASS overflow applies one stack to the surviving target and none to the slain target
+PASS Void Bolt multihits each roll Poison independently
+PASS all ten Volley missiles can apply Poison to one surviving target
+PASS a Bolt-triggered Volley applies one stack per Bolt or missile hit
+PASS basic attacks and multihits still apply one stack each
+PASS failed chance rolls do not apply Poison
+PASS AOE hits use the configured Poison chance exactly once
+PASS zero Poison chance cannot add stacks
+PASS Poison, Bleed and burning DOT cannot apply Poison regardless of targeting tag
+PASS invalid or zero damage cannot apply Poison
+PASS missed ability attacks never apply Poison
+PASS a newly applied spell Poison stack can execute and spread
+PASS dead targets cannot grant duplicate kills or poison applications
+PASS lethal direct damage does not poison a corpse
+PASS ability Poison has identical foreground and offline outcomes
+PASS no runtime errors:
+SMOKE PASSED

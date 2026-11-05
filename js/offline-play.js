@@ -26,7 +26,6 @@
             }
             await navigator.serviceWorker.ready;
             message('Ready for offline play');
-            window.setTimeout(() => { status.hidden = true; }, 6000);
         } catch (error) {
             message('Offline download incomplete. Reconnect and reopen to finish.');
             console.warn('Could not prepare offline play.', error);

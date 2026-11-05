@@ -1,0 +1,34 @@
+PASS Reaping Echo is connected directly to Reap
+PASS both nodes allocate through the normal skill UI
+PASS the new node survives save parsing
+PASS Reap still waits before applying damage
+PASS the primary receives 100% and adjacent enemies receive 300%
+PASS an adjacent Reap kill queues exactly one echo at that corpse
+PASS echo targeting keeps the corpse as origin and selects its living neighbors
+PASS the new visual is anchored to the slain card
+PASS an echo has its own delayed hit window
+PASS a pending corpse-origin echo survives save and load
+PASS an echo hits new adjacent targets for 300% without hitting its corpse
+PASS kills from an echo generate the next Reap
+PASS a chain ends naturally when its hits cause no further kills
+PASS physical Reap damage has its own damage-meter entry
+PASS each simultaneous Reap kill spawns one distinct echo
+PASS a primary-target Reap kill also spawns an echo
+PASS kills cannot echo without allocating the new node
+PASS kills by other abilities cannot generate Reap echoes
+PASS a later poison execution is not misattributed to the previous Reap
+PASS missed Reaps deal no damage and cannot generate echoes
+PASS one living target retains the full formation-sized sweep
+PASS an isolated slot still gets a full-sized Reap
+PASS size measurement preserves the 1-enemy encounter
+PASS size measurement preserves the 4-enemy encounter
+PASS size measurement preserves the 2-enemy encounter
+PASS size measurement preserves the 3-enemy encounter
+PASS size measurement preserves the 8-enemy encounter
+PASS size measurement preserves the 16-enemy encounter
+PASS size measurement preserves the 1-enemy encounter
+PASS Reap has the same size with one, two, three, four, eight and sixteen enemies
+PASS foreground and offline chains produce identical damage and queues
+PASS changing encounters clears pending Reap chains
+PASS no runtime errors
+SMOKE PASSED

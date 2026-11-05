@@ -1,7 +1,7 @@
 (async function(){
     const checks=[],check=(name,ok)=>{checks.push((ok?'PASS ':'FAIL ')+name);if(!ok)throw new Error(name);};
     try{
-        await document.fonts.ready;
+        await document.fonts.ready;state.defeatedBossWorldIds=[worldData[0].id];
         let scaled=true;
         for(let tier=0;tier<=5;tier++){
             const upgrade=TownProgression.cost('upgrade','lumberOutpost',{tier,level:1}),prestige=TownProgression.cost('prestige','lumberOutpost',{tier,level:10});

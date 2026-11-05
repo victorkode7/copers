@@ -8,10 +8,13 @@
     const rarityOrder = {common: 0, uncommon: 1, rare: 2, epic: 3, unique: 4};
     const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const number = value => new Intl.NumberFormat('en-US').format(value);
-    let mapId, lastPosition;
+    let mapId, lastPosition, pendingDrops = null;
+
+    const boundsOf = element => typeof getCombatEffectBounds === 'function'
+        ? getCombatEffectBounds(element) : element.getBoundingClientRect();
 
     function statusBounds() {
-        const bounds = document.getElementById('combatStatus')?.getBoundingClientRect();
+        const status = document.getElementById('combatStatus'), bounds = status && boundsOf(status);
         return bounds?.width && bounds.height && bounds.bottom > 0 && bounds.top < innerHeight && bounds.right > 0 && bounds.left < innerWidth ? bounds : null;
     }
     function remove(token) {
@@ -32,18 +35,27 @@
         token.animation.onfinish = () => dismiss(token);
     }
     function clear() {
+        if (pendingDrops) pendingDrops.length = 0;
         for (const token of [...active.values()]) remove(token);
         root.getAnimations({subtree: true}).forEach(animation => animation.cancel());
         active.clear(); flashes.clear(); row.replaceChildren(); root.replaceChildren(row);
         row.hidden = true; lastPosition = null;
     }
-    function sync(activeView, nextMapId) {
+    function sync(activeView, nextMapId, deferPosition = false) {
         if (!activeView || nextMapId !== mapId) clear();
-        else reposition();
+        else if (!deferPosition) reposition();
         mapId = nextMapId;
     }
     function reposition() {
+        applyPosition(measurePosition());
+    }
+    function measurePosition(extraCards = []) {
         const bounds = statusBounds(), viewportWidth = document.documentElement.clientWidth;
+        const flashBounds = new Map();
+        for (const card of new Set([...flashes.keys(), ...(bounds ? extraCards : [])])) if (card) flashBounds.set(card, boundsOf(card));
+        return {bounds, viewportWidth, flashBounds};
+    }
+    function applyPosition({bounds, viewportWidth, flashBounds}) {
         if (!bounds) {
             // Unique rewards survive scrolling; normal drops remain transient.
             for (const token of [...active.values()]) if (!token.persistent) remove(token);
@@ -61,18 +73,18 @@
             lastPosition = {x: parseFloat(row.style.left), y: parseFloat(row.style.top)};
         }
         for (const [card, effect] of flashes) {
-            const rect = card.getBoundingClientRect();
+            const rect = flashBounds.get(card);
             Object.assign(effect.node.style, {left: rect.left + 'px', top: rect.top + 'px', width: rect.width + 'px', height: rect.height + 'px'});
         }
     }
-    function flash(source, reward) {
+    function flash(source, reward, flashBounds) {
         if (window.CombatSettings?.enabled('glows') === false) return;
         const card = source?.closest('.enemy-card');
         if (!card || reducedMotion()) return;
         if(window.CombatWebGLEffects?.lootFlash(card,reward.rarity))return;
         const previous = flashes.get(card);
         if (previous) { previous.animation.cancel(); previous.node.remove(); }
-        const bounds = card.getBoundingClientRect(), node = document.createElement('span');
+        const bounds = flashBounds?.get(card) || boundsOf(card), node = document.createElement('span');
         node.className = 'loot-plate-flash'; node.dataset.rarity = reward.rarity; node.setAttribute('aria-hidden', 'true');
         Object.assign(node.style, {left: bounds.left + 'px', top: bounds.top + 'px', width: bounds.width + 'px', height: bounds.height + 'px'});
         root.prepend(node);
@@ -86,8 +98,14 @@
     function drop(rewards, source, nextMapId) {
         if (window.CombatSettings?.enabled() === false) return;
         if (document.hidden || !rewards.length) return;
-        sync(true, nextMapId);
-        const now = performance.now(), visibleStatus = statusBounds();
+        const entry = {rewards, source, nextMapId, now: performance.now()};
+        if (pendingDrops) { pendingDrops.push(entry); return; }
+        presentDrop(entry);
+    }
+    function presentDrop({rewards, source, nextMapId, now}, placement) {
+        if (window.CombatSettings?.enabled() === false || document.hidden) return;
+        sync(true, nextMapId, Boolean(placement));
+        const visibleStatus = placement ? placement.bounds : statusBounds();
         const equipment = rewards.filter(reward => reward.equipment)
             .sort((a, b) => (rarityOrder[b.rarity] || 0) - (rarityOrder[a.rarity] || 0));
         const materials = rewards.filter(reward => !reward.gold && !reward.equipment);
@@ -95,7 +113,7 @@
             ...equipment.filter(reward => reward.rarity === 'unique'),
             ...equipment.filter(reward => reward.rarity !== 'unique').slice(0, 2)];
         const special = equipment.find(reward => rarityOrder[reward.rarity] >= 2);
-        if (visibleStatus && special) flash(source, special);
+        if (visibleStatus && special) flash(source, special, placement?.flashBounds);
         visible.forEach(reward => {
             const persistent = Boolean(reward.equipment && reward.rarity === 'unique');
             if (!visibleStatus && !persistent) return;
@@ -161,11 +179,37 @@
                 } else dismiss(token);
             };
         });
-        reposition();
+        if (!placement) reposition();
+    }
+    function batch(present) {
+        if (pendingDrops) return present();
+        pendingDrops = [];
+        try {
+            const result = present(), drops = pendingDrops;
+            pendingDrops = null;
+            // Combat normally produces one map's rewards. Retain ordering and
+            // clearing behavior if a caller changes maps inside the batch.
+            for (let start = 0; start < drops.length;) {
+                let end = start + 1;
+                while (end < drops.length && drops[end].nextMapId === drops[start].nextMapId) end++;
+                const group = drops.slice(start, end);
+                sync(true, group[0].nextMapId, true);
+                // Measure once after status writes, before adding any loot DOM.
+                // Include possible new flash sources for the HTML fallback.
+                const flashCards = window.CombatSettings?.enabled('glows') !== false && !reducedMotion()
+                    ? group.filter(entry => entry.rewards.some(reward => reward.equipment && rarityOrder[reward.rarity] >= 2))
+                        .map(entry => entry.source?.closest('.enemy-card')) : [];
+                const placement = measurePosition(flashCards);
+                group.forEach(entry => presentDrop(entry, placement));
+                applyPosition(placement);
+                start = end;
+            }
+            return result;
+        } finally { pendingDrops = null; }
     }
     window.addEventListener('scroll', reposition, {passive: true});
     window.addEventListener('resize', reposition, {passive: true});
     window.addEventListener('blur', clear);
     document.addEventListener('visibilitychange', () => { if (document.hidden) clear(); });
-    window.LootEffects = {drop, sync, clear};
+    window.LootEffects = {drop, sync, clear, batch};
 }());

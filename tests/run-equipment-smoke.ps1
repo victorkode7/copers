@@ -11,7 +11,8 @@ param(
     [switch]$WithoutDeveloperTools,
     [switch]$MissingDeveloperModule,
     [switch]$ReducedMotion,
-    [switch]$EnableGpu
+    [switch]$EnableGpu,
+    [switch]$RestrictFileAccess
 )
 $ErrorActionPreference = 'Stop'
 $workspacePath = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -29,7 +30,7 @@ if ($MissingDeveloperModule) { $html = $html.Replace('src="dev/developer-tools.j
 if ($Page -eq 'index.html') {
     # These suites inspect retained SVG paths and CSS timelines explicitly.
     # GPU pixels, timing, switches and fallback have dedicated WebGL suites.
-    $originalEffectTests = @('tests/arrow-skills-smoke.js','tests/spell-skills-smoke.js','tests/shield-expansion-smoke.js','tests/elemental-layout-smoke.js','tests/combat-settings-smoke.js','tests/health-regen-smoke.js','tests/eruption-skills-smoke.js','tests/all-skills-performance-smoke.js')
+    $originalEffectTests = @('tests/arrow-skills-smoke.js','tests/spell-skills-smoke.js','tests/shield-expansion-smoke.js','tests/elemental-layout-smoke.js','tests/combat-settings-smoke.js','tests/health-regen-smoke.js','tests/eruption-skills-smoke.js','tests/all-skills-performance-smoke.js','tests/loot-effects-smoke.js')
     if ($TestScript -in $originalEffectTests) {
         $html = $html.Replace('</body>', '<script>const smokeRenderer=document.getElementById("combatEffectRenderer");smokeRenderer.value="svg";smokeRenderer.dispatchEvent(new Event("change"));</script></body>')
     }
@@ -59,6 +60,7 @@ try {
     $realtime = $realtime -or $TestScript -eq 'tests/world-progression-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/black-sun-smoke.js'
     $realtime = $realtime -or $TestScript -in @('tests/monster-mastery-smoke.js','tests/mastery-editor-smoke.js')
+    $realtime = $realtime -or $TestScript -eq 'tests/mastery-gestures-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/equipment-crafting-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/weapon-roll-save-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/auto-reroll-smoke.js'
@@ -83,8 +85,19 @@ try {
     $realtime = $realtime -or $TestScript -eq 'tests/combat-settings-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-effects-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/combat-effect-batch-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-projectiles-smoke.js' -or [bool]$ScreenshotPath
     $realtime = $realtime -or $TestScript -eq 'tests/equipment-sprite-preview-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/level-up-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/notification-windows-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-preview-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-sprite-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-cone-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-geometry-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-redraw-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-echo-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-local-file-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/scythe-reap-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/world-project-load-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/spell-skills-smoke.js'
     $realtime = $realtime -or ($Page -eq 'skill-tree-editor.html' -and $TestScript -eq 'tests/shield-expansion-smoke.js')
@@ -94,6 +107,7 @@ try {
         $processInfo.Arguments = '--headless --disable-gpu --no-first-run --allow-file-access-from-files --remote-debugging-port=0 --user-data-dir="' + $profilePath + '" "' + $startUrl + '"'
     }
     if ($EnableGpu) { $processInfo.Arguments = $processInfo.Arguments.Replace('--disable-gpu ', '') }
+    if ($RestrictFileAccess) { $processInfo.Arguments = $processInfo.Arguments.Replace('--allow-file-access-from-files ', '') }
     $processInfo.UseShellExecute = $false
     $processInfo.Arguments += ' --window-size=' + $WindowSize
     $processInfo.CreateNoWindow = $true
@@ -106,8 +120,17 @@ try {
         # Real time allows IndexedDB draft/sprite operations to finish, including across navigation.
         $deadline = [DateTime]::UtcNow.AddSeconds(20)
         $portFile = Join-Path $profilePath 'DevToolsActivePort'
-        while (!(Test-Path -LiteralPath $portFile) -and [DateTime]::UtcNow -lt $deadline) { Start-Sleep -Milliseconds 100 }
-        $port = ([IO.File]::ReadAllLines($portFile))[0]
+        $port=0
+        while (!$port -and [DateTime]::UtcNow -lt $deadline) {
+            if (Test-Path -LiteralPath $portFile) {
+                try {
+                    $portLines=[IO.File]::ReadAllLines($portFile)
+                    if ($portLines.Length -ge 2) { $port=[int]$portLines[0] }
+                } catch [IO.IOException] { } # Chrome may still be writing the file.
+            }
+            if (!$port) { Start-Sleep -Milliseconds 100 }
+        }
+        if (!$port) { throw 'Browser debugging port did not become ready.' }
         $targets = Invoke-RestMethod -Uri ('http://127.0.0.1:' + $port + '/json/list')
         $target = $targets | Where-Object { $_.type -eq 'page' } | Select-Object -First 1
         $socket = [Net.WebSockets.ClientWebSocket]::new()

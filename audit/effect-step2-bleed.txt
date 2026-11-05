@@ -1,0 +1,65 @@
+PASS the old default Bleed description updates to two short lines
+PASS custom Bleed descriptions remain untouched
+PASS skill and equipment Bleed stats combine correctly
+PASS 100 and 200 damage hits add ten and twenty damage to the shared DOT
+PASS mixed-strength applications tick for their combined damage
+PASS changing attack damage cannot rewrite the damage of earlier Bleed applications
+PASS Bleed damage multipliers scale the combined hit-based DOT
+PASS equipped Bleed modifiers continue to affect active DOTs
+PASS small hits retain fractional Bleed damage instead of rounding up to one
+PASS Fury gained by a hit does not change its Bleed contribution
+PASS missing or invalid triggering damage never creates Bleed or consumes a roll
+PASS zero chance preserves ordinary hits and combat random rolls
+PASS first application creates one stack with a one-second shared timer
+PASS a later application adds time instead of resetting ticks or refreshing the duration
+PASS the shared timer caps at five seconds while stacks keep accumulating
+PASS all stacks tick together
+PASS old stacks stay active for the entire shared duration
+PASS the final tick lands at expiration and all stacks disappear together
+PASS fractional steps never drop or duplicate the expiry tick
+PASS large elapsed steps and small steps give identical total Bleed damage
+PASS tick speed bonuses increase ticks without extending the duration
+PASS Bleed and other DOTs cannot build Fury or apply additional Bleed
+PASS poison and Bleed coexist with independent timers
+PASS missed attacks do not apply Bleed
+PASS basic attacks apply Bleed based on their actual hit damage
+PASS multihits each apply Bleed once to their directly hit target
+PASS a direct attack with Shockwave Slash applies Bleed only to the direct target
+PASS Shockwave Slash splash cannot apply Bleed
+PASS eruption impact and splash cannot apply Bleed
+PASS piercingArrow cannot apply Bleed
+PASS forkingArrow cannot apply Bleed
+PASS single-target Multishot can apply Bleed
+PASS single-target Shield Slam can apply Bleed
+PASS AOE ability hits cannot extend existing Bleed or add to its damage pool
+PASS Bleed kills grant normal rewards and shields without switching a living target or spreading Bleed
+PASS respawned enemies start without stale Bleed stacks
+PASS Poison Execute does not count future Bleed damage
+PASS Bleed keeps ticking after player death and expires normally
+PASS the Bleed node is reachable from the center
+PASS profiles preserve stacks, shared duration and partial tick progress
+PASS older active Bleed saves preserve their original pending base damage
+PASS new hit-based damage adds correctly to a restored legacy DOT
+PASS older profiles load without inventing Bleed
+PASS malformed Bleed saves are rejected: {"stacks":0}
+PASS malformed Bleed saves are rejected: {"stacks":0.5}
+PASS malformed Bleed saves are rejected: {"stacks":-1}
+PASS malformed Bleed saves are rejected: {"baseDamagePerTick":-1}
+PASS malformed Bleed saves are rejected: {"baseDamagePerTick":null}
+PASS malformed Bleed saves are rejected: {"baseDamagePerTick":"10"}
+PASS malformed Bleed saves are rejected: {"remainingDuration":0}
+PASS malformed Bleed saves are rejected: {"remainingDuration":5.1}
+PASS malformed Bleed saves are rejected: {"timeUntilTick":0}
+PASS malformed Bleed saves are rejected: {"timeUntilTick":11}
+PASS malformed Bleed saves are rejected: []
+PASS malformed Bleed saves are rejected: "bleed"
+PASS foreground and offline Bleed combat produce identical states and rewards
+PASS Bleed simulation does not mutate the DOM
+PASS plates show red Bleed stacks and the shared duration beside poison
+PASS Bleed status stays inside the plate on narrow screens
+PASS poison and Bleed forecasts occupy separate health-bar segments
+PASS expiring statuses hides the badge without moving the health bar
+PASS combat stats expose Bleed chance and damage details
+PASS the Bleed tooltip renders no more than two lines
+PASS no runtime errors:
+SMOKE PASSED

@@ -2,7 +2,7 @@
     const checks=[],check=(label,ok)=>{checks.push((ok?'PASS ':'FAIL ')+label);if(!ok)throw new Error(label);};
     const originalWrite=Storage.prototype.setItem;
     try{
-        await document.fonts.ready;
+        await document.fonts.ready;state.defeatedBossWorldIds=[worldData[0].id];
         let surplus=true,matchingRatio=true;
         for(const hall of [{tier:0,level:1},{tier:1,level:1},{tier:4,level:10}])for(const tier of [0,1,4])for(let level=1;level<=10;level++)for(const millTier of [0,1])for(let millLevel=1;millLevel<=10;millLevel++){
             if(tier<millTier||tier===millTier&&level<millLevel)continue;

@@ -1,0 +1,137 @@
+{
+    "browser":  "Chrome",
+    "environment":  {
+                        "userAgent":  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+                        "width":  1440,
+                        "height":  1000,
+                        "devicePixelRatio":  1,
+                        "logicalProcessors":  8,
+                        "gpu":  "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002484) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+                        "reapFrames":  16,
+                        "simulationTickMs":  100
+                    },
+    "samples":  [
+                    {
+                        "scenario":  "idle",
+                        "setup":  {
+                                      "interval":  1.2,
+                                      "damage":  12,
+                                      "columns":  3,
+                                      "count":  64
+                                  },
+                        "elapsedMs":  2401,
+                        "animationCallbacksPerSecond":  215,
+                        "frameP95Ms":  4.300000000000182,
+                        "webglDraws":  0,
+                        "spriteDraws":  0,
+                        "canvasClears":  0,
+                        "webglDrawsPerSecond":  0,
+                        "spriteDrawsPerSecond":  0,
+                        "canvasClearsPerSecond":  0,
+                        "webglStatus":  {
+                                            "active":  0,
+                                            "ambient":  0,
+                                            "running":  false,
+                                            "available":  true,
+                                            "reducedMotion":  false,
+                                            "failureReason":  "",
+                                            "types":  [
+
+                                                      ]
+                                        },
+                        "activeReaps":  0,
+                        "canvases":  [
+                                         {
+                                             "className":  "combat-webgl-layer",
+                                             "width":  300,
+                                             "height":  150
+                                         }
+                                     ]
+                    },
+                    {
+                        "scenario":  "ambient",
+                        "setup":  {
+                                      "interval":  1.2,
+                                      "damage":  12,
+                                      "columns":  3,
+                                      "count":  64
+                                  },
+                        "elapsedMs":  2406,
+                        "animationCallbacksPerSecond":  232,
+                        "frameP95Ms":  4.300000000000182,
+                        "webglDraws":  560,
+                        "spriteDraws":  0,
+                        "canvasClears":  0,
+                        "webglDrawsPerSecond":  233,
+                        "spriteDrawsPerSecond":  0,
+                        "canvasClearsPerSecond":  0,
+                        "webglStatus":  {
+                                            "active":  0,
+                                            "ambient":  64,
+                                            "running":  true,
+                                            "available":  true,
+                                            "reducedMotion":  false,
+                                            "failureReason":  "",
+                                            "types":  [
+                                                          "poisonAura"
+                                                      ]
+                                        },
+                        "activeReaps":  0,
+                        "canvases":  [
+                                         {
+                                             "className":  "combat-webgl-layer",
+                                             "width":  1440,
+                                             "height":  1000
+                                         }
+                                     ]
+                    },
+                    {
+                        "scenario":  "reap32",
+                        "setup":  {
+                                      "interval":  1.2,
+                                      "damage":  12,
+                                      "columns":  3,
+                                      "count":  64
+                                  },
+                        "elapsedMs":  2402,
+                        "animationCallbacksPerSecond":  229,
+                        "frameP95Ms":  4.300000000000182,
+                        "webglDraws":  0,
+                        "spriteDraws":  2847,
+                        "canvasClears":  57,
+                        "webglDrawsPerSecond":  0,
+                        "spriteDrawsPerSecond":  1185,
+                        "canvasClearsPerSecond":  24,
+                        "webglStatus":  {
+                                            "active":  0,
+                                            "ambient":  0,
+                                            "running":  false,
+                                            "available":  true,
+                                            "reducedMotion":  false,
+                                            "failureReason":  "",
+                                            "types":  [
+
+                                                      ]
+                                        },
+                        "activeReaps":  32,
+                        "canvases":  [
+                                         {
+                                             "className":  "combat-webgl-layer",
+                                             "width":  1440,
+                                             "height":  1000
+                                         },
+                                         {
+                                             "className":  "",
+                                             "width":  1440,
+                                             "height":  1000
+                                         }
+                                     ]
+                    }
+                ],
+    "notes":  [
+                  "Isolated headless browser with fresh storage.",
+                  "Counts drawing submissions, not GPU utilization or execution time.",
+                  "No combat intervals or real player profile. Ambient and Reap loads are synthetic.",
+                  "Headless timing and rendering may differ from interactive browser windows."
+              ]
+}

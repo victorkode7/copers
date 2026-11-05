@@ -3,7 +3,7 @@
     const originalWrite=Storage.prototype.setItem;
     const fresh=()=>({gold:1e9,townProgress:TownProgression.defaults()});
     try{
-        await document.fonts.ready;
+        await document.fonts.ready;state.defeatedBossWorldIds=[worldData[0].id];
         const base=fresh();
         check('base Town caps cover Logs, Planks, Ore and Bars',TownProgression.capacity(base,'wood')===50000&&TownProgression.capacity(base,'planks')===50000&&TownProgression.capacity(base,'ore')===100000&&TownProgression.capacity(base,'bars')===10000);
         state.townProgress=TownProgression.defaults();state.townProgress.buildings.townHall={tier:2,level:10};state.gold=500000;state.townProgress.resources={wood:49999,planks:40000,ore:90000};state.currentView='townPage';state.isInTown=true;state.combatPaused=true;resetCombatClock();render();

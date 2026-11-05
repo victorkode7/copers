@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    const uniqueEffects = new Set(['shockwaveSlash', 'poisonExecute', 'bloomingFlower',
+    const uniqueEffects = new Set(['reapPreview', 'reapingEcho', 'shockwaveSlash', 'poisonExecute', 'bloomingFlower',
         'piercingArrow', 'forkingArrow', 'multiShot', 'freezingArrows', 'volcanicEruption', 'eruptionChain', 'shieldGenerator', 'shieldSlam', 'overflowingSlam', 'resonantGuard', 'righteousFire', 'fireOfTheRighteous', 'bleed', 'singledOff', 'deepWounds', 'bleederer','voidBolt','voidVolley','voidVortex']);
     const abilityTargetingDefaults = Object.freeze({
         shockwaveSlash:'aoe', piercingArrow:'aoe', forkingArrow:'aoe', multiShot:'singleTarget',

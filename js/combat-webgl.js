@@ -39,14 +39,15 @@
             float angle=buffGlow?0.0:a_target.w+(a_timing.w>9.5&&a_timing.w<10.5?t*1.74533:0.0);
             float c = cos(angle), s = sin(angle);
             vec2 pos = center + vec2(c*local.x-s*local.y, s*local.x+c*local.y);
-            if (a_timing.w >= 12.0 && !buffGlow) pos = a_origin.xy;
+            if (a_timing.w >= 12.0 && a_timing.w < 17.5) pos = a_origin.xy;
             vec2 p = (pos + u_origin) / u_viewport;
             gl_Position = vec4(p.x*2.0-1.0, 1.0-p.y*2.0, 0.0, 1.0);
-            v_uv = a_uv.xy; v_size=a_timing.w>=12.0?a_origin.zw:a_origin.zw*scale; v_color = a_color;
+            v_uv = a_uv.xy; v_size=a_timing.w>=12.0&&a_timing.w<17.5?a_origin.zw:a_origin.zw*scale; v_color = a_color;
             v_glowColor = a_timing.w >= 12.0 ? a_curve.xyz : a_color.rgb;
             v_cutout1 = a_curve; v_cutout2 = a_target;
             v_pathLength = a_curve.w;
-            v_info = vec4(a_uv.z > 0.5 ? 0.0 : age, a_uv.z > 0.5 ? 1.0 : a_timing.y, a_timing.w, a_target.z);
+            float effectAge=a_uv.z>1.5?a_uv.z-2.0:a_uv.z>0.5?0.0:age;
+            v_info = vec4(effectAge, a_uv.z>0.5&&a_uv.z<1.5?1.0:a_timing.y, a_timing.w, a_target.z);
         }`;
     const fragmentSource = `
         precision mediump float;
@@ -239,7 +240,7 @@
         corners.forEach((uv,index)=>vertices.set([x,y,width/2,height/2,
             buffGlow?secondCutout[0]:endX,buffGlow?secondCutout[1]:endY,buffGlow?secondCutout[2]:scale,buffGlow?secondCutout[3]:rotation,
             buffGlow?firstCutout[0]:move===1?flight/1000:control1.x,buffGlow?firstCutout[1]:control1.y,
-            buffGlow?firstCutout[2]:control2.x,buffGlow?firstCutout[3]:control2.y,born,seconds,move,style,...color,opacity,...uv,spec.persistent?1:0,startScale],index*24));
+            buffGlow?firstCutout[2]:control2.x,buffGlow?firstCutout[3]:control2.y,born,seconds,move,style,...color,opacity,...uv,Number.isFinite(spec.freezeAt)?2+spec.freezeAt/1000:spec.persistent?1:0,startScale],index*24));
         return {vertices,expires:born+seconds,category:spec.category||'abilities',type:spec.type||'shape',requiresAbilities:spec.requiresAbilities===true};
     }
     function emit(spec) {

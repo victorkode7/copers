@@ -1,0 +1,30 @@
+PASS webgl: status geometry is read only after all indicators are revealed
+PASS webgl: one combat batch measures the loot anchor once
+PASS webgl: all drops merge into one correctly summed reward
+PASS webgl: fallback CSS restarts all requested indicator animations
+PASS webgl: loot stays aligned beside or beneath the combat status
+PASS webgl: batched unique loot remains dismissible
+PASS webgl: dismissing unique loot leaves the other reward intact
+PASS webgl: clearing during a batch discards pending loot
+PASS webgl: map changes within a batch preserve reward clearing order
+PASS webgl: removed indicators cannot leave deferred glows behind
+PASS webgl: a failed batch restores effect state and discards queued loot
+PASS webgl: the next batch still works after an exception
+PASS webgl: standalone loot still appears synchronously
+PASS svg: status geometry is read only after all indicators are revealed
+PASS svg: one combat batch measures the loot anchor once
+PASS svg: all drops merge into one correctly summed reward
+PASS svg: fallback CSS restarts all requested indicator animations
+PASS svg: loot stays aligned beside or beneath the combat status
+PASS svg: batched unique loot remains dismissible
+PASS svg: dismissing unique loot leaves the other reward intact
+PASS svg: clearing during a batch discards pending loot
+PASS svg: map changes within a batch preserve reward clearing order
+PASS svg: removed indicators cannot leave deferred glows behind
+PASS svg: a failed batch restores effect state and discards queued loot
+PASS svg: the next batch still works after an exception
+PASS svg: standalone loot still appears synchronously
+PASS presentation batching preserves combat and reward state
+PASS disabled effects do not queue loot or GPU work
+PASS no runtime errors
+SMOKE PASSED

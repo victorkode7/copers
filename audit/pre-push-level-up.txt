@@ -1,0 +1,24 @@
+PASS offline gains do not start visual effects
+PASS live gains queue one celebration
+PASS announcement shows earned level and skill point
+PASS XP and level label remain active
+PASS traveling light and player-frame surge are removed
+PASS two input-transparent container surges replace the traveling border
+PASS surge 0 matches its container
+PASS surge 1 matches its container
+PASS expanding rings respect reduced motion
+PASS particle bursts respect reduced motion
+PASS zero XP still shows its celebration ribbon
+PASS rapid levels replace all previous overlays
+PASS level-up sound and its settings control are removed
+PASS no skill point is invented
+PASS container rings follow resize
+PASS shine completion does not end the celebration
+PASS container effects clean up while the notification stays
+PASS all active classes clean up automatically
+PASS level-up notification persists until clicked
+PASS clicking the level-up window closes it
+PASS developer level button celebrates
+PASS partial XP progress is preserved
+PASS no runtime errors
+SMOKE PASSED

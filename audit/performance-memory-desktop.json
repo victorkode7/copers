@@ -1,0 +1,133 @@
+{
+    "phase":  "memory",
+    "environment":  {
+                        "userAgent":  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+                        "width":  1440,
+                        "height":  1000,
+                        "devicePixelRatio":  1,
+                        "logicalProcessors":  8,
+                        "gpu":  "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002484) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+                        "reapFrames":  16,
+                        "simulationTickMs":  100
+                    },
+    "samples":  [
+                    {
+                        "scenario":  "idle-memory",
+                        "samples":  [
+
+                                    ],
+                        "active":  0,
+                        "overlays":  0,
+                        "setup":  {
+                                      "interval":  1.2,
+                                      "damage":  12,
+                                      "columns":  3,
+                                      "count":  64
+                                  },
+                        "mainThreadMs":  0.754,
+                        "layoutStyleMs":  0.000,
+                        "layoutCount":  0,
+                        "heapBefore":  1992880,
+                        "heapAfter":  1994744,
+                        "nodesBefore":  7758,
+                        "nodesAfter":  7758
+                    },
+                    {
+                        "scenario":  "ten-reap-cycles",
+                        "samples":  [
+                                        {
+                                            "cycle":  0,
+                                            "active":  0,
+                                            "overlays":  0,
+                                            "domNodes":  5477,
+                                            "heapUsed":  10000000
+                                        },
+                                        {
+                                            "cycle":  1,
+                                            "active":  0,
+                                            "overlays":  0,
+                                            "domNodes":  5477,
+                                            "heapUsed":  10000000
+                                        },
+                                        {
+                                            "cycle":  2,
+                                            "active":  0,
+                                            "overlays":  0,
+                                            "domNodes":  5477,
+                                            "heapUsed":  10000000
+                                        },
+                                        {
+                                            "cycle":  3,
+                                            "active":  0,
+                                            "overlays":  0,
+                                            "domNodes":  5477,
+                                            "heapUsed":  10000000
+                                        },
+                                        {
+                                            "cycle":  4,
+                                            "active":  0,
+                                            "overlays":  0,
+                                            "domNodes":  5477,
+                                            "heapUsed":  10000000
+                                        },
+                                        {
+                                            "cycle":  5,
+                                            "active":  0,
+                                            "overlays":  0,
+                                            "domNodes":  5477,
+                                            "heapUsed":  10000000
+                                        },
+                                        {
+                                            "cycle":  6,
+                                            "active":  0,
+                                            "overlays":  0,
+                                            "domNodes":  5477,
+                                            "heapUsed":  10000000
+                                        },
+                                        {
+                                            "cycle":  7,
+                                            "active":  0,
+                                            "overlays":  0,
+                                            "domNodes":  5477,
+                                            "heapUsed":  10000000
+                                        },
+                                        {
+                                            "cycle":  8,
+                                            "active":  0,
+                                            "overlays":  0,
+                                            "domNodes":  5477,
+                                            "heapUsed":  10000000
+                                        },
+                                        {
+                                            "cycle":  9,
+                                            "active":  0,
+                                            "overlays":  0,
+                                            "domNodes":  5477,
+                                            "heapUsed":  10000000
+                                        }
+                                    ],
+                        "active":  0,
+                        "overlays":  0,
+                        "setup":  {
+                                      "interval":  1.2,
+                                      "damage":  12,
+                                      "columns":  3,
+                                      "count":  64
+                                  },
+                        "mainThreadMs":  5423.881,
+                        "layoutStyleMs":  134.317,
+                        "layoutCount":  21,
+                        "heapBefore":  2007304,
+                        "heapAfter":  2120052,
+                        "nodesBefore":  7758,
+                        "nodesAfter":  7758
+                    }
+                ],
+    "notes":  [
+                  "Synthetic isolated profile; production files are unchanged.",
+                  "GPU acceleration requested; the actual renderer is recorded.",
+                  "Inclusive instrumented timings overlap and include instrumentation overhead.",
+                  "CDP thread timings exclude GPU-process work. Memory snapshots follow forced GC.",
+                  "Narrow viewport is desktop Chrome without mobile CPU throttling."
+              ]
+}

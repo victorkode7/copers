@@ -1,0 +1,19 @@
+PASS Town is completely hidden before the World 1 boss
+PASS hidden Town control cannot open Town
+PASS locked Town views fall back to the map
+PASS another world boss does not unlock Town
+PASS first World 1 boss kill reveals Town with an indicator
+PASS Town unlock message names the actual world
+PASS separate notification requests a Lumber Outpost
+PASS Town unlock and notifications survive save loading
+PASS visiting Town completes the unlock notification
+PASS Lumber Outpost reminder and indicator remain until purchase
+PASS the Lumber Outpost purchase is highlighted
+PASS failed purchase keeps the reminder and resources
+PASS buying the outpost completes the reminder and indicator
+PASS repeat boss kills do not replay the Town tutorial
+PASS Lumber Outpost reminder can be dismissed and stays dismissed
+PASS legacy boss kill history still unlocks Town
+PASS legacy Town views without a boss victory load on the map
+PASS no runtime errors
+SMOKE PASSED

@@ -4,6 +4,7 @@
         await document.fonts.ready;state.combatPaused=true;resetCombatClock();
         check('game starts without the optional module or developer controls',!window.DeveloperTools&&!document.getElementById('developerTools')&&!document.getElementById('developerTravel')&&!document.getElementById('resetTownProgress')&&!document.getElementById('hideDeveloperNavigation'));
         check('playtest uses the existing normal save namespace',saveKey==='idleAdventureSave'&&createGameSave().profileEnvironment==='playtest');
+        check('playtest has no developer level button',!document.getElementById('increaseLevelButton'));
         state.developerItemsEnabled=true;state.developerTravelEnabled=true;state.gold=0;
         check('changing developer flags cannot grant admin equipment',itemData.items.filter(item=>item.developerOnly).every(item=>!ownsItem(item.id)));
         check('changing flags cannot bypass travel or spending',!worldIsUnlocked(1)&&!GameResources.canSpend(state,{gold:1})&&!GameResources.spend(state,{gel:1}));

@@ -49,7 +49,7 @@
         card.append(number,header,rate,preview,status,actions,production);$('townBuildingGrid').append(card);buildingCards.push(view);
     }
     function perform(kind,id){
-        if(state.currentView!=='townPage'||TownContent.buildings[id]?.world!==selectedWorld||SaveCompatibility.protection.blocked||simulatingCombat||!TownProgression.can(state,kind,id))return false;
+        if(!townIsUnlocked()||state.currentView!=='townPage'||TownContent.buildings[id]?.world!==selectedWorld||SaveCompatibility.protection.blocked||simulatingCombat||!TownProgression.can(state,kind,id))return false;
         const priorGold=state.gold,priorProgress=state.townProgress;
         state.townProgress=TownProgression.clone(priorProgress);
         try{TownProgression.apply(state,kind,id);localStorage.setItem(saveKey,JSON.stringify(createGameSave()));unlockMessage='';}
@@ -130,6 +130,7 @@
             view.level.hidden=!data;if(data)updateCombatText(view.level,'T'+data.tier+' · Lv '+data.level+'/'+TownProgression.maxLevel(key,data.tier));
             view.status.hidden=unlockMessage?.id!==key;if(!view.status.hidden)updateCombatText(view.status,unlockMessage.text);
             view.kind=data?(data.level<TownProgression.maxLevel(key,data.tier)?'upgrade':'prestige'):'purchase';
+            view.unlock.classList.toggle('tutorial-attention',key==='lumberOutpost'&&!data&&!state.tutorials.lumberOutpostDismissed);
             const cost=TownProgression.cost(view.kind,key,data);
             view.unlock.hidden=!def||cost===null||!data&&!TownProgression.available(state,view.kind,key);
             view.costs.hidden=view.unlock.hidden;
@@ -204,6 +205,6 @@
     }
     document.addEventListener('visibilitychange',renderProduction);
     reducedMotion.addEventListener('change',renderProduction);
-    $('townPageButton').addEventListener('click',()=>{state.currentView='townPage';state.isInTown=true;window.render();saveGame();});
+    $('townPageButton').addEventListener('click',()=>{if(!townIsUnlocked())return;state.tutorials.townUnlockedPending=false;state.currentView='townPage';state.isInTown=true;window.render();saveGame();});
     window.TownPage={render,renderProduction};render();
 }());

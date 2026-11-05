@@ -1,0 +1,33 @@
+.idle-adventure #gameNotificationStack {
+    position:fixed; z-index:110; width:340px; max-width:calc(100vw - 32px);
+    display:flex; flex-direction:column; gap:10px; transform:translateX(-50%);
+    overflow-y:auto; overflow-x:hidden; padding:3px; pointer-events:none;
+    scrollbar-width:thin;
+}
+.idle-adventure #gameNotificationStack #tutorialNotifications {
+    position:static; display:contents; width:auto; max-height:none; overflow:visible;
+}
+.idle-adventure #gameNotificationStack [hidden] { display:none; }
+.idle-adventure #gameNotificationStack #tutorialNotifications[hidden] { display:none; }
+.idle-adventure #gameNotificationStack :is(.tutorial-notice,.notification-window) {
+    position:relative; inset:auto; flex:none; width:100%; max-width:100%; margin:0;
+    padding:18px 24px; border:1px solid #66819e; border-radius:8px;
+    background:radial-gradient(ellipse at center,#213b58fa,#10213bfa 72%);
+    color:var(--adventure-text); box-shadow:none; text-shadow:var(--game-text-shadow);
+    font-size:.9rem; line-height:1.5; text-align:center; transform:none;
+    animation:none; pointer-events:auto; cursor:pointer;
+}
+.idle-adventure #gameNotificationStack .tutorial-notice { display:block; padding-right:30px; }
+.idle-adventure #gameNotificationStack .tutorial-notice p { margin:0; font-size:inherit; line-height:inherit; }
+.idle-adventure #gameNotificationStack .tutorial-dismiss { position:absolute; top:4px; right:5px; }
+.idle-adventure #gameNotificationStack .notification-window.is-error { border-color:var(--adventure-danger); }
+.idle-adventure #gameNotificationStack :is(.tutorial-notice,.notification-window):focus-visible { outline:2px solid var(--adventure-blue); outline-offset:-3px; }
+.idle-adventure #gameNotificationStack .level-up-announcement {
+    order:1; display:flex; border-color:#ffd70099;
+    background:radial-gradient(ellipse at center,#493a16fa,#10213bfa 72%);
+    animation:notification-level-enter 350ms ease-out both;
+}
+@keyframes notification-level-enter { from { opacity:0; scale:.94; } to { opacity:1; scale:1; } }
+@media(prefers-reduced-motion:reduce) {
+    .idle-adventure #gameNotificationStack .level-up-announcement { animation:none; }
+}

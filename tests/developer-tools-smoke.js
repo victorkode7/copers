@@ -7,7 +7,11 @@
         const normal=JSON.stringify({...createGameSave(),profileEnvironment:'playtest',developerItemsEnabled:false,developerTravelEnabled:false,gold:12345});localStorage.setItem('idleAdventureSave',normal);
         state.gold=0;state.materials=Object.fromEntries(Object.keys(materialNames).map(id=>[id,0]));state.townProgress=TownProgression.defaults();
         check('developer mode is initially disabled',!state.developerTravelEnabled&&!GameResources.canSpend(state,{gold:1}));
+        check('level control belongs to developer tools and is disabled outside developer mode',$('developerTools').contains($('increaseLevelButton'))&&$('increaseLevelButton').disabled);
+        check('Reap preview belongs to developer tools and is disabled outside developer mode',$('developerTools').contains($('previewScytheReap'))&&$('previewScytheReap').disabled);
         check('enabling mode also makes admin equipment available',DeveloperTools.setMode(true)&&itemData.items.filter(item=>item.developerOnly).every(item=>ownsItem(item.id)));
+        const initialLevel=state.level;$('increaseLevelButton').click();
+        check('developer level control grants and saves exactly one level',state.level===initialLevel+1&&JSON.parse(localStorage.getItem(saveKey)).level===state.level);
         check('all spending-resource IDs are covered without refilling balances',GameResources.canSpend(state,{gold:999999,gel:999999,futureMaterial:999999})&&GameResources.spend(state,{gold:100,futureMaterial:50})&&state.gold===0&&!Object.hasOwn(state.materials,'futureMaterial'));
         check('invalid costs are rejected even in developer mode',!GameResources.canSpend(state,{gold:Infinity})&&!GameResources.canSpend(state,{gold:-1}));
         const locked={gold:0,townProgress:TownProgression.defaults(),developerTravelEnabled:true};
@@ -49,6 +53,8 @@
         window.confirm=()=>true;
         check('explicit copy preserves the original profile and backs up development progress',DeveloperTools.copyPlaytest()&&state.gold===12345&&localStorage.getItem('idleAdventureSave')===normal&&SaveCompatibility.backups().length>0&&SaveCompatibility.backups().every(entry=>entry.key.startsWith(saveKey+':backup:')));
         check('copy stays in the development environment',JSON.parse(localStorage.getItem(saveKey)).profileEnvironment==='development');
+        await ReapSprite.ready;DeveloperTools.setMode(true);$('previewScytheReap').click();await Promise.resolve();
+        check('Reap preview button displays the new animation in the map view',state.currentView==='map'&&!!document.querySelector('.scythe-reap-effect'));ReapSprite.clear();DeveloperTools.setMode(false);
         check('no runtime errors',!smokeErrors.length);checks.push('SMOKE PASSED');
     }catch(error){checks.push('ERROR '+error.stack);}finally{Storage.prototype.setItem=originalWrite;window.confirm=originalConfirm;Math.random=originalRandom;}
     const report=document.createElement('pre');report.id='smoke-results';report.textContent=checks.join('\n');document.body.append(report);

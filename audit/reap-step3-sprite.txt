@@ -1,0 +1,89 @@
+PASS native weapon resolution is preserved
+PASS blood is normalized into equal padded cells
+PASS raw 1254px blood can also normalize at runtime
+PASS weapon frame 0 selects the correct cell
+PASS weapon frame 0 is present and transparent at its borders
+PASS weapon frame 1 selects the correct cell
+PASS weapon frame 1 is present and transparent at its borders
+PASS weapon frame 2 selects the correct cell
+PASS weapon frame 2 is present and transparent at its borders
+PASS weapon frame 3 selects the correct cell
+PASS weapon frame 3 is present and transparent at its borders
+PASS weapon frame 4 selects the correct cell
+PASS weapon frame 4 is present and transparent at its borders
+PASS weapon frame 5 selects the correct cell
+PASS weapon frame 5 is present and transparent at its borders
+PASS weapon frame 6 selects the correct cell
+PASS weapon frame 6 is present and transparent at its borders
+PASS weapon frame 7 selects the correct cell
+PASS weapon frame 7 is present and transparent at its borders
+PASS weapon frame 8 selects the correct cell
+PASS weapon frame 8 is present and transparent at its borders
+PASS weapon frame 9 selects the correct cell
+PASS weapon frame 9 is present and transparent at its borders
+PASS weapon frame 10 selects the correct cell
+PASS weapon frame 10 is present and transparent at its borders
+PASS weapon frame 11 selects the correct cell
+PASS weapon frame 11 is present and transparent at its borders
+PASS weapon frame 12 selects the correct cell
+PASS weapon frame 12 is present and transparent at its borders
+PASS weapon frame 13 selects the correct cell
+PASS weapon frame 13 is present and transparent at its borders
+PASS weapon frame 14 selects the correct cell
+PASS weapon frame 14 is present and transparent at its borders
+PASS weapon frame 15 selects the correct cell
+PASS weapon frame 15 is present and transparent at its borders
+PASS weapon turns counterclockwise through 270 degrees exactly once
+PASS frames 13–15 hold the final source pose
+PASS only the hilt end is removed in every animation frame
+PASS every hilt end has a short feathered transition
+PASS the long shaft remains opaque in all sixteen frames
+PASS outer blade detail is preserved in all sixteen frames
+PASS blood frame 0 has transparent anti-bleed gutters
+PASS blood frame 1 has transparent anti-bleed gutters
+PASS blood frame 2 has transparent anti-bleed gutters
+PASS blood frame 3 has transparent anti-bleed gutters
+PASS blood frame 4 has transparent anti-bleed gutters
+PASS blood frame 5 has transparent anti-bleed gutters
+PASS blood frame 6 has transparent anti-bleed gutters
+PASS blood frame 7 has transparent anti-bleed gutters
+PASS blood frame 8 has transparent anti-bleed gutters
+PASS blood frame 9 has transparent anti-bleed gutters
+PASS blood frame 10 has transparent anti-bleed gutters
+PASS blood frame 11 has transparent anti-bleed gutters
+PASS blood frame 12 has transparent anti-bleed gutters
+PASS blood frame 13 has transparent anti-bleed gutters
+PASS blood frame 14 has transparent anti-bleed gutters
+PASS blood frame 15 has transparent anti-bleed gutters
+PASS low-opacity background residue is removed from every blood frame
+PASS the bright blood core retains its original opacity
+PASS frame boundaries feather smoothly instead of cutting off opaque blood
+PASS all sixteen cell boundaries stay transparent
+PASS both reveal boundaries have a smooth opacity transition
+PASS forty overlapping casts do not expose rectangular frame edges
+PASS all visible weapon frames have identical size and position
+PASS the weapon fades at the end of the swing and omits all held frames
+PASS blood remains visible after the weapon disappears
+PASS blood composites above the weapon in each frame
+PASS no additional rotation or distortion is applied to the weapon
+PASS only blood receives the independent alignment correction
+PASS blood is absent during wind-up and fades over the final three frames
+PASS instances reuse the prepared weapon sheet
+PASS instances reuse the cleaned blood texture
+PASS all sixteen timeline frames play in sequence
+PASS both layers share one animation container
+PASS one hit callback occurs during the swing
+PASS playback completes once and removes its container
+PASS overlapping casts keep every blood layer above every weapon
+PASS rapid retrigger restarts at frame zero cleanly
+PASS playback speed is configurable
+PASS speed changes still complete once
+PASS frame inspection pauses both layers together
+PASS skipping frames cannot lose or duplicate the hit callback
+PASS viewport resize retains the cast size and updates canvas dimensions
+PASS target layout changes do not restart the animation
+PASS existing Reap node triggers the new two-layer component
+PASS damage is still delayed from frame zero
+PASS saved hit still lands at frame five on the combat clock
+PASS no runtime errors
+SMOKE PASSED

@@ -1,0 +1,26 @@
+PASS single click selects without spending a point
+PASS selection preserves node elements for native double-click recognition
+PASS double-click learns exactly one node and saves it
+PASS double-clicking an allocated node cannot spend another point
+PASS double-click respects prerequisites
+PASS holding an allocated node shows refund feedback
+PASS a completed hold refunds the node and its dependents
+PASS release after a refund cannot accidentally learn the node again
+PASS a short press cancels the refund and its feedback
+PASS dragging or scrolling cancels a pending refund
+PASS leaving the node cancels a pending refund
+PASS pointer cancellation clears the pending refund
+PASS closing mastery cancels a pending refund
+PASS changing maps cannot refund the previous map
+PASS hold-to-refund preserves points when saving fails
+PASS the existing learn and refund buttons still work
+PASS clicking or double-clicking the starting node does not reset mastery
+PASS a short starting-node press cancels refund all
+PASS starting-node refund all rolls back when saving fails
+PASS holding the starting node shows refund feedback
+PASS holding the starting node refunds all branches and saves the available points
+PASS starting-node refund all only affects the current map
+PASS holding an empty starting node does not arm a refund
+PASS mastery fits the viewport without instruction text
+PASS no runtime errors
+SMOKE PASSED

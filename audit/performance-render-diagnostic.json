@@ -1,0 +1,749 @@
+{
+    "phase":  "render",
+    "rounds":  1,
+    "environment":  {
+                        "userAgent":  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+                        "width":  1440,
+                        "height":  1000,
+                        "devicePixelRatio":  1,
+                        "logicalProcessors":  8,
+                        "gpu":  "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002484) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+                        "reapFrames":  16,
+                        "simulationTickMs":  100
+                    },
+    "samples":  [
+                    {
+                        "scenario":  "normal-9",
+                        "ticks":  15,
+                        "simulatedSeconds":  1.5,
+                        "medianTickMs":  1.7,
+                        "p95TickMs":  9.5,
+                        "frameP95Ms":  4.3,
+                        "framesOver25":  1,
+                        "simulationMs":  8.7,
+                        "visualMs":  28,
+                        "mutations":  117,
+                        "kills":  0,
+                        "inclusiveProfile":  {
+                                                 "simulateCombatStep":  {
+                                                                            "calls":  15,
+                                                                            "inclusiveMs":  8.5
+                                                                        },
+                                                 "render":  {
+                                                                "calls":  0,
+                                                                "inclusiveMs":  0
+                                                            },
+                                                 "renderCombat":  {
+                                                                      "calls":  15,
+                                                                      "inclusiveMs":  27.3
+                                                                  },
+                                                 "renderMaps":  {
+                                                                    "calls":  0,
+                                                                    "inclusiveMs":  0
+                                                                },
+                                                 "renderWorlds":  {
+                                                                      "calls":  0,
+                                                                      "inclusiveMs":  0
+                                                                  },
+                                                 "renderDetailedStats":  {
+                                                                             "calls":  15,
+                                                                             "inclusiveMs":  0.1
+                                                                         },
+                                                 "flushCombatEffects":  {
+                                                                            "calls":  15,
+                                                                            "inclusiveMs":  0.7
+                                                                        },
+                                                 "getCombatEffectCard":  {
+                                                                             "calls":  1,
+                                                                             "inclusiveMs":  0
+                                                                         },
+                                                 "monsterDefinition":  {
+                                                                           "calls":  557,
+                                                                           "inclusiveMs":  1.5
+                                                                       },
+                                                 "createGameSave":  {
+                                                                        "calls":  0,
+                                                                        "inclusiveMs":  0
+                                                                    },
+                                                 "saveGame":  {
+                                                                  "calls":  0,
+                                                                  "inclusiveMs":  0
+                                                              },
+                                                 "masteryRender":  {
+                                                                       "calls":  15,
+                                                                       "inclusiveMs":  0.8
+                                                                   },
+                                                 "gpuAmbientSync":  {
+                                                                        "calls":  15,
+                                                                        "inclusiveMs":  0.8
+                                                                    },
+                                                 "reapTick":  {
+                                                                  "calls":  0,
+                                                                  "inclusiveMs":  0
+                                                              },
+                                                 "rectReads":  {
+                                                                   "calls":  15,
+                                                                   "inclusiveMs":  2
+                                                               },
+                                                 "storageWrites":  {
+                                                                       "calls":  0,
+                                                                       "inclusiveMs":  0
+                                                                   },
+                                                 "createdElements":  {
+                                                                         "calls":  6,
+                                                                         "inclusiveMs":  0.1
+                                                                     },
+                                                 "slowRectReads":  [
+                                                                       {
+                                                                           "ms":  1.7,
+                                                                           "element":  "combatStatus",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at statusBounds (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:14:65)\n    at reposition (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:46:24)\n    at Object.sync (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:42:14)\n    at renderCombatContent (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3425:25)\n    at renderCombat (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3257:11)\n    at owner.\u003ccomputed\u003e (file:///D:/victo/Desktop/copers/tests/performance-audit.js:30:220)\n    at file:///D:/victo/Desktop/copers/tests/performance-audit.js:58:88"
+                                                                       }
+                                                                   ]
+                                             },
+                        "setup":  {
+                                      "interval":  1.2,
+                                      "damage":  12,
+                                      "columns":  3,
+                                      "count":  9
+                                  },
+                        "round":  1,
+                        "mainThreadMs":  371.595,
+                        "layoutStyleMs":  40.733,
+                        "layoutCount":  2,
+                        "heapBefore":  1866712,
+                        "heapAfter":  2178248,
+                        "nodesBefore":  2808,
+                        "nodesAfter":  2816
+                    },
+                    {
+                        "scenario":  "render-64",
+                        "ticks":  15,
+                        "simulatedSeconds":  1.5,
+                        "medianTickMs":  4.2,
+                        "p95TickMs":  12.9,
+                        "frameP95Ms":  4.3,
+                        "framesOver25":  0,
+                        "simulationMs":  5.6,
+                        "visualMs":  63,
+                        "mutations":  117,
+                        "kills":  0,
+                        "inclusiveProfile":  {
+                                                 "simulateCombatStep":  {
+                                                                            "calls":  15,
+                                                                            "inclusiveMs":  5.6
+                                                                        },
+                                                 "render":  {
+                                                                "calls":  0,
+                                                                "inclusiveMs":  0
+                                                            },
+                                                 "renderCombat":  {
+                                                                      "calls":  15,
+                                                                      "inclusiveMs":  62.7
+                                                                  },
+                                                 "renderMaps":  {
+                                                                    "calls":  0,
+                                                                    "inclusiveMs":  0
+                                                                },
+                                                 "renderWorlds":  {
+                                                                      "calls":  0,
+                                                                      "inclusiveMs":  0
+                                                                  },
+                                                 "renderDetailedStats":  {
+                                                                             "calls":  15,
+                                                                             "inclusiveMs":  0
+                                                                         },
+                                                 "flushCombatEffects":  {
+                                                                            "calls":  15,
+                                                                            "inclusiveMs":  0.3
+                                                                        },
+                                                 "getCombatEffectCard":  {
+                                                                             "calls":  1,
+                                                                             "inclusiveMs":  0
+                                                                         },
+                                                 "monsterDefinition":  {
+                                                                           "calls":  3857,
+                                                                           "inclusiveMs":  3.7
+                                                                       },
+                                                 "createGameSave":  {
+                                                                        "calls":  0,
+                                                                        "inclusiveMs":  0
+                                                                    },
+                                                 "saveGame":  {
+                                                                  "calls":  0,
+                                                                  "inclusiveMs":  0
+                                                              },
+                                                 "masteryRender":  {
+                                                                       "calls":  15,
+                                                                       "inclusiveMs":  1.6
+                                                                   },
+                                                 "gpuAmbientSync":  {
+                                                                        "calls":  15,
+                                                                        "inclusiveMs":  3.2
+                                                                    },
+                                                 "reapTick":  {
+                                                                  "calls":  0,
+                                                                  "inclusiveMs":  0
+                                                              },
+                                                 "rectReads":  {
+                                                                   "calls":  15,
+                                                                   "inclusiveMs":  2.6
+                                                               },
+                                                 "storageWrites":  {
+                                                                       "calls":  0,
+                                                                       "inclusiveMs":  0
+                                                                   },
+                                                 "createdElements":  {
+                                                                         "calls":  6,
+                                                                         "inclusiveMs":  0
+                                                                     },
+                                                 "slowRectReads":  [
+                                                                       {
+                                                                           "ms":  1.9,
+                                                                           "element":  "combatStatus",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at statusBounds (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:14:65)\n    at reposition (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:46:24)\n    at Object.sync (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:42:14)\n    at renderCombatContent (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3425:25)\n    at renderCombat (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3257:11)\n    at owner.\u003ccomputed\u003e (file:///D:/victo/Desktop/copers/tests/performance-audit.js:30:220)\n    at file:///D:/victo/Desktop/copers/tests/performance-audit.js:58:88"
+                                                                       }
+                                                                   ]
+                                             },
+                        "setup":  {
+                                      "interval":  1.2,
+                                      "damage":  12,
+                                      "columns":  3,
+                                      "count":  64
+                                  },
+                        "round":  1,
+                        "mainThreadMs":  577.500,
+                        "layoutStyleMs":  48.245,
+                        "layoutCount":  1,
+                        "heapBefore":  2299912,
+                        "heapAfter":  2343420,
+                        "nodesBefore":  7758,
+                        "nodesAfter":  7766
+                    },
+                    {
+                        "scenario":  "fast-reap-kills-64",
+                        "ticks":  15,
+                        "simulatedSeconds":  1.5,
+                        "medianTickMs":  9.1,
+                        "p95TickMs":  50.4,
+                        "frameP95Ms":  25.1,
+                        "framesOver25":  10,
+                        "simulationMs":  12.6,
+                        "visualMs":  270.5,
+                        "mutations":  3224,
+                        "kills":  21,
+                        "inclusiveProfile":  {
+                                                 "simulateCombatStep":  {
+                                                                            "calls":  15,
+                                                                            "inclusiveMs":  12.5
+                                                                        },
+                                                 "render":  {
+                                                                "calls":  6,
+                                                                "inclusiveMs":  108.1
+                                                            },
+                                                 "renderCombat":  {
+                                                                      "calls":  15,
+                                                                      "inclusiveMs":  151.9
+                                                                  },
+                                                 "renderMaps":  {
+                                                                    "calls":  6,
+                                                                    "inclusiveMs":  2.6
+                                                                },
+                                                 "renderWorlds":  {
+                                                                      "calls":  6,
+                                                                      "inclusiveMs":  1.7
+                                                                  },
+                                                 "renderDetailedStats":  {
+                                                                             "calls":  15,
+                                                                             "inclusiveMs":  0.1
+                                                                         },
+                                                 "flushCombatEffects":  {
+                                                                            "calls":  15,
+                                                                            "inclusiveMs":  107.7
+                                                                        },
+                                                 "getCombatEffectCard":  {
+                                                                             "calls":  1355,
+                                                                             "inclusiveMs":  48.8
+                                                                         },
+                                                 "monsterDefinition":  {
+                                                                           "calls":  3778,
+                                                                           "inclusiveMs":  4.3
+                                                                       },
+                                                 "createGameSave":  {
+                                                                        "calls":  0,
+                                                                        "inclusiveMs":  0
+                                                                    },
+                                                 "saveGame":  {
+                                                                  "calls":  21,
+                                                                  "inclusiveMs":  0
+                                                              },
+                                                 "masteryRender":  {
+                                                                       "calls":  15,
+                                                                       "inclusiveMs":  1.3
+                                                                   },
+                                                 "gpuAmbientSync":  {
+                                                                        "calls":  15,
+                                                                        "inclusiveMs":  3.2
+                                                                    },
+                                                 "reapTick":  {
+                                                                  "calls":  130,
+                                                                  "inclusiveMs":  208.4
+                                                              },
+                                                 "rectReads":  {
+                                                                   "calls":  3028,
+                                                                   "inclusiveMs":  160.4
+                                                               },
+                                                 "storageWrites":  {
+                                                                       "calls":  0,
+                                                                       "inclusiveMs":  0
+                                                                   },
+                                                 "createdElements":  {
+                                                                         "calls":  13,
+                                                                         "inclusiveMs":  0.2
+                                                                     },
+                                                 "slowRectReads":  [
+                                                                       {
+                                                                           "ms":  9.3,
+                                                                           "element":  "enemy-card",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at file:///D:/victo/Desktop/copers/js/scythe-reap-effect.js?v=9:236:67\n    at Array.map (\u003canonymous\u003e)\n    at compactSize (file:///D:/victo/Desktop/copers/js/scythe-reap-effect.js?v=9:236:52)\n    at Object.show (file:///D:/victo/Desktop/copers/js/scythe-reap-effect.js?v=9:247:34)\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:4339:48\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:403:86\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:37\n    at Array.forEach (\u003canonymous\u003e)\n    at flushCombatEffects (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:19)"
+                                                                       },
+                                                                       {
+                                                                           "ms":  4.3,
+                                                                           "element":  "combatStatus",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at statusBounds (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:14:65)\n    at reposition (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:46:24)\n    at Object.sync (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:42:14)\n    at renderCombatContent (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3425:25)\n    at renderCombat (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3257:11)\n    at owner.\u003ccomputed\u003e (file:///D:/victo/Desktop/copers/tests/performance-audit.js:30:220)\n    at render (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3530:5)\n    at owner.\u003ccomputed\u003e (file:///D:/victo/Desktop/copers/tests/performance-audit.js:30:220)\n    at file:///D:/victo/Desktop/copers/tests/performance-audit.js:58:74"
+                                                                       },
+                                                                       {
+                                                                           "ms":  1.5,
+                                                                           "element":  "enemy-card is-target",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at ScytheReapEffect.tick (file:///D:/victo/Desktop/copers/js/scythe-reap-effect.js?v=9:179:103)\n    at owner.\u003ccomputed\u003e [as tick] (file:///D:/victo/Desktop/copers/tests/performance-audit.js:30:220)\n    at file:///D:/victo/Desktop/copers/js/scythe-reap-effect.js?v=9:141:75"
+                                                                       },
+                                                                       {
+                                                                           "ms":  1.1,
+                                                                           "element":  "combatStatus",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at statusBounds (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:14:65)\n    at reposition (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:46:24)\n    at Object.sync (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:42:14)\n    at renderCombatContent (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3425:25)\n    at renderCombat (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3257:11)\n    at owner.\u003ccomputed\u003e (file:///D:/victo/Desktop/copers/tests/performance-audit.js:30:220)\n    at file:///D:/victo/Desktop/copers/tests/performance-audit.js:58:88"
+                                                                       },
+                                                                       {
+                                                                           "ms":  9,
+                                                                           "element":  "combatStatus",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at statusBounds (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:14:65)\n    at reposition (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:46:24)\n    at Object.sync (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:42:14)\n    at renderCombatContent (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3425:25)\n    at renderCombat (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3257:11)\n    at owner.\u003ccomputed\u003e (file:///D:/victo/Desktop/copers/tests/performance-audit.js:30:220)\n    at render (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3530:5)\n    at owner.\u003ccomputed\u003e (file:///D:/victo/Desktop/copers/tests/performance-audit.js:30:220)\n    at file:///D:/victo/Desktop/copers/tests/performance-audit.js:58:74"
+                                                                       },
+                                                                       {
+                                                                           "ms":  1,
+                                                                           "element":  "enemy-card is-defeating is-respawning",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at ScytheReapEffect.tick (file:///D:/victo/Desktop/copers/js/scythe-reap-effect.js?v=9:179:103)\n    at owner.\u003ccomputed\u003e [as tick] (file:///D:/victo/Desktop/copers/tests/performance-audit.js:30:220)\n    at file:///D:/victo/Desktop/copers/js/scythe-reap-effect.js?v=9:141:75"
+                                                                       },
+                                                                       {
+                                                                           "ms":  1.3,
+                                                                           "element":  "combatStatus",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at statusBounds (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:14:65)\n    at reposition (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:46:24)\n    at Object.sync (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:42:14)\n    at renderCombatContent (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3425:25)\n    at renderCombat (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3257:11)\n    at owner.\u003ccomputed\u003e (file:///D:/victo/Desktop/copers/tests/performance-audit.js:30:220)\n    at file:///D:/victo/Desktop/copers/tests/performance-audit.js:58:88"
+                                                                       },
+                                                                       {
+                                                                           "ms":  1.3,
+                                                                           "element":  "enemy-card is-defeating is-respawning",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at ScytheReapEffect.tick (file:///D:/victo/Desktop/copers/js/scythe-reap-effect.js?v=9:179:103)\n    at owner.\u003ccomputed\u003e [as tick] (file:///D:/victo/Desktop/copers/tests/performance-audit.js:30:220)\n    at file:///D:/victo/Desktop/copers/js/scythe-reap-effect.js?v=9:141:75"
+                                                                       },
+                                                                       {
+                                                                           "ms":  1.2,
+                                                                           "element":  "enemy-card is-defeating is-respawning",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at ScytheReapEffect.tick (file:///D:/victo/Desktop/copers/js/scythe-reap-effect.js?v=9:179:103)\n    at owner.\u003ccomputed\u003e [as tick] (file:///D:/victo/Desktop/copers/tests/performance-audit.js:30:220)\n    at file:///D:/victo/Desktop/copers/js/scythe-reap-effect.js?v=9:141:75"
+                                                                       },
+                                                                       {
+                                                                           "ms":  4.2,
+                                                                           "element":  "combatStatus",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at statusBounds (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:14:65)\n    at reposition (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:46:24)\n    at Object.sync (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:42:14)\n    at renderCombatContent (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3425:25)\n    at renderCombat (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3257:11)\n    at owner.\u003ccomputed\u003e (file:///D:/victo/Desktop/copers/tests/performance-audit.js:30:220)\n    at render (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3530:5)\n    at owner.\u003ccomputed\u003e (file:///D:/victo/Desktop/copers/tests/performance-audit.js:30:220)\n    at file:///D:/victo/Desktop/copers/tests/performance-audit.js:58:74"
+                                                                       },
+                                                                       {
+                                                                           "ms":  2,
+                                                                           "element":  "combatStatus",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at statusBounds (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:14:65)\n    at reposition (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:46:24)\n    at Object.sync (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:42:14)\n    at renderCombatContent (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3425:25)\n    at renderCombat (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3257:11)\n    at owner.\u003ccomputed\u003e (file:///D:/victo/Desktop/copers/tests/performance-audit.js:30:220)\n    at file:///D:/victo/Desktop/copers/tests/performance-audit.js:58:88"
+                                                                       },
+                                                                       {
+                                                                           "ms":  1,
+                                                                           "element":  "enemy-card is-defeating is-respawning",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at ScytheReapEffect.tick (file:///D:/victo/Desktop/copers/js/scythe-reap-effect.js?v=9:179:103)\n    at owner.\u003ccomputed\u003e [as tick] (file:///D:/victo/Desktop/copers/tests/performance-audit.js:30:220)\n    at file:///D:/victo/Desktop/copers/js/scythe-reap-effect.js?v=9:141:75"
+                                                                       }
+                                                                   ]
+                                             },
+                        "setup":  {
+                                      "interval":  0.25,
+                                      "damage":  12,
+                                      "columns":  3,
+                                      "count":  64
+                                  },
+                        "round":  1,
+                        "mainThreadMs":  969.185,
+                        "layoutStyleMs":  186.305,
+                        "layoutCount":  167,
+                        "heapBefore":  2354584,
+                        "heapAfter":  2691100,
+                        "nodesBefore":  7758,
+                        "nodesAfter":  7808
+                    },
+                    {
+                        "scenario":  "all-skills-visible-64",
+                        "ticks":  15,
+                        "simulatedSeconds":  1.5,
+                        "medianTickMs":  14.4,
+                        "p95TickMs":  527.1,
+                        "frameP95Ms":  25.1,
+                        "framesOver25":  10,
+                        "simulationMs":  10.3,
+                        "visualMs":  714.5,
+                        "mutations":  14582,
+                        "kills":  64,
+                        "inclusiveProfile":  {
+                                                 "simulateCombatStep":  {
+                                                                            "calls":  15,
+                                                                            "inclusiveMs":  10.2
+                                                                        },
+                                                 "render":  {
+                                                                "calls":  1,
+                                                                "inclusiveMs":  69.7
+                                                            },
+                                                 "renderCombat":  {
+                                                                      "calls":  15,
+                                                                      "inclusiveMs":  251.7
+                                                                  },
+                                                 "renderMaps":  {
+                                                                    "calls":  1,
+                                                                    "inclusiveMs":  0.3
+                                                                },
+                                                 "renderWorlds":  {
+                                                                      "calls":  1,
+                                                                      "inclusiveMs":  0.2
+                                                                  },
+                                                 "renderDetailedStats":  {
+                                                                             "calls":  15,
+                                                                             "inclusiveMs":  0
+                                                                         },
+                                                 "flushCombatEffects":  {
+                                                                            "calls":  15,
+                                                                            "inclusiveMs":  461.4
+                                                                        },
+                                                 "getCombatEffectCard":  {
+                                                                             "calls":  127,
+                                                                             "inclusiveMs":  0.3
+                                                                         },
+                                                 "monsterDefinition":  {
+                                                                           "calls":  2965,
+                                                                           "inclusiveMs":  4.8
+                                                                       },
+                                                 "createGameSave":  {
+                                                                        "calls":  0,
+                                                                        "inclusiveMs":  0
+                                                                    },
+                                                 "saveGame":  {
+                                                                  "calls":  64,
+                                                                  "inclusiveMs":  0.1
+                                                              },
+                                                 "masteryRender":  {
+                                                                       "calls":  15,
+                                                                       "inclusiveMs":  1.1
+                                                                   },
+                                                 "gpuAmbientSync":  {
+                                                                        "calls":  15,
+                                                                        "inclusiveMs":  2.8
+                                                                    },
+                                                 "reapTick":  {
+                                                                  "calls":  0,
+                                                                  "inclusiveMs":  0
+                                                              },
+                                                 "rectReads":  {
+                                                                   "calls":  284,
+                                                                   "inclusiveMs":  512.5
+                                                               },
+                                                 "storageWrites":  {
+                                                                       "calls":  0,
+                                                                       "inclusiveMs":  0
+                                                                   },
+                                                 "createdElements":  {
+                                                                         "calls":  25,
+                                                                         "inclusiveMs":  0.1
+                                                                     },
+                                                 "slowRectReads":  [
+                                                                       {
+                                                                           "ms":  4.1,
+                                                                           "element":  "combatStatus",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at statusBounds (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:14:65)\n    at reposition (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:46:24)\n    at sync (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:42:14)\n    at Object.drop (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:89:9)\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3662:33\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:403:86\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:37\n    at Array.forEach (\u003canonymous\u003e)\n    at flushCombatEffects (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:19)"
+                                                                       },
+                                                                       {
+                                                                           "ms":  271.6,
+                                                                           "element":  "enemy-dot-status",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at getCombatEffectBounds (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:456:97)\n    at box (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:12:35)\n    at Object.pulse (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:162:26)\n    at restartCombatAnimation (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:417:55)\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:731:9\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:403:86\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:37\n    at Array.forEach (\u003canonymous\u003e)\n    at flushCombatEffects (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:19)"
+                                                                       },
+                                                                       {
+                                                                           "ms":  1.4,
+                                                                           "element":  "enemy-dot-status",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at getCombatEffectBounds (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:456:97)\n    at box (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:12:35)\n    at Object.pulse (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:162:26)\n    at restartCombatAnimation (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:417:55)\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:731:9\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:403:86\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:37\n    at Array.forEach (\u003canonymous\u003e)\n    at flushCombatEffects (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:19)"
+                                                                       },
+                                                                       {
+                                                                           "ms":  1,
+                                                                           "element":  "combatStatus",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at statusBounds (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:14:65)\n    at reposition (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:46:24)\n    at sync (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:42:14)\n    at Object.drop (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:89:9)\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3662:33\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:403:86\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:37\n    at Array.forEach (\u003canonymous\u003e)\n    at flushCombatEffects (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:19)"
+                                                                       },
+                                                                       {
+                                                                           "ms":  1,
+                                                                           "element":  "enemy-dot-status",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at getCombatEffectBounds (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:456:97)\n    at box (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:12:35)\n    at Object.pulse (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:162:26)\n    at restartCombatAnimation (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:417:55)\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:731:9\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:403:86\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:37\n    at Array.forEach (\u003canonymous\u003e)\n    at flushCombatEffects (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:19)"
+                                                                       },
+                                                                       {
+                                                                           "ms":  1.1,
+                                                                           "element":  "enemy-dot-status",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at getCombatEffectBounds (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:456:97)\n    at box (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:12:35)\n    at Object.pulse (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:162:26)\n    at restartCombatAnimation (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:417:55)\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:731:9\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:403:86\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:37\n    at Array.forEach (\u003canonymous\u003e)\n    at flushCombatEffects (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:19)"
+                                                                       },
+                                                                       {
+                                                                           "ms":  2.2,
+                                                                           "element":  "enemy-dot-status",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at getCombatEffectBounds (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:456:97)\n    at box (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:12:35)\n    at Object.pulse (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:162:26)\n    at restartCombatAnimation (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:417:55)\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:731:9\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:403:86\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:37\n    at Array.forEach (\u003canonymous\u003e)\n    at flushCombatEffects (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:19)"
+                                                                       },
+                                                                       {
+                                                                           "ms":  1,
+                                                                           "element":  "enemy-dot-status",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at getCombatEffectBounds (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:456:97)\n    at box (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:12:35)\n    at Object.pulse (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:162:26)\n    at restartCombatAnimation (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:417:55)\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:731:9\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:403:86\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:37\n    at Array.forEach (\u003canonymous\u003e)\n    at flushCombatEffects (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:19)"
+                                                                       },
+                                                                       {
+                                                                           "ms":  1.7,
+                                                                           "element":  "enemy-dot-status",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at getCombatEffectBounds (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:456:97)\n    at box (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:12:35)\n    at Object.pulse (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:162:26)\n    at restartCombatAnimation (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:417:55)\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:731:9\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:403:86\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:37\n    at Array.forEach (\u003canonymous\u003e)\n    at flushCombatEffects (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:19)"
+                                                                       },
+                                                                       {
+                                                                           "ms":  2.1,
+                                                                           "element":  "combatStatus",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at statusBounds (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:14:65)\n    at reposition (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:46:24)\n    at Object.drop (file:///D:/victo/Desktop/copers/js/loot-effects.js?v=8:164:9)\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:3662:33\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:403:86\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:37\n    at Array.forEach (\u003canonymous\u003e)\n    at flushCombatEffects (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:19)\n    at owner.\u003ccomputed\u003e (file:///D:/victo/Desktop/copers/tests/performance-audit.js:30:220)"
+                                                                       },
+                                                                       {
+                                                                           "ms":  2.5,
+                                                                           "element":  "enemy-dot-status",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at getCombatEffectBounds (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:456:97)\n    at box (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:12:35)\n    at Object.pulse (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:162:26)\n    at restartCombatAnimation (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:417:55)\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:731:9\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:403:86\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:37\n    at Array.forEach (\u003canonymous\u003e)\n    at flushCombatEffects (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:19)"
+                                                                       },
+                                                                       {
+                                                                           "ms":  1,
+                                                                           "element":  "enemy-dot-status",
+                                                                           "stack":  "Error\n    at Element.getBoundingClientRect (file:///D:/victo/Desktop/copers/tests/performance-audit.js:35:264)\n    at getCombatEffectBounds (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:456:97)\n    at box (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:12:35)\n    at Object.pulse (file:///D:/victo/Desktop/copers/js/combat-webgl-effects.js?v=4:162:26)\n    at restartCombatAnimation (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:417:55)\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:731:9\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:403:86\n    at file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:37\n    at Array.forEach (\u003canonymous\u003e)\n    at flushCombatEffects (file:///D:/victo/Desktop/copers/js/game.js?v=20261105-2:438:19)"
+                                                                       }
+                                                                   ]
+                                             },
+                        "setup":  {
+                                      "interval":  0.3905081770716226,
+                                      "damage":  104,
+                                      "columns":  3,
+                                      "count":  64
+                                  },
+                        "round":  1,
+                        "mainThreadMs":  1113.165,
+                        "layoutStyleMs":  365.536,
+                        "layoutCount":  132,
+                        "heapBefore":  2680908,
+                        "heapAfter":  2827908,
+                        "nodesBefore":  7789,
+                        "nodesAfter":  7885
+                    },
+                    {
+                        "scenario":  "inventory-hidden-combat",
+                        "ticks":  15,
+                        "simulatedSeconds":  1.5,
+                        "medianTickMs":  4.2,
+                        "p95TickMs":  6.7,
+                        "frameP95Ms":  4.3,
+                        "framesOver25":  0,
+                        "simulationMs":  7.3,
+                        "visualMs":  59.7,
+                        "mutations":  148,
+                        "kills":  0,
+                        "inclusiveProfile":  {
+                                                 "simulateCombatStep":  {
+                                                                            "calls":  15,
+                                                                            "inclusiveMs":  7.1
+                                                                        },
+                                                 "render":  {
+                                                                "calls":  0,
+                                                                "inclusiveMs":  0
+                                                            },
+                                                 "renderCombat":  {
+                                                                      "calls":  15,
+                                                                      "inclusiveMs":  59
+                                                                  },
+                                                 "renderMaps":  {
+                                                                    "calls":  0,
+                                                                    "inclusiveMs":  0
+                                                                },
+                                                 "renderWorlds":  {
+                                                                      "calls":  0,
+                                                                      "inclusiveMs":  0
+                                                                  },
+                                                 "renderDetailedStats":  {
+                                                                             "calls":  15,
+                                                                             "inclusiveMs":  0
+                                                                         },
+                                                 "flushCombatEffects":  {
+                                                                            "calls":  15,
+                                                                            "inclusiveMs":  0.7
+                                                                        },
+                                                 "getCombatEffectCard":  {
+                                                                             "calls":  1,
+                                                                             "inclusiveMs":  0
+                                                                         },
+                                                 "monsterDefinition":  {
+                                                                           "calls":  3857,
+                                                                           "inclusiveMs":  6.9
+                                                                       },
+                                                 "createGameSave":  {
+                                                                        "calls":  0,
+                                                                        "inclusiveMs":  0
+                                                                    },
+                                                 "saveGame":  {
+                                                                  "calls":  0,
+                                                                  "inclusiveMs":  0
+                                                              },
+                                                 "masteryRender":  {
+                                                                       "calls":  15,
+                                                                       "inclusiveMs":  1.6
+                                                                   },
+                                                 "gpuAmbientSync":  {
+                                                                        "calls":  15,
+                                                                        "inclusiveMs":  0.1
+                                                                    },
+                                                 "reapTick":  {
+                                                                  "calls":  0,
+                                                                  "inclusiveMs":  0
+                                                              },
+                                                 "rectReads":  {
+                                                                   "calls":  0,
+                                                                   "inclusiveMs":  0
+                                                               },
+                                                 "storageWrites":  {
+                                                                       "calls":  0,
+                                                                       "inclusiveMs":  0
+                                                                   },
+                                                 "createdElements":  {
+                                                                         "calls":  6,
+                                                                         "inclusiveMs":  0
+                                                                     },
+                                                 "slowRectReads":  [
+
+                                                                   ]
+                                             },
+                        "setup":  {
+                                      "interval":  1.2,
+                                      "damage":  12,
+                                      "columns":  3,
+                                      "count":  64
+                                  },
+                        "round":  1,
+                        "mainThreadMs":  192.498,
+                        "layoutStyleMs":  32.986,
+                        "layoutCount":  1,
+                        "heapBefore":  2845840,
+                        "heapAfter":  2862540,
+                        "nodesBefore":  7783,
+                        "nodesAfter":  7791
+                    },
+                    {
+                        "scenario":  "mastery-idle",
+                        "ticks":  15,
+                        "simulatedSeconds":  1.5,
+                        "medianTickMs":  0.6,
+                        "p95TickMs":  1.5,
+                        "frameP95Ms":  4.3,
+                        "framesOver25":  0,
+                        "simulationMs":  5.6,
+                        "visualMs":  4.4,
+                        "mutations":  90,
+                        "kills":  0,
+                        "inclusiveProfile":  {
+                                                 "simulateCombatStep":  {
+                                                                            "calls":  15,
+                                                                            "inclusiveMs":  5.6
+                                                                        },
+                                                 "render":  {
+                                                                "calls":  0,
+                                                                "inclusiveMs":  0
+                                                            },
+                                                 "renderCombat":  {
+                                                                      "calls":  15,
+                                                                      "inclusiveMs":  4.3
+                                                                  },
+                                                 "renderMaps":  {
+                                                                    "calls":  0,
+                                                                    "inclusiveMs":  0
+                                                                },
+                                                 "renderWorlds":  {
+                                                                      "calls":  0,
+                                                                      "inclusiveMs":  0
+                                                                  },
+                                                 "renderDetailedStats":  {
+                                                                             "calls":  15,
+                                                                             "inclusiveMs":  0
+                                                                         },
+                                                 "flushCombatEffects":  {
+                                                                            "calls":  15,
+                                                                            "inclusiveMs":  0
+                                                                        },
+                                                 "getCombatEffectCard":  {
+                                                                             "calls":  0,
+                                                                             "inclusiveMs":  0
+                                                                         },
+                                                 "monsterDefinition":  {
+                                                                           "calls":  1921,
+                                                                           "inclusiveMs":  1.7
+                                                                       },
+                                                 "createGameSave":  {
+                                                                        "calls":  0,
+                                                                        "inclusiveMs":  0
+                                                                    },
+                                                 "saveGame":  {
+                                                                  "calls":  0,
+                                                                  "inclusiveMs":  0
+                                                              },
+                                                 "masteryRender":  {
+                                                                       "calls":  15,
+                                                                       "inclusiveMs":  4.1
+                                                                   },
+                                                 "gpuAmbientSync":  {
+                                                                        "calls":  0,
+                                                                        "inclusiveMs":  0
+                                                                    },
+                                                 "reapTick":  {
+                                                                  "calls":  0,
+                                                                  "inclusiveMs":  0
+                                                              },
+                                                 "rectReads":  {
+                                                                   "calls":  14,
+                                                                   "inclusiveMs":  1.1
+                                                               },
+                                                 "storageWrites":  {
+                                                                       "calls":  0,
+                                                                       "inclusiveMs":  0
+                                                                   },
+                                                 "createdElements":  {
+                                                                         "calls":  0,
+                                                                         "inclusiveMs":  0
+                                                                     },
+                                                 "slowRectReads":  [
+
+                                                                   ]
+                                             },
+                        "setup":  {
+                                      "interval":  1.2,
+                                      "damage":  12,
+                                      "columns":  3,
+                                      "count":  64
+                                  },
+                        "round":  1,
+                        "mainThreadMs":  100.130,
+                        "layoutStyleMs":  1.038,
+                        "layoutCount":  0,
+                        "heapBefore":  2913308,
+                        "heapAfter":  2915444,
+                        "nodesBefore":  7877,
+                        "nodesAfter":  7877
+                    }
+                ],
+    "notes":  [
+                  "Synthetic isolated profile; production files are unchanged.",
+                  "GPU acceleration requested; the actual renderer is recorded.",
+                  "Inclusive instrumented timings overlap and include instrumentation overhead.",
+                  "CDP thread timings exclude GPU-process work. Memory snapshots follow forced GC.",
+                  "Narrow viewport is desktop Chrome without mobile CPU throttling."
+              ]
+}

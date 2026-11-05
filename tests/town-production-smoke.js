@@ -5,7 +5,7 @@
     const secondsPerLog=1/TownProgression.production('lumberOutpost',{tier:0,level:1}).perSecond;
     const fresh=()=>{const profile={gold:10000,townProgress:TownProgression.defaults()};TownProgression.apply(profile,'purchase','lumberOutpost');return profile;};
     try{
-        await document.fonts.ready;
+        await document.fonts.ready;state.defeatedBossWorldIds=[worldData[0].id];
         const locked={townProgress:TownProgression.defaults()};TownProgression.tick(locked,100);
         check('unowned outposts produce nothing',!Object.hasOwn(locked.townProgress.resources,'wood'));
         const short=fresh();TownProgression.tick(short,.6*secondsPerLog);

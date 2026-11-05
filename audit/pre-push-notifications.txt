@@ -1,0 +1,18 @@
+PASS all global notice sources share the notification stack
+PASS tip is a quiet notification window
+PASS level up appears below pending notification
+PASS notifications use the former level-up position
+PASS tip and level up persist past animation and old toast timers
+PASS clicking the message closes and saves the tip
+PASS pending condition can display a tip
+PASS meeting the underlying condition removes the tip
+PASS level up closes on click
+PASS profileStatus is styled as a quiet window
+PASS profileStatus supports keyboard dismissal
+PASS offlinePlayStatus is styled as a quiet window
+PASS offlinePlayStatus supports keyboard dismissal
+PASS combatCatchupNotice is styled as a quiet window
+PASS combatCatchupNotice supports keyboard dismissal
+PASS stack fits the viewport
+PASS no runtime errors
+SMOKE PASSED

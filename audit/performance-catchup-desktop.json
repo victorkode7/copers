@@ -1,0 +1,200 @@
+{
+    "phase":  "catchup",
+    "environment":  {
+                        "userAgent":  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+                        "width":  1440,
+                        "height":  1000,
+                        "devicePixelRatio":  1,
+                        "logicalProcessors":  8,
+                        "gpu":  "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002484) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+                        "reapFrames":  16,
+                        "simulationTickMs":  100
+                    },
+    "samples":  [
+                    {
+                        "scenario":  "offline-reap-60s",
+                        "elapsedMs":  224.2,
+                        "simulatedSeconds":  60.1,
+                        "kills":  862,
+                        "inclusiveProfile":  {
+                                                 "simulateCombatStep":  {
+                                                                            "calls":  601,
+                                                                            "inclusiveMs":  109.6
+                                                                        },
+                                                 "render":  {
+                                                                "calls":  1,
+                                                                "inclusiveMs":  34.5
+                                                            },
+                                                 "renderCombat":  {
+                                                                      "calls":  1,
+                                                                      "inclusiveMs":  33
+                                                                  },
+                                                 "renderMaps":  {
+                                                                    "calls":  1,
+                                                                    "inclusiveMs":  0.4
+                                                                },
+                                                 "renderWorlds":  {
+                                                                      "calls":  1,
+                                                                      "inclusiveMs":  0.2
+                                                                  },
+                                                 "renderDetailedStats":  {
+                                                                             "calls":  1,
+                                                                             "inclusiveMs":  0
+                                                                         },
+                                                 "flushCombatEffects":  {
+                                                                            "calls":  1,
+                                                                            "inclusiveMs":  0.2
+                                                                        },
+                                                 "getCombatEffectCard":  {
+                                                                             "calls":  0,
+                                                                             "inclusiveMs":  0
+                                                                         },
+                                                 "monsterDefinition":  {
+                                                                           "calls":  62757,
+                                                                           "inclusiveMs":  35.6
+                                                                       },
+                                                 "createGameSave":  {
+                                                                        "calls":  0,
+                                                                        "inclusiveMs":  0
+                                                                    },
+                                                 "saveGame":  {
+                                                                  "calls":  862,
+                                                                  "inclusiveMs":  0.6
+                                                              },
+                                                 "masteryRender":  {
+                                                                       "calls":  1,
+                                                                       "inclusiveMs":  0
+                                                                   },
+                                                 "gpuAmbientSync":  {
+                                                                        "calls":  1,
+                                                                        "inclusiveMs":  0.2
+                                                                    },
+                                                 "reapTick":  {
+                                                                  "calls":  0,
+                                                                  "inclusiveMs":  0
+                                                              },
+                                                 "rectReads":  {
+                                                                   "calls":  1,
+                                                                   "inclusiveMs":  27.1
+                                                               },
+                                                 "storageWrites":  {
+                                                                       "calls":  0,
+                                                                       "inclusiveMs":  0
+                                                                   },
+                                                 "createdElements":  {
+                                                                         "calls":  6,
+                                                                         "inclusiveMs":  0
+                                                                     }
+                                             },
+                        "setup":  {
+                                      "interval":  0.25,
+                                      "damage":  12,
+                                      "columns":  3,
+                                      "count":  64
+                                  },
+                        "mainThreadMs":  198.931,
+                        "layoutStyleMs":  51.933,
+                        "layoutCount":  2,
+                        "heapBefore":  1998232,
+                        "heapAfter":  2419900,
+                        "nodesBefore":  7758,
+                        "nodesAfter":  7796
+                    },
+                    {
+                        "scenario":  "offline-all-skills-60s",
+                        "elapsedMs":  188.1,
+                        "simulatedSeconds":  60.1,
+                        "kills":  1984,
+                        "inclusiveProfile":  {
+                                                 "simulateCombatStep":  {
+                                                                            "calls":  601,
+                                                                            "inclusiveMs":  80.4
+                                                                        },
+                                                 "render":  {
+                                                                "calls":  1,
+                                                                "inclusiveMs":  40.3
+                                                            },
+                                                 "renderCombat":  {
+                                                                      "calls":  1,
+                                                                      "inclusiveMs":  39.4
+                                                                  },
+                                                 "renderMaps":  {
+                                                                    "calls":  1,
+                                                                    "inclusiveMs":  0.3
+                                                                },
+                                                 "renderWorlds":  {
+                                                                      "calls":  1,
+                                                                      "inclusiveMs":  0.1
+                                                                  },
+                                                 "renderDetailedStats":  {
+                                                                             "calls":  1,
+                                                                             "inclusiveMs":  0
+                                                                         },
+                                                 "flushCombatEffects":  {
+                                                                            "calls":  1,
+                                                                            "inclusiveMs":  0
+                                                                        },
+                                                 "getCombatEffectCard":  {
+                                                                             "calls":  0,
+                                                                             "inclusiveMs":  0
+                                                                         },
+                                                 "monsterDefinition":  {
+                                                                           "calls":  44417,
+                                                                           "inclusiveMs":  22.7
+                                                                       },
+                                                 "createGameSave":  {
+                                                                        "calls":  0,
+                                                                        "inclusiveMs":  0
+                                                                    },
+                                                 "saveGame":  {
+                                                                  "calls":  1984,
+                                                                  "inclusiveMs":  0.6
+                                                              },
+                                                 "masteryRender":  {
+                                                                       "calls":  1,
+                                                                       "inclusiveMs":  0.1
+                                                                   },
+                                                 "gpuAmbientSync":  {
+                                                                        "calls":  1,
+                                                                        "inclusiveMs":  0.2
+                                                                    },
+                                                 "reapTick":  {
+                                                                  "calls":  0,
+                                                                  "inclusiveMs":  0
+                                                              },
+                                                 "rectReads":  {
+                                                                   "calls":  5,
+                                                                   "inclusiveMs":  33.7
+                                                               },
+                                                 "storageWrites":  {
+                                                                       "calls":  0,
+                                                                       "inclusiveMs":  0
+                                                                   },
+                                                 "createdElements":  {
+                                                                         "calls":  23,
+                                                                         "inclusiveMs":  0.1
+                                                                     }
+                                             },
+                        "setup":  {
+                                      "interval":  0.3905081770716226,
+                                      "damage":  104,
+                                      "columns":  3,
+                                      "count":  64
+                                  },
+                        "mainThreadMs":  181.194,
+                        "layoutStyleMs":  52.951,
+                        "layoutCount":  4,
+                        "heapBefore":  2434760,
+                        "heapAfter":  2543692,
+                        "nodesBefore":  7768,
+                        "nodesAfter":  7864
+                    }
+                ],
+    "notes":  [
+                  "Synthetic isolated profile; production files are unchanged.",
+                  "GPU acceleration requested; the actual renderer is recorded.",
+                  "Inclusive instrumented timings overlap and include instrumentation overhead.",
+                  "CDP thread timings exclude GPU-process work. Memory snapshots follow forced GC.",
+                  "Narrow viewport is desktop Chrome without mobile CPU throttling."
+              ]
+}

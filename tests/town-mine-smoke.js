@@ -2,7 +2,7 @@
     const checks=[],$=id=>document.getElementById(id),check=(label,ok)=>{checks.push((ok?'PASS ':'FAIL ')+label);if(!ok)throw new Error(label);};
     const originalWrite=Storage.prototype.setItem;
     try{
-        await document.fonts.ready;
+        await document.fonts.ready;state.defeatedBossWorldIds=[worldData[0].id];
         state.townProgress=TownProgression.defaults();state.gold=99999;state.currentView='townPage';state.isInTown=true;state.combatPaused=true;resetCombatClock();render();
         const destination=JSON.stringify([state.selectedWorld,state.selectedMap]),slopes=TownContent.buildings.mine.world;
         $('townWorldList').querySelector('[data-world="'+slopes+'"]').click();

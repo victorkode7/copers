@@ -1,0 +1,35 @@
+PASS GPU Piercing Arrow keeps a tight glow on both shaft and tip
+PASS all major effects use GPU batches
+PASS GPU mode creates no per-effect SVG or HTML overlays
+PASS all effects share one input-transparent canvas
+PASS visuals preserve combat state and never consume its random rolls
+PASS redirected missiles can cancel their original GPU impact
+PASS all effect shader styles draw without WebGL errors
+PASS projectile switch immediately removes all GPU projectile families
+PASS ability switch removes ability visuals and dependent player glow
+PASS independent health glows remain available with abilities off
+PASS glow switch removes remaining GPU pulses
+PASS GPU missile impacts stay hidden before their combat deadline
+PASS GPU impact appears on the scheduled arrival timeline
+PASS persistent status and fire effects use GPU auras
+PASS original portrait particles and fire layers are suppressed in full GPU mode
+PASS buff stack label stays inside the frame with an opaque background
+PASS WebGL buff glow uses the buff frame radius and bounds
+PASS flashing buff frame and its text layer above the WebGL canvas
+PASS WebGL player glow uses exactly the player frame bounds
+PASS WebGL buff glow reaches the GPU ambient batch
+PASS WebGL buff and player glows stay inside their frames
+PASS WebGL glows leave the buff and player frame contents clear
+PASS WebGL buff glow follows the frame’s tighter rounded corners
+PASS WebGL buff glow leaves the entire top-right label area clear
+PASS glow switch removes persistent auras immediately
+PASS master off stops transient and persistent GPU work
+PASS cracks-only comparison retains original projectiles
+PASS original buff glow retains its halo without scaling over the label
+PASS original player glow corner radius matches its expanded frame
+PASS original renderer retains shields, spells and elemental effects
+PASS lost contexts restore original effects and portrait layers
+PASS all-effect rendering resumes after context restoration
+PASS leaving combat stops the shared surface
+PASS no script errors
+SMOKE PASSED

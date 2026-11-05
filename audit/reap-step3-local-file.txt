@@ -1,0 +1,9 @@
+PASS sprite textures initialize with ordinary browser permissions
+PASS the procedural module and stylesheet are no longer loaded
+PASS a new sprite instance loads without reading image pixels
+PASS webgl settings use the current scythe sprite
+PASS svg settings use the current scythe sprite
+PASS an unavailable sprite never invokes the removed procedural fallback
+PASS visual unavailability does not change Reap damage
+PASS no runtime errors
+SMOKE PASSED

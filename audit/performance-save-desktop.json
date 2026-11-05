@@ -1,0 +1,64 @@
+{
+    "phase":  "save",
+    "environment":  {
+                        "userAgent":  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+                        "width":  1440,
+                        "height":  1000,
+                        "devicePixelRatio":  1,
+                        "logicalProcessors":  8,
+                        "gpu":  "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002484) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+                        "reapFrames":  16,
+                        "simulationTickMs":  100
+                    },
+    "samples":  [
+                    {
+                        "scenario":  "save-9",
+                        "bytes":  4998,
+                        "buildMedianMs":  0,
+                        "serializeMedianMs":  0,
+                        "storageMedianMs":  0,
+                        "totalMedianMs":  0.1,
+                        "setup":  {
+                                      "interval":  1.2,
+                                      "damage":  12,
+                                      "columns":  3,
+                                      "count":  9
+                                  },
+                        "mainThreadMs":  10.729,
+                        "layoutStyleMs":  0.000,
+                        "layoutCount":  0,
+                        "heapBefore":  1865796,
+                        "heapAfter":  1898792,
+                        "nodesBefore":  2808,
+                        "nodesAfter":  2808
+                    },
+                    {
+                        "scenario":  "save-100",
+                        "bytes":  20924,
+                        "buildMedianMs":  0,
+                        "serializeMedianMs":  0.1,
+                        "storageMedianMs":  0,
+                        "totalMedianMs":  0.2,
+                        "setup":  {
+                                      "interval":  1.2,
+                                      "damage":  12,
+                                      "columns":  3,
+                                      "count":  100
+                                  },
+                        "mainThreadMs":  20.471,
+                        "layoutStyleMs":  0.000,
+                        "layoutCount":  0,
+                        "heapBefore":  2114196,
+                        "heapAfter":  2115000,
+                        "nodesBefore":  10998,
+                        "nodesAfter":  10998
+                    }
+                ],
+    "notes":  [
+                  "Synthetic isolated profile; production files are unchanged.",
+                  "GPU acceleration requested; the actual renderer is recorded.",
+                  "Inclusive instrumented timings overlap and include instrumentation overhead.",
+                  "CDP thread timings exclude GPU-process work. Memory snapshots follow forced GC.",
+                  "Narrow viewport is desktop Chrome without mobile CPU throttling."
+              ]
+}

@@ -8,11 +8,11 @@
     <link rel="stylesheet" href="css/nav.css">
     <link rel="stylesheet" href="css/app-nav.css">
     <link rel="stylesheet" href="css/game.css?v=20261103-6">
-    <link rel="stylesheet" href="css/town-page.css?v=21">
+    <link rel="stylesheet" href="css/town-page.css?v=22">
     <link rel="stylesheet" href="css/equipment-effects.css?v=1">
     <link rel="stylesheet" href="css/equipment-sprite-preview.css?v=3">
     <link rel="stylesheet" href="css/equipment-crafting.css?v=12">
-    <link rel="stylesheet" href="css/mastery.css?v=2">
+    <link rel="stylesheet" href="css/mastery.css?v=4">
     <link rel="stylesheet" href="css/live-tooltips.css?v=1">
     <link rel="stylesheet" href="css/elemental-skills.css?v=20261027-10">
     <link rel="stylesheet" href="css/world-game.css?v=34">
@@ -22,6 +22,8 @@
     <link rel="stylesheet" href="css/loot-effects.css?v=6">
     <link rel="stylesheet" href="css/combat-settings.css?v=3">
     <link rel="stylesheet" href="css/game-theme.css?v=6">
+    <link rel="stylesheet" href="css/level-up.css?v=6">
+    <link rel="stylesheet" href="css/notification-windows.css?v=1">
     <title>Idle Adventure</title>
 </head>
 <body class="idle-adventure">
@@ -40,7 +42,7 @@
             <ul class="navbar">
                 <li class="primary-nav-item">
                     <ul class="primary-nav" aria-label="Game pages">
-                        <li class="town-map-nav"><button id="townPageButton" class="nav-button" type="button" aria-pressed="false" aria-controls="townPageView">Town</button><button id="mapButton" class="nav-button" type="button" aria-pressed="false">Map</button></li>
+                        <li class="town-map-nav"><button id="townPageButton" class="nav-button" type="button" aria-pressed="false" aria-controls="townPageView" hidden>Town</button><button id="mapButton" class="nav-button" type="button" aria-pressed="false">Map</button></li>
                         <li><button id="townButton" class="nav-button" type="button" aria-pressed="true">Crafting</button></li>
                         <li><button id="upgradesButton" class="nav-button" type="button" aria-pressed="false">Skill Tree</button></li>
                         <li><button id="inventoryButton" class="nav-button" type="button" aria-pressed="false">Inventory</button></li>
@@ -64,7 +66,6 @@
             <strong id="levelDisplay">Level 0</strong>
             <span id="experienceText">0 / 50 XP</span>
             <span id="experiencePenalty" hidden></span>
-            <button id="increaseLevelButton" class="dev-level-button" type="button" title="Temporary testing control: gain one level; skill points respect the boss cap">Increase Level by 1</button>
             <strong id="skillPointDisplay" aria-live="polite" aria-atomic="true">Skill points: <span id="skillPointTotal">0</span> / <span id="skillPointCapValue">15</span></strong>
         </div>
         <div id="experienceTrack" class="experience-track" role="progressbar" aria-label="Experience to next level" aria-valuemin="0" aria-valuemax="50" aria-valuenow="0" aria-valuetext="0 of 50 XP to level 1">
@@ -186,9 +187,15 @@
             </section>
 
             <section id="mapMasteryPanel" class="game-panel map-mastery-panel" aria-labelledby="mapMasteryTitle" hidden>
-                <div class="mastery-heading"><div><span class="eyebrow">MONSTER MASTERY</span><h2 id="mapMasteryTitle" tabindex="-1">Map Mastery</h2><p class="subtle">Bonuses apply only on this map. Each node costs 1 mastery point.</p></div><button id="closeMapMastery" type="button">Back to combat</button></div>
-                <p id="masteryCombatStatus" class="subtle" role="status"></p><div class="mastery-progress"><strong id="mapMasteryPoints"></strong><span id="mapMasteryMilestone"></span><progress id="mapMasteryProgress" max="100" value="0"></progress></div>
-                <div class="mastery-workspace"><div id="mapMasteryTree" aria-label="Map mastery tree"></div><section class="mastery-node-details"><h3 id="masterySelectedName"></h3><p id="masterySelectedDescription"></p><h4>Bonuses</h4><ul id="masterySelectedBonuses" class="mastery-bonuses"></ul><h4>Trade-offs</h4><ul id="masterySelectedPenalties" class="mastery-bonuses mastery-penalties"></ul><p id="masteryNodeStatus" class="mastery-status" role="status"></p><div class="mastery-actions"><button id="learnMasteryNode" type="button">Learn · 1 point</button><button id="refundMasteryNode" type="button" hidden>Refund node</button><button id="resetMapMastery" type="button">Refund all</button></div></section></div>
+                <div class="mastery-heading"><div><span class="eyebrow">MONSTER MASTERY</span><h2 id="mapMasteryTitle" tabindex="-1">Map Mastery</h2></div></div>
+                <div class="mastery-workspace">
+                    <div id="mapMasteryTree" aria-label="Map mastery tree"></div>
+                    <aside class="mastery-sidebar">
+                        <div class="mastery-progress"><strong id="mapMasteryPoints"></strong><span id="mapMasteryMilestone"></span><progress id="mapMasteryProgress" max="100" value="0"></progress><p class="mastery-scope-note">Bonuses apply only on this map.</p></div>
+                        <button id="closeMapMastery" class="mastery-return-button" type="button">Back to combat</button>
+                        <section class="mastery-node-details"><h3 id="masterySelectedName"></h3><p id="masterySelectedDescription"></p><h4>Bonuses</h4><ul id="masterySelectedBonuses" class="mastery-bonuses"></ul><h4>Trade-offs</h4><ul id="masterySelectedPenalties" class="mastery-bonuses mastery-penalties"></ul><p id="masteryNodeStatus" class="mastery-status" role="status"></p><div class="mastery-actions"><button id="learnMasteryNode" type="button">Learn · 1 point</button><button id="refundMasteryNode" type="button" hidden>Refund node</button><button id="resetMapMastery" type="button">Refund all</button></div></section>
+                    </aside>
+                </div>
             </section>
 
             <details class="loot-table-panel">
@@ -418,40 +425,44 @@
     <!-- Optional tooling owns its UI and capabilities. Playtest packaging removes this script and the entire dev folder. -->
     <script src="dev/developer-tools.js" data-developer-module></script>
     <script src="js/resources.js?v=1"></script>
-    <script src="js/combat-settings.js?v=4"></script>
-    <script src="js/combat-webgl.js?v=3"></script>
+    <script src="js/combat-settings.js?v=6"></script>
+    <script src="js/combat-webgl.js?v=6"></script>
     <script src="js/combat-webgl-effects.js?v=4"></script>
     <script src="js/items.js?v=20261101-1"></script>
     <script src="js/item-system.js?v=20261031-3"></script>
-    <script src="js/skill-tree.js?v=20261027-11"></script>
+    <script src="js/skill-tree.js?v=20261104-4"></script>
     <script src="js/skill-stat-compat.js?v=20261026-7"></script>
-    <script src="js/skill-descriptions.js?v=20261028-1"></script>
+    <script src="js/skill-descriptions.js?v=20261104-2"></script>
     <script src="js/skill-sprites.js?v=20261021-13"></script>
     <script src="js/equipment-effects.js?v=1"></script>
     <script src="js/world-content.js?v=20261101-1"></script>
     <script src="js/world-system.js?v=20261031-2"></script>
     <script src="js/mastery-system.js?v=3"></script>
-    <script src="js/mastery-tree.js?v=2"></script>
-    <script src="js/loot-effects.js?v=8"></script>
+    <script src="js/mastery-tree.js?v=3"></script>
+    <script src="js/loot-effects.js?v=9"></script>
     <script src="js/arrow-skills.js?v=20261101-1"></script>
     <script src="js/eruption-skills.js?v=20261101-1"></script>
     <script src="js/shield-effects.js?v=20261101-1"></script>
     <script src="js/bleed.js?v=20261026-5"></script>
     <script src="js/spell-skills.js?v=20261102-1"></script>
     <script src="js/elemental-skills.js?v=20261101-1"></script>
-    <script src="js/damage-breakdown.js?v=20261027-6"></script>
-    <script src="js/save-compat.js?v=20261102-1"></script>
+    <script src="js/damage-breakdown.js?v=20261104-1"></script>
+    <script src="js/save-compat.js?v=20261104-1"></script>
     <script src="js/equipment-sprite-preview.js?v=3"></script>
     <script src="js/equipment-crafting.js?v=19"></script>
     <script src="js/progression.js?v=1"></script>
     <script src="js/live-tooltips.js?v=1"></script>
     <script src="js/town-content.js?v=32"></script>
     <script src="js/town-progression.js?v=13"></script>
-    <script src="js/game.js?v=20261103-3"></script>
-    <script src="js/town-page.js?v=35"></script>
-    <script src="js/map-mastery.js?v=5"></script>
+    <script src="js/notification-windows.js?v=1"></script>
+    <script src="js/level-up-celebration.js?v=3"></script>
+    <script src="js/reap-targeting.js?v=3"></script>
+    <script src="js/scythe-reap-effect.js?v=11"></script>
+    <script src="js/game.js?v=20261105-4"></script>
+    <script src="js/town-page.js?v=36"></script>
+    <script src="js/map-mastery.js?v=9"></script>
     <script src="js/skill-builds.js?v=20261031-1"></script>
-    <script src="js/game-profiles.js?v=20261102-1"></script>
-    <script src="js/offline-play.js?v=20261025-1"></script>
+    <script src="js/game-profiles.js?v=20261104-1"></script>
+    <script src="js/offline-play.js?v=20261104-1"></script>
 </body>
 </html>

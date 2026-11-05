@@ -117,7 +117,7 @@
     function migrate(saved, context, migrations = contentMigrations) {
         assertCollections(saved);
         for (const [key,value] of Object.entries({furyStacks:0,furyRemaining:0,furyDecaying:false,shieldStacks:0,
-            attackTimer:0,monsterColumns:1,pendingEruptions:[],pendingVoidMissiles:[],combatPaused:false,lootLog:[],voidCharges:0})) {
+            attackTimer:0,monsterColumns:1,pendingEruptions:[],pendingVoidMissiles:[],pendingReapAttacks:[],combatPaused:false,lootLog:[],voidCharges:0})) {
             if (saved[key] === undefined) saved[key] = value;
         }
         if (saved.currentView === undefined) saved.currentView = saved.isInTown === false ? 'map' : 'town';
@@ -213,7 +213,7 @@
             saved.selectedWorld=world.id;
             saved.selectedMap=world.mapIds.includes(remembered) && saved.unlockedMapIds.includes(remembered) ? remembered : world.mapIds.filter(id => saved.unlockedMapIds.includes(id)).at(-1) || world.mapIds[0];
             saved.enemyHp=context.maps[saved.selectedMap].health;saved.enemyRespawnRemaining=0;
-            saved.monsterStates=[];saved.pendingEruptions=[];saved.pendingVoidMissiles=[];saved.targetMonsterId=null;saved.attackTimer=0;
+            saved.monsterStates=[];saved.pendingEruptions=[];saved.pendingVoidMissiles=[];saved.pendingReapAttacks=[];saved.targetMonsterId=null;saved.attackTimer=0;
             report.destinationChanged=true;
         }
         for (const migration of migrations) for (const field of migration.removedMonsterFields || []) {
