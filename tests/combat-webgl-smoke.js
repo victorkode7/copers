@@ -5,6 +5,7 @@
     const check = (label, ok) => { checks.push((ok ? 'PASS ' : 'FAIL ') + label); if (!ok) throw new Error(label); };
     const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
     const nextFrame = () => new Promise(resolve => requestAnimationFrame(resolve));
+    const browserAnimationFrame = window.requestAnimationFrame;
     const choose = value => {
         const select = document.getElementById('combatEffectRenderer'); select.value = value; select.dispatchEvent(new Event('change'));
     };
@@ -38,6 +39,10 @@
         for (let i = 0; i < 15; i++) showEruptionChain(source.id, target.id, 0);
         check('many cracks share one canvas', document.querySelectorAll('.combat-webgl-layer').length === 1 && CombatWebGL.status().active === 16);
         CombatWebGL.clear();
+        // Isolate scrolling from the crack's advancing head and widening banks.
+        // Both readbacks must compare the same instant on its visual timeline.
+        const fixedFrameTime = performance.now() + 100;
+        window.requestAnimationFrame = callback => browserAnimationFrame(timestamp => callback(fixedFrameTime));
         CombatWebGL.eruptionChain({panel: elements.combatPanel, points: [{x: 30, y: 30}, {x: 140, y: 80}, {x: 280, y: 35}]});
         await wait(80); await nextFrame();
         const canvas = document.querySelector('.combat-webgl-layer'), gl = canvas.getContext('webgl');
@@ -57,6 +62,7 @@
         gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
         const scrollDelta = elements.combatPanel.getBoundingClientRect().top - beforeScroll;
         check('GPU cracks remain anchored to the combat panel while scrolling', scrollDelta > 0 && Math.abs(pixelTop(pixels) - firstPixel - scrollDelta * canvas.height / innerHeight) < 3);
+        window.requestAnimationFrame = browserAnimationFrame;
         toggle('abilities', false);
         check('ability switch stops and hides the GPU layer immediately', !CombatWebGL.status().active && !CombatWebGL.status().running && canvas.hidden);
         toggle('abilities', true); showEruptionChain(source.id, target.id, 0); toggle('all', false);
@@ -105,5 +111,6 @@
         check('no browser script errors', !window.smokeErrors.length);
         choose('svg'); sessionStorage.setItem(phaseKey, JSON.stringify(checks)); location.reload(); return;
     } catch (error) { checks.push(error.stack || String(error)); }
+    finally { window.requestAnimationFrame = browserAnimationFrame; }
     report();
 }());

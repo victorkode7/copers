@@ -79,10 +79,7 @@ function shootAbilityArrow(targets, damage, kind, direction = 0) {
         if (target.hp <= 0) continue;
         if (shot.kind !== 'piercingArrow') visualShots.push(shot);
         if (Math.random() * 100 >= getHitChance(getPlayerAccuracy(), monsterDefinition(target).evasion)) {
-            presentCombatEffect(() => {
-                const card = getCombatEffectCard(target.id);
-                if (card) flashDodge(card.querySelector('.health-track'));
-            });
+            emitCombatEvent('monsterDodged', {monsterId: target.id});
             continue;
         }
         if (shot.kind === 'multiShot') showMonsterHitBadge(target.id, 'MULTISHOT');
@@ -138,82 +135,88 @@ function triggerAttackArrowSkills(target, damage, includeMultishot = true) {
 }
 
 function showCombatArrow(sourceId, targetId, kind, direction, visual = {}) {
-    if (!combatEffectEnabled('projectiles')) return;
-    const mapId = state.selectedMap, freezing = getSkillNodeRank('freezingArrows') > 0;
-    const columns = Math.max(1, state.monsterColumns || 1);
+    if (combatEffects === null) return;
     const targetMonster = state.monsterStates.find(monster => monster.id === targetId);
+    if (!targetMonster) return;
+    const columns = Math.max(1, state.monsterColumns || 1);
     const row = getMonsterGridPosition(targetMonster).row;
     const rowIds = kind === 'piercingArrow'
         ? state.monsterStates.slice(row * columns, (row + 1) * columns).map(monster => monster.id) : [];
-    presentCombatEffect(() => {
-        if (document.hidden || !isCombatView() || state.selectedMap !== mapId) return;
-        const target = getCombatEffectCard(targetId)?.querySelector('.enemy-mark');
-        const source = getCombatEffectCard(sourceId)?.querySelector('.enemy-mark');
-        if (!target) return;
-        if(window.CombatWebGLEffects?.arrow({source,target,rowIds,kind,direction,delay:visual.delay||0,freezing,sourceId}))return;
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.classList.add('combat-arrow');
-        svg.classList.toggle('is-freezing', freezing);
-        const directed = kind === 'forkingArrow';
-        svg.classList.toggle('is-directed', Boolean(directed));
-        svg.classList.toggle('is-incoming', Boolean(directed && !sourceId));
-        svg.dataset.arrowKind = kind;
-        svg.dataset.targetId = targetId;
-        if (sourceId) svg.dataset.sourceId = sourceId;
-        const duration = directed ? arrowVisualDurations.forkingArrow : arrowVisualDurations[kind] || 450;
-        const delay = visual.delay || 0;
-        const flight = getArrowFlightTime(kind, sourceId);
-        svg.style.setProperty('--arrow-duration', duration + 'ms');
-        svg.style.setProperty('--arrow-delay', delay + 'ms');
-        svg.style.setProperty('--arrow-flight', flight + 'ms');
-        svg.style.setProperty('--arrow-impact-delay', delay + flight + 'ms');
-        svg.setAttribute('aria-hidden', 'true');
-        elements.combatPanel.append(svg);
-        const frame = getCombatOverlayBounds(svg), to = getCombatEffectBounds(target);
-        if (!frame.width || !frame.height) { svg.remove(); return; }
-        svg.setAttribute('viewBox', '0 0 ' + frame.width + ' ' + frame.height);
-        let end = {x: to.left + to.width / 2 - frame.left, y: to.top + to.height / 2 - frame.top};
-        const starts = [{x: 4, y: end.y}, {x: frame.width - 4, y: end.y},
-            {x: end.x, y: 4}, {x: end.x, y: frame.height - 4}];
-        let start = starts[direction] || starts[0];
-        if (kind === 'piercingArrow') {
-            const first = getCombatEffectCard(rowIds[0]);
-            const last = getCombatEffectCard(rowIds[rowIds.length - 1]);
-            if (!first || !last) { svg.remove(); return; }
-            const firstBounds = getCombatEffectBounds(first), lastBounds = getCombatEffectBounds(last);
-            const y = firstBounds.top + firstBounds.height / 2 - frame.top;
-            start = {x: firstBounds.left - frame.left, y};
-            end = {x: lastBounds.right - frame.left, y};
-        } else if (source) {
-            const from = getCombatEffectBounds(source);
-            start = {x: from.left + from.width / 2 - frame.left, y: from.top + from.height / 2 - frame.top};
-        } else if (directed) {
-            // Keep the incoming approach near its target, rather than starting
-            // below a tall encounter where the player cannot see it arrive.
-            const visibleLeft = Math.max(8, 8 - frame.left), visibleRight = Math.min(frame.width - 8, innerWidth - frame.left - 8);
-            const visibleTop = Math.max(8, 8 - frame.top), visibleBottom = Math.min(frame.height - 8, innerHeight - frame.top - 8);
-            const horizontalVisible = end.x >= visibleLeft && end.x <= visibleRight;
-            const verticalVisible = end.y >= visibleTop && end.y <= visibleBottom;
-            const left = horizontalVisible ? visibleLeft : 8, right = horizontalVisible ? visibleRight : frame.width - 8;
-            const top = verticalVisible ? visibleTop : 8, bottom = verticalVisible ? visibleBottom : frame.height - 8;
-            start = [{x: Math.max(left, end.x - 160), y: end.y}, {x: Math.min(right, end.x + 160), y: end.y},
-                {x: end.x, y: Math.max(top, end.y - 160)}, {x: end.x, y: Math.min(bottom, end.y + 160)}][direction] || starts[0];
-        }
-        const length = Math.hypot(end.x - start.x, end.y - start.y) || 1;
-        const dx = (end.x - start.x) / length, dy = (end.y - start.y) / length;
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', `M${start.x},${start.y} L${end.x},${end.y}` + (directed ? '' :
-            ` M${end.x - dx * 11 - dy * 5},${end.y - dy * 11 + dx * 5} L${end.x},${end.y} L${end.x - dx * 11 + dy * 5},${end.y - dy * 11 - dx * 5}`));
-        path.setAttribute('pathLength', '1');
-        if (directed) {
-            path.classList.add('arrow-shaft');
-            addDirectionalArrowTrail(svg, path, start, end, duration, delay, flight);
-        }
-        svg.append(path);
-        if (directed) addArrowProjectile(svg, start, end, !sourceId);
-        svg.addEventListener('animationend', event => { if (event.target === svg) svg.remove(); });
-        window.setTimeout(() => svg.remove(), delay + duration + 150);
+    emitCombatEvent('arrowFired', {
+        mapId: state.selectedMap, sourceId, targetId, kind, direction, rowIds,
+        freezing: getSkillNodeRank('freezingArrows') > 0,
+        delay: visual.delay || 0, duration: arrowVisualDurations[kind] || 450,
+        flight: getArrowFlightTime(kind, sourceId)
     });
+}
+
+function presentCombatArrow({mapId, sourceId, targetId, kind, direction, rowIds, freezing, delay, duration, flight}) {
+    if (!combatEffectEnabled('projectiles')) return;
+    if (document.hidden || !isCombatView() || state.selectedMap !== mapId) return;
+    if (!getCombatEffectMonster(targetId) || sourceId && !getCombatEffectMonster(sourceId)) return;
+    const target = getCombatEffectCard(targetId)?.querySelector('.enemy-mark');
+    const source = getCombatEffectCard(sourceId)?.querySelector('.enemy-mark');
+    if (!target || sourceId && !source) return;
+    if(window.CombatWebGLEffects?.arrow({source,target,rowIds,kind,direction,delay,duration,flight,freezing,sourceId}))return;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.classList.add('combat-arrow');
+    svg.classList.toggle('is-freezing', freezing);
+    const directed = kind === 'forkingArrow';
+    svg.classList.toggle('is-directed', Boolean(directed));
+    svg.classList.toggle('is-incoming', Boolean(directed && !sourceId));
+    svg.dataset.arrowKind = kind;
+    svg.dataset.targetId = targetId;
+    if (sourceId) svg.dataset.sourceId = sourceId;
+    svg.style.setProperty('--arrow-duration', duration + 'ms');
+    svg.style.setProperty('--arrow-delay', delay + 'ms');
+    svg.style.setProperty('--arrow-flight', flight + 'ms');
+    svg.style.setProperty('--arrow-impact-delay', delay + flight + 'ms');
+    svg.setAttribute('aria-hidden', 'true');
+    elements.combatPanel.append(svg);
+    const frame = getCombatOverlayBounds(svg), to = getCombatEffectBounds(target);
+    if (!frame.width || !frame.height) { svg.remove(); return; }
+    svg.setAttribute('viewBox', '0 0 ' + frame.width + ' ' + frame.height);
+    let end = {x: to.left + to.width / 2 - frame.left, y: to.top + to.height / 2 - frame.top};
+    const starts = [{x: 4, y: end.y}, {x: frame.width - 4, y: end.y},
+        {x: end.x, y: 4}, {x: end.x, y: frame.height - 4}];
+    let start = starts[direction] || starts[0];
+    if (kind === 'piercingArrow') {
+        const first = getCombatEffectCard(rowIds[0]);
+        const last = getCombatEffectCard(rowIds[rowIds.length - 1]);
+        if (!first || !last) { svg.remove(); return; }
+        const firstBounds = getCombatEffectBounds(first), lastBounds = getCombatEffectBounds(last);
+        const y = firstBounds.top + firstBounds.height / 2 - frame.top;
+        start = {x: firstBounds.left - frame.left, y};
+        end = {x: lastBounds.right - frame.left, y};
+    } else if (source) {
+        const from = getCombatEffectBounds(source);
+        start = {x: from.left + from.width / 2 - frame.left, y: from.top + from.height / 2 - frame.top};
+    } else if (directed) {
+        // Keep the incoming approach near its target, rather than starting
+        // below a tall encounter where the player cannot see it arrive.
+        const visibleLeft = Math.max(8, 8 - frame.left), visibleRight = Math.min(frame.width - 8, innerWidth - frame.left - 8);
+        const visibleTop = Math.max(8, 8 - frame.top), visibleBottom = Math.min(frame.height - 8, innerHeight - frame.top - 8);
+        const horizontalVisible = end.x >= visibleLeft && end.x <= visibleRight;
+        const verticalVisible = end.y >= visibleTop && end.y <= visibleBottom;
+        const left = horizontalVisible ? visibleLeft : 8, right = horizontalVisible ? visibleRight : frame.width - 8;
+        const top = verticalVisible ? visibleTop : 8, bottom = verticalVisible ? visibleBottom : frame.height - 8;
+        start = [{x: Math.max(left, end.x - 160), y: end.y}, {x: Math.min(right, end.x + 160), y: end.y},
+            {x: end.x, y: Math.max(top, end.y - 160)}, {x: end.x, y: Math.min(bottom, end.y + 160)}][direction] || starts[0];
+    }
+    const length = Math.hypot(end.x - start.x, end.y - start.y) || 1;
+    const dx = (end.x - start.x) / length, dy = (end.y - start.y) / length;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M${start.x},${start.y} L${end.x},${end.y}` + (directed ? '' :
+        ` M${end.x - dx * 11 - dy * 5},${end.y - dy * 11 + dx * 5} L${end.x},${end.y} L${end.x - dx * 11 + dy * 5},${end.y - dy * 11 - dx * 5}`));
+    path.setAttribute('pathLength', '1');
+    if (directed) {
+        path.classList.add('arrow-shaft');
+        addDirectionalArrowTrail(svg, path, start, end, duration, delay, flight);
+    }
+    svg.append(path);
+    if (directed) addArrowProjectile(svg, start, end, !sourceId);
+    svg.addEventListener('animationend', event => { if (event.target === svg) svg.remove(); });
+    window.setTimeout(() => svg.remove(), delay + duration + 150);
 }
 
 function addDirectionalArrowTrail(svg, path, start, end, duration, delay, flight) {

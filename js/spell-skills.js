@@ -7,9 +7,59 @@ const voidMissileTiming = Object.freeze({flight:.4,stagger:.05,redirect:.2,windu
 // These Bezier controls make distance grow as time squared. SVG heads and CSS
 // trails share the same acceleration, while their contact deadline stays fixed.
 const voidMissileEasing = Object.freeze([1/3,0,2/3,1/3]);
-// Visual handles stay outside saves and combat randomness. Each impact ring is
-// scheduled beside its projectile so a late combat callback cannot delay it.
-const voidMissileVisuals = new WeakMap();
+// Transient IDs bridge simulation events and presentation without putting DOM
+// handles or IDs into missiles/saves. Timelines contain simulation data only.
+let voidMissilePresentationIds = new WeakMap();
+let nextVoidMissilePresentationId = 1;
+let voidMissilePresentationEpoch = 0;
+const voidMissileTimelines = new Map();
+const voidMissileVisuals = new Map();
+
+function trackVoidMissile(missile, schedule) {
+    if (!missile) return undefined;
+    let id = voidMissilePresentationIds.get(missile);
+    if (id === undefined) {
+        id = nextVoidMissilePresentationId++;
+        voidMissilePresentationIds.set(missile, id);
+        voidMissileTimelines.set(id, {remaining:missile.remaining ?? schedule.arrival, status:'flying'});
+    }
+    return id;
+}
+
+function getVoidMissileVisual(missile) {
+    return voidMissileVisuals.get(voidMissilePresentationIds.get(missile));
+}
+
+function resetVoidMissilePresentation() {
+    voidMissilePresentationEpoch++;
+    voidMissilePresentationIds = new WeakMap();
+    voidMissileTimelines.clear();
+    emitCombatEvent('voidVolleyReset', {epoch:voidMissilePresentationEpoch});
+}
+
+function presentVoidVolleyReset() {
+    window.CombatWebGL?.clear();
+    voidMissileVisuals.forEach(visual => {visual.cancelled=true;visual.circle?.remove();});
+    voidMissileVisuals.clear();
+    elements.combatPanel.querySelectorAll('.spell-void-volley,.void-volley-player-glow').forEach(element=>element.remove());
+}
+
+// Call after presenting or discarding an entire batch: launch events still need
+// the final remaining time/status when a missile also resolves in that batch.
+function pruneVoidMissilePresentations() {
+    // A reset can occur during an unpresented/offline step.
+    for (const [id,visual] of voidMissileVisuals) {
+        if (voidMissileTimelines.has(id)) continue;
+        visual.cancelled=true;visual.circle?.remove();voidMissileVisuals.delete(id);
+    }
+    for (const [id,timeline] of voidMissileTimelines) {
+        if (timeline.status === 'flying') continue;
+        const visual = voidMissileVisuals.get(id);
+        if (timeline.status === 'cancelled' && visual) {visual.cancelled=true;visual.circle?.remove();}
+        voidMissileVisuals.delete(id);
+        voidMissileTimelines.delete(id);
+    }
+}
 
 function getVoidMissileSchedule(index,visualDelay=0,flight=voidMissileTiming.flight) {
     const delay=visualDelay/1000+index*voidMissileTiming.stagger;
@@ -96,7 +146,11 @@ function tickPendingVoidMissiles(elapsed) {
     while(state.pendingVoidMissiles.length){
         const next=Math.min(...state.pendingVoidMissiles.map(hit=>hit.remaining));
         const step=Math.min(remaining,next);
-        state.pendingVoidMissiles.forEach(hit=>{hit.remaining=Math.max(0,hit.remaining-step);});
+        state.pendingVoidMissiles.forEach(hit=>{
+            hit.remaining=Math.max(0,hit.remaining-step);
+            const timeline=voidMissileTimelines.get(voidMissilePresentationIds.get(hit));
+            if(timeline)timeline.remaining=hit.remaining;
+        });
         remaining-=step;
         const arrived=state.pendingVoidMissiles.filter(hit=>hit.remaining<1e-8);
         if(!arrived.length)break;
@@ -107,8 +161,10 @@ function tickPendingVoidMissiles(elapsed) {
                 applyDamageToMonster(target,hit.damage,'spell','voidVolley');
                 showVoidMissileImpact(target.id,hit);
             }else{
-                const visual=voidMissileVisuals.get(hit);
-                if(visual){visual.cancelled=true;presentCombatEffect(()=>visual.circle?.remove());voidMissileVisuals.delete(hit);}
+                const missileId=voidMissilePresentationIds.get(hit);
+                const timeline=voidMissileTimelines.get(missileId);
+                if(timeline)timeline.status='cancelled';
+                emitCombatEvent('voidMissileCancelled', {mapId:state.selectedMap,epoch:voidMissilePresentationEpoch,missileId});
                 const living=state.monsterStates.filter(monster=>monster.hp>0);
                 if(!living.length)continue;
                 // A target can die during flight. Turn toward another living
@@ -175,33 +231,36 @@ function castVoidVortex() {
 }
 
 function showVoidVortex(targetIds,visualDelay=0) {
-    if (!combatEffectEnabled('abilities')) return;
-    const mapId=state.selectedMap;
-    presentCombatEffect(()=>{
-        if (!isCombatView() || state.selectedMap!==mapId) return;
-        if(window.CombatWebGLEffects?.vortex(targetIds,visualDelay))return;
-        const cards=targetIds.map(id=>getCombatEffectCard(id)).filter(Boolean);
-        if (!cards.length) return;
-        const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-        svg.classList.add('spell-effect','spell-void-vortex');
-        svg.dataset.spell='voidVortex';svg.setAttribute('aria-hidden','true');
-        elements.combatPanel.append(svg);
-        const frame=getCombatOverlayBounds(svg);
-        if (!frame.width || !frame.height) {svg.remove();return;}
-        svg.setAttribute('viewBox','0 0 '+frame.width+' '+frame.height);
-        const bounds=cards.map(card=>getCombatEffectBounds(card));
-        const left=Math.min(...bounds.map(box=>box.left)),right=Math.max(...bounds.map(box=>box.right));
-        const top=Math.min(...bounds.map(box=>box.top)),bottom=Math.max(...bounds.map(box=>box.bottom));
-        for (let ring=0;ring<3;ring++) {
-            const ellipse=document.createElementNS(svg.namespaceURI,'ellipse');
-            ellipse.setAttribute('cx',(left+right)/2-frame.left);
-            ellipse.setAttribute('cy',(top+bottom)/2-frame.top);
-            ellipse.setAttribute('rx',Math.max(12,(right-left)/2)*(1-ring*.15));
-            ellipse.setAttribute('ry',Math.max(10,(bottom-top)/2)*(1-ring*.2));
-            ellipse.style.animationDelay=(visualDelay+ring*70)+'ms';svg.append(ellipse);
-        }
-        setTimeout(()=>svg.remove(),900+visualDelay);
-    });
+    if(combatEffects===null || !targetIds.length)return;
+    emitCombatEvent('voidVortexCast', {mapId:state.selectedMap,targetIds:[...targetIds],visualDelay});
+}
+
+function presentVoidVortexCast({targetIds,visualDelay}) {
+    if(!combatEffectEnabled('abilities'))return;
+    const validIds=targetIds.filter(id=>getCombatEffectMonster(id) && getCombatEffectCard(id));
+    if(!validIds.length)return;
+    if(window.CombatWebGLEffects?.vortex(validIds,visualDelay))return;
+    const cards=validIds.map(id=>getCombatEffectCard(id));
+    if (!cards.length) return;
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.classList.add('spell-effect','spell-void-vortex');
+    svg.dataset.spell='voidVortex';svg.setAttribute('aria-hidden','true');
+    elements.combatPanel.append(svg);
+    const frame=getCombatOverlayBounds(svg);
+    if (!frame.width || !frame.height) {svg.remove();return;}
+    svg.setAttribute('viewBox','0 0 '+frame.width+' '+frame.height);
+    const bounds=cards.map(card=>getCombatEffectBounds(card));
+    const left=Math.min(...bounds.map(box=>box.left)),right=Math.max(...bounds.map(box=>box.right));
+    const top=Math.min(...bounds.map(box=>box.top)),bottom=Math.max(...bounds.map(box=>box.bottom));
+    for (let ring=0;ring<3;ring++) {
+        const ellipse=document.createElementNS(svg.namespaceURI,'ellipse');
+        ellipse.setAttribute('cx',(left+right)/2-frame.left);
+        ellipse.setAttribute('cy',(top+bottom)/2-frame.top);
+        ellipse.setAttribute('rx',Math.max(12,(right-left)/2)*(1-ring*.15));
+        ellipse.setAttribute('ry',Math.max(10,(bottom-top)/2)*(1-ring*.2));
+        ellipse.style.animationDelay=(visualDelay+ring*70)+'ms';svg.append(ellipse);
+    }
+    setTimeout(()=>svg.remove(),900+visualDelay);
 }
 
 function tickPlayerMana(elapsed) {
@@ -264,6 +323,10 @@ function getVoidVolleyCurve(start,target,index,count,noise,frame) {
 }
 
 function showVoidVolleyPlayerGlow(holdSeconds,windupSeconds=0) {
+    emitCombatEvent('voidVolleyPlayerGlow', {mapId:state.selectedMap,epoch:voidMissilePresentationEpoch,holdSeconds,windupSeconds});
+}
+
+function presentVoidVolleyPlayerGlow({holdSeconds,windupSeconds}) {
     if (!combatEffectEnabled('glows') || !combatEffectEnabled('abilities')) return;
     if(holdSeconds<=0 || state.playerHp<=0)return;
     if(window.CombatWebGLEffects?.glow(holdSeconds,windupSeconds))return;
@@ -293,111 +356,162 @@ function showVoidVolleyPlayerGlow(holdSeconds,windupSeconds=0) {
 }
 
 function showSpellCast(kind,hits,visualDelay=0) {
-    if (!combatEffectEnabled('projectiles')) return;
-    const mapId=state.selectedMap;
-    const visuals=hits.map(hit=>{
-        if(!hit.missile||combatEffects===null||document.hidden)return null;
-        const visual={circle:null,cancelled:false};
-        voidMissileVisuals.set(hit.missile,visual);
-        return visual;
-    });
-    presentCombatEffect(() => {
-        if (!isCombatView() || state.selectedMap!==mapId || !hits.length) return;
-        if(window.CombatWebGLEffects?.spells(kind,hits,visualDelay,visuals))return;
-        const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-        svg.classList.add('spell-effect',kind==='voidVolley'?'spell-void-volley':'spell-void-bolt');svg.setAttribute('aria-hidden','true');
-        svg.dataset.spell=kind;
-        elements.combatPanel.append(svg);
-        const frame=getCombatOverlayBounds(svg);
-        if (!frame.width || !frame.height) {svg.remove();return;}
-        svg.setAttribute('viewBox','0 0 '+frame.width+' '+frame.height);
-        const centers=new Map();
-        const center=id=>{
-            if (centers.has(id)) return centers.get(id);
-            const card=getCombatEffectCard(id);if (!card)return null;
-            const bounds=getCombatEffectBounds(card),point={x:bounds.left+bounds.width/2-frame.left,y:bounds.top+bounds.height/2-frame.top};
-            centers.set(id,point);return point;
-        };
-        const player=getCombatEffectBounds(elements.playerHealthPanel);
-        const origin={x:player.left+player.width/2-frame.left,y:player.bottom-frame.top};
-        const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        // Cosmetic randomness must not advance the combat RNG, including offline.
-        const noise=kind==='voidVolley'?crypto.getRandomValues(new Uint32Array(hits.length*4)):null;
-        let sourceGlowHold=0;
-        let sourceGlowWindup=Infinity;
-        hits.forEach((hit,index)=>{
-            if(visuals[index]?.cancelled)return;
-            const point=center(hit.targetId);if(!point)return;
-            const start=hit.sourceId?(center(hit.sourceId)||origin):origin;
-            const schedule=getVoidMissileSchedule(index,visualDelay,hit.flight??voidMissileTiming.flight);
-            // Batched effects can be presented after simulation has advanced.
-            // Start partway through that same flight instead of replaying it.
-            const age=Math.max(0,schedule.arrival-(hit.missile?.remaining??schedule.arrival));
-            const flight=schedule.flight,delay=(schedule.delay-age)*1000;
-            const contactDelay=Math.max(0,schedule.arrival-age)*1000;
-            if(kind==='voidVolley'&&!hit.sourceId){
-                // Keep the emitter lit through the last launch and the slow
-                // opening tail leaving the plate. Reduced motion flashes at contact.
-                sourceGlowHold=Math.max(sourceGlowHold,reducedMotion?contactDelay/1000+.18:
-                    schedule.delay-age+flight*.4);
-                sourceGlowWindup=Math.min(sourceGlowWindup,Math.max(0,reducedMotion?contactDelay/1000:delay/1000));
-            }
-            const fan=kind==='voidVolley'?(index-(hits.length-1)/2)*21:(index-(hits.length-1)/2)*12;
-            const control={x:(start.x+point.x)/2+fan,y:Math.max(0,(start.y+point.y)/2-Math.abs(fan)*.65-30)};
-            const path=document.createElementNS(svg.namespaceURI,'path');
-            const curve=noise
-                ? getVoidVolleyCurve(start,point,index,hits.length,noise,frame)
-                : 'Q'+control.x+' '+control.y+' ';
-            path.setAttribute('d','M'+start.x+' '+start.y+' '+curve+point.x+' '+point.y);
-            path.setAttribute('pathLength','1');path.dataset.targetId=hit.targetId;
-            // A reduced-motion line shows the whole route. Flash it at contact,
-            // rather than making it look as though the missile arrived at launch.
-            path.style.animationDelay=(reducedMotion?contactDelay:delay)+'ms';
-            if(!reducedMotion){
-                path.style.animationDuration=flight+'s';
-                if(kind==='voidVolley')path.style.animationTimingFunction='cubic-bezier('+voidMissileEasing.join(',')+')';
-            }
-            svg.append(path);
-            const missile=document.createElementNS(svg.namespaceURI,'circle');
-            missile.classList.add('void-missile');missile.setAttribute('r',kind==='voidVolley'?3.5:4.5);
-            missile.style.animationDelay=delay+'ms';missile.style.animationDuration=flight+'s';
-            const motion=document.createElementNS(svg.namespaceURI,'animateMotion');
-            motion.setAttribute('path',path.getAttribute('d'));motion.setAttribute('dur',flight+'s');motion.setAttribute('calcMode','paced');motion.setAttribute('begin','indefinite');motion.setAttribute('fill','freeze');
-            if(kind==='voidVolley'){
-                motion.setAttribute('calcMode','spline');motion.setAttribute('keyTimes','0;1');
-                motion.setAttribute('keyPoints','0;1');motion.setAttribute('keySplines',voidMissileEasing.join(' '));
-            }
-            missile.append(motion);svg.append(missile);motion.beginElementAt(delay/1000);
-            const circle=document.createElementNS(svg.namespaceURI,'circle');
-            circle.classList.add('void-impact');
-            circle.setAttribute('cx',point.x);circle.setAttribute('cy',point.y);circle.setAttribute('r',kind==='voidVolley'?18:14);
-            circle.style.animationDelay=contactDelay+'ms';svg.append(circle);
-            if(visuals[index])visuals[index].circle=circle;
+    if (kind==='voidBolt') {
+        if (combatEffects===null || !hits.length) return;
+        emitCombatEvent('voidBoltCast', {
+            mapId:state.selectedMap, visualDelay,
+            hits:hits.map((hit,index)=>({
+                targetId:hit.targetId, sourceId:hit.sourceId,
+                schedule:getVoidMissileSchedule(index,visualDelay,hit.flight??voidMissileTiming.flight)
+            })),
+            lifetime:visualDelay+1000+hits.length*voidMissileTiming.stagger*1000
         });
-        if(sourceGlowHold>0)showVoidVolleyPlayerGlow(sourceGlowHold,sourceGlowWindup);
-        window.setTimeout(()=>svg.remove(),visualDelay+1000+hits.length*voidMissileTiming.stagger*1000);
+        return;
+    }
+    if (combatEffects===null || !hits.length) return;
+    emitCombatEvent('voidVolleyCast', {
+        mapId:state.selectedMap,epoch:voidMissilePresentationEpoch,visualDelay,
+        hits:hits.map((hit,index)=>{
+            const schedule=getVoidMissileSchedule(index,visualDelay,hit.flight??voidMissileTiming.flight);
+            return {targetId:hit.targetId,sourceId:hit.sourceId,schedule,
+                missileId:trackVoidMissile(hit.missile,schedule)};
+        }),
+        lifetime:visualDelay+1000+hits.length*voidMissileTiming.stagger*1000
     });
 }
 
+function presentVoidVolleyCast({mapId,epoch,hits,visualDelay,lifetime}) {
+    if(epoch!==voidMissilePresentationEpoch || !combatEffectEnabled('projectiles'))return;
+    const visuals=hits.map(hit=>{
+        const timeline=voidMissileTimelines.get(hit.missileId);
+        if(timeline?.status==='cancelled' || !getCombatEffectMonster(hit.targetId) || !getCombatEffectCard(hit.targetId) ||
+            hit.sourceId && (!getCombatEffectMonster(hit.sourceId) || !getCombatEffectCard(hit.sourceId)))return {cancelled:true};
+        const visual={circle:null,cancelled:false};
+        if(hit.missileId!==undefined)voidMissileVisuals.set(hit.missileId,visual);
+        return visual;
+    });
+    if(visuals.every(visual=>visual.cancelled))return;
+    const agedHits=hits.map(hit=>({...hit,remaining:voidMissileTimelines.get(hit.missileId)?.remaining??hit.schedule.arrival}));
+    presentSpellCast('voidVolley',agedHits,visualDelay,visuals,mapId,lifetime);
+}
+
+function presentVoidMissileCancelled({epoch,missileId}) {
+    if(epoch!==voidMissilePresentationEpoch)return;
+    const visual=voidMissileVisuals.get(missileId);
+    if(visual){visual.cancelled=true;visual.circle?.remove();voidMissileVisuals.delete(missileId);}
+}
+
+function presentVoidBoltCast({mapId,hits,visualDelay,lifetime}) {
+    if (!combatEffectEnabled('projectiles')) return;
+    const visuals=hits.map(hit=>!getCombatEffectMonster(hit.targetId) || !getCombatEffectCard(hit.targetId) ||
+        hit.sourceId && (!getCombatEffectMonster(hit.sourceId) || !getCombatEffectCard(hit.sourceId)) ? {cancelled:true} : null);
+    if (visuals.every(visual=>visual?.cancelled)) return;
+    presentSpellCast('voidBolt',hits,visualDelay,visuals,mapId,lifetime);
+}
+
+function presentSpellCast(kind,hits,visualDelay,visuals,mapId,lifetime=visualDelay+1000+hits.length*voidMissileTiming.stagger*1000) {
+    if (!isCombatView() || state.selectedMap!==mapId || !hits.length) return;
+    if(window.CombatWebGLEffects?.spells(kind,hits,visualDelay,visuals))return;
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.classList.add('spell-effect',kind==='voidVolley'?'spell-void-volley':'spell-void-bolt');svg.setAttribute('aria-hidden','true');
+    svg.dataset.spell=kind;
+    elements.combatPanel.append(svg);
+    const frame=getCombatOverlayBounds(svg);
+    if (!frame.width || !frame.height) {svg.remove();return;}
+    svg.setAttribute('viewBox','0 0 '+frame.width+' '+frame.height);
+    const centers=new Map();
+    const center=id=>{
+        if (centers.has(id)) return centers.get(id);
+        const card=getCombatEffectCard(id);if (!card)return null;
+        const bounds=getCombatEffectBounds(card),point={x:bounds.left+bounds.width/2-frame.left,y:bounds.top+bounds.height/2-frame.top};
+        centers.set(id,point);return point;
+    };
+    const player=getCombatEffectBounds(elements.playerHealthPanel);
+    const origin={x:player.left+player.width/2-frame.left,y:player.bottom-frame.top};
+    const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Cosmetic randomness must not advance the combat RNG, including offline.
+    const noise=kind==='voidVolley'?crypto.getRandomValues(new Uint32Array(hits.length*4)):null;
+    let sourceGlowHold=0;
+    let sourceGlowWindup=Infinity;
+    hits.forEach((hit,index)=>{
+        if(visuals[index]?.cancelled)return;
+        const point=center(hit.targetId);if(!point)return;
+        const start=hit.sourceId?(center(hit.sourceId)||origin):origin;
+        const schedule=hit.schedule||getVoidMissileSchedule(index,visualDelay,hit.flight??voidMissileTiming.flight);
+        // Batched effects can be presented after simulation has advanced.
+        // Start partway through that same flight instead of replaying it.
+        const age=Math.max(0,schedule.arrival-(hit.remaining??schedule.arrival));
+        const flight=schedule.flight,delay=(schedule.delay-age)*1000;
+        const contactDelay=Math.max(0,schedule.arrival-age)*1000;
+        if(kind==='voidVolley'&&!hit.sourceId){
+            // Keep the emitter lit through the last launch and the slow
+            // opening tail leaving the plate. Reduced motion flashes at contact.
+            sourceGlowHold=Math.max(sourceGlowHold,reducedMotion?contactDelay/1000+.18:
+                schedule.delay-age+flight*.4);
+            sourceGlowWindup=Math.min(sourceGlowWindup,Math.max(0,reducedMotion?contactDelay/1000:delay/1000));
+        }
+        const fan=kind==='voidVolley'?(index-(hits.length-1)/2)*21:(index-(hits.length-1)/2)*12;
+        const control={x:(start.x+point.x)/2+fan,y:Math.max(0,(start.y+point.y)/2-Math.abs(fan)*.65-30)};
+        const path=document.createElementNS(svg.namespaceURI,'path');
+        const curve=noise
+            ? getVoidVolleyCurve(start,point,index,hits.length,noise,frame)
+            : 'Q'+control.x+' '+control.y+' ';
+        path.setAttribute('d','M'+start.x+' '+start.y+' '+curve+point.x+' '+point.y);
+        path.setAttribute('pathLength','1');path.dataset.targetId=hit.targetId;
+        // A reduced-motion line shows the whole route. Flash it at contact,
+        // rather than making it look as though the missile arrived at launch.
+        path.style.animationDelay=(reducedMotion?contactDelay:delay)+'ms';
+        if(!reducedMotion){
+            path.style.animationDuration=flight+'s';
+            if(kind==='voidVolley')path.style.animationTimingFunction='cubic-bezier('+voidMissileEasing.join(',')+')';
+        }
+        svg.append(path);
+        const missile=document.createElementNS(svg.namespaceURI,'circle');
+        missile.classList.add('void-missile');missile.setAttribute('r',kind==='voidVolley'?3.5:4.5);
+        missile.style.animationDelay=delay+'ms';missile.style.animationDuration=flight+'s';
+        const motion=document.createElementNS(svg.namespaceURI,'animateMotion');
+        motion.setAttribute('path',path.getAttribute('d'));motion.setAttribute('dur',flight+'s');motion.setAttribute('calcMode','paced');motion.setAttribute('begin','indefinite');motion.setAttribute('fill','freeze');
+        if(kind==='voidVolley'){
+            motion.setAttribute('calcMode','spline');motion.setAttribute('keyTimes','0;1');
+            motion.setAttribute('keyPoints','0;1');motion.setAttribute('keySplines',voidMissileEasing.join(' '));
+        }
+        missile.append(motion);svg.append(missile);motion.beginElementAt(delay/1000);
+        const circle=document.createElementNS(svg.namespaceURI,'circle');
+        circle.classList.add('void-impact');
+        circle.setAttribute('cx',point.x);circle.setAttribute('cy',point.y);circle.setAttribute('r',kind==='voidVolley'?18:14);
+        circle.style.animationDelay=contactDelay+'ms';svg.append(circle);
+        if(visuals[index])visuals[index].circle=circle;
+    });
+    if(sourceGlowHold>0)presentVoidVolleyPlayerGlow({holdSeconds:sourceGlowHold,windupSeconds:sourceGlowWindup});
+    window.setTimeout(()=>svg.remove(),lifetime);
+}
+
 function showVoidMissileImpact(targetId,missile) {
+    const missileId=missile&&voidMissilePresentationIds.get(missile);
+    const timeline=voidMissileTimelines.get(missileId);
+    if(timeline)timeline.status='arrived';
+    emitCombatEvent('voidMissileImpact', {mapId:state.selectedMap,epoch:voidMissilePresentationEpoch,targetId,missileId});
+}
+
+function presentVoidMissileImpact({targetId,missileId,epoch}) {
+    if(epoch!==voidMissilePresentationEpoch)return;
+    const visual=voidMissileVisuals.get(missileId);
+    voidMissileVisuals.delete(missileId);
     if (!combatEffectEnabled('abilities')) return;
     // Visible casts already own a ring on the projectile's exact timeline.
     // Saves and casts launched offscreen have no visual handle and use a fallback.
-    if(missile&&voidMissileVisuals.has(missile)){voidMissileVisuals.delete(missile);return;}
-    const mapId=state.selectedMap;
-    presentCombatEffect(()=>{
-        if(!isCombatView()||state.selectedMap!==mapId)return;
-        if(window.CombatWebGLEffects?.impact(targetId))return;
-        const card=getCombatEffectCard(targetId);if(!card)return;
-        const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-        svg.classList.add('spell-effect','spell-void-volley','spell-impact-effect');
-        svg.setAttribute('aria-hidden','true');svg.dataset.targetId=targetId;
-        elements.combatPanel.append(svg);
-        const frame=getCombatOverlayBounds(svg),bounds=getCombatEffectBounds(card);
-        svg.setAttribute('viewBox','0 0 '+frame.width+' '+frame.height);
-        const circle=document.createElementNS(svg.namespaceURI,'circle');circle.classList.add('void-impact');
-        circle.setAttribute('cx',bounds.left+bounds.width/2-frame.left);
-        circle.setAttribute('cy',bounds.top+bounds.height/2-frame.top);circle.setAttribute('r',18);svg.append(circle);
-        window.setTimeout(()=>svg.remove(),500);
-    });
+    if(visual?.circle)return;
+    if(!getCombatEffectMonster(targetId))return;
+    if(window.CombatWebGLEffects?.impact(targetId))return;
+    const card=getCombatEffectCard(targetId);if(!card)return;
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.classList.add('spell-effect','spell-void-volley','spell-impact-effect');
+    svg.setAttribute('aria-hidden','true');svg.dataset.targetId=targetId;
+    elements.combatPanel.append(svg);
+    const frame=getCombatOverlayBounds(svg),bounds=getCombatEffectBounds(card);
+    svg.setAttribute('viewBox','0 0 '+frame.width+' '+frame.height);
+    const circle=document.createElementNS(svg.namespaceURI,'circle');circle.classList.add('void-impact');
+    circle.setAttribute('cx',bounds.left+bounds.width/2-frame.left);
+    circle.setAttribute('cy',bounds.top+bounds.height/2-frame.top);circle.setAttribute('r',18);svg.append(circle);
+    window.setTimeout(()=>svg.remove(),500);
 }

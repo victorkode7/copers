@@ -25,7 +25,8 @@
                 move:1,rotation:angle,style:fire?0:3,color,duration:800,delay:delay+i*14,startScale:.3,scale:.7});
         }
     }
-    function arrow({source,target,rowIds,kind,direction,delay=0,freezing,sourceId}) {
+    function arrow({source,target,rowIds,kind,direction,delay=0,freezing,sourceId,
+        duration=arrowVisualDurations[kind]||450,flight=getArrowFlightTime(kind,sourceId)}) {
         if(!available('projectiles'))return false;
         const area=frame(),end=center(target),directed=kind==='forkingArrow';
         let start=[{x:4,y:end.y},{x:area.width-4,y:end.y},{x:end.x,y:4},{x:end.x,y:area.height-4}][direction]||{x:4,y:end.y};
@@ -40,7 +41,6 @@
                 {x:end.x,y:Math.max(top,end.y-160)},{x:end.x,y:Math.min(bottom,end.y+160)}][direction]||start;
         }
         const color=kind==='piercingArrow'?[1,1,1]:freezing?[.6,.929,1]:[1,.886,.588];
-        const duration=arrowVisualDurations[kind]||450,flight=getArrowFlightTime(kind,sourceId);
         const angle=Math.atan2(end.y-start.y,end.x-start.x);
         gpu().trail({points:[start,end],flight,duration,delay,color,strokeWidth:directed?(source?4:5):3,
             glowRadius:4,style:directed?16:12,type:'arrow'});
@@ -108,8 +108,8 @@
             if(visuals[index]?.cancelled)return;
             const target=getCombatEffectCard(hit.targetId);if(!target)return;
             const point=center(target),source=getCombatEffectCard(hit.sourceId),start=source?center(source):origin;
-            const schedule=getVoidMissileSchedule(index,visualDelay,hit.flight??voidMissileTiming.flight);
-            const age=Math.max(0,schedule.arrival-(hit.missile?.remaining??schedule.arrival));
+            const schedule=hit.schedule||getVoidMissileSchedule(index,visualDelay,hit.flight??voidMissileTiming.flight);
+            const age=Math.max(0,schedule.arrival-(hit.remaining??schedule.arrival));
             const flight=schedule.flight*1000,delay=(schedule.delay-age)*1000,contact=Math.max(0,schedule.arrival-age)*1000;
             let a,b;
             if(noise){const values=getVoidVolleyCurve(start,point,index,hits.length,noise,area).match(/-?\d*\.?\d+(?:e[-+]?\d+)?/gi).map(Number);a={x:values[0],y:values[1]};b={x:values[2],y:values[3]};}
@@ -125,7 +125,7 @@
             if(visuals[index])visuals[index].circle=impact;
             if(accelerating&&!hit.sourceId){hold=Math.max(hold,schedule.delay-age+schedule.flight*.4);windup=Math.min(windup,Math.max(0,delay/1000));}
         });
-        if(hold>0)showVoidVolleyPlayerGlow(hold,windup);
+        if(hold>0)presentVoidVolleyPlayerGlow({holdSeconds:hold,windupSeconds:windup});
         return true;
     }
     function impact(targetId) {

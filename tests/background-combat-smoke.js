@@ -147,7 +147,7 @@
         observer.observe(elements.enemyRoster, {subtree: true, childList: true, attributes: true, characterData: true});
         const live = simulateCombatStep(gameTickSeconds, true);
         check('live simulation collects visual effects without drawing them', live.effects.length > 0 && observer.takeRecords().length === 0);
-        live.effects.forEach(effect => effect());
+        flushCombatEffects(live.effects);
         check('foreground effects still display when presented', observer.takeRecords().length > 0);
         observer.disconnect();
         saveGame(); const legacy = JSON.parse(localStorage.getItem(saveKey));

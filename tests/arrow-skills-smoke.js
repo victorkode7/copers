@@ -173,7 +173,7 @@
         state.attackTimer = getAttackSpeed() - .05;
         const effects = simulateCombatStep(.1, true).effects;
         check('a missed normal attack still fires its Multishot arrow', monsters[0].hp === 100 && monsters[1].hp === 100 - getDamage());
-        effects.forEach(effect => effect());
+        flushCombatEffects(effects);
 
         monsters = fresh({multiShot: 1, piercingArrow: 1, forkingArrow: 1, freezingArrows: 1, shockwaveSlash: 1}, 1, 1, {health: 10000});
         let rolls = 0;

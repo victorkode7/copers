@@ -26,7 +26,7 @@
     function advance(seconds, showEffects=false) {
         for(let index=0;index<Math.round(seconds*10);index++) {
             const result=simulateCombatStep(.1,showEffects);
-            if(showEffects)result.effects.forEach(effect=>effect());
+            if(showEffects)flushCombatEffects(result.effects);
         }
     }
     function seedRandom(){let seed=1234;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};}
@@ -142,7 +142,7 @@
         monsters=fresh({volcanicEruption:1});state.targetMonsterId=monsters[4].id;damage=getDamage();Math.random=()=>.99;attack();
         check('every attack erupts even when its normal hit misses',monsters.every((monster,index)=>monster.hp===100-([1,3,4,5,7].includes(index)?damage:0))&&state.playerHp===95);
         monsters=fresh({volcanicEruption:1});itemById.testAmulet.stats={multiHit:1};state.ownedItemIds=['testAmulet'];state.gear.necklace='testAmulet';state.targetMonsterId=monsters[4].id;
-        attack().effects.forEach(effect=>effect());
+        flushCombatEffects(attack().effects);
         const multiCenters=[...elements.enemyRoster.querySelectorAll('.eruption-burst.is-center')].map(burst=>burst.parentElement.dataset.monsterId);
         check('successful multi-hits trigger their own eruption and health cost',state.playerHp===90&&monsters[4].hp===100-getDamage()*3&&monsters[5].hp===100-getDamage()*3&&multiCenters.includes(monsters[4].id)&&multiCenters.includes(monsters[5].id));
         monsters=fresh({volcanicEruption:1});itemById.testAmulet.stats={multiHit:1};state.ownedItemIds=['testAmulet'];state.gear.necklace='testAmulet';state.targetMonsterId=monsters[4].id;
@@ -168,7 +168,7 @@
         observer=new MutationObserver(()=>{});observer.observe(document.body,{subtree:true,childList:true,attributes:true,characterData:true});
         const effects=attack().effects;
         check('combat simulation collects eruption visuals without touching the DOM',effects.length>0&&observer.takeRecords().length===0);
-        effects.forEach(effect=>effect());
+        flushCombatEffects(effects);
         check('collected eruption effects render when the foreground presents them',elements.enemyRoster.querySelector('.eruption-burst')&&observer.takeRecords().length>0);
         observer.disconnect();
         fresh({volcanicEruption:1,eruptionChain:1},9,3,{health:10});itemById.testAmulet.stats={multiHit:1};state.ownedItemIds=['testAmulet'];state.gear.necklace='testAmulet';seedRandom();

@@ -83,12 +83,14 @@
                 check('fractional regeneration accumulates accurately each second', near(state.playerHp, 53.125));
                 check('regeneration appears in gear tooltips and comparisons', Equipment.describe(itemById.testAmulet) === '+0.25 Flat health regeneration per second\n+50% Increased health regeneration' && Equipment.compare(itemById.testAmulet, null).every(line => line.status === 'new'));
                 skillNodeById.healthNode.stats.healthRegenPercent=.01; itemById.testAmulet.stats.healthRegenPercent=.02;
+                invalidateSkillBonusCache();
                 check('maximum-health rates add and increased regeneration scales both base sources',near(getPlayerHealthRegen(),10.625));
                 itemById.testAmulet.stats.health=100;
                 check('increasing maximum health raises percentage-based regeneration',getPlayerMaxHealth()===200&&near(getPlayerHealthRegen(),18.125));
                 itemById.testAmulet.stats.healthMultiplier=1.5;
                 check('maximum-health multipliers also increase regeneration',getPlayerMaxHealth()===300&&near(getPlayerHealthRegen(),25.625));
                 skillNodeById.healthNode.stats={healthRegen:1,healthRegenIncrease:1}; itemById.testAmulet.stats={healthRegen:.25,healthRegenIncrease:.5};
+                invalidateSkillBonusCache();
                 state.playerHp = getPlayerMaxHealth() - .1; simulateCombatStep(.1);
                 check('healing never exceeds maximum health', state.playerHp === getPlayerMaxHealth());
                 state.playerHp = 50; state.monsterStates[0].hp = 0; state.monsterStates[0].respawnRemaining = 5; simulateCombatStep(.1);
@@ -98,6 +100,7 @@
                 state.playerHp = 0; state.combatPaused = true; simulateCombatStep(10);
                 check('regeneration cannot revive a dead character', state.playerHp === 0 && state.combatPaused);
                 skillNodeById.healthNode.stats = {healthRegen: -1}; state.gear = createEmptyGear();
+                invalidateSkillBonusCache();
                 check('penalties cannot make regeneration damage the player', getPlayerHealthRegen() === 0);
                 skillNodeById.healthNode.stats = {healthRegen: 1, healthRegenIncrease: 1,healthRegenPercent:.01};
                 fresh({healthNode: 1}); equip();

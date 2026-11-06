@@ -252,7 +252,8 @@ let combatNeedsFullRender = false;
 let combatCatchingUp = false;
 let combatCatchupUiActive = false;
 let simulatingCombat = false;
-// undefined presents immediately; null suppresses effects; an array collects a live step.
+// undefined presents immediately; null suppresses effects; an array collects
+// ordered event records and legacy presentation callbacks for a live step.
 let combatEffects;
 let combatStatCache = null;
 const skillBonusCache = {ranks: null, level: null, flat: new Map(), multipliers: new Map()};
@@ -400,9 +401,143 @@ function combatEffectEnabled(category = 'general') {
 }
 
 function presentCombatEffect(effect, category = 'general') {
+    // Presentation-only compatibility helper. Combat rules emit data records.
     if (combatEffects === null || document.hidden || !combatEffectEnabled(category)) return;
     if (combatEffects) combatEffects.push(() => { if (combatEffectEnabled(category)) effect(); });
     else effect();
+}
+
+// Simulation-facing entry point: no DOM, visibility, or renderer settings.
+// Construct records only when presentation is requested, including live steps.
+function emitCombatEvent(type, details) {
+    if (combatEffects === null) return;
+    const event = {...details, type};
+    // Spawn IDs can be reused on other maps; keep delayed visuals on their map.
+    if (event.monsterId !== undefined) event.mapId = state.selectedMap;
+    if (combatEffects) combatEffects.push(event);
+    else presentCombatEvent(event);
+}
+
+function presentCombatEvent(event) {
+    // Keep compatibility with presentation callbacks supplied by older callers.
+    if (typeof event === 'function') { event(); return; }
+    // Cancellation/reset release handles even when the app is hidden.
+    if (event.type === 'voidVolleyReset') {
+        if(event.epoch===voidMissilePresentationEpoch)presentVoidVolleyReset();
+        return;
+    }
+    if (event.type === 'voidMissileCancelled') {presentVoidMissileCancelled(event);return;}
+    if (document.hidden) return;
+    switch (event.type) {
+        case 'poisonTransferred':
+            if (event.mapId !== state.selectedMap || !isCombatView()) break;
+            presentPoisonTransfer(event);
+            break;
+        case 'righteousFireHit':
+            if (event.mapId !== state.selectedMap || !isCombatView() || !combatEffectEnabled()) break;
+            presentRighteousFireHit(event);
+            break;
+        case 'monsterDefeated':
+            if (event.mapId !== state.selectedMap || !isCombatView()) break;
+            presentMonsterDefeat(event);
+            break;
+        case 'enemyDamageCleared':
+            if (event.mapId === state.selectedMap && combatEffectEnabled()) presentEnemyDamageIndicatorReset();
+            break;
+        case 'playerCombatBuffsCleared':
+            if (event.mapId === state.selectedMap && combatEffectEnabled()) presentPlayerCombatBuffsCleared();
+            break;
+        case 'elementalEffectsCleared':
+            if (event.mapId === state.selectedMap) elements.combatPanel.querySelectorAll('.elemental-effect-layer').forEach(layer=>layer.remove());
+            break;
+        case 'arrowFired':
+            if (event.mapId !== state.selectedMap || !isCombatView()) break;
+            presentCombatArrow(event);
+            break;
+        case 'voidBoltCast':
+            if (event.mapId !== state.selectedMap || !isCombatView()) break;
+            presentVoidBoltCast(event);
+            break;
+        case 'voidVortexCast':
+            if (event.mapId !== state.selectedMap || !isCombatView()) break;
+            presentVoidVortexCast(event);
+            break;
+        case 'volcanicEruption':
+            if (event.mapId !== state.selectedMap || !isCombatView()) break;
+            presentVolcanicEruption(event);
+            break;
+        case 'eruptionChain':
+            if (event.mapId !== state.selectedMap || !isCombatView()) break;
+            presentEruptionChain(event);
+            break;
+        case 'elementalBurst':
+            if (event.mapId !== state.selectedMap || !isCombatView()) break;
+            presentElementalBurst(event);
+            break;
+        case 'shieldSlamWave':
+            if (event.mapId !== state.selectedMap || !isCombatView()) break;
+            presentShieldSlamWave(event);
+            break;
+        case 'voidVolleyCast':
+        case 'voidMissileImpact':
+        case 'voidVolleyPlayerGlow':
+        case 'voidVolleyBuffProc':
+            if (event.mapId !== state.selectedMap || !isCombatView() || event.epoch !== voidMissilePresentationEpoch) break;
+            if (event.type === 'voidVolleyCast') presentVoidVolleyCast(event);
+            else if (event.type === 'voidMissileImpact') presentVoidMissileImpact(event);
+            else if (event.type === 'voidVolleyPlayerGlow') presentVoidVolleyPlayerGlow(event);
+            else presentVoidVolleyBuffProc(event);
+            break;
+        case 'playerDodged':
+            flashDodge(elements.playerHealthTrack);
+            break;
+        case 'playerDamaged':
+            showPlayerDamage(event.damage);
+            break;
+        case 'playerShieldBlocked':
+            if (event.mapId !== state.selectedMap || !isCombatView()) break;
+            restartCombatAnimation(elements.playerHealthPanel, 'is-shield-blocking');
+            break;
+        case 'monsterShockwaveFlash': {
+            if (event.mapId !== state.selectedMap || !isCombatView() || !combatEffectEnabled('glows') || !combatEffectEnabled('abilities')) break;
+            const track = getCombatEffectCard(event.monsterId)?.querySelector('.health-track');
+            if (track) restartCombatAnimation(track, 'is-shockwave-hit');
+            break;
+        }
+        case 'monsterShockwaveShake': {
+            if (event.mapId !== state.selectedMap || !isCombatView() || !combatEffectEnabled('shaking') || !combatEffectEnabled('abilities')) break;
+            const card = getCombatEffectCard(event.monsterId);
+            if (card) restartCombatAnimation(card, 'is-shockwave-splashed');
+            break;
+        }
+        case 'monsterDamaged':
+            if (event.mapId !== state.selectedMap || !isCombatView()) break;
+            showMonsterDamage(event.monsterId, event.damage, event.damageType);
+            break;
+        case 'monsterHitNotice':
+            if (event.mapId !== state.selectedMap || !isCombatView()) break;
+            presentMonsterHitBadge(event.monsterId, event.label, event.isMultiHit, event.priority);
+            break;
+        case 'monsterProcNotice':
+            if (event.mapId !== state.selectedMap || !isCombatView()) break;
+            presentMonsterProc(event.monsterId, event.procName);
+            break;
+        case 'monsterPoisonApplied':
+            if (event.mapId !== state.selectedMap || !isCombatView()) break;
+            presentPoisonStackProc(event.monsterId);
+            break;
+        case 'monsterBleedApplied':
+            if (event.mapId !== state.selectedMap || !isCombatView()) break;
+            presentBleedStackProc(event.monsterId);
+            break;
+        case 'monsterDodged': {
+            if (event.mapId !== state.selectedMap || !isCombatView() || !combatEffectEnabled('glows')) break;
+            const card = getCombatEffectCard(event.monsterId);
+            const track = card && card.querySelector('.health-track');
+            if (track) flashDodge(track);
+            break;
+        }
+    }
 }
 
 function cachedCombatStat(key, calculate) {
@@ -427,20 +562,24 @@ function restartCombatAnimation(element, className) {
 }
 
 function flushCombatEffects(effects) {
-    if (!effects.length) return;
+    if (!effects.length) {
+        if(!combatAnimationRestarts)pruneVoidMissilePresentations();
+        return;
+    }
     const previousRestarts = combatAnimationRestarts;
-    if (previousRestarts) { effects.forEach(effect => effect()); return; }
+    if (previousRestarts) { effects.forEach(presentCombatEvent); return; }
     combatAnimationRestarts = new Map();
     combatEffectLayout = {
         cards: new Map(Array.from(elements.enemyRoster.children, card => [card.dataset.monsterId, card])),
         bounds: new WeakMap(),
         frame: null
     };
-    try { effects.forEach(effect => effect()); }
+    try { effects.forEach(presentCombatEvent); }
     finally {
         const restarts = combatAnimationRestarts;
         combatAnimationRestarts = previousRestarts;
         combatEffectLayout = null;
+        pruneVoidMissilePresentations();
         // Restart all hit flashes together after a single layout flush.
         if (restarts.size) void elements.combatPanel.offsetWidth;
         restarts.forEach((classes, element) => classes.forEach(name => element.classList.add(name)));
@@ -450,6 +589,12 @@ function flushCombatEffects(effects) {
 function getCombatEffectCard(id) {
     return combatEffectLayout ? combatEffectLayout.cards.get(id) :
         Array.from(elements.enemyRoster.children).find(card => card.dataset.monsterId === id);
+}
+
+function getCombatEffectMonster(id) {
+    return combatEffectLayout
+        ? (combatEffectLayout.monsters ||= new Map(state.monsterStates.map(monster => [monster.id, monster]))).get(id)
+        : state.monsterStates.find(monster => monster.id === id);
 }
 
 function getCombatEffectBounds(element) {
@@ -543,6 +688,7 @@ function refreshMasteryMonsters(previousDefinitions) {
         return previous?{...previous,hp:Math.min(definition.health,previous.hp)}:fresh[index];
     });
     state.pendingEruptions=[];state.pendingVoidMissiles=[];
+    resetVoidMissilePresentation();
     if(!state.monsterStates.some(monster=>monster.id===state.targetMonsterId))state.targetMonsterId=definitions[0]?.id||null;
     combatNeedsFullRender=true;combatLootSignature=null;syncLegacyEnemyState();
 }
@@ -591,11 +737,12 @@ function createMonsterStates(map, savedStates, legacyHp, legacyRespawn) {
 function resetMonsterStates(map = currentMap()) {
     window.MapMastery?.close(false);
     clearPlayerCombatBuffs();
-    presentCombatEffect(()=>elements.combatPanel.querySelectorAll('.elemental-effect-layer').forEach(layer=>layer.remove()));
+    emitCombatEvent('elementalEffectsCleared', {mapId:map.id});
     resetDamageBreakdown(map.id);
     monsterDefinitionCache.delete(map);
     state.pendingEruptions = [];
     state.pendingVoidMissiles = [];
+    resetVoidMissilePresentation();
     state.monsterStates = createMonsterStates(map);
     state.targetMonsterId = monsterDefinitions(map)[0].id;
     state.playerHp=Math.min(state.playerHp,getPlayerMaxHealth());
@@ -672,15 +819,17 @@ function syncLegacyEnemyState() {
 }
 
 function clearEnemyDamageIndicator() {
-    presentCombatEffect(() => {
-        recentEnemyDamage = 0;
-        elements.enemyRoster.querySelectorAll('.enemy-health-damage, .enemy-health-poison-damage').forEach(indicator => {
-            window.clearTimeout(enemyDamageIndicatorTimers.get(indicator));
-            indicator.classList.remove('is-visible');
-            if (indicator.classList.contains('enemy-health-poison-damage')) {
-                setCombatBar(indicator, 0);
-            }
-        });
+    emitCombatEvent('enemyDamageCleared', {mapId:state.selectedMap});
+}
+
+function presentEnemyDamageIndicatorReset() {
+    recentEnemyDamage = 0;
+    elements.enemyRoster.querySelectorAll('.enemy-health-damage, .enemy-health-poison-damage').forEach(indicator => {
+        window.clearTimeout(enemyDamageIndicatorTimers.get(indicator));
+        indicator.classList.remove('is-visible');
+        if (indicator.classList.contains('enemy-health-poison-damage')) {
+            setCombatBar(indicator, 0);
+        }
     });
 }
 
@@ -697,80 +846,77 @@ function flashDodge(track) {
 }
 
 function showMonsterProc(monsterId, procName) {
+    emitCombatEvent('monsterProcNotice', {monsterId, procName});
+}
+
+function presentMonsterProc(monsterId, procName) {
     if (!combatEffectEnabled('abilities')) return;
-    presentCombatEffect(() => {
-        const card = getCombatEffectCard(monsterId);
-        const notice = card && card.querySelector('[data-enemy-proc-notice]');
-        if (!notice) return;
+    const card = getCombatEffectCard(monsterId);
+    const notice = card && card.querySelector('[data-enemy-proc-notice]');
+    if (!notice) return;
 
-        const activeProcs = (notice.dataset.activeProcs || '').split('|').filter(Boolean);
-        if (!activeProcs.includes(procName)) activeProcs.push(procName);
-        notice.dataset.activeProcs = activeProcs.join('|');
-        notice.textContent = activeProcs.join(' · ');
-        restartCombatAnimation(notice, 'is-visible');
+    const activeProcs = (notice.dataset.activeProcs || '').split('|').filter(Boolean);
+    if (!activeProcs.includes(procName)) activeProcs.push(procName);
+    notice.dataset.activeProcs = activeProcs.join('|');
+    notice.textContent = activeProcs.join(' · ');
+    restartCombatAnimation(notice, 'is-visible');
 
-        window.clearTimeout(monsterProcTimers.get(notice));
-        monsterProcTimers.set(notice, window.setTimeout(function() {
-            notice.textContent = '';
-            notice.dataset.activeProcs = '';
-            notice.classList.remove('is-visible');
-            monsterProcTimers.delete(notice);
-        }, 1100));
-    });
+    window.clearTimeout(monsterProcTimers.get(notice));
+    monsterProcTimers.set(notice, window.setTimeout(function() {
+        notice.textContent = '';
+        notice.dataset.activeProcs = '';
+        notice.classList.remove('is-visible');
+        monsterProcTimers.delete(notice);
+    }, 1100));
 }
 
 function showPoisonStackProc(monster) {
-    if (!combatEffectEnabled('glows')) return;
-    presentCombatEffect(() => {
-        const card = getCombatEffectCard(monster.id);
-        const indicator = card && card.querySelector('[data-enemy-dot-status]');
-        if (!indicator) return;
-        indicator.hidden = false;
-        indicator.querySelector('[data-enemy-dot-count]').textContent = monster.poisonStacks.length + 'x';
-        restartCombatAnimation(indicator, 'is-applying');
-    });
+    emitCombatEvent('monsterPoisonApplied', {monsterId: monster.id});
+}
+
+function presentPoisonStackProc(monsterId) {
+    if (!combatEffectEnabled()) return;
+    const monster = getCombatEffectMonster(monsterId);
+    const card = getCombatEffectCard(monsterId);
+    const indicator = card && card.querySelector('[data-enemy-dot-status]');
+    if (!monster || !indicator) return;
+    const count = monster.hp > 0 ? monster.poisonStacks.length : 0;
+    updateCombatHidden(indicator, count === 0);
+    if (!count) return;
+    updateCombatText(indicator.querySelector('[data-enemy-dot-count]'), count + 'x');
+    restartCombatAnimation(indicator, 'is-applying');
 }
 
 function flashShockwaveHealthBar(monsterId) {
-    if (!combatEffectEnabled('glows') || !combatEffectEnabled('abilities')) return;
-    presentCombatEffect(() => {
-        const card = getCombatEffectCard(monsterId);
-        const healthTrack = card && card.querySelector('.health-track');
-        if (!healthTrack) return;
-        restartCombatAnimation(healthTrack, 'is-shockwave-hit');
-    });
+    emitCombatEvent('monsterShockwaveFlash', {monsterId});
 }
 
 function showMonsterHitBadge(monsterId, label, isMultiHit = false, priority = 0) {
+    emitCombatEvent('monsterHitNotice', {monsterId, label, isMultiHit, priority});
+}
+
+function presentMonsterHitBadge(monsterId, label, isMultiHit = false, priority = 0) {
     if (!combatEffectEnabled('abilities')) return;
-    presentCombatEffect(() => {
-        const card = getCombatEffectCard(monsterId);
-        if (!card) return;
-        const notice = card.querySelector('[data-combat-hit-badge]');
-        if (notice) {
-            if ((notice.classList.contains('is-visible') || combatAnimationRestarts?.get(notice)?.has('is-visible')) &&
-                Number(notice.dataset.hitPriority || 0) > priority) return;
-            notice.dataset.hitPriority = String(priority);
-            notice.hidden = false;
-            notice.textContent = label;
-            notice.classList.toggle('is-multihit', isMultiHit);
-            restartCombatAnimation(notice, 'is-visible');
-            window.clearTimeout(shockwaveHitTimers.get(notice));
-            shockwaveHitTimers.set(notice, window.setTimeout(() => {
-                notice.classList.remove('is-visible');
-                shockwaveHitTimers.delete(notice);
-            }, priority > 0 ? arrowVisualDurations.forkingArrow : 1500));
-        }
-    });
+    const card = getCombatEffectCard(monsterId);
+    if (!card) return;
+    const notice = card.querySelector('[data-combat-hit-badge]');
+    if (!notice) return;
+    if ((notice.classList.contains('is-visible') || combatAnimationRestarts?.get(notice)?.has('is-visible')) &&
+        Number(notice.dataset.hitPriority || 0) > priority) return;
+    notice.dataset.hitPriority = String(priority);
+    notice.hidden = false;
+    notice.textContent = label;
+    notice.classList.toggle('is-multihit', isMultiHit);
+    restartCombatAnimation(notice, 'is-visible');
+    window.clearTimeout(shockwaveHitTimers.get(notice));
+    shockwaveHitTimers.set(notice, window.setTimeout(() => {
+        notice.classList.remove('is-visible');
+        shockwaveHitTimers.delete(notice);
+    }, priority > 0 ? arrowVisualDurations.forkingArrow : 1500));
 }
 
 function flashShockwaveCard(monsterId) {
-    if (!combatEffectEnabled('shaking') || !combatEffectEnabled('abilities')) return;
-    presentCombatEffect(() => {
-        const card = getCombatEffectCard(monsterId);
-        if (!card) return;
-        restartCombatAnimation(card, 'is-shockwave-splashed');
-    });
+    emitCombatEvent('monsterShockwaveShake', {monsterId});
 }
 
 function flashPlayerHealthBar() {
@@ -778,6 +924,39 @@ function flashPlayerHealthBar() {
     presentCombatEffect(() => {
         restartCombatAnimation(elements.playerHealthTrack, 'is-damaged');
     });
+}
+
+function showPlayerDamage(damage) {
+    if (!combatEffectEnabled()) return;
+    recentPlayerDamage = damage;
+    flashPlayerHealthBar();
+    restartCombatAnimation(elements.playerHealthDamage, 'is-visible');
+    window.clearTimeout(damageFadeTimeout);
+    damageFadeTimeout = window.setTimeout(() => {
+        elements.playerHealthDamage.classList.remove('is-visible');
+    }, 500);
+}
+
+function showMonsterDamage(monsterId, damage, damageType) {
+    if (!combatEffectEnabled()) return;
+    recentEnemyDamage = damage;
+    if (damageType !== 'physical') return;
+    const monster = getCombatEffectMonster(monsterId);
+    const card = getCombatEffectCard(monsterId);
+    const indicator = card && card.querySelector('.enemy-health-damage');
+    if (!monster || !indicator) return;
+    // Place the hit snapshot beside the current health bar, including when
+    // several simulation steps have completed before this batch is presented.
+    const maxHp = monsterDefinition(monster).health;
+    const currentHpPercent = Math.max(0, Math.min(100, monster.hp / maxHp * 100));
+    const damagePercent = Math.min(100 - currentHpPercent, Math.max(damage / maxHp * 100, 1));
+    setCombatBar(indicator, damagePercent, currentHpPercent);
+    indicator.classList.add('is-visible');
+    window.clearTimeout(enemyDamageIndicatorTimers.get(indicator));
+    enemyDamageIndicatorTimers.set(indicator, window.setTimeout(() => {
+        indicator.classList.remove('is-visible');
+        enemyDamageIndicatorTimers.delete(indicator);
+    }, 250));
 }
 
 function promptForFirstGear(itemId, slot) {
@@ -914,11 +1093,14 @@ function clearFury() {
 }
 
 function clearPlayerCombatBuffs() {
-    clearFury();clearGatheringPower();state.voidCharges=0;state.shieldStacks=0;voidVolleyBuffProc=null;
-    presentCombatEffect(()=>{
-        elements.playerHealthPanel.querySelector('.void-volley-player-glow')?.remove();
-        renderCombatBuffs();
-    });
+    clearFury();clearGatheringPower();state.voidCharges=0;state.shieldStacks=0;
+    emitCombatEvent('playerCombatBuffsCleared', {mapId:state.selectedMap});
+}
+
+function presentPlayerCombatBuffsCleared() {
+    voidVolleyBuffProc=null;
+    elements.playerHealthPanel.querySelector('.void-volley-player-glow')?.remove();
+    renderCombatBuffs();
 }
 
 function getPlayerMaxShields() {
@@ -1114,28 +1296,29 @@ function renderCombatBuffs() {
 }
 
 function showVoidVolleyBuffProc() {
+    emitCombatEvent('voidVolleyBuffProc', {mapId:state.selectedMap,epoch:voidMissilePresentationEpoch});
+}
+
+function presentVoidVolleyBuffProc({mapId}) {
     if (!combatEffectEnabled('glows') || !combatEffectEnabled('abilities')) return;
-    const mapId=state.selectedMap;
-    presentCombatEffect(()=>{
-        if(!isCombatView()||state.selectedMap!==mapId||state.playerHp<=0)return;
-        const proc={mapId,until:performance.now()+650};
-        voidVolleyBuffProc=proc;
-        // Keep its slot until the release finishes, including when the fifth
-        // charge was gained and consumed before the next combat render.
+    if(!isCombatView()||state.selectedMap!==mapId||state.playerHp<=0)return;
+    const proc={mapId,until:performance.now()+650};
+    voidVolleyBuffProc=proc;
+    // Keep its slot until the release finishes, including when the fifth
+    // charge was gained and consumed before the next combat render.
+    renderCombatBuffs();
+    const element=combatBuffViews.get('voidCharges')?.element;
+    if(!element)return;
+    const finish=event=>{
+        if(event&&event.target!==element)return;
+        element.removeEventListener('animationend',finish);
+        if(voidVolleyBuffProc!==proc)return;
+        voidVolleyBuffProc=null;
         renderCombatBuffs();
-        const element=combatBuffViews.get('voidCharges')?.element;
-        if(!element)return;
-        const finish=event=>{
-            if(event&&event.target!==element)return;
-            element.removeEventListener('animationend',finish);
-            if(voidVolleyBuffProc!==proc)return;
-            voidVolleyBuffProc=null;
-            renderCombatBuffs();
-        };
-        element.addEventListener('animationend',finish);
-        window.setTimeout(finish,700);
-        restartCombatAnimation(element,'is-proccing');
-    });
+    };
+    element.addEventListener('animationend',finish);
+    window.setTimeout(finish,700);
+    restartCombatAnimation(element,'is-proccing');
 }
 
 function getPlayerHealthRegen() {
@@ -1202,9 +1385,14 @@ function tickPlayerRegeneration(elapsed) {
     if (!targets.length) return;
     const damage = excess * getRighteousFireSettings().damageMultiplier / targets.length;
     targets.forEach(monster => applyDamageToMonster(monster, damage, 'dot', 'righteousFire'));
-    presentCombatEffect(() => {
-        const until = performance.now() + 350;
-        targets.forEach(monster => righteousFireHitUntil.set(monster, until));
+    if(combatEffects!==null)emitCombatEvent('righteousFireHit', {mapId:state.selectedMap,targetIds:targets.map(monster=>monster.id),duration:350});
+}
+
+function presentRighteousFireHit({targetIds,duration}) {
+    const until=performance.now()+duration;
+    targetIds.forEach(id=>{
+        const monster=getCombatEffectMonster(id);
+        if(monster?.hp>0)righteousFireHitUntil.set(monster,until);
     });
 }
 
@@ -1953,6 +2141,7 @@ function parseGameSave(rawSave) {
 }
 
 function applyGameSave(saved) {
+    resetVoidMissilePresentation();
     window.ItemCrafting?.stopAuto();
     window.SkillBuilds?.cancelEditing(false);
     voidVolleyBuffProc=null;
@@ -3641,30 +3830,33 @@ function defeatEnemy(monster) {
         state.lootLog = state.lootLog.slice(0,12);
     }
 
-    presentCombatEffect(() => {
-        const defeatedCard = getCombatEffectCard(monster.id);
-        if (isCombatView()) {
-            const rewards = [
-                ...(gold > 0 ? [{key: 'gold', name: 'Gold', amount: gold, gold: true}] : []),
-                ...Array.from(lootMaterials, ([id, amount]) => ({
-                    key: 'material:' + id, name: materialNames[id], amount,
-                    sprite: itemData.materialDetails?.[id]?.sprite
-                })),
-                ...equipment.map(id => ({
-                    key: 'equipment:' + id, name: itemById[id].name, amount: 1,
-                    sprite: itemById[id].sprite, rarity: itemById[id].rarity, equipment: true
-                }))
-            ];
-            window.LootEffects?.drop(rewards, defeatedCard?.querySelector('.enemy-mark') || defeatedCard, map.id);
-        }
-        if (defeatedCard) {
-            restartCombatAnimation(defeatedCard, 'is-defeating');
-        }
-
-    });
+    if(combatEffects!==null) {
+        const rewards = [
+            ...(gold > 0 ? [{key: 'gold', name: 'Gold', amount: gold, gold: true}] : []),
+            ...Array.from(lootMaterials, ([id, amount]) => ({
+                key: 'material:' + id, name: materialNames[id], amount,
+                sprite: itemData.materialDetails?.[id]?.sprite
+            })),
+            ...equipment.map(id => ({
+                key: 'equipment:' + id, name: itemById[id].name, amount: 1,
+                sprite: itemById[id].sprite, rarity: itemById[id].rarity, equipment: true
+            }))
+        ];
+        emitCombatEvent('monsterDefeated', {monsterId:monster.id,mapId:map.id,rewards});
+    }
 
     finishMonsterDefeat(monster,definition,remainingPoison);
     saveGame();
+}
+
+function presentMonsterDefeat({monsterId,mapId,rewards}) {
+    if(!combatEffectEnabled())return;
+    const monster=getCombatEffectMonster(monsterId);
+    const card=monster && getCombatEffectCard(monsterId);
+    // Earned loot can still use the status row if its original plate is gone.
+    window.LootEffects?.drop(rewards,card?.querySelector('.enemy-mark') || card,mapId);
+    // A delayed death event must not shake a monster that has already respawned.
+    if(card && monster.hp<=0)restartCombatAnimation(card,'is-defeating');
 }
 
 function finishMonsterDefeat(monster,definition,remainingPoison) {
@@ -3694,34 +3886,36 @@ function transferPoisonOnDeath(monster, stacks) {
 }
 
 function showPoisonTransfer(sourceId, targetId) {
-    if (!combatEffectEnabled('projectiles')) return;
-    presentCombatEffect(() => {
-        const source = getCombatEffectCard(sourceId)?.querySelector('.enemy-mark');
-        const target = getCombatEffectCard(targetId)?.querySelector('.enemy-mark');
-        if (!source || !target) return;
-        if(window.CombatWebGLEffects?.transfer(source,target))return;
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.classList.add('poison-transfer');
-        svg.setAttribute('aria-hidden', 'true');
-        svg.dataset.sourceId = sourceId;
-        svg.dataset.targetId = targetId;
-        elements.combatPanel.appendChild(svg);
-        const frame = getCombatOverlayBounds(svg);
-        if (!frame.width || !frame.height) { svg.remove(); return; }
-        svg.setAttribute('viewBox', '0 0 ' + frame.width + ' ' + frame.height);
-        const from = getCombatEffectBounds(source), to = getCombatEffectBounds(target);
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', String(from.left + from.width / 2 - frame.left));
-        line.setAttribute('y1', String(from.top + from.height / 2 - frame.top));
-        line.setAttribute('x2', String(to.left + to.width / 2 - frame.left));
-        line.setAttribute('y2', String(to.top + to.height / 2 - frame.top));
-        line.setAttribute('pathLength', '1');
-        svg.appendChild(line);
-        svg.addEventListener('animationend', event => {
-            if (event.target === svg) svg.remove();
-        });
-        window.setTimeout(() => svg.remove(), 800);
+    emitCombatEvent('poisonTransferred', {mapId:state.selectedMap,sourceId,targetId});
+}
+
+function presentPoisonTransfer({sourceId,targetId}) {
+    if(!combatEffectEnabled('projectiles') || !getCombatEffectMonster(sourceId) || !getCombatEffectMonster(targetId))return;
+    const source = getCombatEffectCard(sourceId)?.querySelector('.enemy-mark');
+    const target = getCombatEffectCard(targetId)?.querySelector('.enemy-mark');
+    if (!source || !target) return;
+    if(window.CombatWebGLEffects?.transfer(source,target))return;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.classList.add('poison-transfer');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.dataset.sourceId = sourceId;
+    svg.dataset.targetId = targetId;
+    elements.combatPanel.appendChild(svg);
+    const frame = getCombatOverlayBounds(svg);
+    if (!frame.width || !frame.height) { svg.remove(); return; }
+    svg.setAttribute('viewBox', '0 0 ' + frame.width + ' ' + frame.height);
+    const from = getCombatEffectBounds(source), to = getCombatEffectBounds(target);
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', String(from.left + from.width / 2 - frame.left));
+    line.setAttribute('y1', String(from.top + from.height / 2 - frame.top));
+    line.setAttribute('x2', String(to.left + to.width / 2 - frame.left));
+    line.setAttribute('y2', String(to.top + to.height / 2 - frame.top));
+    line.setAttribute('pathLength', '1');
+    svg.appendChild(line);
+    svg.addEventListener('animationend', event => {
+        if (event.target === svg) svg.remove();
     });
+    window.setTimeout(() => svg.remove(), 800);
 }
 
 function applyDamageToPlayer(damage, source = 'enemy') {
@@ -3730,7 +3924,7 @@ function applyDamageToPlayer(damage, source = 'enemy') {
         normalizeShields();
         if (state.shieldStacks > 0) {
             state.shieldStacks--;
-            presentCombatEffect(() => restartCombatAnimation(elements.playerHealthPanel, 'is-shield-blocking'));
+            emitCombatEvent('playerShieldBlocked', {mapId: state.selectedMap});
             return;
         }
     }
@@ -3738,15 +3932,7 @@ function applyDamageToPlayer(damage, source = 'enemy') {
     state.playerHp = Math.max(0, state.playerHp - damage);
     if (state.playerHp < 1e-8) state.playerHp = 0;
     const damageDealt = previousHp - state.playerHp;
-    presentCombatEffect(() => {
-        recentPlayerDamage = damageDealt;
-        flashPlayerHealthBar();
-        restartCombatAnimation(elements.playerHealthDamage, 'is-visible');
-        window.clearTimeout(damageFadeTimeout);
-        damageFadeTimeout = window.setTimeout(() => {
-            elements.playerHealthDamage.classList.remove('is-visible');
-        }, 500);
-    });
+    emitCombatEvent('playerDamaged', {damage: damageDealt});
     if (state.playerHp === 0) {
         state.combatPaused = true;
         state.attackTimer = 0;
@@ -3795,26 +3981,7 @@ function applyDamageToMonster(monster, damage, damageType = 'physical', abilityI
     }
 
     const damageDealt = previousHp - monster.hp;
-    presentCombatEffect(() => {
-        recentEnemyDamage = damageDealt;
-        const targetCard = getCombatEffectCard(monster.id);
-        const damageIndicator = damageType === 'physical' && targetCard
-            ? targetCard.querySelector('.enemy-health-damage')
-            : null;
-        if (damageIndicator) {
-            const maxHp = monsterDefinition(monster).health;
-            const currentHpPercent = Math.max(0, Math.min(100, monster.hp / maxHp * 100));
-            const damagePercent = Math.min(100 - currentHpPercent,
-                Math.max(recentEnemyDamage / maxHp * 100, 1));
-            setCombatBar(damageIndicator, damagePercent, currentHpPercent);
-            damageIndicator.classList.add('is-visible');
-            window.clearTimeout(enemyDamageIndicatorTimers.get(damageIndicator));
-            enemyDamageIndicatorTimers.set(damageIndicator, window.setTimeout(() => {
-                damageIndicator.classList.remove('is-visible');
-                enemyDamageIndicatorTimers.delete(damageIndicator);
-            }, 250));
-        }
-    });
+    emitCombatEvent('monsterDamaged', {monsterId: monster.id, damage: damageDealt, damageType});
     return false;
 }
 
@@ -4382,7 +4549,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                     if (Math.random() * 100 < getEnemyHitChance(monster)) {
                         applyDamageToPlayer(definition.attackDamage, 'enemy');
                     } else {
-                        flashDodge(elements.playerHealthTrack);
+                        emitCombatEvent('playerDodged');
                     }
                 }
             });
@@ -4413,11 +4580,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
                             triggerShockwaveSlash(attackTarget, hitDamage);
                             if (attackIndex > 0) extraEruptionTargets.push({target: attackTarget, damage: hitDamage});
                         } else {
-                            presentCombatEffect(() => {
-                                const targetCard = getCombatEffectCard(attackTarget.id);
-                                const targetTrack = targetCard && targetCard.querySelector('.health-track');
-                                if (targetTrack) flashDodge(targetTrack);
-                            });
+                            emitCombatEvent('monsterDodged', {monsterId: attackTarget.id});
                         }
                     }
                     if (arrowTarget) {
@@ -4536,6 +4699,7 @@ function processCombatBacklog() {
         if(finishedCatchup)window.DeveloperTools?.render();
         showOfflineRecap();
     }
+    pruneVoidMissilePresentations();
     if (Date.now() - lastSave >= 1000) saveGame();
 }
 

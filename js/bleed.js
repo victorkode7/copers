@@ -110,14 +110,18 @@ function tryApplyBleed(monster, hitDamage) {
         monster.bleed = {stacks:applications, baseDamagePerTick:addedDamage * applications, strongestApplications:strongest,
             remainingDuration:bleedDamageType.secondsPerApplication * applications, timeUntilTick:getBleedTickInterval()};
     }
-    presentCombatEffect(() => {
-        const card = getCombatEffectCard(monster.id);
-        const badge = card?.querySelector('[data-enemy-bleed-status]');
-        if (!badge || !monster.bleed || monster.hp <= 0) return;
-        updateBleedStatus(badge, monster);
-        restartCombatAnimation(badge, 'is-applying');
-    });
+    emitCombatEvent('monsterBleedApplied', {monsterId: monster.id});
     return true;
+}
+
+function presentBleedStackProc(monsterId) {
+    if (!combatEffectEnabled()) return;
+    const monster = getCombatEffectMonster(monsterId);
+    const card = getCombatEffectCard(monsterId);
+    const badge = card?.querySelector('[data-enemy-bleed-status]');
+    if (!monster || !badge) return;
+    updateBleedStatus(badge, monster);
+    if (monster.hp > 0 && monster.bleed) restartCombatAnimation(badge, 'is-applying');
 }
 
 function tickMonsterBleed(monster, elapsed) {

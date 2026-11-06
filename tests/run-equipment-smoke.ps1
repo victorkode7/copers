@@ -27,7 +27,7 @@ if ($MissingDeveloperModule) { $html = $html.Replace('src="dev/developer-tools.j
 if ($Page -eq 'index.html') {
     # These suites inspect retained SVG paths and CSS timelines explicitly.
     # GPU pixels, timing, switches and fallback have dedicated WebGL suites.
-    $originalEffectTests = @('tests/arrow-skills-smoke.js','tests/spell-skills-smoke.js','tests/shield-expansion-smoke.js','tests/elemental-layout-smoke.js','tests/combat-settings-smoke.js','tests/health-regen-smoke.js','tests/eruption-skills-smoke.js','tests/all-skills-performance-smoke.js')
+    $originalEffectTests = @('tests/arrow-skills-smoke.js','tests/spell-skills-smoke.js','tests/shield-expansion-smoke.js','tests/elemental-layout-smoke.js','tests/combat-settings-smoke.js','tests/health-regen-smoke.js','tests/eruption-skills-smoke.js','tests/all-skills-performance-smoke.js','tests/blooming-flower-smoke.js','tests/loot-effects-smoke.js')
     if ($TestScript -in $originalEffectTests) {
         $html = $html.Replace('</body>', '<script>const smokeRenderer=document.getElementById("combatEffectRenderer");smokeRenderer.value="svg";smokeRenderer.dispatchEvent(new Event("change"));</script></body>')
     }
@@ -75,6 +75,21 @@ try {
     $realtime = $realtime -or $TestScript -in @('tests/developer-tools-smoke.js','tests/playtest-build-smoke.js')
     $realtime = $realtime -or $TestScript -eq 'tests/item-crafting-editor-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-settings-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/combat-events-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/player-damage-events-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/monster-hit-notices-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/monster-damage-events-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/monster-proc-notices-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/status-stack-events-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/combat-impact-events-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/arrow-events-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/void-bolt-events-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/void-volley-events-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/void-vortex-events-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/eruption-events-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/elemental-events-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/shield-slam-events-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/combat-lifecycle-events-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-effects-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-projectiles-smoke.js' -or [bool]$ScreenshotPath

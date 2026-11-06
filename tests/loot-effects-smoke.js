@@ -76,7 +76,8 @@
         window.matchMedia = query => query === '(prefers-reduced-motion: reduce)' ? {matches: true} : priorMatchMedia.call(window, query);
         kill();
         check('reduced motion keeps fades but removes upward movement', root.querySelectorAll('.loot-drop').length === 2 && [...root.querySelectorAll('.loot-drop')].every(node => node.getAnimations().every(animation => animation.effect.getKeyframes().every(frame => !frame.transform || frame.transform === 'none'))) && root.querySelector('.loot-drop-material strong').textContent === '×5');
-        await new Promise(resolve => setTimeout(resolve, 1350));
+        await Promise.all([...root.querySelectorAll('.loot-drop')].flatMap(node => node.getAnimations().map(animation => animation.finished)));
+        await settle();
         check('reduced-motion rewards also disappear automatically', !root.querySelector('.loot-drop, .loot-plate-flash'));
         kill(); elements.combatStatus.style.transform = 'translateY(-2000px)'; window.dispatchEvent(new Event('scroll'));
         check('scrolling the status out of view clears ordinary floating rewards', !root.querySelector('.loot-drop, .loot-plate-flash'));

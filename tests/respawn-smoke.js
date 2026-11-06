@@ -5,7 +5,7 @@
     const priorRandom = Math.random;
     const tick = () => {
         const result = simulateCombatStep(gameTickSeconds, true);
-        result.effects.forEach(effect => effect());
+        flushCombatEffects(result.effects);
         if (result.needsRender) render(); else renderCombat();
     };
     try {

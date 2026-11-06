@@ -33,7 +33,7 @@
         check('all effects share one input-transparent canvas',document.querySelectorAll('.combat-webgl-layer').length===1&&getComputedStyle(document.querySelector('.combat-webgl-layer')).pointerEvents==='none');
         check('visuals preserve combat state and never consume its random rolls',before===JSON.stringify({monsters:state.monsterStates,hp:state.playerHp,mana:state.playerMana,pending:state.pendingVoidMissiles}));
         const count=CombatWebGL.status().active;
-        voidMissileVisuals.get(missile).circle.remove();
+        getVoidMissileVisual(missile).circle.remove();
         check('redirected missiles can cancel their original GPU impact',CombatWebGL.status().active===count-1);
         await wait(100);await nextFrame();
         const canvas=document.querySelector('.combat-webgl-layer'),gl=canvas.getContext('webgl');

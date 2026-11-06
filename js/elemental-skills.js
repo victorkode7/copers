@@ -180,32 +180,35 @@ function renderElementalStatuses(view,monster) {
 }
 
 function showElementalBurst(targetIds,element,explosion) {
-    if (!combatEffectEnabled('abilities')) return;
-    const mapId=state.selectedMap;
-    presentCombatEffect(()=>{
-        if (!isCombatView() || state.selectedMap!==mapId) return;
-        if(window.CombatWebGLEffects?.elemental(targetIds,element,explosion))return;
-        const layer=document.createElement('div');layer.className='elemental-effect-layer';
-        layer.setAttribute('aria-hidden','true');elements.combatPanel.append(layer);
-        const frame=getCombatOverlayBounds(layer);
-        if (!frame.width || !frame.height) {layer.remove();return;}
-        for (const id of targetIds) {
-            const card=getCombatEffectCard(id);if(!card)continue;
-            const bounds=getCombatEffectBounds(card);
-            const burst=document.createElement('span');
-            burst.className='elemental-burst is-'+element+(explosion?' is-explosion':'');
-            burst.style.left=(bounds.left-frame.left)+'px';burst.style.top=(bounds.top-frame.top)+'px';
-            burst.style.width=bounds.width+'px';burst.style.height=bounds.height+'px';
-            // Deterministic particle directions keep visuals out of combat RNG.
-            for(let index=0;index<(explosion?8:5);index++) {
-                const particle=document.createElement('i'),angle=index*Math.PI/4;
-                particle.style.setProperty('--spark-x',Math.cos(angle)*70+'px');
-                particle.style.setProperty('--spark-y',Math.sin(angle)*55+'px');
-                particle.style.setProperty('--spark-angle',index*45+'deg');
-                particle.style.setProperty('--spark-delay',index*14+'ms');burst.append(particle);
-            }
-            layer.append(burst);
+    if(combatEffects===null || !targetIds.length)return;
+    emitCombatEvent('elementalBurst', {mapId:state.selectedMap,targetIds:[...targetIds],element,explosion});
+}
+
+function presentElementalBurst({targetIds,element,explosion}) {
+    if(!combatEffectEnabled('abilities'))return;
+    const validIds=targetIds.filter(id=>getCombatEffectMonster(id) && getCombatEffectCard(id));
+    if(!validIds.length)return;
+    if(window.CombatWebGLEffects?.elemental(validIds,element,explosion))return;
+    const layer=document.createElement('div');layer.className='elemental-effect-layer';
+    layer.setAttribute('aria-hidden','true');elements.combatPanel.append(layer);
+    const frame=getCombatOverlayBounds(layer);
+    if (!frame.width || !frame.height) {layer.remove();return;}
+    for (const id of validIds) {
+        const card=getCombatEffectCard(id);if(!card)continue;
+        const bounds=getCombatEffectBounds(card);
+        const burst=document.createElement('span');
+        burst.className='elemental-burst is-'+element+(explosion?' is-explosion':'');
+        burst.style.left=(bounds.left-frame.left)+'px';burst.style.top=(bounds.top-frame.top)+'px';
+        burst.style.width=bounds.width+'px';burst.style.height=bounds.height+'px';
+        // Deterministic particle directions keep visuals out of combat RNG.
+        for(let index=0;index<(explosion?8:5);index++) {
+            const particle=document.createElement('i'),angle=index*Math.PI/4;
+            particle.style.setProperty('--spark-x',Math.cos(angle)*70+'px');
+            particle.style.setProperty('--spark-y',Math.sin(angle)*55+'px');
+            particle.style.setProperty('--spark-angle',index*45+'deg');
+            particle.style.setProperty('--spark-delay',index*14+'ms');burst.append(particle);
         }
-        setTimeout(()=>layer.remove(),1100);
-    });
+        layer.append(burst);
+    }
+    setTimeout(()=>layer.remove(),1100);
 }
