@@ -115,7 +115,12 @@ try {
     $null = Send-Cdp 'Page.navigate' @{url=$origin + '/index.html'}
     Wait-For 'Boolean(navigator.serviceWorker.controller && document.getElementById("offlinePlayStatus")?.textContent === "Ready for offline play")'
     Check 'the hosted game installs a complete offline cache' (Evaluate '(async()=>{const names=await caches.keys();const cache=await caches.open(names.find(name=>name.startsWith("idle-adventure-offline-")));return (await cache.keys()).length>100;})()')
-    $baseline = Evaluate '(()=>{const random=Math.random;Math.random=()=>0;try{currentMap().drops=[{id:"gel",amount:[1,1],chance:1}];state.currentView="map";state.isInTown=false;state.combatPaused=false;state.playerHp=getPlayerMaxHealth();state.monsterStates[0].hp=1;state.attackTimer=getAttackSpeed();simulateCombatStep(gameTickSeconds);render();saveGame();return {gold:state.gold,gel:state.materials.gel,origin:performance.timeOrigin};}finally{Math.random=random;}})()'
+    # Starting enemies may legitimately roll zero gold. Make the reward fixture
+    # explicit rather than depending on current world-content balance.
+    $baseline = Evaluate '(()=>{const random=Math.random;Math.random=()=>0;try{currentMap().drops=[{id:"gel",amount:[1,1],chance:1}];state.currentView="map";state.isInTown=false;state.combatPaused=false;state.playerHp=getPlayerMaxHealth();const monster=state.monsterStates[0];monster.hp=1;monster.respawnRemaining=0;monsterDefinition(monster).gold=[1,1];state.targetMonsterId=monster.id;state.attackTimer=getAttackSpeed();simulateCombatStep(gameTickSeconds);render();saveGame();return {gold:state.gold,gel:state.materials.gel,origin:performance.timeOrigin};}finally{Math.random=random;}})()'
+    if (!($baseline.gold -gt 0 -and $baseline.gel -gt 0)) {
+        Write-Output (Evaluate 'JSON.stringify({gold:state.gold,gel:state.materials.gel,target:state.targetMonsterId,paused:state.combatPaused,hp:state.playerHp,monsters:state.monsterStates.map(m=>({id:m.id,hp:m.hp,respawn:m.respawnRemaining,gold:monsterDefinition(m).gold})),errors:offlineSmokeErrors})')
+    }
     Check 'combat awards and saves progress before disconnecting' ($baseline.gold -gt 0 -and $baseline.gel -gt 0)
     Check 'visual preferences can be saved before disconnecting' (Evaluate '(()=>{document.getElementById("openCombatSettings").click();document.querySelector("[data-effect-setting=projectiles]").click();document.getElementById("closeCombatSettings").click();return !CombatSettings.enabled("projectiles");})()')
     Stop-Job $server
@@ -132,7 +137,7 @@ try {
     Check 'offline play has no runtime errors' (Evaluate 'offlineSmokeErrors.length === 0')
     $null = Send-Cdp 'Page.navigate' @{url=([uri](Join-Path $projectPath 'index.html')).AbsoluteUri}
     Wait-For 'Boolean(location.protocol === "file:" && document.readyState === "complete" && typeof state !== "undefined")'
-    Check 'a downloaded folder also opens directly without a server' (Evaluate '(()=>{const random=Math.random;Math.random=()=>0;try{currentMap().drops=[{id:"gel",amount:[1,1],chance:1}];state.combatPaused=false;state.playerHp=getPlayerMaxHealth();state.monsterStates[0].hp=1;state.attackTimer=getAttackSpeed();simulateCombatStep(gameTickSeconds);return state.gold>0&&state.materials.gel>0&&offlineSmokeErrors.length===0;}finally{Math.random=random;}})()')
+    Check 'a downloaded folder also opens directly without a server' (Evaluate '(()=>{const random=Math.random;Math.random=()=>0;try{currentMap().drops=[{id:"gel",amount:[1,1],chance:1}];state.combatPaused=false;state.playerHp=getPlayerMaxHealth();const monster=state.monsterStates[0];monster.hp=1;monster.respawnRemaining=0;monsterDefinition(monster).gold=[1,1];state.targetMonsterId=monster.id;state.attackTimer=getAttackSpeed();simulateCombatStep(gameTickSeconds);return state.gold>0&&state.materials.gel>0&&offlineSmokeErrors.length===0;}finally{Math.random=random;}})()')
     $external = @($script:requests | Where-Object { $_ -match '^https?://' -and !$_.StartsWith($origin + '/') })
     Check 'the game makes no requests to external services' ($external.Count -eq 0)
     Write-Output 'SMOKE PASSED'

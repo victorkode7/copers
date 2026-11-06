@@ -2,63 +2,27 @@ const eruptionSkillSettings = Object.freeze({damageMultiplier: 1, healthCost: 0.
 let nextEruptionTrailId = 0;
 
 function getMaxEruptionChains() {
-    return Math.max(0, Math.floor(getSkillStat('eruptionChains')));
+    return combatAbilities.getMaxEruptionChains();
 }
 
 function getEruptionTargets(center) {
-    const origin = getMonsterGridPosition(center);
-    const columns = Math.max(1, state.monsterColumns || 1);
-    return state.monsterStates.filter((monster, index) => {
-        if (monster.hp <= 0) return false;
-        return Math.abs(Math.floor(index / columns) - origin.row) + Math.abs(index % columns - origin.column) <= 1;
-    });
+    return combatAbilities.getEruptionTargets(center);
 }
 
 function triggerVolcanicEruption(target, damage) {
-    if (getSkillNodeRank('volcanicEruption') <= 0 || !target || state.playerHp <= 0) return;
-    detonateEruption(target, damage);
-    queueEruptionChain(target.id, damage, getMaxEruptionChains());
-    // Each triggering hit pays once, regardless of splash targets or chains.
-    applyDamageToPlayer(getPlayerMaxHealth() * eruptionSkillSettings.healthCost, 'self');
+    return combatAbilities.triggerVolcanicEruption(target, damage);
 }
 
 function detonateEruption(center, damage) {
-    const targets = getEruptionTargets(center);
-    showVolcanicEruption(center.id, targets.map(monster => monster.id));
-    targets.forEach(monster => {
-        applyDamageToMonster(monster, damage * eruptionSkillSettings.damageMultiplier, 'physical', 'volcanicEruption');
-    });
+    return combatAbilities.detonateEruption(center, damage);
 }
 
 function queueEruptionChain(sourceId, damage, chains) {
-    if (chains <= 0) return;
-    const living = state.monsterStates.filter(monster => monster.hp > 0);
-    if (!living.length) return;
-    const target = living[Math.floor(Math.random() * living.length)];
-    state.pendingEruptions.push({targetId: target.id, damage, chainsRemaining: chains - 1,
-        remaining: eruptionSkillSettings.chainDelay / 1000});
-    showEruptionChain(sourceId, target.id, 0);
+    return combatAbilities.queueEruptionChain(sourceId, damage, chains);
 }
 
 function tickPendingEruptions(elapsed) {
-    let remaining = elapsed;
-    while (state.pendingEruptions.length) {
-        const nextArrival = Math.min(...state.pendingEruptions.map(hit => hit.remaining));
-        const step = Math.min(remaining, nextArrival);
-        state.pendingEruptions.forEach(hit => { hit.remaining = Math.max(0, hit.remaining - step); });
-        remaining -= step;
-        const arrived = state.pendingEruptions.filter(hit => hit.remaining < 1e-8);
-        state.pendingEruptions = state.pendingEruptions.filter(hit => hit.remaining >= 1e-8);
-        if (!arrived.length) break;
-        arrived.forEach(hit => {
-            const center = state.monsterStates.find(monster => monster.id === hit.targetId);
-            if (!center) return;
-            // The crack erupts at its destination even if that monster died en route.
-            detonateEruption(center, hit.damage);
-            queueEruptionChain(center.id, hit.damage, hit.chainsRemaining);
-        });
-        if (remaining < 1e-8) break;
-    }
+    return combatAbilities.tickPendingEruptions(elapsed);
 }
 
 function showVolcanicEruption(centerId, targetIds) {

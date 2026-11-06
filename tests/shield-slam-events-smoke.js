@@ -29,7 +29,7 @@
         function fresh(){resetVoidMissilePresentation();Object.assign(state,JSON.parse(initial));combatStatCache=null;resetDamageBreakdown(map.id);render();clear();Math.random=()=>.5;}
         state.shieldStacks=10;const queued=guarded(()=>tryShieldSlam()),event=queued.find(effect=>effect.type==='shieldSlamWave');
         check('a real slam emits a plain map and ordered-hit record without HTML, visual settings, visibility or wall-clock access',event?.mapId===map.id&&event.hitIds.join(',')===ids[0]&&queued.every(effect=>typeof effect==='object'));
-        check('Shield Slam consumes half the shields and retains its original physical damage',state.shieldStacks===5&&state.monsterStates[0].hp===500&&state.monsterStates.slice(1).every(monster=>monster.hp===1000)&&!resolvingShieldSlam);
+        check('Shield Slam consumes half the shields and retains its original physical damage',state.shieldStacks===5&&state.monsterStates[0].hp===500&&state.monsterStates.slice(1).every(monster=>monster.hp===1000)&&!combatAbilities.resolvingShieldSlam);
         check('collecting a slam creates no visual wave',!elements.combatPanel.querySelector('.shield-slam-wave'));
         const before=JSON.stringify(state);Math.random=()=>{throw new Error('Shield presentation consumed combat randomness');};flushCombatEffects(JSON.parse(JSON.stringify(queued)));
         check('presenting a single hit preserves state and creates one shield, pressure ring and six shards',JSON.stringify(state)===before&&elements.combatPanel.querySelectorAll('.shield-slam-stamp').length===1&&elements.combatPanel.querySelectorAll('.shield-slam-pressure').length===1&&elements.combatPanel.querySelectorAll('.shield-slam-shard').length===6);

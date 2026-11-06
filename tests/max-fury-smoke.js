@@ -49,7 +49,8 @@
             state.gear=createEmptyGear();state.ownedItemIds=[];state.crafted=[];state.upgrades={strength:0,haste:0,evasion:0};
             check('Maximum Fury starts at zero without granting a combat bonus',getPlayerMaxFury()===0&&getDamage()===2);
             state.skillRanks={maxFury:1};state.level=1;render();
-            check('the Fury node grants one capacity and shows it in the build panel',getPlayerMaxFury()===1&&elements.maxFury.textContent==='1'&&getDamage()===2);
+            const nodeCapacity=skillNodeById.maxFury.stats.maxFury;
+            check('the Fury node grants its configured capacity and shows it in the build panel',nodeCapacity>0&&getPlayerMaxFury()===nodeCapacity&&elements.maxFury.textContent===String(nodeCapacity)&&getDamage()===2);
             const originalFury={...skillNodeById.maxFury.stats},originalHealth={...skillNodeById.healthNode.stats},originalItem={...itemById.testAmulet.stats};
             try {
                 skillNodeById.maxFury.stats={maxFury:1,maxFuryMultiplier:2};

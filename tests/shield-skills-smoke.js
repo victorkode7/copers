@@ -107,7 +107,7 @@
                 check('full shields wait without consumption when no target is alive', state.shieldStacks === 10);
                 simulateCombatStep(2); check('a pending full-cap slam hits the respawned enemy', state.shieldStacks === 5 && state.monsterStates[0].hp === 500);
                 fresh(shieldRanks,100,1); itemById.testAmulet.stats.maxShields = -9; state.shieldStacks = 1; tryShieldSlam();
-                check('one-shield capacities resolve long kill chains without recursion or duplicate rewards', state.kills[map.id] === 100 && state.shieldStacks === 1 && !resolvingShieldSlam);
+                check('one-shield capacities resolve long kill chains without recursion or duplicate rewards', state.kills[map.id] === 100 && state.shieldStacks === 1 && !combatAbilities.resolvingShieldSlam);
                 fresh(shieldRanks); itemById.testAmulet.stats.maxShields = -10; gainShieldFromKill(); tryShieldSlam(); check('zero capacity neither generates shields nor slams', state.shieldStacks === 0 && activeMonster().hp === 1000);
                 fresh(); state.shieldStacks = 3; render(); const icon = elements.buffList.querySelector('[data-buff-id="shields"]');
                 check('the buff section displays shield stacks with no duration', icon && icon.querySelector('.buff-stacks').textContent === '3' && icon.querySelector('.buff-value').textContent === '1 hit' && icon.querySelector('.buff-duration').hidden && icon.getBoundingClientRect().width === 48);

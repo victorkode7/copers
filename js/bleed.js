@@ -18,17 +18,11 @@ function getBleedStacksPerApplication() {
 }
 
 function strongestBleedApplications(bleed) {
-    if (!bleed) return [];
-    // Older profiles saved only the combined pool. Treat those applications as
-    // equal shares; new profiles retain their three strongest contributions.
-    const applications = bleed.strongestApplications
-        ? [...bleed.strongestApplications]
-        : Array(Math.min(bleed.stacks, deepWoundsSettings.maximumStacks)).fill((bleed.baseDamagePerTick ?? bleed.stacks) / bleed.stacks);
-    return applications.sort((a,b) => b-a).slice(0,deepWoundsSettings.maximumStacks);
+    return combatAbilities.strongestBleedApplications(bleed);
 }
 
 function sumBleedApplications(applications) {
-    return applications.reduce((sum,damage) => Math.min(Number.MAX_VALUE, sum + damage), 0);
+    return combatAbilities.sumBleedApplications(applications);
 }
 
 function getBleedChance() {
@@ -78,40 +72,15 @@ function isValidBleedState(bleed) {
 }
 
 function remainingBleedTicks(bleed) {
-    return bleed && bleed.timeUntilTick <= bleed.remainingDuration + 1e-8
-        ? Math.max(0, 1 + Math.floor((bleed.remainingDuration - bleed.timeUntilTick + 1e-8) / getBleedTickInterval())) : 0;
+    return combatAbilities.remainingBleedTicks(bleed);
 }
 
 function getRemainingBleedDamage(monster) {
-    return monster?.hp > 0 && monster.bleed
-        ? remainingBleedTicks(monster.bleed) * getBleedTickDamage(monster.bleed) * getMonsterDamageTakenMultiplier(monster) : 0;
+    return combatAbilities.getRemainingBleedDamage(monster);
 }
 
 function tryApplyBleed(monster, hitDamage) {
-    if (!monster || monster.hp <= 0 || !Number.isFinite(hitDamage) || hitDamage <= 0) return false;
-    const chance = getBleedChance();
-    if (chance <= 0 || Math.random() >= chance) return false;
-    const bleed = monster.bleed;
-    // Target vulnerability is applied when the DOT ticks, not baked into the
-    // pool as well. This keeps direct attacks and ability hits consistent.
-    const addedDamage = hitDamage * getBleedHitDamageRatio();
-    const applications = getBleedStacksPerApplication();
-    const strongest = strongestBleedApplications(bleed && bleed.remainingDuration > 0 ? bleed : null);
-    for (let index = 0; index < applications; index++) strongest.push(addedDamage);
-    strongest.sort((a,b) => b-a);
-    strongest.length = Math.min(strongest.length, deepWoundsSettings.maximumStacks);
-    if (bleed && bleed.remainingDuration > 0) {
-        bleed.baseDamagePerTick = hasDeepWounds() ? sumBleedApplications(strongest)
-            : Math.min(Number.MAX_VALUE, (bleed.baseDamagePerTick ?? bleed.stacks) + addedDamage * applications);
-        bleed.stacks = Math.min(getBleedMaximumStacks(), bleed.stacks + applications);
-        bleed.strongestApplications = strongest;
-        bleed.remainingDuration = Math.min(bleedDamageType.maximumDuration, bleed.remainingDuration + bleedDamageType.secondsPerApplication * applications);
-    } else {
-        monster.bleed = {stacks:applications, baseDamagePerTick:addedDamage * applications, strongestApplications:strongest,
-            remainingDuration:bleedDamageType.secondsPerApplication * applications, timeUntilTick:getBleedTickInterval()};
-    }
-    emitCombatEvent('monsterBleedApplied', {monsterId: monster.id});
-    return true;
+    return combatAbilities.tryApplyBleed(monster, hitDamage);
 }
 
 function presentBleedStackProc(monsterId) {
@@ -125,24 +94,7 @@ function presentBleedStackProc(monsterId) {
 }
 
 function tickMonsterBleed(monster, elapsed) {
-    const bleed = monster.bleed;
-    if (monster.hp <= 0 || !bleed || elapsed <= 0) return false;
-    if (bleed.stacks > getBleedMaximumStacks()) {
-        bleed.strongestApplications = strongestBleedApplications(bleed);
-        bleed.stacks = getBleedMaximumStacks();
-        bleed.baseDamagePerTick = sumBleedApplications(bleed.strongestApplications);
-    }
-    const activeSeconds = Math.min(elapsed, bleed.remainingDuration);
-    const interval = getBleedTickInterval();
-    const ticks = bleed.timeUntilTick <= activeSeconds + 1e-8
-        ? Math.max(0, 1 + Math.floor((activeSeconds - bleed.timeUntilTick + 1e-8) / interval)) : 0;
-    const damage = ticks * getBleedTickDamage(bleed);
-    bleed.timeUntilTick = Math.max(1e-8, bleed.timeUntilTick - activeSeconds + ticks * interval);
-    bleed.remainingDuration = Math.max(0, bleed.remainingDuration - elapsed);
-    // The tick exactly at expiry still lands; no stacks survive the shared timer.
-    if (bleed.remainingDuration < 1e-8) monster.bleed = null;
-    if (damage > 0) applyDamageToMonster(monster, damage, 'bleed');
-    return monster.hp <= 0;
+    return combatAbilities.tickMonsterBleed(monster, elapsed);
 }
 
 function updateBleedStatus(badge, monster) {

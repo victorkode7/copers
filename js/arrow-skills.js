@@ -4,7 +4,7 @@ const arrowSkillSettings = Object.freeze({piercingChance: 0.3, forkingChance: 0.
 const bowAttackAbilityIds = new Set(['multiShot', 'piercingArrow', 'forkingArrow']);
 
 function getBowDamageMultiplier() {
-    return Math.max(0, 1 + getSkillStat('bowDamageIncrease') + getGearStat('bowDamageIncrease'));
+    return CombatHealth.getBowDamageMultiplier(getSkillStat('bowDamageIncrease'), getGearStat('bowDamageIncrease'));
 }
 
 const arrowTravelDirections = Object.freeze([{x: 1, y: 0}, {x: -1, y: 0}, {x: 0, y: 1}, {x: 0, y: -1}]);
@@ -25,113 +25,31 @@ function updateCombatFormation() {
 }
 
 function getMonsterGridPosition(monster) {
-    const index = state.monsterStates.indexOf(monster);
-    const columns = Math.max(1, state.monsterColumns || 1);
-    return {row: Math.floor(index / columns), column: index % columns};
+    return combatAbilities.getMonsterGridPosition(monster);
 }
 
 function getArrowRowTargets(target) {
-    const row = getMonsterGridPosition(target).row;
-    const columns = Math.max(1, state.monsterColumns || 1);
-    return state.monsterStates.slice(row * columns, (row + 1) * columns).filter(monster => monster.hp > 0);
+    return combatAbilities.getArrowRowTargets(target);
 }
 
 function getForwardDiagonalArrowTargets(source, visited, travel) {
-    const position = getMonsterGridPosition(source);
-    const columns = Math.max(1, state.monsterColumns || 1);
-    // Keep the original firing direction for the whole chain. Each fork may
-    // choose either forward diagonal, allowing a zigzag without turning back.
-    return [{x: -1, y: -1}, {x: 1, y: -1}, {x: -1, y: 1}, {x: 1, y: 1}]
-        .filter(offset => offset.x * travel.x + offset.y * travel.y > 0)
-        .map(offset => {
-            const row = position.row + offset.y, column = position.column + offset.x;
-            return row >= 0 && column >= 0 && column < columns
-                ? state.monsterStates[row * columns + column] : null;
-        })
-        .filter(monster => monster && monster.hp > 0 && !visited.has(monster.id));
+    return combatAbilities.getForwardDiagonalArrowTargets(source, visited, travel);
 }
 
 function getMonsterAttackInterval(monster) {
-    return monsterDefinition(monster).attackInterval +
-        (monster.freezeRemaining > 0 ? arrowSkillSettings.freezeDelay : 0);
+    return combatAbilities.getMonsterAttackInterval(monster);
 }
 
 function applyArrowFreeze(monster) {
-    if (getSkillNodeRank('freezingArrows') <= 0 || monster.hp <= 0) return;
-    // Refresh the duration; repeated arrows never stack the slowdown.
-    monster.freezeRemaining = arrowSkillSettings.freezeDuration;
+    return combatAbilities.applyArrowFreeze(monster);
 }
 
 function shootAbilityArrow(targets, damage, kind, direction = 0) {
-    if (!targets.length) return;
-    if (kind === 'piercingArrow') {
-        direction = 0;
-        // One full-row beam, regardless of how many enemies it hits or misses.
-        showCombatArrow(null, targets[0].id, kind, direction);
-    }
-    // Reserve piercing's initial row so a fork cannot hit a row target twice.
-    const visited = new Set(targets.map(monster => monster.id));
-    const queue = targets.map(target => ({target, sourceId: null, kind, travel: arrowTravelDirections[direction], visualDelay: 0}));
-    const canFork = getSkillNodeRank('forkingArrow') > 0;
-    const visualShots = [];
-    for (let index = 0; index < queue.length; index++) {
-        const shot = queue[index], target = shot.target;
-        if (target.hp <= 0) continue;
-        if (shot.kind !== 'piercingArrow') visualShots.push(shot);
-        if (Math.random() * 100 >= getHitChance(getPlayerAccuracy(), monsterDefinition(target).evasion)) {
-            emitCombatEvent('monsterDodged', {monsterId: target.id});
-            continue;
-        }
-        if (shot.kind === 'multiShot') showMonsterHitBadge(target.id, 'MULTISHOT');
-        applyDamageToMonster(target, damage, 'physical', shot.kind);
-        applyArrowFreeze(target);
-        // Only Multishot's original arrow rolls attack procs. Generated arrows
-        // still poison, freeze and fork, but cannot recursively cast Multishot.
-        if (shot.kind === 'multiShot') {
-            triggerShockwaveSlash(target, damage);
-            triggerVolcanicEruption(target, damage);
-            triggerAttackArrowSkills(target, damage, false);
-        }
-        if (canFork) {
-            const adjacent = getForwardDiagonalArrowTargets(target, visited, shot.travel);
-            if (adjacent.length) {
-                const next = adjacent[Math.floor(Math.random() * adjacent.length)];
-                visited.add(next.id);
-                queue.push({target: next, sourceId: target.id, kind: 'forkingArrow',
-                    travel: shot.travel,
-                    visualDelay: shot.visualDelay + getArrowFlightTime(shot.kind, shot.sourceId) + arrowImpactPause});
-            }
-        }
-    }
-    // Only animate a fork when an arrow actually travels to a
-    // second living target. Keep the final hop visible even if it cannot fork again.
-    const forked = visualShots.some(shot => shot.sourceId);
-    visualShots.forEach(shot => {
-        // Multishot has no separate projectile effect. If it forks, show its
-        // incoming leg as part of that real fork chain so the origin stays clear.
-        if (shot.kind === 'multiShot' && !forked) return;
-        if (shot.kind === 'forkingArrow' && !shot.sourceId && !forked) return;
-        const visualKind = shot.kind === 'multiShot' ? 'forkingArrow' : shot.kind;
-        showCombatArrow(shot.sourceId, shot.target.id, visualKind, direction, {delay: shot.visualDelay});
-    });
+    return combatAbilities.shootAbilityArrow(targets, damage, kind, direction);
 }
 
 function triggerAttackArrowSkills(target, damage, includeMultishot = true) {
-    if (getSkillNodeRank('piercingArrow') > 0 && Math.random() < arrowSkillSettings.piercingChance) {
-        shootAbilityArrow(getArrowRowTargets(target), damage * 2, 'piercingArrow');
-    }
-    if (getSkillNodeRank('forkingArrow') > 0 && Math.random() < arrowSkillSettings.forkingChance) {
-        const living = state.monsterStates.filter(monster => monster.hp > 0);
-        if (living.length) {
-            const enemy = living[Math.floor(Math.random() * living.length)];
-            const direction = Math.floor(Math.random() * 4);
-            shootAbilityArrow([enemy], damage, 'forkingArrow', direction);
-        }
-    }
-    if (includeMultishot && getSkillNodeRank('multiShot') > 0) {
-        const living = state.monsterStates.filter(monster => monster.hp > 0);
-        if (living.length) shootAbilityArrow([living[Math.floor(Math.random() * living.length)]], damage, 'multiShot');
-    }
+    return combatAbilities.triggerAttackArrowSkills(target, damage, includeMultishot);
 }
 
 function showCombatArrow(sourceId, targetId, kind, direction, visual = {}) {

@@ -79,7 +79,7 @@
                 const oldDescription='On reaching max shield stacks. Consume half your shield stacks. Dealing 30% physical damage per stack to the target.';
                 check('legacy default descriptions update to 100 percent while custom descriptions remain intact',SkillStatCompat.normalizeShieldSlamDescription(oldDescription).includes('100%')&&SkillStatCompat.normalizeShieldSlamDescription('My slam description')==='My slam description');
                 fresh({shieldGenerator:1,overflowingSlam:1});state.shieldStacks=10;tryShieldSlam();check('Overflowing Slam requires Shield Slam to fire',activeMonster().hp===1000&&state.shieldStacks===10);
-                fresh(overflow,100,1);state.shieldStacks=10;tryShieldSlam();check('large overflow chains terminate and never duplicate kills',state.kills[map.id]===100&&state.gold===100&&!activeMonster()&&state.shieldStacks===10&&!resolvingShieldSlam);
+                fresh(overflow,100,1);state.shieldStacks=10;tryShieldSlam();check('large overflow chains terminate and never duplicate kills',state.kills[map.id]===100&&state.gold===100&&!activeMonster()&&state.shieldStacks===10&&!combatAbilities.resolvingShieldSlam);
                 [a]=fresh({shockwaveSlash:1});triggerShockwaveSlash(a,10);check('ordinary Shockwave Slash does not grant shields',state.shieldStacks===0);
                 [a]=fresh(resonance,64);triggerShockwaveSlash(a,10);check('one shockwave grants one shield regardless of how many enemies it hits',state.shieldStacks===1&&state.kills[map.id]===0);
                 [a]=fresh(resonance,1);triggerShockwaveSlash(a,100);check('Resonant Guard generates shields in a single-enemy fight',state.shieldStacks===1&&a.hp===1000);

@@ -90,6 +90,7 @@ try {
     $realtime = $realtime -or $TestScript -eq 'tests/elemental-events-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/shield-slam-events-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-lifecycle-events-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/combat-simulation-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-effects-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-projectiles-smoke.js' -or [bool]$ScreenshotPath

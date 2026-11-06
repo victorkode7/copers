@@ -79,15 +79,15 @@
         check('the buff section supports multiple independent icons',elements.buffList.children.length === 2 && elements.buffList.lastElementChild.querySelector('.buff-stacks').textContent === '2' && elements.buffList.lastElementChild.querySelector('.buff-value').textContent === '5%');
         renderCombatBuffs(); check('expired buffs disappear without removing other buffs',elements.buffList.children.length === 1 && elements.buffList.firstElementChild === furyIcon);
         state.combatPaused = true; simulateCombatStep(.4); check('Fury continues to decay while combat is paused', near(state.furyRemaining,.6));
-        applyDamageToPlayer(state.playerHp); check('death preserves Fury for normal decay instead of removing every stack', state.furyStacks === 10 && near(state.furyRemaining,.6));
+        applyDamageToPlayer(state.playerHp); check('death immediately clears Fury with the other combat buffs', state.furyStacks === 0 && state.furyRemaining === 0 && !state.furyDecaying);
         simulateCombatStep(.6); renderCombatBuffs();
-        check('dead players lose only one stack when their remaining duration expires',state.furyStacks === 9 && near(state.furyRemaining,.5) && elements.buffList.firstElementChild.querySelector('.buff-stacks').textContent === '9');
-        simulateCombatStep(.5); check('dead players continue losing one stack every half second',state.furyStacks === 8 && near(state.furyRemaining,.5));
+        check('dead players cannot retain an expired Fury icon',state.furyStacks === 0 && state.furyRemaining === 0 && !elements.buffList.querySelector('[data-buff-id="fury"]'));
+        simulateCombatStep(.5); check('dead combat steps cannot restore cleared Fury',state.furyStacks === 0 && state.furyRemaining === 0);
         fresh(30,{volcanicEruption:1}); hit(10); state.playerHp = getPlayerMaxHealth() * .05;
         triggerVolcanicEruption(state.monsterStates[0],1);
-        check('lethal eruption self-damage no longer clears all accumulated Fury',state.playerHp === 0 && state.furyStacks === 13 && near(state.furyRemaining,1.3));
-        state.furyRemaining = .1; pendingCombatSeconds = .1; processCombatBacklog();
-        check('the game clock preserves gradual Fury decay while the player is dead',state.furyStacks === 12 && near(state.furyRemaining,.5) && elements.buffList.firstElementChild.querySelector('.buff-stacks').textContent === '12');
+        check('lethal eruption self-damage clears all accumulated Fury',state.playerHp === 0 && state.furyStacks === 0 && state.furyRemaining === 0);
+        pendingCombatSeconds = .1; processCombatBacklog();
+        check('the game clock keeps Fury cleared while the player is dead',state.furyStacks === 0 && state.furyRemaining === 0 && !elements.buffList.querySelector('[data-buff-id="fury"]'));
         fresh(30); render(); hit(30); state.attackTimer = -100;
         for (let index=0;index<29;index++) { simulateCombatStep(.1); renderCombat(); }
         check('all thirty stacks remain visible until the shared timer actually expires',state.furyStacks === 30 && elements.buffList.firstElementChild.querySelector('.buff-stacks').textContent === '30');

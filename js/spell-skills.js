@@ -26,6 +26,18 @@ function trackVoidMissile(missile, schedule) {
     return id;
 }
 
+function advanceVoidMissilePresentation(hit) {
+    const timeline=voidMissileTimelines.get(voidMissilePresentationIds.get(hit));
+    if(timeline)timeline.remaining=hit.remaining;
+}
+
+function cancelVoidMissilePresentation(hit) {
+    const missileId=voidMissilePresentationIds.get(hit);
+    const timeline=voidMissileTimelines.get(missileId);
+    if(timeline)timeline.status='cancelled';
+    emitCombatEvent('voidMissileCancelled', {mapId:state.selectedMap,epoch:voidMissilePresentationEpoch,missileId});
+}
+
 function getVoidMissileVisual(missile) {
     return voidMissileVisuals.get(voidMissilePresentationIds.get(missile));
 }
@@ -62,11 +74,7 @@ function pruneVoidMissilePresentations() {
 }
 
 function getVoidMissileSchedule(index,visualDelay=0,flight=voidMissileTiming.flight) {
-    const delay=visualDelay/1000+index*voidMissileTiming.stagger;
-    // Impacts are resolved on fixed combat steps. Stretch individual flights by
-    // at most one step so the visible arrival shares the actual damage deadline.
-    const arrival=Math.ceil((delay+flight-1e-8)/gameTickSeconds)*gameTickSeconds;
-    return {delay,flight:arrival-delay,arrival};
+    return combatAbilities.getVoidMissileSchedule(index, visualDelay, flight);
 }
 
 function getPlayerMaxMana() {
@@ -93,141 +101,32 @@ function getPlayerManaRegen() {
 }
 
 function getSpellDamage() {
-    return Math.max(0,
-        (getSkillStat('spellDamage') + getGearStat('spellDamage')) *
-        getSkillMultiplier('spellDamageMultiplier') * getGearStat('spellDamageMultiplier') * (1+state.furyStacks*furyDamagePerStack));
+    return CombatHealth.getSpellDamage(getSkillStat('spellDamage') + getGearStat('spellDamage'),
+        getSkillMultiplier('spellDamageMultiplier'), getGearStat('spellDamageMultiplier'), state.furyStacks, furyDamagePerStack);
 }
 
 function normalizePlayerMana() {
-    const maximum=getPlayerMaxMana();
-    // Unlocking the first reserve grants a full pool; subsequent capacity
-    // increases and swapping equipment cannot repeatedly refill an existing pool.
-    if (!state.manaCapacity && maximum > 0) state.playerMana=maximum;
-    state.manaCapacity=maximum;
-    state.playerMana=Math.max(0,Math.min(maximum,Number.isFinite(state.playerMana)?state.playerMana:0));
-    return maximum;
+    return combatAbilities.normalizePlayerMana();
 }
 
 function normalizeVoidCharges() {
-    state.voidCharges=(getSkillNodeRank('voidBolt')>0 || getSkillNodeRank('voidVortex')>0)
-        ? Math.max(0,Math.min(spellSettings.voidVolley.charges,state.voidCharges||0)) : 0;
+    return combatAbilities.normalizeVoidCharges();
 }
 
 function castVoidVolley(visualDelay=0) {
-    normalizeVoidCharges();
-    if (getSkillNodeRank('voidVolley')<=0 || state.voidCharges<spellSettings.voidVolley.charges ||
-        state.combatPaused || state.playerHp<=0 ||
-        state.playerMana+1e-8<spellSettings.voidVolley.manaCost || !state.monsterStates.some(monster=>monster.hp>0)) return false;
-    const damage=getSpellDamage();if(damage<=0)return false;
-    // Every volley gets a short charge-up, including a ready volley released
-    // directly by mana regeneration. Damage keeps the same projectile deadline.
-    visualDelay=Math.max(visualDelay,voidMissileTiming.windup*1000);
-    state.playerMana=Math.max(0,state.playerMana-spellSettings.voidVolley.manaCost);
-    state.voidCharges-=spellSettings.voidVolley.charges;
-    showVoidVolleyBuffProc();
-    const hits=[];
-    for(let missile=0;missile<spellSettings.voidVolley.missiles;missile++){
-        const living=state.monsterStates.filter(monster=>monster.hp>0);
-        if(!living.length)break;
-        const target=living[Math.floor(Math.random()*living.length)];
-        const pending={targetId:target.id,damage,
-            remaining:getVoidMissileSchedule(missile,visualDelay).arrival};
-        hits.push({targetId:target.id,missile:pending});
-        state.pendingVoidMissiles.push(pending);
-    }
-    showSpellCast('voidVolley',hits,visualDelay);
-    return true;
+    return combatAbilities.castVoidVolley(visualDelay);
 }
 
 function tickPendingVoidMissiles(elapsed) {
-    // Resolve arrivals in time order, including redirects inside a long step.
-    // Simulation owns damage; CSS/SMIL events never award hits or rewards.
-    let remaining=elapsed;
-    while(state.pendingVoidMissiles.length){
-        const next=Math.min(...state.pendingVoidMissiles.map(hit=>hit.remaining));
-        const step=Math.min(remaining,next);
-        state.pendingVoidMissiles.forEach(hit=>{
-            hit.remaining=Math.max(0,hit.remaining-step);
-            const timeline=voidMissileTimelines.get(voidMissilePresentationIds.get(hit));
-            if(timeline)timeline.remaining=hit.remaining;
-        });
-        remaining-=step;
-        const arrived=state.pendingVoidMissiles.filter(hit=>hit.remaining<1e-8);
-        if(!arrived.length)break;
-        state.pendingVoidMissiles=state.pendingVoidMissiles.filter(hit=>hit.remaining>=1e-8);
-        for(const hit of arrived){
-            const target=state.monsterStates.find(monster=>monster.id===hit.targetId && monster.hp>0);
-            if(target){
-                applyDamageToMonster(target,hit.damage,'spell','voidVolley');
-                showVoidMissileImpact(target.id,hit);
-            }else{
-                const missileId=voidMissilePresentationIds.get(hit);
-                const timeline=voidMissileTimelines.get(missileId);
-                if(timeline)timeline.status='cancelled';
-                emitCombatEvent('voidMissileCancelled', {mapId:state.selectedMap,epoch:voidMissilePresentationEpoch,missileId});
-                const living=state.monsterStates.filter(monster=>monster.hp>0);
-                if(!living.length)continue;
-                // A target can die during flight. Turn toward another living
-                // enemy and give that visible redirect its own travel time.
-                const replacement=living[Math.floor(Math.random()*living.length)];
-                const redirected={...hit,targetId:replacement.id,remaining:voidMissileTiming.redirect};
-                state.pendingVoidMissiles.push(redirected);
-                showSpellCast('voidVolley',[{targetId:replacement.id,sourceId:hit.targetId,flight:voidMissileTiming.redirect,missile:redirected}]);
-            }
-        }
-        if(remaining<1e-8)break;
-    }
+    return combatAbilities.tickPendingVoidMissiles(elapsed);
 }
 
 function castVoidBolt() {
-    normalizeVoidCharges();
-    if (getSkillNodeRank('voidBolt')<=0 || state.combatPaused || state.playerHp<=0 || getSpellDamage()<=0 ||
-        state.playerMana+1e-8<spellSettings.voidBolt.manaCost || !activeMonster()) return false;
-    // Reserve mana for a charged volley instead of letting repeated cheap bolts
-    // keep its mana forever below the 10 needed to release it.
-    if(state.voidCharges>=spellSettings.voidVolley.charges && getSkillNodeRank('voidVolley')>0){
-        if(!castVoidVolley() || state.playerMana+1e-8<spellSettings.voidBolt.manaCost || !activeMonster())return false;
-    }
-    const damage=getSpellDamage();
-    const targets=getPlayerAttackTargets();
-    if(!targets.length)return false;
-    state.playerMana=Math.max(0,state.playerMana-spellSettings.voidBolt.manaCost);
-    const hits=[];
-    for(const target of targets){
-        if(target.hp<=0)continue;
-        hits.push({targetId:target.id});
-        applyDamageToMonster(target,damage,'spell','voidBolt');
-        state.voidCharges=Math.min(spellSettings.voidVolley.charges,state.voidCharges+1);
-        castVoidVolley(voidMissileTiming.flight*1000+hits.length*voidMissileTiming.stagger*1000);
-    }
-    showSpellCast('voidBolt',hits);
-    return true;
+    return combatAbilities.castVoidBolt();
 }
 
 function castVoidVortex() {
-    normalizeVoidCharges();
-    if (getSkillNodeRank('voidVortex')<=0 || state.combatPaused || state.playerHp<=0 ||
-        state.playerMana+1e-8<spellSettings.voidVortex.manaCost) return false;
-    const target=activeMonster(),damage=getSpellDamage()*spellSettings.voidVortex.damageMultiplier;
-    if (!target || damage<=0) return false;
-    const targets=getArrowRowTargets(target);
-    if (!targets.length) return false;
-    state.playerMana=Math.max(0,state.playerMana-spellSettings.voidVortex.manaCost);
-    // Roll once per paid cast. The repeat stays in the original row and cannot
-    // recursively repeat or generate charges from enemies killed by the first hit.
-    const triggers=getSkillNodeRank('echoingVoid')>0 && Math.random()<spellSettings.voidVortex.doubleChance ? 2 : 1;
-    for (let trigger=0;trigger<triggers;trigger++) {
-        const living=targets.filter(monster=>monster.hp>0);
-        if (!living.length) break;
-        showVoidVortex(living.map(monster=>monster.id),trigger*180);
-        for (const monster of living) {
-            applyDamageToMonster(monster,damage,'spell','voidVortex');
-            state.voidCharges=Math.min(spellSettings.voidVolley.charges,
-                state.voidCharges+spellSettings.voidVortex.chargesPerHit);
-            castVoidVolley();
-        }
-    }
-    return true;
+    return combatAbilities.castVoidVortex();
 }
 
 function showVoidVortex(targetIds,visualDelay=0) {
@@ -264,25 +163,11 @@ function presentVoidVortexCast({targetIds,visualDelay}) {
 }
 
 function tickPlayerMana(elapsed) {
-    const maximum=normalizePlayerMana();
-    normalizeVoidCharges();
-    if (maximum<=0 || state.combatPaused || state.playerHp<=0) return;
-    state.playerMana=Math.min(maximum,state.playerMana+getPlayerManaRegen()*elapsed);
-    // A charged volley waits at five stacks when mana is short or no target
-    // is alive, then fires as soon as its requirements are satisfied.
-    castVoidVolley();
+    return combatAbilities.tickPlayerMana(elapsed);
 }
 
 function triggerAttackSpells() {
-    // One attempt per primary attack, independent of multihit count. Generated
-    // abilities and spells cannot recursively generate more spell casts.
-    if (state.combatPaused || state.playerHp<=0 || getPlayerMaxMana()<=0) return;
-    normalizePlayerMana();
-    castVoidVolley();
-    castElementalBrand('rimeBrand');
-    castElementalBrand('emberBrand');
-    if (getSkillNodeRank('voidVortex')>0) castVoidVortex();
-    if (getSkillNodeRank('voidBolt')>0) castVoidBolt();
+    return combatAbilities.triggerAttackSpells();
 }
 
 function renderPlayerMana() {

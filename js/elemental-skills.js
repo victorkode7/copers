@@ -51,98 +51,39 @@ function isValidGatheringPower(power) {
 }
 
 function clearGatheringPower() {
-    state.gatheringPower={stacks:0,progress:0,remaining:0};
+    CombatBuffs.clearGatheringPower(state);
 }
 
 function getGatheringPowerMultiplier() {
-    return getSkillNodeRank('gatheringPower')>0 ? 1+Math.min(gatheringPowerSettings.maxStacks,state.gatheringPower?.stacks||0)*gatheringPowerSettings.damagePerStack : 1;
+    return CombatBuffs.getGatheringPowerMultiplier(state, getSkillNodeRank('gatheringPower')>0, gatheringPowerSettings);
 }
 
 function tickGatheringPower(elapsed) {
-    if (getSkillNodeRank('gatheringPower')<=0 || state.playerHp<=0) {clearGatheringPower();return;}
-    const power=state.gatheringPower ||= {stacks:0,progress:0,remaining:0};
-    power.stacks=Math.min(gatheringPowerSettings.maxStacks,power.stacks);
-    power.remaining=Math.min(gatheringPowerSettings.resetSeconds,power.remaining);
-    if (!state.combatPaused && state.playerHp>0 && state.monsterStates.some(monster=>monster.hp>0)) {
-        power.remaining=gatheringPowerSettings.resetSeconds;
-        const progress=power.progress+elapsed;
-        const gained=Math.floor(progress+1e-8);
-        power.stacks=Math.min(gatheringPowerSettings.maxStacks,power.stacks+gained);
-        power.progress=Math.max(0,progress-gained);
-    } else {
-        power.progress=0;
-        power.remaining=Math.max(0,power.remaining-elapsed);
-        if (power.remaining<1e-8) clearGatheringPower();
-    }
+    CombatBuffs.tickGatheringPower(state, elapsed, getSkillNodeRank('gatheringPower')>0, gatheringPowerSettings);
 }
 
 function castElementalBrand(id) {
-    const settings=elementalBrands.find(brand=>brand.id===id);
-    if (!settings || getSkillNodeRank(id)<=0 || state.combatPaused || state.playerHp<=0 || getSpellDamage()<=0 ||
-        state.playerMana+1e-8<elementalSkillSettings.manaCost) return false;
-    const current=activeMonster();
-    const target=current && !current[id] ? current : state.monsterStates.find(monster=>monster.hp>0 && !monster[id]);
-    if (!target) return false;
-    state.playerMana=Math.max(0,state.playerMana-elementalSkillSettings.manaCost);
-    target[id]={timeUntilTick:elementalSkillSettings.tickSeconds,stacks:0,remainingDuration:elementalSkillSettings.duration};
-    showElementalBurst([target.id],settings.element,false);
-    return true;
+    return combatAbilities.castElementalBrand(id);
 }
 
 function getElementalExplosionTargets(center) {
-    // Match the game's four orthogonal neighbours. The branded enemy is the
-    // source of the explosion; only its living neighbours receive the blast.
-    return getEruptionTargets(center).filter(monster=>monster!==center);
+    return combatAbilities.getElementalExplosionTargets(center);
 }
 
 function detonateElementalBrand(center, settings) {
-    const targets=getElementalExplosionTargets(center);
-    const damage=getSpellDamage()*elementalSkillSettings.explosionMultiplier;
-    showElementalBurst([center.id,...targets.map(monster=>monster.id)],settings.element,true);
-    for (const monster of targets) {
-        applyDamageToMonster(monster,damage,'spell',settings.upgrade);
-        if (monster.hp<=0) continue;
-        if (settings.element==='cold') monster.freezeRemaining=arrowSkillSettings.freezeDuration;
-        else monster.scorched=true;
-    }
+    return combatAbilities.detonateElementalBrand(center, settings);
 }
 
 function tickElementalBrands(monster,elapsed) {
-    // Like Poison and Bleed, an applied brand keeps ticking after player death.
-    if (monster.hp<=0 || elapsed<=0) return;
-    for (const settings of elementalBrands) {
-        const brand=monster[settings.id];
-        if (!brand) continue;
-        if (getSkillNodeRank(settings.id)<=0) {monster[settings.id]=null;continue;}
-        const upgraded=getSkillNodeRank(settings.upgrade)>0;
-        if (!upgraded) brand.stacks=0;
-        brand.remainingDuration ??= elementalSkillSettings.duration;
-        const activeElapsed=Math.min(elapsed,brand.remainingDuration);
-        brand.remainingDuration=Math.max(0,brand.remainingDuration-elapsed);
-        brand.timeUntilTick-=activeElapsed;
-        while (brand.timeUntilTick<1e-8 && monster.hp>0) {
-            brand.timeUntilTick+=elementalSkillSettings.tickSeconds;
-            if (upgraded) brand.stacks++;
-            const explode=upgraded && brand.stacks>=elementalSkillSettings.explosionStacks;
-            if (explode) brand.stacks=0;
-            applyDamageToMonster(monster,getSpellDamage(),'dot',settings.id);
-            if (explode) detonateElementalBrand(monster,settings);
-        }
-        // Subtracting 0.1 ten times can leave a positive epsilon before the
-        // interval is added back. Never write an out-of-range timer to a save.
-        brand.timeUntilTick=Math.min(elementalSkillSettings.tickSeconds,brand.timeUntilTick);
-        // Resolve the tick at exactly ten seconds before removing the brand,
-        // so the tenth stack can still trigger its explosion.
-        if (brand.remainingDuration<1e-8) monster[settings.id]=null;
-    }
+    return combatAbilities.tickElementalBrands(monster, elapsed);
 }
 
 function clearElementalDebuffs(monster) {
-    monster.rimeBrand=null;monster.emberBrand=null;monster.scorched=false;
+    return combatAbilities.clearElementalDebuffs(monster);
 }
 
 function getFireDamageTakenMultiplier(monster,abilityId) {
-    return monster.scorched && fireAbilityIds.has(abilityId) ? elementalSkillSettings.scorchedMultiplier : 1;
+    return CombatHealth.getFireDamageTakenMultiplier(monster, fireAbilityIds.has(abilityId), elementalSkillSettings.scorchedMultiplier);
 }
 
 function createElementalIcon(kind) {

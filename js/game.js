@@ -94,6 +94,7 @@ const basePlayerMaxShields = 10;
 const shieldSlamDamagePerStack = 1;
 const furySecondsPerStack = 0.1;
 const furyStackDecaySeconds = 0.5;
+const furyBuffSettings = Object.freeze({secondsPerStack:furySecondsPerStack, decaySeconds:furyStackDecaySeconds});
 const furyDamagePerStack = 0.02;
 const righteousFireSettings = Object.freeze({regenHealthCap: 0.3, healthDrainPerSecond: 0.1, damageMultiplier: 1});
 const righteousFireNodeIds = Object.freeze(['fireOfTheRighteous', 'righteousFire']);
@@ -263,7 +264,6 @@ let combatEffectLayout = null;
 const combatBuffViews = new Map();
 let voidVolleyBuffProc = null;
 const detailedStatViews = new Map();
-let resolvingShieldSlam = false;
 elements.detailedStats.addEventListener('toggle', renderDetailedStats);
 // Presentation-only hit times; never saved or advanced by offline simulation.
 const righteousFireHitUntil = new WeakMap();
@@ -777,17 +777,7 @@ function ensureLiveMonsterTarget() {
 }
 
 function getPlayerAttackTargets() {
-    if (!activeMonster()) return [];
-    const targetIndex = state.monsterStates.findIndex(monster => monster.id === state.targetMonsterId);
-    const multiHit = getMultiHit();
-    const guaranteedHits = Math.floor(multiHit);
-    const extraHit = Math.random() < multiHit - guaranteedHits ? 1 : 0;
-    const targets = [];
-    for (let offset = 0; offset < state.monsterStates.length && targets.length < guaranteedHits + extraHit; offset++) {
-        const monster = state.monsterStates[(targetIndex + offset) % state.monsterStates.length];
-        if (monster.hp > 0) targets.push(monster);
-    }
-    return targets;
+    return combatAbilities.getPlayerAttackTargets();
 }
 
 function setInitialMonsterTarget() {
@@ -1077,8 +1067,8 @@ function getGearStat(stat) {
 }
 
 function getPlayerMaxHealth() {
-    return Math.max(1, Math.round((basePlayerMaxHealth + getSkillStat('health') + getGearStat('health')) *
-        getSkillMultiplier('healthMultiplier') * getGearStat('healthMultiplier')));
+    return CombatHealth.getMaxHealth(basePlayerMaxHealth + getSkillStat('health') + getGearStat('health'),
+        getSkillMultiplier('healthMultiplier'), getGearStat('healthMultiplier'));
 }
 
 function getPlayerMaxFury() {
@@ -1087,9 +1077,7 @@ function getPlayerMaxFury() {
 }
 
 function clearFury() {
-    state.furyStacks = 0;
-    state.furyRemaining = 0;
-    state.furyDecaying = false;
+    CombatBuffs.clearFury(state);
 }
 
 function clearPlayerCombatBuffs() {
@@ -1114,90 +1102,31 @@ function hasShieldGeneration() {
 }
 
 function normalizeShields() {
-    state.shieldStacks = hasShieldGeneration()
-        ? Math.min(getPlayerMaxShields(), Math.max(0, Math.floor(state.shieldStacks))) : 0;
+    return combatAbilities.normalizeShields();
 }
 
 function gainShields() {
-    if (!hasShieldGeneration() || state.playerHp <= 0 || state.combatPaused) return;
-    normalizeShields();
-    state.shieldStacks = Math.min(getPlayerMaxShields(), state.shieldStacks + 1);
-    tryShieldSlam();
+    return combatAbilities.gainShields();
 }
 
 function gainShieldFromKill() {
-    if (getSkillNodeRank('shieldGenerator') > 0) gainShields();
+    return combatAbilities.gainShieldFromKill();
 }
 
 function tryShieldSlam() {
-    if (resolvingShieldSlam || getSkillNodeRank('shieldSlam') <= 0 || state.playerHp <= 0 || state.combatPaused) return;
-    normalizeShields();
-    const maximum = getPlayerMaxShields();
-    if (!maximum || state.shieldStacks < maximum) return;
-    // A slam kill can grant another shield. Resolve those triggers iteratively,
-    // including a capacity of one, without recursively overflowing the stack.
-    resolvingShieldSlam = true;
-    try {
-        while (state.shieldStacks >= maximum) {
-            const target = activeMonster() || state.monsterStates.find(monster => monster.hp > 0);
-            if (!target) break; // Keep shields until there is a target to slam.
-            const consumed = Math.max(1, Math.floor(state.shieldStacks / 2));
-            state.shieldStacks -= consumed;
-            let remainingDamage = getDamage() * shieldSlamDamagePerStack * consumed;
-            const overflowing = getSkillNodeRank('overflowingSlam') > 0;
-            const hitIds = [];
-            let slamTarget = target;
-            while (slamTarget && remainingDamage > 1e-8) {
-                const healthBefore = slamTarget.hp;
-                const damageMultiplier = getMonsterDamageTakenMultiplier(slamTarget);
-                hitIds.push(slamTarget.id);
-                applyDamageToMonster(slamTarget, remainingDamage, 'physical', hitIds.length === 1 ? 'shieldSlam' : 'overflowingSlam');
-                // Only unused physical damage carries on. Poison executions
-                // and newly gained Fury cannot increase this slam's budget.
-                remainingDamage = Math.max(0, remainingDamage - healthBefore / damageMultiplier);
-                if (!overflowing || slamTarget.hp > 0 || remainingDamage <= 1e-8) break;
-                slamTarget = activeMonster();
-            }
-            showShieldSlamWave(hitIds);
-        }
-    } finally {
-        resolvingShieldSlam = false;
-    }
+    return combatAbilities.tryShieldSlam();
 }
 
 function normalizeFury() {
-    const maximum = getPlayerMaxFury();
-    state.furyStacks = Math.min(maximum, Math.max(0, state.furyStacks));
-    // The countdown between lost stacks keeps its own interval, even when
-    // a low stack count has a shorter maximum duration from hits.
-    const durationCap = state.furyDecaying ? furyStackDecaySeconds : state.furyStacks * furySecondsPerStack;
-    state.furyRemaining = Math.min(state.furyRemaining, durationCap);
-    if (state.furyStacks === 0) clearFury();
+    CombatBuffs.normalizeFury(state, getPlayerMaxFury(), furyBuffSettings);
 }
 
 function gainFuryFromHit() {
-    if (state.playerHp <= 0 || state.combatPaused) return;
-    normalizeFury();
-    const maximum = getPlayerMaxFury();
-    if (!maximum) return;
-    state.furyStacks = Math.min(maximum, state.furyStacks + 1);
-    state.furyRemaining = Math.min(state.furyStacks * furySecondsPerStack, state.furyRemaining + furySecondsPerStack);
-    state.furyDecaying = false;
+    CombatBuffs.gainFuryFromHit(state, getPlayerMaxFury(), furyBuffSettings);
 }
 
 function tickFury(elapsed) {
-    normalizeFury();
-    if (!state.furyStacks) return;
-    state.furyRemaining -= elapsed;
-    // After the shared timer expires, lose one stack per half second.
-    // Preserve elapsed overshoot so offline and foreground steps agree.
-    if (state.furyRemaining < 1e-8) {
-        const lostStacks = Math.min(state.furyStacks, 1 + Math.floor((1e-8 - state.furyRemaining) / furyStackDecaySeconds));
-        state.furyStacks -= lostStacks;
-        state.furyRemaining += lostStacks * furyStackDecaySeconds;
-        state.furyDecaying = state.furyStacks > 0;
-        if (!state.furyStacks) clearFury();
-    }
+    CombatBuffs.tickFury(state, elapsed, getPlayerMaxFury(), furyBuffSettings);
 }
 
 function formatBuffAmount(amount) {
@@ -1325,7 +1254,7 @@ function getPlayerHealthRegen() {
     const flat = getSkillStat('healthRegen') + getGearStat('healthRegen');
     const maximumHealthRate = getSkillStat('healthRegenPercent') + getGearStat('healthRegenPercent');
     const increase = getSkillStat('healthRegenIncrease') + getGearStat('healthRegenIncrease');
-    return Math.max(0, flat + getPlayerMaxHealth() * maximumHealthRate) * Math.max(0, 1 + increase);
+    return CombatHealth.getHealthRegeneration(getPlayerMaxHealth(), flat, maximumHealthRate, increase);
 }
 
 function hasFireOfTheRighteous() {
@@ -1347,45 +1276,19 @@ function getRighteousFireSettings() {
 }
 
 function getRighteousFireRegeneration(elapsed) {
-    const maxHealth = getPlayerMaxHealth(), regeneration = getPlayerHealthRegen() * elapsed;
-    const settings = getRighteousFireSettings();
-    const drain = maxHealth * settings.healthDrainPerSecond * elapsed;
-    const healing = Math.min(regeneration, Math.max(0,
-        maxHealth * settings.regenHealthCap - state.playerHp + drain));
-    return {drain, healing, excess: regeneration - healing};
+    const maxHealth = getPlayerMaxHealth(), regeneration = getPlayerHealthRegen();
+    return CombatHealth.getRighteousFireRegeneration(state, elapsed, maxHealth, regeneration, getRighteousFireSettings());
 }
 
 function applyPlayerHealing(amount) {
     if (!Number.isFinite(amount) || amount <= 0) return 0;
     const maxHealth = getPlayerMaxHealth();
-    const limit = hasFireOfTheRighteous() ? maxHealth * getRighteousFireSettings().regenHealthCap : maxHealth;
-    const previousHp = state.playerHp;
-    // Existing health above the cap drains normally; healing cannot add to it.
-    if (previousHp >= limit) return 0;
-    state.playerHp = Math.min(limit, previousHp + amount);
-    return state.playerHp - previousHp;
+    const healingCap = hasFireOfTheRighteous() ? getRighteousFireSettings().regenHealthCap : 1;
+    return CombatHealth.applyPlayerHealing(state, amount, maxHealth, healingCap);
 }
 
 function tickPlayerRegeneration(elapsed) {
-    if (state.combatPaused || state.playerHp <= 0) return;
-    if (!hasFireOfTheRighteous()) {
-        applyPlayerHealing(getPlayerHealthRegen() * elapsed);
-        return;
-    }
-
-    // Resolve regeneration and drain together. Reserve healing to offset the
-    // drain and reach the current healing cap; convert only regeneration left over.
-    const {drain, healing, excess} = getRighteousFireRegeneration(elapsed);
-    if (healing >= drain) applyPlayerHealing(healing - drain);
-    else applyDamageToPlayer(drain - healing, 'self');
-
-    if (excess <= 0 || state.playerHp <= 0) return;
-    // Snapshot living targets so kills cannot redistribute this tick's damage.
-    const targets = state.monsterStates.filter(monster => monster.hp > 0);
-    if (!targets.length) return;
-    const damage = excess * getRighteousFireSettings().damageMultiplier / targets.length;
-    targets.forEach(monster => applyDamageToMonster(monster, damage, 'dot', 'righteousFire'));
-    if(combatEffects!==null)emitCombatEvent('righteousFireHit', {mapId:state.selectedMap,targetIds:targets.map(monster=>monster.id),duration:350});
+    return combatAbilities.tickPlayerRegeneration(elapsed);
 }
 
 function presentRighteousFireHit({targetIds,duration}) {
@@ -1412,9 +1315,8 @@ function getSkillMultiplier(stat) {
 }
 
 function getDamage() {
-    return Math.max(1, Math.round((2 + state.upgrades.strength * 2 + getGearStat('damage') +
-        getSkillStat('damage')) * getSkillMultiplier('damageMultiplier') * getGearStat('damageMultiplier') *
-        (1 + state.furyStacks * furyDamagePerStack)));
+    return CombatHealth.getPhysicalDamage(2 + state.upgrades.strength * 2 + getGearStat('damage') + getSkillStat('damage'),
+        getSkillMultiplier('damageMultiplier'), getGearStat('damageMultiplier'), state.furyStacks, furyDamagePerStack);
 }
 
 function getMultiHit() {
@@ -3874,15 +3776,7 @@ function finishMonsterDefeat(monster,definition,remainingPoison) {
 }
 
 function transferPoisonOnDeath(monster, stacks) {
-    if (getSkillNodeRank('bloomingFlower') <= 0 || !stacks.length) return;
-    const targets = state.monsterStates.filter(target => target !== monster && target.hp > 0);
-    if (!targets.length) return;
-    const target = targets[Math.floor(Math.random() * targets.length)];
-    if (!Array.isArray(target.poisonStacks)) target.poisonStacks = [];
-    target.poisonStacks.push(...stacks);
-    showPoisonTransfer(monster.id, target.id);
-    showMonsterProc(target.id, 'BLOOMING FLOWER');
-    showPoisonStackProc(target);
+    return combatAbilities.transferPoisonOnDeath(monster, stacks);
 }
 
 function showPoisonTransfer(sourceId, targetId) {
@@ -3919,21 +3813,15 @@ function presentPoisonTransfer({sourceId,targetId}) {
 }
 
 function applyDamageToPlayer(damage, source = 'enemy') {
-    if (!Number.isFinite(damage) || damage <= 0 || state.playerHp <= 0) return;
-    if (source === 'enemy') {
-        normalizeShields();
-        if (state.shieldStacks > 0) {
-            state.shieldStacks--;
-            emitCombatEvent('playerShieldBlocked', {mapId: state.selectedMap});
-            return;
-        }
+    if (!CombatHealth.isValidDamage(state.playerHp, damage)) return;
+    if (source === 'enemy') normalizeShields();
+    const result = CombatHealth.applyPlayerDamage(state, damage, source);
+    if (result.blocked) {
+        emitCombatEvent('playerShieldBlocked', {mapId: state.selectedMap});
+        return;
     }
-    const previousHp = state.playerHp;
-    state.playerHp = Math.max(0, state.playerHp - damage);
-    if (state.playerHp < 1e-8) state.playerHp = 0;
-    const damageDealt = previousHp - state.playerHp;
-    emitCombatEvent('playerDamaged', {damage: damageDealt});
-    if (state.playerHp === 0) {
+    emitCombatEvent('playerDamaged', {damage: result.damageDealt});
+    if (result.died) {
         state.combatPaused = true;
         state.attackTimer = 0;
         clearPlayerCombatBuffs();
@@ -3942,26 +3830,23 @@ function applyDamageToPlayer(damage, source = 'enemy') {
 
 function getMonsterDamageTakenMultiplier(monster) {
     const power=getGatheringPowerMultiplier();
-    if (!monster || monster.hp <= 0 || getSkillNodeRank('singledOff') <= 0) return power;
-    // Check current HP each time: kills and respawns can change isolation within
-    // the same combat step. Dead enemies waiting to respawn do not count.
-    return power*(state.monsterStates.some(other => other !== monster && other.hp > 0) ? 1 : 1.3);
+    return CombatHealth.getMonsterDamageTakenMultiplier(state, monster, power, getSkillNodeRank('singledOff')>0);
 }
 
 function applyDamageToMonster(monster, damage, damageType = 'physical', abilityId = null) {
     // Scale at the hit so forks and arrows generated by Multishot each receive
     // this bonus once, while their other attack procs keep the original damage.
     if (damageType === 'physical' && bowAttackAbilityIds.has(abilityId)) damage *= getBowDamageMultiplier();
-    if (!monster || monster.hp <= 0 || !Number.isFinite(damage) || damage <= 0) return false;
+    if (!monster || !CombatHealth.isValidDamage(monster.hp, damage)) return false;
     // Every successful hit builds Fury, including splash and generated arrows.
     // Damage over time and poison executions never build or extend Fury.
     if (damageType !== 'poison' && damageType !== 'bleed' && damageType !== 'dot') gainFuryFromHit();
     const previousHp = monster.hp;
-    const receivedDamage = damage * (abilityId === 'poisonExecute' ? 1 : getMonsterDamageTakenMultiplier(monster)*getFireDamageTakenMultiplier(monster,abilityId));
-    monster.hp = Math.max(0, monster.hp - receivedDamage);
-    recordMonsterDamage(previousHp - monster.hp, damageType, abilityId);
+    const multiplier = abilityId === 'poisonExecute' ? 1 : getMonsterDamageTakenMultiplier(monster)*getFireDamageTakenMultiplier(monster,abilityId);
+    const result = CombatHealth.applyMonsterDamage(monster, damage, multiplier);
+    recordMonsterDamage(result.damageDealt, damageType, abilityId);
     syncLegacyEnemyState();
-    if (monster.hp <= 0) {
+    if (result.died) {
         defeatEnemy(monster);
         return true;
     }
@@ -4005,96 +3890,27 @@ function getPoisonChance() {
 }
 
 function getRemainingPoisonDamage(monster) {
-    if (!monster || monster.hp <= 0 || !Array.isArray(monster.poisonStacks) || !monster.poisonStacks.length) return 0;
-    const tickInterval = getPoisonTickInterval();
-    const damagePerTick = getPoisonDamage();
-    const damageMultiplier = getMonsterDamageTakenMultiplier(monster);
-    const cached = combatPoisonForecasts?.get(monster);
-    // Ticking replaces the array; applying or spreading poison changes its length.
-    // Scope forecasts to this simulation step and recheck stats after level-ups.
-    if (cached && cached.stacks === monster.poisonStacks && cached.length === monster.poisonStacks.length &&
-        cached.interval === tickInterval && cached.damage === damagePerTick) return cached.total * damageMultiplier;
-    const total = monster.poisonStacks.reduce((total, stack) => {
-        const firstTickIn = Math.max(0, stack.timeUntilTick);
-        if (firstTickIn > stack.remainingDuration + 1e-6) return total;
-        const ticksRemaining = 1 + Math.floor(
-            (stack.remainingDuration - firstTickIn + 1e-6) / tickInterval
-        );
-        return total + Math.max(0, ticksRemaining) * damagePerTick;
-    }, 0);
-    combatPoisonForecasts?.set(monster, {
-        stacks: monster.poisonStacks, length: monster.poisonStacks.length,
-        interval: tickInterval, damage: damagePerTick, total
-    });
-    return total * damageMultiplier;
+    return combatAbilities.getRemainingPoisonDamage(monster);
 }
 
 function tryExecutePoison(monster) {
-    if (getSkillNodeRank('poisonExecute') <= 0 || !monster || monster.hp <= 0 ||
-        getRemainingPoisonDamage(monster) < monster.hp) return false;
-    showMonsterProc(monster.id, 'POISON EXECUTE');
-    return applyDamageToMonster(monster, monster.hp, 'poison', 'poisonExecute');
+    return combatAbilities.tryExecutePoison(monster);
 }
 
 function tryApplyPoison(monster) {
-    const poisonChance = getPoisonChance();
-    if (!monster || monster.hp <= 0 || poisonChance <= 0 || Math.random() >= poisonChance) return false;
-    if (!Array.isArray(monster.poisonStacks)) monster.poisonStacks = [];
-    monster.poisonStacks.push({
-        remainingDuration: poisonDamageType.durationSeconds,
-        timeUntilTick: getPoisonTickInterval()
-    });
-    showPoisonStackProc(monster);
-    tryExecutePoison(monster);
-    return true;
+    return combatAbilities.tryApplyPoison(monster);
 }
 
 function tickMonsterPoison(monster, elapsed) {
-    if (monster.hp <= 0 || !Array.isArray(monster.poisonStacks) || !monster.poisonStacks.length) return false;
-    if (tryExecutePoison(monster)) return true;
-    const tickInterval = getPoisonTickInterval();
-    const remainingStacks = [];
-    let damage = 0;
-    for (const stack of monster.poisonStacks) {
-        stack.remainingDuration -= elapsed;
-        stack.timeUntilTick -= elapsed;
-        while (stack.timeUntilTick <= 0 && stack.remainingDuration >= -1e-6) {
-            damage += getPoisonDamage();
-            stack.timeUntilTick += tickInterval;
-        }
-        if (stack.remainingDuration > 0) remainingStacks.push(stack);
-    }
-    // Advance every stack before dealing damage so death transfers cannot
-    // repeat a tick or carry stacks with stale lifetimes to another enemy.
-    monster.poisonStacks = remainingStacks;
-    if (damage > 0) applyDamageToMonster(monster, damage, 'poison');
-    return monster.hp <= 0 || tryExecutePoison(monster);
+    return combatAbilities.tickMonsterPoison(monster, elapsed);
 }
 
 function playerHasShockwaveSlash() {
-    return (state.skillRanks.shockwaveSlash || 0) > 0;
+    return combatAbilities.playerHasShockwaveSlash();
 }
 
 function triggerShockwaveSlash(hitMonster, hitDamage) {
-    if (!playerHasShockwaveSlash()) return;
-    const unique = getEquippedItems().map(Equipment.uniqueEffect).find(effect => effect?.shockwaveSlash);
-    const {chance, triggers} = unique?.shockwaveSlash || {chance: 0.25, triggers: 1};
-    if (Math.random() >= chance) return;
-    const splashDamage = hitDamage * 0.33;
-    for (let activation = 0; activation < triggers; activation++) {
-        // Resolve each activation separately so both can apply on-hit effects,
-        // while enemies killed by the first wave cannot be hit or looted twice.
-        const splashTargets = state.monsterStates
-            .filter(monster => monster.hp > 0 && monster.id !== hitMonster.id);
-        splashTargets.forEach(monster => {
-            showMonsterProc(monster.id, 'SHOCKWAVE HIT');
-            flashShockwaveCard(monster.id);
-            flashShockwaveHealthBar(monster.id);
-            applyDamageToMonster(monster, splashDamage, 'physical', 'shockwaveSlash');
-        });
-        // One shield per activation, including procs against a lone boss.
-        if (getSkillNodeRank('resonantGuard') > 0) gainShields();
-    }
+    return combatAbilities.triggerShockwaveSlash(hitMonster, hitDamage);
 }
 
 function craftGear(id) {
@@ -4465,6 +4281,124 @@ elements.resumeCombat.addEventListener('click', function() {
     saveGame();
 });
 
+// Existing rules still use the live game state and event collector. Resolve
+// them at call time so build changes and rule replacements remain visible.
+// The ability engine owns its stateful rules and reentrancy. Host callbacks
+// resolve live stats and route data events without owning ability calculations.
+const combatAbilities = CombatAbilities.create({
+    state,
+    random: () => Math.random(),
+    settings: {
+        arrowSkillSettings, arrowTravelDirections, arrowImpactPause, eruptionSkillSettings,
+        spellSettings, voidMissileTiming, gameTickSeconds, elementalSkillSettings, elementalBrands,
+        bleedDamageType, deepWoundsSettings, poisonDamageType, shieldSlamDamagePerStack
+    },
+    rules: {
+        activeMonster: () => activeMonster(),
+        applyDamageToMonster: (monster, damage, damageType, abilityId) => applyDamageToMonster(monster, damage, damageType, abilityId),
+        applyDamageToPlayer: (damage, source) => applyDamageToPlayer(damage, source),
+        applyPlayerHealing: (amount) => applyPlayerHealing(amount),
+        emitCombatEvent: (type, details) => emitCombatEvent(type, details),
+        flashShockwaveCard: (id) => flashShockwaveCard(id),
+        flashShockwaveHealthBar: (id) => flashShockwaveHealthBar(id),
+        getArrowFlightTime: (kind, sourceId) => getArrowFlightTime(kind, sourceId),
+        getBleedChance: () => getBleedChance(),
+        getBleedHitDamageRatio: () => getBleedHitDamageRatio(),
+        getBleedMaximumStacks: () => getBleedMaximumStacks(),
+        getBleedStacksPerApplication: () => getBleedStacksPerApplication(),
+        getBleedTickDamage: (bleed) => getBleedTickDamage(bleed),
+        getBleedTickInterval: () => getBleedTickInterval(),
+        getDamage: () => getDamage(),
+        getHitChance: (accuracy, evasion) => getHitChance(accuracy, evasion),
+        getMonsterDamageTakenMultiplier: (monster) => getMonsterDamageTakenMultiplier(monster),
+        getMultiHit: () => getMultiHit(),
+        getPlayerAccuracy: () => getPlayerAccuracy(),
+        getPlayerHealthRegen: () => getPlayerHealthRegen(),
+        getPlayerManaRegen: () => getPlayerManaRegen(),
+        getPlayerMaxHealth: () => getPlayerMaxHealth(),
+        getPlayerMaxMana: () => getPlayerMaxMana(),
+        getPlayerMaxShields: () => getPlayerMaxShields(),
+        getPoisonChance: () => getPoisonChance(),
+        getPoisonDamage: () => getPoisonDamage(),
+        getPoisonTickInterval: () => getPoisonTickInterval(),
+        getRighteousFireRegeneration: (elapsed) => getRighteousFireRegeneration(elapsed),
+        getRighteousFireSettings: () => getRighteousFireSettings(),
+        getSkillNodeRank: (id) => getSkillNodeRank(id),
+        getSkillStat: (stat) => getSkillStat(stat),
+        getSpellDamage: () => getSpellDamage(),
+        hasDeepWounds: () => hasDeepWounds(),
+        hasFireOfTheRighteous: () => hasFireOfTheRighteous(),
+        hasShieldGeneration: () => hasShieldGeneration(),
+        monsterDefinition: (monster) => monsterDefinition(monster),
+        showCombatArrow: (sourceId, targetId, kind, direction, visual) => showCombatArrow(sourceId, targetId, kind, direction, visual),
+        showElementalBurst: (targetIds, element, explosion) => showElementalBurst(targetIds, element, explosion),
+        showEruptionChain: (sourceId, targetId, delay) => showEruptionChain(sourceId, targetId, delay),
+        showMonsterHitBadge: (id, label, isMultiHit) => showMonsterHitBadge(id, label, isMultiHit),
+        showMonsterProc: (id, label) => showMonsterProc(id, label),
+        showPoisonStackProc: (monster) => showPoisonStackProc(monster),
+        showPoisonTransfer: (sourceId, targetId) => showPoisonTransfer(sourceId, targetId),
+        showShieldSlamWave: (hitIds) => showShieldSlamWave(hitIds),
+        showSpellCast: (kind, hits, visualDelay) => showSpellCast(kind, hits, visualDelay),
+        showVoidMissileImpact: (targetId, missile) => showVoidMissileImpact(targetId, missile),
+        showVoidVolleyBuffProc: () => showVoidVolleyBuffProc(),
+        showVoidVortex: (targetIds, delay) => showVoidVortex(targetIds, delay),
+        showVolcanicEruption: (centerId, targetIds) => showVolcanicEruption(centerId, targetIds),
+        getShockwaveSettings: () => {
+            const unique = getEquippedItems().map(Equipment.uniqueEffect).find(effect => effect?.shockwaveSlash);
+            return unique?.shockwaveSlash || {chance:0.25,triggers:1};
+        },
+        getPoisonForecast: monster => combatPoisonForecasts?.get(monster),
+        setPoisonForecast: (monster, forecast) => combatPoisonForecasts?.set(monster, forecast),
+        advanceVoidMissile: hit => advanceVoidMissilePresentation(hit),
+        cancelVoidMissile: hit => cancelVoidMissilePresentation(hit),
+        showRighteousFireHit: targets => {
+            if(combatEffects!==null)emitCombatEvent('righteousFireHit', {mapId:state.selectedMap,targetIds:targets.map(monster=>monster.id),duration:350});
+        }
+    }
+});
+
+const combatSimulation = CombatSimulation.create({
+    state,
+    random: () => Math.random(),
+    freezeDelay: arrowSkillSettings.freezeDelay,
+    rules: {
+        tickTown: (profile, elapsed) => TownProgression.tick(profile, elapsed),
+        currentMap: () => currentMap(),
+        tickFury: (elapsed) => tickFury(elapsed),
+        tickGatheringPower: (elapsed) => tickGatheringPower(elapsed),
+        normalizeShields: () => normalizeShields(),
+        tickPlayerRegeneration: (elapsed) => tickPlayerRegeneration(elapsed),
+        ensureLiveMonsterTarget: () => ensureLiveMonsterTarget(),
+        activeMonster: () => activeMonster(),
+        monsterDefinition: (monster, map) => monsterDefinition(monster, map),
+        clearElementalDebuffs: (monster) => clearElementalDebuffs(monster),
+        tickPendingEruptions: (elapsed) => tickPendingEruptions(elapsed),
+        tickPendingVoidMissiles: (elapsed) => tickPendingVoidMissiles(elapsed),
+        tryShieldSlam: () => tryShieldSlam(),
+        tickPlayerMana: (elapsed) => tickPlayerMana(elapsed),
+        tickMonsterPoison: (monster, elapsed) => tickMonsterPoison(monster, elapsed),
+        tickMonsterBleed: (monster, elapsed) => tickMonsterBleed(monster, elapsed),
+        tickElementalBrands: (monster, elapsed) => tickElementalBrands(monster, elapsed),
+        syncLegacyEnemyState: () => syncLegacyEnemyState(),
+        getEnemyHitChance: (monster) => getEnemyHitChance(monster),
+        applyDamageToPlayer: (damage, source) => applyDamageToPlayer(damage, source),
+        emitCombatEvent: (type, details) => emitCombatEvent(type, details),
+        getAttackSpeed: () => getAttackSpeed(),
+        getDamage: () => getDamage(),
+        getPlayerAttackTargets: () => getPlayerAttackTargets(),
+        getHitChance: (accuracy, evasion) => getHitChance(accuracy, evasion),
+        getPlayerAccuracy: () => getPlayerAccuracy(),
+        showMonsterHitBadge: (id, label, isMultiHit) => showMonsterHitBadge(id, label, isMultiHit),
+        applyDamageToMonster: (monster, damage, damageType) => applyDamageToMonster(monster, damage, damageType),
+        tryApplyBleed: (monster, damage) => tryApplyBleed(monster, damage),
+        tryApplyPoison: (monster) => tryApplyPoison(monster),
+        triggerShockwaveSlash: (monster, damage) => triggerShockwaveSlash(monster, damage),
+        triggerVolcanicEruption: (monster, damage) => triggerVolcanicEruption(monster, damage),
+        triggerAttackArrowSkills: (monster, damage) => triggerAttackArrowSkills(monster, damage),
+        triggerAttackSpells: () => triggerAttackSpells()
+    }
+});
+
 const hasSavedGame = loadGame();
 if (hasSavedGame) startOfflineRecap();
 // Removing the optional file removes its controls and implementation entirely.
@@ -4493,120 +4427,7 @@ function simulateCombatStep(elapsed, collectEffects = false) {
     combatEffects = effects;
     simulatingCombat = true;
     try {
-        TownProgression.tick(state,elapsed);
-        const map = currentMap();
-        tickFury(elapsed);
-        tickGatheringPower(elapsed);
-        normalizeShields();
-        const killsBeforeTick = state.kills[map.id];
-        const wasPaused = state.combatPaused;
-        tickPlayerRegeneration(elapsed);
-        ensureLiveMonsterTarget();
-        const previousTarget = activeMonster();
-        let anyRespawned = false;
-        const enemyAttackElapsed = [];
-        state.monsterStates.forEach((monster, index) => {
-            const frozenSeconds = Math.min(elapsed, monster.freezeRemaining || 0);
-            monster.freezeRemaining = Math.max(0, (monster.freezeRemaining || 0) - elapsed);
-            if (monster.freezeRemaining < 1e-6) monster.freezeRemaining = 0;
-            const interval = monsterDefinition(monster, map).attackInterval;
-            // Keep attack progress in normal interval units. This avoids a burst
-            // of banked attacks when freezing expires, including mid-step.
-            enemyAttackElapsed[index] = elapsed - frozenSeconds +
-                frozenSeconds * interval / (interval + arrowSkillSettings.freezeDelay);
-            if (monster.hp > 0 || monster.respawnRemaining <= 0) return;
-            monster.respawnRemaining = Math.max(0, monster.respawnRemaining - elapsed);
-            if (monster.respawnRemaining === 0) {
-                monster.hp = monsterDefinition(monster, map).health;
-                monster.attackTimer = 0;
-                monster.freezeRemaining = 0;
-                monster.bleed = null;
-                clearElementalDebuffs(monster);
-                anyRespawned = true;
-            }
-        });
-        tickPendingEruptions(elapsed);
-        tickPendingVoidMissiles(elapsed);
-        tryShieldSlam();
-        tickPlayerMana(elapsed);
-        if (!state.combatPaused) {
-            state.monsterStates.forEach(monster => {
-                if (monster.hp > 0) {
-                    tickMonsterPoison(monster, elapsed);
-                    if (monster.hp > 0) tickMonsterBleed(monster, elapsed);
-                    if (monster.hp > 0) tickElementalBrands(monster, elapsed);
-                }
-            });
-            ensureLiveMonsterTarget();
-            syncLegacyEnemyState();
-            const target = activeMonster();
-            state.monsterStates.forEach((monster, index) => {
-                if (monster.hp <= 0 || state.combatPaused) return;
-                const definition = monsterDefinition(monster, map);
-                monster.attackTimer += enemyAttackElapsed[index];
-                while (monster.attackTimer >= definition.attackInterval && !state.combatPaused) {
-                    monster.attackTimer -= definition.attackInterval;
-                    if (Math.random() * 100 < getEnemyHitChance(monster)) {
-                        applyDamageToPlayer(definition.attackDamage, 'enemy');
-                    } else {
-                        emitCombatEvent('playerDodged');
-                    }
-                }
-            });
-            if (!target) {
-                state.attackTimer = 0;
-            } else {
-                if (!previousTarget && target || anyRespawned && previousTarget && target.id !== previousTarget.id) {
-                    state.attackTimer = 0;
-                }
-                const attackInterval = getAttackSpeed();
-                state.attackTimer += elapsed;
-                while (state.attackTimer >= attackInterval && !state.combatPaused) {
-                    state.attackTimer -= attackInterval;
-                    const arrowTarget = activeMonster();
-                    const arrowDamage = getDamage();
-                    const attackTargets = getPlayerAttackTargets();
-                    const extraEruptionTargets = [];
-                    for (let attackIndex = 0; attackIndex < attackTargets.length; attackIndex++) {
-                        const attackTarget = attackTargets[attackIndex];
-                        if (attackTarget.hp <= 0) continue;
-                        if (Math.random() * 100 < getHitChance(getPlayerAccuracy(), monsterDefinition(attackTarget, map).evasion)) {
-                            const hitDamage = getDamage();
-                            if (attackIndex > 0) showMonsterHitBadge(attackTarget.id, 'MULTI-HIT', true);
-                            applyDamageToMonster(attackTarget, hitDamage, 'physical');
-                            // Basic attacks also roll Bleed, including multihits.
-                            tryApplyBleed(attackTarget, hitDamage);
-                            tryApplyPoison(attackTarget);
-                            triggerShockwaveSlash(attackTarget, hitDamage);
-                            if (attackIndex > 0) extraEruptionTargets.push({target: attackTarget, damage: hitDamage});
-                        } else {
-                            emitCombatEvent('monsterDodged', {monsterId: attackTarget.id});
-                        }
-                    }
-                    if (arrowTarget) {
-                        triggerVolcanicEruption(arrowTarget, arrowDamage);
-                        extraEruptionTargets.forEach(hit => triggerVolcanicEruption(hit.target, hit.damage));
-                        triggerAttackArrowSkills(arrowTarget, arrowDamage);
-                        triggerAttackSpells();
-                    }
-                }
-            }
-        } else {
-            state.monsterStates.forEach(monster => {
-                if (monster.hp > 0) {
-                    tickMonsterPoison(monster, elapsed);
-                    if (monster.hp > 0) tickMonsterBleed(monster, elapsed);
-                    if (monster.hp > 0) tickElementalBrands(monster, elapsed);
-                }
-            });
-            ensureLiveMonsterTarget();
-            syncLegacyEnemyState();
-        }
-
-        return {
-            needsRender: state.kills[map.id] !== killsBeforeTick || anyRespawned || wasPaused !== state.combatPaused,
-            effects: effects || []
-        };
+        return {...combatSimulation.step(elapsed), effects:effects || []};
     } finally {
         combatEffects = previousEffects;
         simulatingCombat = previousSimulation;
