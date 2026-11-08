@@ -1,0 +1,8 @@
+It's not fully realized yet, but I would want it to be a side mechanic that doesn't limit or force the player to do it, but would reward the player with an easier time progressing. Like the monster mastery mechanic: You do not need it as of right now, but it will speed things up, especially for world 1 monsters because of the inherent low monster count in each map.
+
+The goal is to have some unlocks be unlocked through the Town mechanic, but the game shouldn't force the player to interact with it if they absolutely don't want. Right now it has a very linear path of just waiting for the next unlock to be affordable and then buy the one upgrade they can afford. I'd like to move it in a direction where the player can make decisions of increasing production or an immediate unlock/buff to the player, sometimes at the cost of potential progression within the Town mechanic. Also in the future possibly adding some way that doesn't directly affect it, but can in turn make it easier for the player to progress the Town mechanic would be something work looking into. Things that already kind of do that is the Forge and Managerie as they increase the rate of upgrade resources and potential good rolls on gear, making it easier to progress worlds and unlock the next towns Town mechanic. 
+
+If i were to make a building cost monster materials, the managerie would be even more powerful as you can increase monster spawn rates/ monster count and drop chances. 
+
+It's largely undecided, but those  are some brief thoughts on some ways to make it not feel like a chore and waiting mechanic and more of a mechanic that makes you problemsolve.
+

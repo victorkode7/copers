@@ -17,12 +17,13 @@
         check('Outpost upgrades charge the scaled plank cost exactly once',TownProgression.apply(outpost,'upgrade','lumberOutpost')&&outpost.gold===0&&outpost.townProgress.resources.planks===0);
         const capped=TownProgression.cost('upgrade','lumberOutpost',{tier:1024,level:1});
         check('extreme prestige costs stay finite and saveable',capped.gold===Number.MAX_SAFE_INTEGER&&capped.planks===Number.MAX_SAFE_INTEGER&&capped.ore===Number.MAX_SAFE_INTEGER);
-        const mill={gold:2500,townProgress:TownProgression.defaults()};mill.townProgress.buildings.townHall={tier:1,level:1};mill.townProgress.buildings.lumberOutpost={tier:0,level:10};mill.townProgress.buildings.sawMill={tier:0,level:10};mill.townProgress.resources={wood:1000,planks:1000,ore:10000};
-        check('Saw Mill prestige waits for the Outpost tier needed to preserve log surplus',!TownProgression.can(mill,'prestige','sawMill'));
-        mill.townProgress.buildings.lumberOutpost={tier:1,level:1};mill.townProgress.resources.ore=9999;
+        const mill={gold:2500,townProgress:TownProgression.defaults()};mill.townProgress.buildings.townHall={tier:1,level:1};mill.townProgress.buildings.lumberOutpost={tier:0,level:1};mill.townProgress.buildings.sawMill={tier:0,level:10};mill.townProgress.resources={wood:1000,planks:1000,ore:10000};
+        check('Saw Mill can prestige with a T0 level 1 Outpost when materials are stocked',TownProgression.can(mill,'prestige','sawMill'));
+        mill.townProgress.resources.ore=9999;
         check('entering Saw Mill T1 requires the full Ore cost without partial deductions',!TownProgression.apply(mill,'prestige','sawMill')&&mill.gold===2500&&mill.townProgress.resources.planks===1000&&mill.townProgress.resources.ore===9999);
         mill.townProgress.resources.ore=10000;
         check('Saw Mill prestige consumes gold, planks and Ore and enters T1 level 1',TownProgression.apply(mill,'prestige','sawMill')&&mill.gold===0&&mill.townProgress.resources.planks===0&&mill.townProgress.resources.ore===0&&mill.townProgress.buildings.sawMill.tier===1&&mill.townProgress.buildings.sawMill.level===1);
+        check('Saw Mill prestige leaves Outpost at T0 level 1',mill.townProgress.buildings.lumberOutpost.tier===0&&mill.townProgress.buildings.lumberOutpost.level===1);
         check('Saw Mill prestige retains output and adds another production step',Math.abs(TownProgression.production('sawMill',mill.townProgress.buildings.sawMill).perSecond*3600-990)<1e-6);
         mill.gold=1500;mill.townProgress.resources.planks=10;mill.townProgress.resources.ore=10;
         check('Saw Mill upgrades are available with a level 1 Outpost',TownProgression.can(mill,'upgrade','sawMill')&&mill.townProgress.buildings.lumberOutpost.level===1);

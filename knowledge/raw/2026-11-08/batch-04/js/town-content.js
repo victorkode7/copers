@@ -1,0 +1,26 @@
+// Costs use Town material IDs, or gold for adventure gold. Null disables an action.
+// Gold grows 15% per level (rounded to 50), then doubles per prestige tier.
+// materialPrestigeMultiplier scales non-gold upgrade/prestige costs per tier.
+// Tier entries may override maxLevel, costs, resource unlocks, or effects.
+// Production quantities are per hour before Town Hall productivity.
+// Matching Outpost/Mill tiers and levels produce 4x the mill's log consumption.
+// Building upgrades and prestige do not depend on other production buildings' progress.
+// Mine output is half the matching Outpost. Smeltery uses 10 Ore per Bar;
+// its 10 Bars/hour per level keeps hourly gains whole with 10% Town Hall bonuses.
+// Town resource caps pause production without deleting older over-cap balances.
+// Storage buildings declare total capacities; Timber Depot upgrades fit within
+// the fixed Plank/Ore caps so capacity upgrades cannot block themselves.
+window.TownContent={
+    // Keep the wood save ID so existing stockpiles become Logs without loss.
+    resources:{wood:{name:'Logs',icon:'▰',capacity:50000},planks:{name:'Planks',icon:'▤',capacity:50000},ore:{name:'Ore',icon:'◆',color:'#b7bec6',capacity:100000},bars:{name:'Bars',icon:'▱',color:'#c4d4e3',capacity:10000}},
+    buildings:{
+        townHall:{name:'Town Hall',icon:'townHall',world:'verdantReach',plot:0,alwaysOwned:true,initialGold:0,maxLevel:10,goldLevelGrowth:1.15,goldRounding:50,goldPrestigeMultiplier:2,upgradeCost:({tier})=>tier?{wood:2000,planks:2000,gold:1000}:{wood:500,gold:1000},prestigeCost:({tier})=>tier?{wood:2000,planks:2000,gold:3300}:{wood:2000,gold:3300},effects:{productivityPerUpgrade:.1},upgradePreview:'+10% Town productivity.',prestigePreview:({tier})=>tier===0?'Unlock Saw Mill.':'Advance to T'+(tier+1)+'.'},
+        lumberOutpost:{name:'Lumber Outpost',icon:'lumberOutpost',world:'verdantReach',plot:1,initialGold:10000,maxLevel:10,goldLevelGrowth:1.15,goldRounding:50,goldPrestigeMultiplier:2,materialPrestigeMultiplier:2,unlockResources:['wood'],upgradeCost:({tier})=>tier>=4?{gold:1000,planks:10,ore:10}:tier?{gold:1000,planks:10}:{gold:1000},prestigeRequires:{townHall:{tier:1}},prestigeCost:{gold:3300,planks:10},effects:null,production:({tier,level})=>({resource:'wood',perHour:(tier*10+level)*720})},
+        sawMill:{name:'Saw Mill',icon:'sawMill',world:'verdantReach',plot:2,initialGold:5000,maxLevel:10,goldLevelGrowth:1.15,goldRounding:50,goldPrestigeMultiplier:2,requires:{townHall:{tier:1},lumberOutpost:{tier:0}},unlockResources:['wood','planks'],upgradeCost:({tier})=>tier?{gold:750,planks:10,ore:10}:{gold:750,planks:10},prestigeCost:({tier})=>tier===0?{gold:2500,planks:1000,ore:10000}:null,production:({tier,level})=>({resource:'planks',perHour:(tier*10+level)*90,inputs:{wood:2}})},
+        menagerie:{name:'Menagerie',icon:'menagerie',world:'verdantReach',plot:3,initialGold:50000,maxLevel:10,goldLevelGrowth:1.15,goldRounding:50,goldPrestigeMultiplier:2,requires:{townHall:{tier:2}},upgradeCost:{gold:2500,planks:100},prestigeCost:({tier})=>tier===0?{gold:8250,planks:100}:null,killCountMultipliers:[1,1.25,1.75,2.5,3.5,4.5,5.5,6.75,8.25,10],purchasePreview:'Unlock W1 Mastery tree.',upgradePreview:({tier,level})=>'W'+(tier+1)+' non-boss kill count: +'+(TownContent.buildings.menagerie.killCountMultipliers[level]-TownContent.buildings.menagerie.killCountMultipliers[level-1])+'x per kill.',prestigePreview:'Keep W1 at 10x. Unlock W2 Mastery tree and its kill-count upgrades.'},
+        timberDepot:{name:'Timber Depot',icon:'timberDepot',world:'verdantReach',plot:4,maxLevel:10,requires:{townHall:{tier:3}},unlockResources:['wood'],purchaseCost:{gold:250000,planks:10000,ore:25000},goldLevelGrowth:1.15,goldRounding:50,upgradeCost:({level})=>({gold:100000,planks:5000*level,ore:10000*level}),prestigeCost:null,storageCapacity:({level})=>({wood:level*100000}),purchasePreview:'Log capacity: 100,000.',upgradePreview:'+100,000 Log capacity.'},
+        slopesTownHall:{name:'Town Hall',icon:'townHall',world:'world_c791ede123810fd894db2294',plot:0,alwaysOwned:true,initialGold:0,maxLevel:10,goldLevelGrowth:1.15,goldRounding:50,goldPrestigeMultiplier:2,upgradeCost:{ore:2000,planks:2000,gold:5000},prestigeCost:{ore:2000,planks:2000,gold:16500},prestigePreview:({tier})=>tier===0?'Unlock Smeltery.':'Advance to T'+(tier+1)+'.',effects:null},
+        mine:{name:'Mine',icon:'mine',world:'world_c791ede123810fd894db2294',plot:1,initialGold:100000,maxLevel:10,goldLevelGrowth:1.15,goldRounding:50,goldPrestigeMultiplier:2,unlockResources:['ore'],upgradeCost:{planks:100,gold:5000},prestigeCost:{planks:100,gold:16500},production:({tier,level})=>({resource:'ore',perHour:(tier*10+level)*360})},
+        smeltery:{name:'Smeltery',icon:'smeltery',world:'world_c791ede123810fd894db2294',plot:2,maxLevel:10,requires:{slopesTownHall:{tier:1},mine:{tier:0}},unlockResources:['ore','bars'],purchaseCost:{gold:50000,planks:500,ore:1000},goldLevelGrowth:1.15,goldRounding:50,upgradeCost:{gold:10000,planks:100,bars:10},prestigeCost:null,production:({tier,level})=>({resource:'bars',perHour:(tier*10+level)*10,inputs:{ore:10}})}
+    }
+};

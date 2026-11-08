@@ -1,0 +1,1 @@
+I have considered adding a mix of enemies, maybe some type of weakness to the enemies or some strategizing for the player to do. This is not implemented yet and may not come in the form of changing the skill tree or equipment, but just something to keep in mind. For now i'd say we just follow the "make enemies stronger" rule unless I state otherwise

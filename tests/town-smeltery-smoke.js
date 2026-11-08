@@ -36,11 +36,16 @@
         check('Bars show their own 10000 cap and the rate displays the 10-to-1 recipe',document.querySelector('[data-resource="bars"] .town-resource-capacity').textContent==='/ 10K'&&smeltery.querySelector('.town-production-rate').textContent==='190 ◆ → 19 ▱ / h');
         TownProgression.tick(state,3600);TownPage.renderProduction();
         check('one hour of boosted smelting consumes ten Ore per completed Bar',state.townProgress.resources.bars===19&&state.townProgress.resources.ore===47494);
-        check('Smeltery upgrades cannot outrun the supporting Mine',!TownProgression.can(state,'upgrade','smeltery'));
-        grid.children[1].querySelector('button').click();state.townProgress.resources.bars=9;render();const upgradeGold=state.gold,upgradePlanks=state.townProgress.resources.planks;buy.click();
+        check('Smeltery upgrades are available with a T0 level 1 Mine',TownProgression.can(state,'upgrade','smeltery'));
+        state.townProgress.resources.bars=9;render();const upgradeGold=state.gold,upgradePlanks=state.townProgress.resources.planks;buy.click();
         check('upgrades require enough Bars and preserve other costs when unaffordable',state.townProgress.buildings.smeltery.level===1&&state.gold===upgradeGold&&state.townProgress.resources.planks===upgradePlanks);
         state.townProgress.resources.bars=10;render();buy.click();
         check('Smeltery upgrades spend Bars, Planks and gold',state.townProgress.buildings.smeltery.level===2&&state.townProgress.resources.bars===0&&state.gold===upgradeGold-10000&&state.townProgress.resources.planks===upgradePlanks-100);
+        check('upgrading the Smeltery does not require changing Mine progress',state.townProgress.buildings.mine.tier===0&&state.townProgress.buildings.mine.level===1);
+        const independent=fresh();independent.townProgress.buildings.mine={tier:0,level:1};independent.townProgress.buildings.smeltery={tier:0,level:1};independent.townProgress.resources={ore:0,planks:10000,bars:1000};
+        let upgraded=true;for(let level=1;level<10;level++)upgraded&&=TownProgression.apply(independent,'upgrade','smeltery');
+        check('stockpiled materials let Smeltery reach level 10 with Mine still at T0 level 1',upgraded&&independent.townProgress.buildings.smeltery.level===10&&independent.townProgress.buildings.mine.tier===0&&independent.townProgress.buildings.mine.level===1);
+        check('independent Smeltery upgrades still stop at its own level cap',!TownProgression.apply(independent,'upgrade','smeltery'));
         const saved=parseGameSave(JSON.stringify(createGameSave()));applyGameSave(saved);render();
         check('Smeltery levels, Ore and Bars survive profile loading',state.townProgress.buildings.smeltery.level===2&&state.townProgress.resources.bars===0&&state.townProgress.resources.ore===47494);
         const missingBars=JSON.parse(JSON.stringify(saved));delete missingBars.townProgress.resources.bars;

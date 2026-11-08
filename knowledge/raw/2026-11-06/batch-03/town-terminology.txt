@@ -1,0 +1,2 @@
+I'm not sure what it's referenced as in the code, but I ideally want to reserve the word Forge for the building in w2 town that makes ores into bars. this has not been implemented yet. The "Anvil" is what I would like the rerolling system to be named, not the crafting system as that is just called "Crafting"/"Craft"/"Crafting system".
+

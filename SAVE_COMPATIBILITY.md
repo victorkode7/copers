@@ -105,8 +105,8 @@ an 80% reduction. At matching tiers and levels, it produces four times the
 mill's log consumption, leaving 75% of log production as surplus. For example,
 T0 level-10 buildings produce 7,200 Logs/hour and 900 Planks/hour; the mill uses
 1,800 Logs/hour and leaves 5,400 Logs/hour. Town Hall bonuses scale both equally.
-Mill purchases require an owned Outpost; level upgrades do not require specific
-Outpost levels. The first mill prestige still requires an Outpost at T1.
+Mill purchases require an owned Outpost; level upgrades and the first mill
+prestige do not require specific Outpost levels or prestige tiers.
 Blocked owned-building actions remain visible with a requirement preview.
 An Outpost behind its mill can be upgraded to restore the intended log surplus.
 Purchases can still spend saved logs.
@@ -144,7 +144,7 @@ The Smeltery converts 10 Ore into each whole Bar at 10 Bars/hour per production
 step (`tier * 10 + level`), before Town productivity. Its hourly output and upgrade
 gains remain whole numbers with the Town Hall's 10% productivity increments.
 At matching levels, Mine output is 3.6 times the Smeltery's Ore consumption.
-Upgrades require matching
+Upgrades are independent of
 Mine progress and cost 10,000 base gold, 100 Planks and 10 Bars, with normal
 15% level-based gold growth. Ten levels are configured; no prestige is set yet.
 Full Bar storage or missing Ore pauses conversion without wasting input or
