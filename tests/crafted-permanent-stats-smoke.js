@@ -20,7 +20,7 @@
         const items = itemData.items.filter(item => item.crafting && ['armor','wand','bow','melee'].includes(item.equipmentType));
         state.skillRanks = {}; state.level = 0; state.skillPoints = 0; state.experience = 0;
         state.upgrades = {strength:0,haste:0,evasion:0}; state.gear = createEmptyGear();
-        state.ownedItemIds = []; state.itemCrafts = {};
+        state.ownedItemIds = []; state.itemCrafts = {}; state.townProgress = TownProgression.defaults();
         state.gold = 10000000; state.materials = Object.fromEntries(Object.keys(materialNames).map(id => [id,100000]));
         state.currentView = 'town'; state.isInTown = true; state.combatPaused = false;
         resetMonsterStates(currentMap()); state.playerHp = getPlayerMaxHealth(); state.playerMana = 0;
@@ -33,7 +33,9 @@
         state.ownedItemIds = ['testDropHelm']; renderCrafting();
         check('ordinary gear does not unlock crafted stats', statsTab.hidden);
         state.ownedItemIds = [items[0].id]; renderCrafting();
-        check('owning eligible gear unlocks the tab without interrupting recipes', !statsTab.hidden && !document.querySelector('.crafting-mode-tabs').hidden && ItemCrafting.mode() === 'recipes');
+        check('owning eligible gear leaves Anvil locked until building purchase', statsTab.hidden);
+        state.townProgress.buildings.anvil = {tier:0,level:1}; renderCrafting();
+        check('owning the Anvil unlocks the tab without interrupting recipes', !statsTab.hidden && !document.querySelector('.crafting-mode-tabs').hidden && ItemCrafting.mode() === 'recipes');
         statsTab.click();
         check('unlocked crafted stats can be opened', !document.getElementById('statCrafting').hidden && document.getElementById('recipeCrafting').hidden);
         check('the crafted stats list contains only owned eligible equipment', document.querySelectorAll('[data-reroll-item]').length === 1 && document.querySelector('[data-reroll-item]').dataset.rerollItem === items[0].id);
@@ -46,7 +48,7 @@
             check('losing the selected item hides it and selects an owned item', document.querySelectorAll('[data-reroll-item]').length === 1 && document.querySelector('[data-reroll-item][aria-pressed=true]').dataset.rerollItem === items[0].id && document.getElementById('rerollItemName').textContent === items[0].name);
         }
         state.ownedItemIds = []; renderCrafting();
-        check('removing eligible ownership returns safely to recipes', statsTab.hidden && ItemCrafting.mode() === 'recipes' && !document.getElementById('recipeCrafting').hidden);
+        check('removing eligible equipment keeps the built Anvil available', !statsTab.hidden && !document.getElementById('rerollEmpty').hidden);
         const dropped = itemById.testDropHelm, beforeDrop = {crafting:dropped.crafting,equipmentType:dropped.equipmentType,tier:dropped.tier,rarity:dropped.rarity};
         Object.assign(dropped,{crafting:JSON.parse(JSON.stringify(items[0].crafting)),equipmentType:items[0].equipmentType,tier:items[0].tier,rarity:'unique'});
         state.ownedItemIds = [dropped.id]; renderCrafting();

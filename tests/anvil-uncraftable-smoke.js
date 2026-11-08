@@ -1,0 +1,64 @@
+(async function () {
+    const preview = new URL(document.currentScript.src).searchParams.has('preview');
+    const checks = [], $ = id => document.getElementById(id);
+    const check = (name, ok) => { checks.push((ok ? 'PASS ' : 'FAIL ') + name); if (!ok) throw new Error(name); };
+    const frame = () => new Promise(resolve => requestAnimationFrame(resolve));
+    try {
+        state.townProgress = TownProgression.defaults(); state.townProgress.buildings.anvil = {tier:0,level:1};
+        await document.fonts.ready; clearOfflineRecap();
+        const weapon = itemData.items.find(item => item.slot === 'weapon' && item.crafting);
+        const helmetArt = itemData.items.find(item => item.slot === 'helmet' && item.sprite)?.sprite || weapon.sprite;
+        const helmet = {id:'anvilUncraftableHelmet',name:'Uncraftable Helmet',slot:'helmet',equipmentType:'armor',tier:3,
+            rarity:'rare',sprite:helmetArt,stats:{health:50,evasion:10}};
+        itemData.items.push(helmet); itemById[helmet.id] = helmet;
+        state.skillRanks = {}; state.level = 0; state.skillPoints = 0; state.experience = 0; state.experienceRemainder = 0;
+        state.gear = createEmptyGear(); state.gear.weapon = weapon.id; state.gear.helmet = helmet.id;
+        state.ownedItemIds = [weapon.id, helmet.id]; state.itemCrafts = {}; state.itemRollSaves = {};
+        state.gold = 1000000; state.materials = Object.fromEntries(Object.keys(materialNames).map(id => [id,100000]));
+        state.currentView = 'town'; state.isInTown = true; state.combatPaused = true;
+        ItemCrafting.setMode('stats'); render();
+        const choose = slot => document.querySelector('[data-reroll-slot="' + slot + '"]').click();
+        choose('weapon');
+        const statPanel = document.querySelector('.reroll-item-panel'), recipePanel = document.querySelector('.reroll-recipe-panel');
+        const normalWidth = statPanel.getBoundingClientRect().width + recipePanel.getBoundingClientRect().width;
+        const balances = () => JSON.stringify([state.gold,state.materials,state.itemCrafts,state.itemRollSaves]);
+        const before = balances(); choose('helmet'); await frame();
+        const panel = $('rerollUncraftable');
+        check('selecting non-rerollable equipped gear shows one overview', !panel.hidden && panel.getBoundingClientRect().width > 0);
+        check('both normal stat and reroll panels are hidden', statPanel.getClientRects().length === 0 && recipePanel.getClientRects().length === 0);
+        check('the equipment selector remains usable', $('rerollEquippedSlots').getBoundingClientRect().width > 0 && $('rerollGearSlot').getBoundingClientRect().width > 0);
+        check('the overview shows the item icon and name', !!$('rerollUncraftableArt').querySelector('img') && $('rerollUncraftableName').textContent === helmet.name);
+        const typeName = itemData.equipmentTypes.find(type => type.id === helmet.equipmentType)?.name || 'Helmet';
+        check('the overview shows the type without a tier', $('rerollUncraftableMeta').textContent === typeName);
+        check('the overview shows all item stats', [...$('rerollUncraftableStats').children].map(row => row.textContent).join('\n') === Equipment.describe(helmet));
+        const color = getComputedStyle(panel).backgroundColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+        check('the replacement box is grey', color && color[1] === color[2] && color[2] === color[3]);
+        const label = panel.querySelector('.reroll-uncraftable-label');
+        check('Uncraftable is prominently displayed', label.textContent.toLowerCase() === 'uncraftable' && parseFloat(getComputedStyle(label).fontSize) >= 20);
+        if (innerWidth > 900) check('the grey box spans both former panels', panel.getBoundingClientRect().width >= normalWidth);
+        check('reroll and saved-roll actions are disabled', ['rerollEquipment','autoRollEquipment','saveWeaponRoll','restoreWeaponRoll'].every(id => $(id).disabled));
+        check('viewing the item does not spend resources or change rolls', balances() === before);
+        $('rerollGearSort').value = 'name'; $('rerollGearSort').dispatchEvent(new Event('change', {bubbles:true}));
+        check('sorting keeps the selected uncraftable item visible', !panel.hidden && $('rerollUncraftableName').textContent === helmet.name);
+        helmet.stats.health = 75; ItemCrafting.render();
+        check('item stat changes refresh the overview', $('rerollUncraftableStats').textContent.includes('75'));
+        delete helmet.tier; ItemCrafting.render();
+        check('an unspecified tier keeps the type visible', $('rerollUncraftableMeta').textContent === typeName);
+        helmet.tier = 3;
+        choose('weapon');
+        check('selecting rerollable gear restores the usual panels', panel.hidden && statPanel.getClientRects().length > 0 && recipePanel.getClientRects().length > 0 && !$('rerollEquipment').disabled);
+        document.querySelector('[data-auto-roll-stat]').click(); $('autoRollEquipment').click();
+        check('auto rolling starts for the rerollable weapon', $('autoRollEquipment').getAttribute('aria-pressed') === 'true');
+        const beforeAuto = balances(); choose('helmet'); await new Promise(resolve => setTimeout(resolve,650));
+        check('selecting uncraftable gear stops auto rolling before it spends resources', balances() === beforeAuto && $('autoRollEquipment').getAttribute('aria-pressed') === 'false' && !panel.hidden);
+        choose('cape');
+        check('an empty slot does not show the previous uncraftable item', panel.hidden && $('rerollEquippedSlots').getClientRects().length > 0);
+        choose('helmet');
+        check('the layout fits the viewport', document.documentElement.scrollWidth <= innerWidth);
+        check('no browser errors', !smokeErrors.length); checks.push('SMOKE PASSED');
+        if (preview) { panel.scrollIntoView({block:'start'}); await frame(); await frame(); }
+    } catch (error) { checks.push('ERROR ' + error.stack); }
+    const report = document.createElement('pre'); report.id = 'smoke-results'; report.textContent = checks.join('\n');
+    const style = document.createElement('style'); style.textContent = '#smoke-results{display:none}'; document.head.append(style);
+    document.body.append(report);
+}());

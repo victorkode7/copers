@@ -158,6 +158,7 @@ const state = {
     monsterStates: [],
     pendingEruptions: [],
     pendingVoidMissiles: [],
+    pendingReapAttacks: [],
     monsterColumns: 1,
     targetMonsterId: null,
     playerHp: basePlayerMaxHealth,
@@ -422,8 +423,20 @@ function presentCombatEvent(event) {
         return;
     }
     if (event.type === 'voidMissileCancelled') {presentVoidMissileCancelled(event);return;}
+    if (event.type === 'reapCleared') {window.ReapSprite?.clear();return;}
     if (document.hidden) return;
     switch (event.type) {
+        case 'attackHitResolved':
+            if (event.landed && event.hit.attack.abilityId === 'reapPreview' && event.hit.role === 'primary' && event.hit.attack.multihit && event.hit.attack.trigger === 'attack' &&
+                event.mapId === state.selectedMap && isCombatView()) {
+                presentMonsterHitBadge(event.monsterId, 'MULTI-HIT', true);
+            }
+            break;
+        case 'reapStarted':
+            if (event.mapId === state.selectedMap && isCombatView() && combatEffectEnabled('abilities')) {
+                window.ReapSprite?.show(event.originId, {targetIds: event.targetIds, angle: event.angle});
+            }
+            break;
         case 'levelUp':
             triggerLevelUpEffect(event);
             break;
@@ -684,7 +697,8 @@ function refreshMasteryMonsters(previousDefinitions) {
         const previous=byId.get(definition.id);
         return previous?{...previous,hp:Math.min(definition.health,previous.hp)}:fresh[index];
     });
-    state.pendingEruptions=[];state.pendingVoidMissiles=[];
+    state.pendingEruptions=[];state.pendingVoidMissiles=[];state.pendingReapAttacks=[];
+    emitCombatEvent('reapCleared');
     resetVoidMissilePresentation();
     if(!state.monsterStates.some(monster=>monster.id===state.targetMonsterId))state.targetMonsterId=definitions[0]?.id||null;
     combatNeedsFullRender=true;combatLootSignature=null;syncLegacyEnemyState();
@@ -739,6 +753,8 @@ function resetMonsterStates(map = currentMap()) {
     monsterDefinitionCache.delete(map);
     state.pendingEruptions = [];
     state.pendingVoidMissiles = [];
+    state.pendingReapAttacks = [];
+    emitCombatEvent('reapCleared');
     resetVoidMissilePresentation();
     state.monsterStates = createMonsterStates(map);
     state.targetMonsterId = monsterDefinitions(map)[0].id;
@@ -1727,6 +1743,7 @@ function createGameSave() {
         monsterStates: state.monsterStates,
         pendingEruptions: state.pendingEruptions,
         pendingVoidMissiles: state.pendingVoidMissiles,
+        pendingReapAttacks: state.pendingReapAttacks,
         monsterColumns: state.monsterColumns,
         targetMonsterId: state.targetMonsterId,
         playerHp: state.playerHp,
@@ -1907,7 +1924,7 @@ function parseGameSave(rawSave) {
     if(!window.DeveloperTools){saved.developerItemsEnabled=false;saved.developerTravelEnabled=false;}
     if(retiredTownBattle){
         saved.enemyHp=mapData.find(map=>map.id===saved.selectedMap).health;saved.enemyRespawnRemaining=0;
-        saved.monsterStates=[];saved.pendingEruptions=[];saved.pendingVoidMissiles=[];saved.targetMonsterId=null;saved.attackTimer=0;
+        saved.monsterStates=[];saved.pendingEruptions=[];saved.pendingVoidMissiles=[];saved.pendingReapAttacks=[];saved.targetMonsterId=null;saved.attackTimer=0;
         saved.voidCharges=0;saved.gatheringPower={stacks:0,progress:0,remaining:0};
         saved.furyStacks=0;saved.furyRemaining=0;saved.furyDecaying=false;saved.shieldStacks=0;
     }
@@ -2002,6 +2019,15 @@ function parseGameSave(rawSave) {
         (!Array.isArray(saved.pendingVoidMissiles) || !saved.pendingVoidMissiles.every(hit => hit &&
             typeof hit.targetId === 'string' && Number.isFinite(hit.damage) && hit.damage > 0 &&
             Number.isFinite(hit.remaining) && hit.remaining > 0)) ||
+        (!Array.isArray(saved.pendingReapAttacks) || !saved.pendingReapAttacks.every(attack => attack &&
+            typeof attack.mapId === 'string' && mapData.some(map => map.id === attack.mapId) &&
+            (attack.arrowTargetId === null || typeof attack.arrowTargetId === 'string') &&
+            (attack.originId === undefined || typeof attack.originId === 'string') &&
+            (attack.fromKill === undefined || typeof attack.fromKill === 'boolean') &&
+            (attack.multihit === undefined || typeof attack.multihit === 'boolean') &&
+            Array.isArray(attack.targetIds) && attack.targetIds.length <= 4 &&
+            attack.targetIds.every(id => typeof id === 'string') && new Set(attack.targetIds).size === attack.targetIds.length &&
+            Number.isFinite(attack.remaining) && attack.remaining > 0 && attack.remaining <= 0.2)) ||
         (saved.pendingEruptions !== undefined && (!Array.isArray(saved.pendingEruptions) ||
             !saved.pendingEruptions.every(hit => hit && typeof hit.targetId === 'string' &&
                 Number.isFinite(hit.damage) && hit.damage > 0 &&
@@ -2117,6 +2143,11 @@ function applyGameSave(saved) {
     state.pendingVoidMissiles = selectedMapChanged ? [] : saved.pendingVoidMissiles
         .filter(hit => state.monsterStates.some(monster => monster.id === hit.targetId))
         .map(hit => ({...hit}));
+    state.pendingReapAttacks = selectedMapChanged ? [] : saved.pendingReapAttacks
+        .filter(attack => attack.mapId === state.selectedMap)
+        .map(attack => ({...attack, multihit: !attack.fromKill && attack.multihit === true, originId: attack.originId || attack.arrowTargetId || attack.targetIds[0],
+            targetIds: attack.targetIds.filter(id => state.monsterStates.some(monster => monster.id === id)).slice(0, 4)}));
+    emitCombatEvent('reapCleared');
     state.targetMonsterId = !selectedMapChanged && monsterDefinitions(currentMap())
         .some(definition => definition.id === saved.targetMonsterId)
         ? saved.targetMonsterId
@@ -3793,7 +3824,7 @@ function getMonsterDamageTakenMultiplier(monster) {
     return CombatHealth.getMonsterDamageTakenMultiplier(state, monster, power, getSkillNodeRank('singledOff')>0);
 }
 
-function applyDamageToMonster(monster, damage, damageType = 'physical', abilityId = null) {
+function applyDamageToMonster(monster, damage, damageType = 'physical', abilityId = null, hit = null) {
     // Scale at the hit so forks and arrows generated by Multishot each receive
     // this bonus once, while their other attack procs keep the original damage.
     if (damageType === 'physical' && bowAttackAbilityIds.has(abilityId)) damage *= getBowDamageMultiplier();
@@ -3807,13 +3838,18 @@ function applyDamageToMonster(monster, damage, damageType = 'physical', abilityI
     recordMonsterDamage(result.damageDealt, damageType, abilityId);
     syncLegacyEnemyState();
     if (result.died) {
+        if (damageType === 'physical' && abilityId === 'reapPreview' && getSkillNodeRank('reapingEcho') > 0) {
+            queueReapAttack(monster.id, {fromKill: true});
+        }
         defeatEnemy(monster);
         return true;
     }
     // Non-poison damage can bring an already-poisoned enemy into execute range.
     // Poison ticks check after updating every stack's remaining lifetime.
     if (damageType !== 'poison' && tryExecutePoison(monster)) return true;
-    if ((damageType === 'physical' || damageType === 'spell') && abilityId) {
+    if (hit && combatAbilities.applyDamageHitEffects(monster, damage, hit)) {
+        if (monster.hp <= 0) return true;
+    } else if ((damageType === 'physical' || damageType === 'spell') && abilityId) {
         if (SkillDescriptions.getAbilityTargeting(skillNodeDefinition(abilityId)) === 'singleTarget') {
             // Bleed stores the hit before target modifiers; its ticks apply the
             // current vulnerability once, just like Poison and burning damage.
@@ -4238,6 +4274,14 @@ elements.resumeCombat.addEventListener('click', function() {
 // them at call time so build changes and rule replacements remain visible.
 // The ability engine owns its stateful rules and reentrancy. Host callbacks
 // resolve live stats and route data events without owning ability calculations.
+function queueReapAttack(originId, options) {
+    return combatAbilities.queueReapAttack(originId, options);
+}
+
+function tickPendingReapAttacks(elapsed) {
+    return combatAbilities.tickPendingReapAttacks(elapsed);
+}
+
 const combatAbilities = CombatAbilities.create({
     state,
     random: () => Math.random(),
@@ -4248,7 +4292,9 @@ const combatAbilities = CombatAbilities.create({
     },
     rules: {
         activeMonster: () => activeMonster(),
-        applyDamageToMonster: (monster, damage, damageType, abilityId) => applyDamageToMonster(monster, damage, damageType, abilityId),
+        currentMap: () => currentMap(),
+        selectReapTargets: (originId, options) => ReapTargeting.select(state.monsterStates, originId, state.monsterColumns, options),
+        applyDamageToMonster: (monster, damage, damageType, abilityId, hit) => applyDamageToMonster(monster, damage, damageType, abilityId, hit),
         applyDamageToPlayer: (damage, source) => applyDamageToPlayer(damage, source),
         applyPlayerHealing: (amount) => applyPlayerHealing(amount),
         emitCombatEvent: (type, details) => emitCombatEvent(type, details),
@@ -4327,6 +4373,8 @@ const combatSimulation = CombatSimulation.create({
         clearElementalDebuffs: (monster) => clearElementalDebuffs(monster),
         tickPendingEruptions: (elapsed) => tickPendingEruptions(elapsed),
         tickPendingVoidMissiles: (elapsed) => tickPendingVoidMissiles(elapsed),
+        tickPendingReapAttacks: (elapsed) => tickPendingReapAttacks(elapsed),
+        performPlayerAttack: () => combatAbilities.performPlayerAttack(),
         tryShieldSlam: () => tryShieldSlam(),
         tickPlayerMana: (elapsed) => tickPlayerMana(elapsed),
         tickMonsterPoison: (monster, elapsed) => tickMonsterPoison(monster, elapsed),
@@ -4337,18 +4385,7 @@ const combatSimulation = CombatSimulation.create({
         applyDamageToPlayer: (damage, source) => applyDamageToPlayer(damage, source),
         emitCombatEvent: (type, details) => emitCombatEvent(type, details),
         getAttackSpeed: () => getAttackSpeed(),
-        getDamage: () => getDamage(),
-        getPlayerAttackTargets: () => getPlayerAttackTargets(),
-        getHitChance: (accuracy, evasion) => getHitChance(accuracy, evasion),
-        getPlayerAccuracy: () => getPlayerAccuracy(),
-        showMonsterHitBadge: (id, label, isMultiHit) => showMonsterHitBadge(id, label, isMultiHit),
-        applyDamageToMonster: (monster, damage, damageType) => applyDamageToMonster(monster, damage, damageType),
-        tryApplyBleed: (monster, damage) => tryApplyBleed(monster, damage),
-        tryApplyPoison: (monster) => tryApplyPoison(monster),
-        triggerShockwaveSlash: (monster, damage) => triggerShockwaveSlash(monster, damage),
-        triggerVolcanicEruption: (monster, damage) => triggerVolcanicEruption(monster, damage),
-        triggerAttackArrowSkills: (monster, damage) => triggerAttackArrowSkills(monster, damage),
-        triggerAttackSpells: () => triggerAttackSpells()
+
     }
 });
 
@@ -4427,7 +4464,7 @@ function processCombatBacklog() {
         // retained and continued in another task so input and painting can run.
         for (let steps = 0; pendingCombatSeconds + 1e-8 >= gameTickSeconds && steps < 250; steps++) {
             let elapsed = gameTickSeconds;
-            if (state.combatPaused && !TownProgression.hasConverters(state) && !state.furyStacks && !state.gatheringPower?.stacks && !state.pendingEruptions.length && !state.pendingVoidMissiles.length && state.monsterStates.every(monster => !monster.poisonStacks.length && !monster.bleed && !monster.rimeBrand && !monster.emberBrand)) {
+            if (state.combatPaused && !TownProgression.hasConverters(state) && !state.furyStacks && !state.gatheringPower?.stacks && !state.pendingEruptions.length && !state.pendingVoidMissiles.length && !state.pendingReapAttacks.length && state.monsterStates.every(monster => !monster.poisonStacks.length && !monster.bleed && !monster.rimeBrand && !monster.emberBrand)) {
                 // Once Fury, DOTs, travelling eruptions and missiles finish, only respawns
                 // can change a dead player's state. Preserve 100 ms boundaries.
                 const nextRespawn = Math.min(...state.monsterStates

@@ -8,10 +8,10 @@
     <link rel="stylesheet" href="css/nav.css">
     <link rel="stylesheet" href="css/app-nav.css">
     <link rel="stylesheet" href="css/game.css?v=20261108-ui1">
-    <link rel="stylesheet" href="css/town-page.css?v=20261108-ui1">
+    <link rel="stylesheet" href="css/town-page.css?v=20261108-ui2">
     <link rel="stylesheet" href="css/equipment-effects.css?v=1">
     <link rel="stylesheet" href="css/equipment-sprite-preview.css?v=3">
-    <link rel="stylesheet" href="css/equipment-crafting.css?v=20261108-ui1">
+    <link rel="stylesheet" href="css/equipment-crafting.css?v=20261108-anvil1">
     <link rel="stylesheet" href="css/mastery.css?v=20261108-ui1">
     <link rel="stylesheet" href="css/live-tooltips.css?v=1">
     <link rel="stylesheet" href="css/elemental-skills.css?v=20261027-10">
@@ -239,6 +239,14 @@
                         <p id="rerollStatus" class="reroll-status" role="status" aria-live="polite"></p>
                         <h3>Potential rolls</h3><ul id="potentialRolls" class="potential-rolls"></ul>
                     </section>
+                    <section id="rerollUncraftable" class="reroll-uncraftable" aria-labelledby="rerollUncraftableName" hidden>
+                        <div class="reroll-uncraftable-heading">
+                            <div id="rerollUncraftableArt" class="reroll-uncraftable-art"></div>
+                            <div><h2 id="rerollUncraftableName"></h2><p id="rerollUncraftableMeta"></p></div>
+                        </div>
+                        <ul id="rerollUncraftableStats" class="reroll-uncraftable-stats"></ul>
+                        <p class="reroll-uncraftable-label">Uncraftable</p>
+                    </section>
                     <section class="reroll-gear-selection" aria-labelledby="rerollGearHeading">
                         <div class="reroll-gear-heading"><h2 id="rerollGearHeading">Equipment</h2><span id="rerollSlotSummary" class="subtle"></span></div>
                         <div id="rerollEquippedSlots" class="reroll-equipment-slots" role="group" aria-label="Equipped equipment slots"></div>
@@ -430,9 +438,9 @@
     <script src="js/combat-webgl-effects.js?v=6"></script>
     <script src="js/items.js?v=20261101-1"></script>
     <script src="js/item-system.js?v=20261031-3"></script>
-    <script src="js/skill-tree.js?v=20261027-11"></script>
+    <script src="js/skill-tree.js?v=20261109-reap2"></script>
     <script src="js/skill-stat-compat.js?v=20261026-7"></script>
-    <script src="js/skill-descriptions.js?v=20261028-1"></script>
+    <script src="js/skill-descriptions.js?v=20261108-reap1"></script>
     <script src="js/skill-sprites.js?v=20261021-13"></script>
     <script src="js/equipment-effects.js?v=1"></script>
     <script src="js/world-content.js?v=20261101-1"></script>
@@ -448,23 +456,25 @@
     <script src="js/bleed.js?v=20261106-2"></script>
     <script src="js/spell-skills.js?v=20261106-5"></script>
     <script src="js/elemental-skills.js?v=20261106-4"></script>
-    <script src="js/damage-breakdown.js?v=20261027-6"></script>
-    <script src="js/save-compat.js?v=20261102-1"></script>
+    <script src="js/damage-breakdown.js?v=20261108-reap1"></script>
+    <script src="js/save-compat.js?v=20261108-reap1"></script>
     <script src="js/equipment-sprite-preview.js?v=3"></script>
-    <script src="js/equipment-crafting.js?v=20261108-ui1"></script>
+    <script src="js/equipment-crafting.js?v=20261109-rolls1"></script>
     <script src="js/progression.js?v=1"></script>
     <script src="js/live-tooltips.js?v=1"></script>
-    <script src="js/town-content.js?v=32"></script>
+    <script src="js/town-content.js?v=36"></script>
     <script src="js/town-progression.js?v=13"></script>
-    <script src="js/combat-abilities.js?v=1"></script>
-    <script src="js/combat-simulation.js?v=1"></script>
+    <script src="js/combat-abilities.js?v=20261109-hit-context1"></script>
+    <script src="js/combat-simulation.js?v=20261109-hit-context1"></script>
+    <script src="js/reap-targeting.js?v=20261108-reap1"></script>
+    <script src="js/scythe-reap-effect.js?v=20261108-reap1"></script>
     <script src="js/notification-windows.js?v=20261108-ui1"></script>
     <script src="js/level-up-celebration.js?v=20261108-ui1"></script>
-    <script src="js/game.js?v=20261108-ui1"></script>
-    <script src="js/town-page.js?v=20261108-ui1"></script>
-    <script src="js/map-mastery.js?v=20261108-ui1"></script>
+    <script src="js/game.js?v=20261109-hit-context1"></script>
+    <script src="js/town-page.js?v=20261108-ui3"></script>
+    <script src="js/map-mastery.js?v=20261108-reap1"></script>
     <script src="js/skill-builds.js?v=20261031-1"></script>
-    <script src="js/game-profiles.js?v=20261102-1"></script>
+    <script src="js/game-profiles.js?v=20261108-reap1"></script>
     <script src="js/offline-play.js?v=20261025-1"></script>
 </body>
 </html>

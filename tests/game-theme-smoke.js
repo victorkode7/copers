@@ -53,7 +53,7 @@ const gameThemePreview = new URL(document.currentScript.src).searchParams.get('s
         state.itemCrafts[weapon.id]=Equipment.craftingPool(weapon,itemData).slice(0,weapon.crafting.slots).map(roll=>({stat:roll.stat,value:roll.min}));
         for(const slot of Object.keys(state.gear))state.gear[slot]=equipment.find(item=>item.slot===slot)?.id||null;
         inventoryCategory='all';
-        state.townProgress=TownProgression.defaults();
+        state.townProgress=TownProgression.defaults();state.townProgress.buildings.anvil={tier:0,level:1};
         Object.assign(state.townProgress.buildings,{townHall:{tier:3,level:4},lumberOutpost:{tier:1,level:4},sawMill:{tier:1,level:6},menagerie:{tier:1,level:3},timberDepot:{tier:0,level:2},slopesTownHall:{tier:1,level:5},mine:{tier:1,level:4},smeltery:{tier:0,level:3}});
         state.townProgress.resources={wood:12500,planks:3200,ore:48000,bars:750};
         combatStatCache=null;invalidateSkillBonusCache();resetMonsterStates(map);state.playerHp=getPlayerMaxHealth();state.manaCapacity=getPlayerMaxMana();state.playerMana=state.manaCapacity*.65;

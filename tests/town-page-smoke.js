@@ -9,9 +9,10 @@
         state.townProgress=TownProgression.defaults();state.gold=12345;state.materials.gel=25;state.materials.hide=8;state.currentView='map';state.isInTown=false;state.combatPaused=true;resetCombatClock();clearOfflineRecap();render();
         const pages=['mapButton','townButton','upgradesButton','inventoryButton'],positions=pages.map(id=>$(id).getBoundingClientRect());$('townPageButton').hidden=true;
         check('Town does not shift the existing game navigation',pages.every((id,index)=>{const rect=$(id).getBoundingClientRect();return Math.abs(rect.left-positions[index].left)<1&&Math.abs(rect.top-positions[index].top)<1;}));$('townPageButton').hidden=false;
-        const destination=JSON.stringify([state.selectedMap,state.selectedWorld,state.kills]),panels=[elements.worldPanel,document.querySelector('.stats-panel'),document.querySelector('.loot-panel'),document.querySelector('.damage-breakdown')];
+        const destination=JSON.stringify([state.selectedMap,state.selectedWorld,state.kills]),panels=[elements.worldPanel,document.querySelector('.stats-panel'),document.querySelector('.combat-report-stack'),document.querySelector('.damage-breakdown')];
+        const combatBounds=document.querySelector('.combat-panel').getBoundingClientRect();
         $('townPageButton').click();await pause();
-        check('Town opens its own full-width page',state.currentView==='townPage'&&!$('townPageView').hidden&&elements.mapView.hidden&&Math.abs(document.querySelector('.adventure-page').getBoundingClientRect().width-document.querySelector('.adventure-layout').getBoundingClientRect().width)<1);
+        check('Town opens at the same horizontal position and width as combat',state.currentView==='townPage'&&!$('townPageView').hidden&&elements.mapView.hidden&&Math.abs($('townPageView').getBoundingClientRect().left-combatBounds.left)<1&&Math.abs($('townPageView').getBoundingClientRect().width-combatBounds.width)<1);
         check('the usual left and right side panels are hidden in Town',panels.every(panel=>panel.getClientRects().length===0));
         const resourceBox=document.querySelector('.town-resources').getBoundingClientRect(),sidebar=document.querySelector('.town-worlds').getBoundingClientRect(),grid=$('townBuildingGrid').getBoundingClientRect();
         check('resources span the top with worlds on the left and buildings beside them',resourceBox.bottom<=sidebar.top+1&&sidebar.left<grid.left&&resourceBox.width>sidebar.width+grid.width);

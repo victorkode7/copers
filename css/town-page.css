@@ -7,7 +7,6 @@
 .idle-adventure.town-page-open .app-nav { background:#141b1b; border-color:#343e3e; }
 .idle-adventure.town-page-open .app-nav a { color:#bcc7c4; }
 .idle-adventure.town-page-open .app-nav a:is(:hover,[aria-current="page"]) { background:#ffffff0b; color:#dce4dc; }
-.idle-adventure.town-page-open .adventure-layout { grid-template-columns:minmax(0,1fr); grid-template-areas:"main"; }
 .idle-adventure.town-page-open .side-panel-stack,.idle-adventure.town-page-open .combat-report-stack { display:none; }
 .idle-adventure .town-page { --town-accent:#b5d296; --town-surface-rgb:24 43 29; --town-border:#64775a; --town-muted:#c0cfb0; padding:0; overflow:hidden; border-color:var(--town-border); }
 .town-resources { display:flex; align-items:center; gap:25px; min-height:112px; padding:22px 26px; border-bottom:1px solid var(--town-border); background:linear-gradient(110deg,rgb(var(--town-surface-rgb)/.94),rgb(var(--town-surface-rgb)/.78)); }

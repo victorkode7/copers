@@ -3,6 +3,7 @@
     const clone = value => JSON.parse(JSON.stringify(value)), near = (a, b) => Math.abs(a - b) < 1e-6;
     const originalRandom = Math.random, originalSetItem = Storage.prototype.setItem;
     try {
+        state.townProgress = TownProgression.defaults(); state.townProgress.buildings.anvil = {tier:0,level:1};
         const names = ['Ice helmet','Ice body','Ice legs','Ice wand','Opal bow','blade'];
         const items = names.map(name => itemData.items.find(item => item.name === name)), wand = items[3];
         check('all six selected pieces have valid editable reroll rules', items.every(item => item.crafting?.slots === 2) && Equipment.validate(itemData).length === 0);

@@ -5,7 +5,7 @@
         await document.fonts.ready;state.combatPaused=true;resetCombatClock();
         check('optional module owns developer UI and a separate save slot',!!window.DeveloperTools&&saveKey==='idleAdventureSave:development'&&!!$('developerTools')&&!!$('developerTravel'));
         const normal=JSON.stringify({...createGameSave(),profileEnvironment:'playtest',developerItemsEnabled:false,developerTravelEnabled:false,gold:12345});localStorage.setItem('idleAdventureSave',normal);
-        state.gold=0;state.materials=Object.fromEntries(Object.keys(materialNames).map(id=>[id,0]));state.townProgress=TownProgression.defaults();
+        state.gold=0;state.materials=Object.fromEntries(Object.keys(materialNames).map(id=>[id,0]));state.townProgress=TownProgression.defaults();state.townProgress.buildings.anvil={tier:0,level:1};
         check('developer mode is initially disabled',!state.developerTravelEnabled&&!GameResources.canSpend(state,{gold:1}));
         check('enabling mode also makes admin equipment available',DeveloperTools.setMode(true)&&itemData.items.filter(item=>item.developerOnly).every(item=>ownsItem(item.id)));
         check('all spending-resource IDs are covered without refilling balances',GameResources.canSpend(state,{gold:999999,gel:999999,futureMaterial:999999})&&GameResources.spend(state,{gold:100,futureMaterial:50})&&state.gold===0&&!Object.hasOwn(state.materials,'futureMaterial'));

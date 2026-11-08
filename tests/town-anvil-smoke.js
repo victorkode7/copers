@@ -1,0 +1,42 @@
+(async function(){
+    const checks=[], $=id=>document.getElementById(id);
+    const check=(name,ok)=>{checks.push((ok?'PASS ':'FAIL ')+name);if(!ok)throw new Error(name);};
+    const originalWrite=Storage.prototype.setItem;
+    try{
+        await document.fonts.ready;
+        state.townProgress=TownProgression.defaults();state.gold=1000000;
+        state.townProgress.buildings.townHall={tier:1,level:10};
+        state.townProgress.resources={wood:10000,planks:10000,bars:499};
+        const before=JSON.stringify([state.gold,state.townProgress]);
+        check('Town Hall T1 rank-up requires all 500 bars',!TownProgression.apply(state,'prestige','townHall')&&JSON.stringify([state.gold,state.townProgress])===before);
+        state.townProgress.resources.bars=500;
+        check('Town Hall T1 to T2 spends only 500 bars and 2000 planks',TownProgression.apply(state,'prestige','townHall')&&state.townProgress.buildings.townHall.tier===2&&state.townProgress.resources.bars===0&&state.townProgress.resources.planks===8000&&state.townProgress.resources.wood===10000&&state.gold===1000000);
+        const weapon=itemData.items.find(item=>item.slot==='weapon'&&item.crafting);
+        state.ownedItemIds=[weapon.id];state.gear=createEmptyGear();state.gear.weapon=weapon.id;
+        state.itemCrafts={};state.itemRollSaves={};state.materials=Object.fromEntries(Object.keys(materialNames).map(id=>[id,100000]));
+        state.currentView='town';state.isInTown=true;state.combatPaused=true;clearOfflineRecap();resetCombatClock();
+        ItemCrafting.setMode('stats');render();
+        const tab=document.querySelector('[data-crafting-mode="stats"]');
+        check('eligible equipment alone does not unlock Anvil',tab.hidden&&$('statCrafting').hidden&&!$('recipeCrafting').hidden);
+        const locked=JSON.stringify([state.gold,state.materials,state.itemCrafts,state.itemRollSaves]);
+        check('locked Anvil rejects reroll and saved-roll actions',!ItemCrafting.reroll(weapon.id).ok&&!ItemCrafting.saveRoll(weapon.id).ok&&!ItemCrafting.restoreRoll(weapon.id).ok&&JSON.stringify([state.gold,state.materials,state.itemCrafts,state.itemRollSaves])===locked);
+        $('townPageButton').click();
+        $('townWorldList').children[1].click();
+        const plot=$('townBuildingGrid').children[3];
+        check('W2 plot 4 contains Anvil',plot.dataset.building==='anvil'&&plot.querySelector('h3').textContent==='Anvil');
+        state.townProgress.resources.bars=100;render();
+        const buy=plot.querySelector('button'),prior=JSON.stringify([state.gold,state.townProgress]);
+        Storage.prototype.setItem=function(key,value){if(key===saveKey)throw new Error('Storage full');return originalWrite.call(this,key,value);};
+        buy.click();Storage.prototype.setItem=originalWrite;
+        check('failed Anvil purchase preserves costs and ownership',JSON.stringify([state.gold,state.townProgress])===prior);
+        buy.click();
+        check('buying Anvil persists ownership',!!state.townProgress.buildings.anvil&&!!parseGameSave(localStorage.getItem(saveKey)).townProgress.buildings.anvil);
+        $('townButton').click();ItemCrafting.setMode('stats');render();
+        check('purchased Anvil unlocks its crafting page',!tab.hidden&&!$('statCrafting').hidden&&$('recipeCrafting').hidden);
+        check('purchased Anvil permits rerolling',ItemCrafting.reroll(weapon.id).ok);
+        delete state.townProgress.buildings.anvil;render();
+        check('removing Anvil ownership returns to recipes',tab.hidden&&$('statCrafting').hidden&&!$('recipeCrafting').hidden);
+        check('no runtime errors',!smokeErrors.length);checks.push('SMOKE PASSED');
+    }catch(error){checks.push('ERROR '+error.stack);}finally{Storage.prototype.setItem=originalWrite;}
+    const report=document.createElement('pre');report.id='smoke-results';report.textContent=checks.join('\n');document.body.append(report);
+}());

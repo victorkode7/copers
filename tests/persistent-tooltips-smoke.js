@@ -3,6 +3,7 @@
     const checks=[],$=id=>document.getElementById(id),check=(name,ok)=>{checks.push((ok?'PASS ':'FAIL ')+name);if(!ok)throw new Error(name);};
     const frame=()=>new Promise(resolve=>requestAnimationFrame(resolve));
     try {
+        state.townProgress = TownProgression.defaults(); state.townProgress.buildings.anvil = {tier:0,level:1};
         state.currentView='town';state.isInTown=true;state.ownedItemIds=[];state.crafted=[];state.gear=createEmptyGear();state.itemCrafts={};state.itemRollSaves={};
         state.materials=Object.fromEntries(Object.keys(materialNames).map(id=>[id,10]));state.gold=1000000;state.combatPaused=true;
         state.tutorials=createTutorialState();state.mapMastery={};resetMonsterStates(currentMap());resetCombatClock();clearOfflineRecap();

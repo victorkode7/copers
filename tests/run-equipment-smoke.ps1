@@ -62,6 +62,7 @@ try {
     $realtime = $realtime -or $TestScript -in @('tests/monster-mastery-smoke.js','tests/mastery-editor-smoke.js')
     $realtime = $realtime -or $TestScript -eq 'tests/mastery-gestures-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/equipment-crafting-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/anvil-uncraftable-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/weapon-roll-save-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/auto-reroll-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/persistent-tooltips-smoke.js'
@@ -78,7 +79,7 @@ try {
     $realtime = $realtime -or $TestScript -eq 'tests/map-selector-lock-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/boss-mastery-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/town-costs-layout-smoke.js'
-    $realtime = $realtime -or $TestScript -eq 'tests/town-storage-smoke.js'
+    $realtime = $realtime -or $TestScript -in @('tests/town-storage-smoke.js','tests/town-anvil-smoke.js')
     $realtime = $realtime -or $TestScript -eq 'tests/town-smeltery-smoke.js'
     $realtime = $realtime -or $TestScript -in @('tests/developer-tools-smoke.js','tests/playtest-build-smoke.js')
     $realtime = $realtime -or $TestScript -eq 'tests/item-crafting-editor-smoke.js'
@@ -112,6 +113,7 @@ try {
     $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-geometry-smoke.js'
     $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-redraw-smoke.js'
     $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-echo-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-integration-smoke.js'
     $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-local-file-smoke.js'
     $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/scythe-reap-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/world-project-load-smoke.js'

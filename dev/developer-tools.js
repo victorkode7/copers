@@ -111,6 +111,7 @@
         document.getElementById('developerCopyPlaytest').disabled=locked;
         document.getElementById('resetTownProgress').disabled=locked;
         document.getElementById('increaseLevelButton').disabled=locked||!active;
+        document.getElementById('previewScytheReap').disabled=locked||!active;
     }
     function mount(){
         if(root)return;
@@ -130,6 +131,11 @@
         tools=node('div');tools.style.cssText='max-width:48rem;padding:.75rem 0';
         const level=node('button','Increase Level by 1','increaseLevelButton');level.type='button';level.className='dev-level-button';
         level.title='Gain one level; skill points respect the boss cap';level.addEventListener('click',increaseLevel);tools.append(level);
+        const preview=node('button','Preview Reap','previewScytheReap');preview.type='button';
+        preview.addEventListener('click',()=>{
+            if(!allows('travel',state))return;document.getElementById('mapButton').click();
+            window.ReapSprite?.ready.then(()=>window.ReapSprite.show(state.targetMonsterId||state.monsterStates[0]?.id));
+        });tools.append(preview);
         const searchLabel=node('label','Find normal equipment');search=node('input',undefined,'developerEquipmentSearch');search.type='search';search.placeholder='Name, slot, or item ID';searchLabel.append(search);
         const pickerLabel=node('label','Equipment');picker=node('select',undefined,'developerEquipmentPicker');picker.style.maxWidth='100%';pickerLabel.append(picker);
         grantButton=node('button','Add equipment','developerGrantItem');deleteButton=node('button','Delete equipment','developerDeleteItem');

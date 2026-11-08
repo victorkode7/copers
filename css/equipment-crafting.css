@@ -5,6 +5,18 @@
 .idle-adventure .crafting-mode-tabs button { padding:6px 11px; background:#172b36; border:1px solid #3c535d; border-radius:7px; color:#bdced7; cursor:pointer; }
 .crafting-mode-tabs button[aria-pressed=true] { border-color:#e4bf73; color:#ffe1a0; background:#3a3020; }
 .reroll-workbench { display:grid; max-width:1100px; margin-inline:auto; grid-template-columns:minmax(200px,2fr) minmax(220px,1.5fr) minmax(230px,1.5fr); gap:8px; align-items:start; }
+.reroll-workbench[hidden],.reroll-workbench > [hidden] { display:none; }
+.reroll-uncraftable { display:flex; flex-direction:column; grid-column:1 / span 2; min-width:0; min-height:520px; box-sizing:border-box; padding:18px; border:1px solid #777; border-radius:4px; background:#3b3b3b; color:#f0f0f0; }
+.reroll-uncraftable-heading { display:flex; align-items:center; gap:14px; min-width:0; }
+.reroll-uncraftable-heading > div:last-child { min-width:0; overflow-wrap:anywhere; }
+.reroll-uncraftable-heading h2 { margin:0 0 8px; color:#fff; font-size:1.2rem; }
+.reroll-uncraftable-heading p { margin:0; color:#d2d2d2; font-size:.8rem; }
+.reroll-uncraftable-art { display:grid; place-items:center; flex:0 0 76px; width:76px; height:76px; }
+.reroll-uncraftable-art .item-sprite,.reroll-uncraftable-art img { width:66px; height:66px; object-fit:contain; image-rendering:pixelated; }
+.reroll-uncraftable-stats { padding:0; margin:24px 0; list-style:none; }
+.reroll-uncraftable-stats li { padding:8px 0; border-bottom:1px solid #ffffff1a; overflow-wrap:anywhere; }
+.reroll-uncraftable-label { margin:auto 0; padding:24px 0; color:#dedede; text-align:center; text-transform:uppercase; font-size:clamp(1.4rem,3vw,2.5rem); font-weight:800; overflow-wrap:anywhere; }
+@media(max-width:620px) { .reroll-uncraftable { grid-column:auto; min-height:340px; padding:12px; } }
 .reroll-item-panel,.reroll-recipe-panel { min-width:0; padding:9px; border:1px solid #3c4d59; border-radius:10px; background:linear-gradient(145deg,#203240,#14252f); }
 .reroll-gear-selection { min-width:0; margin:0; padding:9px; border:1px solid #3c4d59; border-radius:10px; background:linear-gradient(145deg,#203240,#14252f); }
 .reroll-equipment-slots { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); grid-template-areas:"necklace helmet ." "weapon body cape" "ring legs ." ". boots ."; gap:6px; width:min(100%,320px); margin:7px auto 12px; }

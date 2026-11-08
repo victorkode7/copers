@@ -52,7 +52,7 @@
     }
     function transact(nodes) {
         if(SaveCompatibility.protection.blocked||simulatingCombat||!unlocked(currentMap()))return false;
-        const map=currentMap(), current=MasterySystem.record(state,map,worldContent), previousDefinitions=monsterDefinitions(map),before={mastery:state.mapMastery,monsters:state.monsterStates,hp:state.playerHp,mana:state.playerMana,capacity:state.manaCapacity,eruptions:state.pendingEruptions,missiles:state.pendingVoidMissiles,target:state.targetMonsterId};
+        const map=currentMap(), current=MasterySystem.record(state,map,worldContent), previousDefinitions=monsterDefinitions(map),before={mastery:state.mapMastery,monsters:state.monsterStates,hp:state.playerHp,mana:state.playerMana,capacity:state.manaCapacity,eruptions:state.pendingEruptions,missiles:state.pendingVoidMissiles,reaps:state.pendingReapAttacks,target:state.targetMonsterId};
         state.mapMastery={...state.mapMastery,[map.id]:{earned:current.earned,nodes}};
         invalidateSkillBonusCache();if(combatStatCache)combatStatCache.clear();
         try {
@@ -62,7 +62,7 @@
             localStorage.setItem(saveKey,JSON.stringify(createGameSave()));
         } catch(error) {
             state.mapMastery=before.mastery;state.playerHp=before.hp;state.playerMana=before.mana;state.manaCapacity=before.capacity;
-            state.monsterStates=before.monsters;state.pendingEruptions=before.eruptions;state.pendingVoidMissiles=before.missiles;state.targetMonsterId=before.target;syncLegacyEnemyState();
+            state.monsterStates=before.monsters;state.pendingEruptions=before.eruptions;state.pendingVoidMissiles=before.missiles;state.pendingReapAttacks=before.reaps;state.targetMonsterId=before.target;syncLegacyEnemyState();
             invalidateSkillBonusCache();if(combatStatCache)combatStatCache.clear();message='Could not save mastery. Your points and previous choices were kept.';signature='';render();return false;
         }
         signature='';window.render();return true;

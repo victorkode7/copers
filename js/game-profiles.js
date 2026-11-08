@@ -129,11 +129,9 @@
             showCraftableRecipesOnly = false;
             showCraftedRecipes = false;
             lastRenderedGearSignature = null;
-            renderedLoot = renderedLootMessage = undefined;
             recentPlayerDamage = 0;
             clearEnemyDamageIndicator();
             window.LootEffects?.clear();
-            shownTutorialNotifications.clear();
             elements.inventory.querySelectorAll('details[open]').forEach(detail => { detail.open = false; });
             state.mapListExpanded = true;
             window.DeveloperTools?.render();

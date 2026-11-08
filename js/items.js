@@ -309,8 +309,8 @@ window.adventureItems = {
             },
             "recipe": {
                 "materials": {
-                    "material_0e547cc411cb91fce7c30162": 50,
-                    "material_1b4e649727a05b3ad2ec7f8a": 50
+                    "material_0e547cc411cb91fce7c30162": 20,
+                    "material_1b4e649727a05b3ad2ec7f8a": 30
                 }
             }
         },
@@ -374,8 +374,8 @@ window.adventureItems = {
             "description": "",
             "sprite": "assets/items/Big-ass-hammer-07a7d53d.png",
             "stats": {
-                "damage": 25,
-                "damageMultiplier": 1.5
+                "damageMultiplier": 1.4,
+                "multiHit": 0.5
             },
             "recipe": {
                 "materials": {
@@ -616,7 +616,7 @@ window.adventureItems = {
             "crafting": {
                 "slots": 2,
                 "cost": {
-                    "gold": 100,
+                    "gold": 1000,
                     "materials": {
                         "hide": 10
                     }
@@ -631,7 +631,7 @@ window.adventureItems = {
             "description": "",
             "sprite": "assets/items/Rapier-ffc29742.png",
             "stats": {
-                "attackSpeedMultiplier": 1.35
+                "attackSpeedMultiplier": 1.5
             },
             "recipe": null,
             "equipmentType": "melee",
@@ -671,8 +671,8 @@ window.adventureItems = {
             "description": "",
             "sprite": "assets/items/Fish-bow-c57f16bf.png",
             "stats": {
-                "bowDamageIncrease": 0.75,
-                "damage": 30
+                "bowDamageIncrease": 1,
+                "attackSpeedMultiplier": 1.5
             },
             "recipe": null,
             "equipmentType": "bow",
@@ -791,7 +791,8 @@ window.adventureItems = {
             "sprite": "assets/items/Dagger-8e4f5f58.png",
             "stats": {
                 "attackSpeedMultiplier": 1.3,
-                "poisonDamage": 5
+                "poisonDamage": 5,
+                "poisonChance": 0.5
             },
             "recipe": {
                 "materials": {
@@ -818,7 +819,7 @@ window.adventureItems = {
             "sprite": "assets/items/New-Item-f0c349ca.png",
             "stats": {
                 "damage": 20,
-                "attackSpeedMultiplier": 1.2
+                "attackSpeedMultiplier": 1.3
             },
             "recipe": {
                 "materials": {
@@ -829,7 +830,7 @@ window.adventureItems = {
             "crafting": {
                 "slots": 2,
                 "cost": {
-                    "gold": 100,
+                    "gold": 1000,
                     "materials": {
                         "gel": 50
                     }
@@ -846,8 +847,8 @@ window.adventureItems = {
             "description": "",
             "sprite": "assets/items/Vagabond-bow-7c14d5ca.png",
             "stats": {
-                "damage": 25,
-                "damageMultiplier": 1.4
+                "damageMultiplier": 1.4,
+                "bowDamageIncrease": 0.5
             },
             "recipe": null,
             "equipmentType": "bow",
@@ -917,7 +918,6 @@ window.adventureItems = {
             "name": "Purple flame",
             "slot": "weapon",
             "rarity": "unique",
-            "uniqueEffect": "blackSun",
             "description": "",
             "sprite": "assets/items/New-Item-05961094.png",
             "stats": {},
@@ -1265,7 +1265,7 @@ window.adventureItems = {
                     "step": 5
                 }
             ],
-            "gold": 1000
+            "gold": 10000
         },
         {
             "equipmentType": "armor",
@@ -1326,7 +1326,7 @@ window.adventureItems = {
                     "step": 5
                 }
             ],
-            "gold": 5000
+            "gold": 50000
         },
         {
             "equipmentType": "armor",
@@ -1387,7 +1387,7 @@ window.adventureItems = {
                     "step": 5
                 }
             ],
-            "gold": 300
+            "gold": 3000
         },
         {
             "equipmentType": "armor",
@@ -1448,7 +1448,7 @@ window.adventureItems = {
                     "step": 10
                 }
             ],
-            "gold": 400
+            "gold": 4000
         },
         {
             "equipmentType": "armor",
@@ -1509,7 +1509,7 @@ window.adventureItems = {
                     "step": 10
                 }
             ],
-            "gold": 500
+            "gold": 5000
         },
         {
             "equipmentType": "wand",
@@ -1570,7 +1570,7 @@ window.adventureItems = {
                     "step": 0.01
                 }
             ],
-            "gold": 1000
+            "gold": 10000
         },
         {
             "equipmentType": "wand",
@@ -1631,7 +1631,7 @@ window.adventureItems = {
                     "step": 0.01
                 }
             ],
-            "gold": 5000
+            "gold": 50000
         },
         {
             "equipmentType": "wand",
@@ -1692,7 +1692,7 @@ window.adventureItems = {
                     "step": 0.01
                 }
             ],
-            "gold": 300
+            "gold": 3000
         },
         {
             "equipmentType": "wand",
@@ -1753,7 +1753,7 @@ window.adventureItems = {
                     "step": 0.02
                 }
             ],
-            "gold": 400
+            "gold": 4000
         },
         {
             "equipmentType": "wand",
@@ -1814,7 +1814,7 @@ window.adventureItems = {
                     "step": 0.02
                 }
             ],
-            "gold": 500
+            "gold": 5000
         },
         {
             "equipmentType": "bow",
@@ -1875,7 +1875,7 @@ window.adventureItems = {
                     "step": 0.01
                 }
             ],
-            "gold": 1000
+            "gold": 10000
         },
         {
             "equipmentType": "bow",
@@ -1936,7 +1936,7 @@ window.adventureItems = {
                     "step": 0.01
                 }
             ],
-            "gold": 5000
+            "gold": 50000
         },
         {
             "equipmentType": "bow",
@@ -1997,7 +1997,7 @@ window.adventureItems = {
                     "step": 0.01
                 }
             ],
-            "gold": 300
+            "gold": 3000
         },
         {
             "equipmentType": "bow",
@@ -2058,7 +2058,7 @@ window.adventureItems = {
                     "step": 0.02
                 }
             ],
-            "gold": 400
+            "gold": 4000
         },
         {
             "equipmentType": "bow",
@@ -2119,7 +2119,7 @@ window.adventureItems = {
                     "step": 0.02
                 }
             ],
-            "gold": 500
+            "gold": 5000
         },
         {
             "equipmentType": "melee",
@@ -2180,7 +2180,7 @@ window.adventureItems = {
                     "step": 0.01
                 }
             ],
-            "gold": 1000
+            "gold": 10000
         },
         {
             "equipmentType": "melee",
@@ -2241,7 +2241,7 @@ window.adventureItems = {
                     "step": 0.01
                 }
             ],
-            "gold": 5000
+            "gold": 50000
         },
         {
             "equipmentType": "melee",
@@ -2302,7 +2302,7 @@ window.adventureItems = {
                     "step": 0.01
                 }
             ],
-            "gold": 300
+            "gold": 3000
         },
         {
             "equipmentType": "melee",
@@ -2363,7 +2363,7 @@ window.adventureItems = {
                     "step": 0.02
                 }
             ],
-            "gold": 400
+            "gold": 4000
         },
         {
             "equipmentType": "melee",
@@ -2424,7 +2424,7 @@ window.adventureItems = {
                     "step": 0.02
                 }
             ],
-            "gold": 500
+            "gold": 5000
         },
         {
             "equipmentType": "accessory",
@@ -2491,7 +2491,7 @@ window.adventureItems = {
                     "step": 5
                 }
             ],
-            "gold": 1000
+            "gold": 10000
         },
         {
             "equipmentType": "accessory",
@@ -2558,7 +2558,7 @@ window.adventureItems = {
                     "step": 5
                 }
             ],
-            "gold": 5000
+            "gold": 50000
         },
         {
             "equipmentType": "accessory",
@@ -2625,7 +2625,7 @@ window.adventureItems = {
                     "step": 5
                 }
             ],
-            "gold": 300
+            "gold": 3000
         },
         {
             "equipmentType": "accessory",
@@ -2692,7 +2692,7 @@ window.adventureItems = {
                     "step": 10
                 }
             ],
-            "gold": 400
+            "gold": 4000
         },
         {
             "equipmentType": "accessory",
@@ -2759,7 +2759,7 @@ window.adventureItems = {
                     "step": 10
                 }
             ],
-            "gold": 500
+            "gold": 5000
         }
     ]
 };

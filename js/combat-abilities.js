@@ -11,6 +11,110 @@
         } = settings;
         let resolvingShieldSlam = false;
 
+        // Only migrated sources use these profiles. Arrows/spells retain the
+        // host's existing direct-ability eligibility until migrated explicitly.
+        const hitEffectProfiles = new Map([
+            [null, {duringDamage: [], afterDamage: [tryApplyBleed, tryApplyPoison, triggerShockwaveSlash]}],
+            ['reapPreview', {duringDamage: [tryApplyPoison], afterDamage: [tryApplyBleed, triggerShockwaveSlash]}]
+        ]);
+
+        // An attack owns timing and attack procs. A hit adds its target role;
+        // a kill echo is a new attack, never a multihit of its parent.
+        function createAttackContext(abilityId = null, {trigger = 'attack', multihit = false,
+            delivery = 'direct', damageType = 'physical'} = {}) {
+            return {abilityId, trigger, delivery, damageType, multihit: trigger === 'kill' ? false : multihit};
+        }
+
+        // Reap's poison runs inside damage handling, before the damage event;
+        // basic attacks historically roll bleed then poison after that event.
+        // Keep these phases explicit so neither path rolls an effect twice.
+        function applyDamageHitEffects(target, damage, hit) {
+            const profile = hitEffectProfiles.get(hit.attack.abilityId);
+            if (!profile) return false;
+            profile.duringDamage.forEach(effect => effect(target, damage));
+            return true;
+        }
+
+        function resolveAttackHit(target, attack, role = 'primary', rollDamage = () => rules.getDamage()) {
+            if (!target || target.hp <= 0) return null;
+            const hit = {attack, role};
+            if (random() * 100 >= rules.getHitChance(rules.getPlayerAccuracy(), rules.monsterDefinition(target).evasion)) {
+                rules.emitCombatEvent('monsterDodged', {monsterId: target.id, hit});
+                rules.emitCombatEvent('attackHitResolved', {monsterId: target.id, hit, landed: false});
+                return null;
+            }
+            // Evaluate damage only after accuracy, preserving stat/RNG order.
+            const damage = rollDamage();
+            // Announce before damage/procs so existing badge priorities survive.
+            if (attack.abilityId === null && attack.multihit) rules.showMonsterHitBadge(target.id, 'MULTI-HIT', true);
+            rules.emitCombatEvent('attackHitResolved', {monsterId: target.id, hit, landed: true});
+            rules.applyDamageToMonster(target, damage, attack.damageType, attack.abilityId, hit);
+            hitEffectProfiles.get(attack.abilityId)?.afterDamage.forEach(effect => effect(target, damage));
+            return {target, damage};
+        }
+
+        function finishAttack(attack, target, damage, extraEruptionTargets) {
+            // Attack triggers run even on a miss. Kill-generated attacks have
+            // hit/kill effects, but cannot recursively generate attack casts.
+            if (!target || attack.trigger !== 'attack') return;
+            triggerVolcanicEruption(target, damage);
+            extraEruptionTargets.forEach(hit => triggerVolcanicEruption(hit.target, hit.damage));
+            triggerAttackArrowSkills(target, damage);
+            triggerAttackSpells();
+        }
+
+        function performPlayerAttack() {
+            const primary = rules.activeMonster(), targets = getPlayerAttackTargets();
+            if (primary && rules.getSkillNodeRank('reapPreview') > 0 && queueReapAttack(primary.id)) {
+                targets.slice(1).forEach(target => queueReapAttack(target.id, {multihit: true}));
+                return;
+            }
+            const damage = rules.getDamage(), extra = [];
+            targets.forEach((target, index) => {
+                const result = resolveAttackHit(target, createAttackContext(null, {multihit: index > 0}));
+                if (result && index > 0) extra.push(result);
+            });
+            finishAttack(createAttackContext(), primary, damage, extra);
+        }
+
+        // Reap damage uses simulation time; its sprite is presentation only.
+        function queueReapAttack(originId, {fromKill = false, multihit = false} = {}) {
+            const plan = rules.selectReapTargets(originId, {allowDeadOrigin: fromKill});
+            if (!plan.targetIds.length) return false;
+            const mapId = rules.currentMap().id;
+            state.pendingReapAttacks.push({mapId, originId, arrowTargetId: fromKill ? null : originId,
+                targetIds: plan.targetIds, fromKill, multihit: !fromKill && multihit, remaining: 0.2});
+            rules.emitCombatEvent('reapStarted', {mapId, originId, targetIds: [...plan.targetIds], angle: plan.angle});
+            return true;
+        }
+
+        function resolveReapAttack(attack) {
+            if (attack.mapId !== rules.currentMap().id || state.playerHp <= 0) return;
+            const arrowTarget = state.monsterStates.find(monster => monster.id === attack.arrowTargetId);
+            const context = createAttackContext('reapPreview', {trigger: attack.fromKill ? 'kill' : 'attack',
+                multihit: attack.multihit === true, delivery: 'cone'});
+            const arrowDamage = rules.getDamage(), extraEruptionTargets = [];
+            for (const [index, id] of attack.targetIds.slice(0, 4).entries()) {
+                if (attack.fromKill && id === attack.originId) continue;
+                const target = state.monsterStates.find(monster => monster.id === id);
+                const result = resolveAttackHit(target, context, id === attack.originId ? 'primary' : 'area',
+                    () => rules.getDamage() * (id === attack.originId ? 1 : 3));
+                if (result && index > 0) extraEruptionTargets.push(result);
+            }
+            // Echoes have no primary attack, so cannot generate attack-only casts.
+            finishAttack(context, arrowTarget, arrowDamage, extraEruptionTargets);
+        }
+
+        function tickPendingReapAttacks(elapsed) {
+            const ready = [];
+            state.pendingReapAttacks = state.pendingReapAttacks.filter(attack => {
+                attack.remaining = Math.max(0, attack.remaining - elapsed);
+                if (attack.remaining < 1e-8) { ready.push(attack); return false; }
+                return true;
+            });
+            ready.forEach(resolveReapAttack);
+        }
+
         // Arrows and formation
 
         function getMonsterGridPosition(monster) {
@@ -681,6 +785,10 @@
         }
 
         return Object.freeze({
+            createAttackContext,
+            resolveAttackHit,
+            applyDamageHitEffects,
+            performPlayerAttack,
             getMonsterGridPosition,
             getArrowRowTargets,
             getForwardDiagonalArrowTargets,
@@ -699,6 +807,8 @@
             normalizeVoidCharges,
             castVoidVolley,
             tickPendingVoidMissiles,
+            queueReapAttack,
+            tickPendingReapAttacks,
             castVoidBolt,
             castVoidVortex,
             tickPlayerMana,

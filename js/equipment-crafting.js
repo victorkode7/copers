@@ -2,7 +2,7 @@
     'use strict';
     const $ = id => document.getElementById(id), record = value => value && typeof value === 'object' && !Array.isArray(value);
     let mode = 'stats', selectedId = null, displayedItemId = null, signature = '', message = '', gearSlot = 'all', gearSort = 'equipped';
-    let costSignature='', poolSignature='', gearListSignature='', equipmentSlotsSignature='', workbenchSignature='', savedRollSignature='';
+    let costSignature='', poolSignature='', gearListSignature='', equipmentSlotsSignature='', workbenchSignature='', savedRollSignature='', uncraftableSignature='';
     let costViews=[];
     const autoTargets = new Map();
     let autoRun = null, autoTimer = null;
@@ -14,8 +14,7 @@
     const copyRolls = rolls => rolls.map(roll => roll && {...roll});
     const sameRolls = (a = [], b = []) => a.length === b.length && a.every((roll,index) =>
         roll === null ? b[index] === null : roll.stat === b[index]?.stat && roll.value === b[index]?.value);
-    const isWeapon = item => item?.slot === 'weapon' && item.crafting;
-    const canSaveRoll = isWeapon;
+    const canSaveRoll = item => Boolean(item?.crafting?.slots > 0);
     const matchesTargets = (item, targets) => {
         const rolled = new Set(rollsFor(item).filter(Boolean).map(roll => roll.stat));
         return targets.length > 0 && targets.every(stat => rolled.has(stat));
@@ -62,7 +61,7 @@
             animation.onfinish = () => animation.cancel();
         });
     }
-    const isUnlocked = () => itemData.items.some(item => item.crafting && ownsItem(item.id));
+    const isUnlocked = () => Boolean(state.townProgress?.buildings.anvil);
     const targetsFor = id => {
         if (!autoTargets.has(id)) autoTargets.set(id, new Set());
         return autoTargets.get(id);
@@ -75,7 +74,7 @@
     }
     function autoContextValid(run) {
         const item = itemById[run.id];
-        return mode === 'stats' && state.currentView === 'town' && selectedId === run.id &&
+        return isUnlocked() && mode === 'stats' && state.currentView === 'town' && selectedId === run.id &&
             !document.hidden && item?.crafting && ownsItem(run.id) && !SaveCompatibility.protection.blocked &&
             run.slots === item.crafting.slots && JSON.stringify(run.targets) === JSON.stringify([...targetsFor(run.id)]) &&
             run.targets.every(stat => Equipment.craftingPool(item,itemData).some(roll => roll.stat === stat));
@@ -178,28 +177,31 @@
         return {ok:true};
     }
     function saveRoll(id) {
+        if (!isUnlocked()) return {ok:false, message:'Build the Anvil in Town first.'};
         if (autoRun) return {ok:false, message:'Stop auto rolling before saving a roll.'};
         const item = itemById[id];
-        if (!isWeapon(item) || !ownsItem(id) || SaveCompatibility.protection.blocked || simulatingCombat) return {ok:false, message:'Choose an owned rerollable weapon.'};
-        if (!rollsFor(item).some(Boolean)) return {ok:false, message:'Craft weapon stats before saving a roll.'};
+        if (!canSaveRoll(item) || !ownsItem(id) || SaveCompatibility.protection.blocked || simulatingCombat) return {ok:false, message:'Choose an owned rerollable equipment item.'};
+        if (!rollsFor(item).some(Boolean)) return {ok:false, message:'Craft equipment stats before saving a roll.'};
         if (sameRolls(state.itemCrafts[id], state.itemRollSaves[id])) return {ok:false, message:'This roll is already saved.'};
         if (!GameResources.canSpend(state,{gold:rollSaveCost})) return {ok:false, message:'You need 10,000 gold to save this roll.'};
         const result = persist({...GameResources.payment(state,{gold:rollSaveCost}), itemRollSaves:{...state.itemRollSaves, [id]:copyRolls(state.itemCrafts[id])}},
             'Could not save the roll. Your gold and previous saved roll were kept.');
-        return result.ok ? {ok:true, message:'Weapon roll saved for 10,000 gold. Restore it once for free; reclaiming consumes the save.'} : result;
+        return result.ok ? {ok:true, message:'Equipment roll saved for 10,000 gold. Restore it once for free; reclaiming consumes the save.'} : result;
     }
     function restoreRoll(id) {
+        if (!isUnlocked()) return {ok:false, message:'Build the Anvil in Town first.'};
         if (autoRun) return {ok:false, message:'Stop auto rolling before reclaiming a roll.'};
         const item = itemById[id], saved = state.itemRollSaves[id];
-        if (!isWeapon(item) || !ownsItem(id) || SaveCompatibility.protection.blocked || simulatingCombat) return {ok:false, message:'Choose an owned rerollable weapon.'};
-        if (!saved) return {ok:false, message:'Save a weapon roll first.'};
-        if (sameRolls(state.itemCrafts[id], saved)) return {ok:false, message:'Your weapon already has the saved roll.'};
+        if (!canSaveRoll(item) || !ownsItem(id) || SaveCompatibility.protection.blocked || simulatingCombat) return {ok:false, message:'Choose an owned rerollable equipment item.'};
+        if (!saved) return {ok:false, message:'Save an equipment roll first.'};
+        if (sameRolls(state.itemCrafts[id], saved)) return {ok:false, message:'Your equipment already has the saved roll.'};
         const remainingSaves = {...state.itemRollSaves}; delete remainingSaves[id];
         const result = persist({itemCrafts:{...state.itemCrafts, [id]:copyRolls(saved)}, itemRollSaves:remainingSaves},
             'Could not restore the roll. Your current stats and saved roll were kept.');
-        return result.ok ? {ok:true, message:'Weapon roll reclaimed for free. The saved roll was consumed. Saving another roll costs 10,000 gold.'} : result;
+        return result.ok ? {ok:true, message:'Equipment roll reclaimed for free. The saved roll was consumed. Saving another roll costs 10,000 gold.'} : result;
     }
     function rollProblem(item) {
+        if (!isUnlocked()) return 'Build the Anvil in Town first.';
         const craft = item?.crafting;
         if (!craft || !ownsItem(item.id) || SaveCompatibility.protection.blocked || simulatingCombat) return 'Choose an owned piece of rerollable equipment.';
         const pool = Equipment.craftingPool(item,itemData), gold = Equipment.craftingGold(item,itemData);
@@ -331,17 +333,23 @@
             }
             return a.name.localeCompare(b.name);
         });
-        if (!items.some(item => item.id === selectedId)) { selectedId = items[0]?.id || null; message = ''; }
+        const selected = itemById[selectedId];
+        const selectedUncraftable = selected && !selected.crafting && ownsItem(selected.id) &&
+            Object.values(state.gear).includes(selected.id) && (gearSlot === 'all' || selected.slot === gearSlot);
+        if (!items.some(item => item.id === selectedId) && !selectedUncraftable) { selectedId = items[0]?.id || null; message = ''; }
         const item = itemById[selectedId];
-        if (item) {
+        const rerollable = Boolean(item?.crafting);
+        if (rerollable) {
             const pool = new Set(Equipment.craftingPool(item,itemData).map(roll=>roll.stat)), targets=targetsFor(item.id);
             for (const stat of [...targets]) if (!pool.has(stat) || [...targets].indexOf(stat) >= item.crafting.slots) targets.delete(stat);
         }
-        const next = JSON.stringify({id: selectedId, gearSlot, gearSort, slots:item?.crafting.slots, type:item?.equipmentType, tier:item?.tier, pool:item && Equipment.craftingPool(item,itemData), cost:item && {gold:Equipment.craftingGold(item,itemData),materials:item.crafting.cost.materials}, developerItemsEnabled:state.developerItemsEnabled, rolls: state.itemCrafts, savedRolls:state.itemRollSaves, targets:[...targetsFor(selectedId)], auto:autoRun, blocked:SaveCompatibility.protection.blocked, gold: Math.floor(state.gold), materials: state.materials, owned: state.ownedItemIds, gear: state.gear, message});
+        const uncraftable = item && !rerollable ? [item.id,item.name,item.sprite,item.slot,item.equipmentType,item.tier,Equipment.describe(effective(item))] : null;
+        const next = JSON.stringify({id: selectedId, gearSlot, gearSort, slots:item?.crafting?.slots, type:item?.equipmentType, tier:item?.tier, pool:rerollable && Equipment.craftingPool(item,itemData), cost:rerollable && {gold:Equipment.craftingGold(item,itemData),materials:item.crafting.cost.materials}, uncraftable, developerItemsEnabled:state.developerItemsEnabled, rolls: state.itemCrafts, savedRolls:state.itemRollSaves, targets:[...targetsFor(selectedId)], auto:autoRun, blocked:SaveCompatibility.protection.blocked, gold: Math.floor(state.gold), materials: state.materials, owned: state.ownedItemIds, gear: state.gear, message});
         if (next === signature) return;
         signature = next;
         $('rerollWorkbench').hidden = ownedItems.length === 0;
-        $('rerollWorkbench').querySelectorAll('.reroll-item-panel,.reroll-recipe-panel').forEach(panel => { panel.hidden = !item; });
+        $('rerollWorkbench').querySelectorAll('.reroll-item-panel,.reroll-recipe-panel').forEach(panel => { panel.hidden = !rerollable; });
+        $('rerollUncraftable').hidden = !uncraftable;
         $('rerollEmpty').hidden = ownedItems.length > 0;
         const equipmentSlotsStructure = JSON.stringify([gearSlot, itemData.slots, state.gear, state.ownedItemIds, itemData.items.filter(entry => entry.crafting).map(entry => [entry.id, entry.name, entry.sprite])]);
         if (equipmentSlotsSignature !== equipmentSlotsStructure) {
@@ -382,6 +390,23 @@
         $('rerollGearList').querySelectorAll('[data-reroll-item]').forEach(button=>updateCombatAttribute(button,'aria-pressed',String(button.dataset.rerollItem===selectedId)));
         updateCombatText($('rerollSlotSummary'),'');
         if (!item) { displayedItemId = null; return; }
+        if (uncraftable) {
+            displayedItemId = null;
+            for (const id of ['rerollEquipment','autoRollEquipment','saveWeaponRoll','restoreWeaponRoll']) $(id).disabled = true;
+            updateCombatAttribute($('autoRollEquipment'),'aria-pressed','false');
+            const key = JSON.stringify(uncraftable);
+            if (uncraftableSignature !== key) {
+                uncraftableSignature = key;
+                $('rerollUncraftableArt').replaceChildren(EquipmentSpritePreview.createIcon(item));
+                $('rerollUncraftableName').textContent = item.name;
+                const type = itemData.equipmentTypes?.find(type => type.id === item.equipmentType)?.name ||
+                    itemData.slots.find(slot => slot.id === item.slot)?.name || item.slot;
+                $('rerollUncraftableMeta').textContent = type;
+                const stats = uncraftable.at(-1).split('\n').filter(Boolean);
+                $('rerollUncraftableStats').replaceChildren(...(stats.length ? stats : ['No stats']).map(text => node('li', '', text)));
+            }
+            return;
+        }
         const statTransition = prepareStatTransition(item);
         const workbenchStructure=JSON.stringify([item.id,item.name,item.sprite,item.slot,item.equipmentType,item.tier,Equipment.describe(item)]);
         if(workbenchSignature!==workbenchStructure){
@@ -427,7 +452,7 @@
             gearSlot = slotPick.dataset.rerollSlot;
             gearSlotSelect.value = gearSlot;
             const equippedItem = itemById[state.gear[gearSlot]];
-            if (equippedItem?.crafting && ownsItem(equippedItem.id)) selectedId = equippedItem.id;
+            if (equippedItem && ownsItem(equippedItem.id)) selectedId = equippedItem.id;
             message = '';
             signature = '';
             render();

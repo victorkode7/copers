@@ -15,7 +15,8 @@
         {name:'basic',seed:9387,steps:250,ranks:{},health:80},
         {name:'freezing',seed:42,steps:250,ranks:{freezingArrows:1,multiShot:1,piercingArrow:1,forkingArrow:1},health:300},
         {name:'spells',seed:193,steps:350,ranks:{voidBolt:1,voidVolley:1,voidVortex:1,echoingVoid:1,rimeBrand:1,emberBrand:1,glacialRupture:1,cinderRupture:1,bloomingFlower:1},health:300},
-        {name:'allSkills',seed:104729,steps:300,ranks:Object.fromEntries(skillNodes.filter(node=>!node.start&&node.maxRank>0).map(node=>[node.id,node.maxRank])),health:1000},
+        // Keep this committed baseline focused on the pre-Reap skill set.
+        {name:'allSkills',seed:104729,steps:300,ranks:Object.fromEntries(skillNodes.filter(node=>!node.start&&node.maxRank>0&&!['reapPreview','reapingEcho'].includes(node.id)).map(node=>[node.id,node.maxRank])),health:1000},
         {name:'paused',seed:937,steps:150,ranks:{rimeBrand:1,emberBrand:1,glacialRupture:1,cinderRupture:1,bloomingFlower:1},health:100},
         {name:'respawns',seed:873,steps:150,ranks:{},health:30}
     ];
@@ -43,10 +44,15 @@
         prepare(scenario);let seed=scenario.seed,rolls=0,eventHash=2166136261,renderHash=2166136261,events=0;
         const missileIds=new Map();Math.random=()=>{rolls++;seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
         for(let index=0;index<scenario.steps;index++){
-            const result=simulateCombatStep(.1,visuals);events+=result.effects.length;
+            const result=simulateCombatStep(.1,visuals);
+            // The shared resolver adds hit context/results. Compare the original
+            // event projection against the unchanged pre-refactor baseline.
+            const legacyEffects=result.effects.filter(event=>event.type!=='attackHitResolved');
+            events+=legacyEffects.length;
             if(!visuals&&result.effects.length)throw new Error('Offline simulation retained events');
             if(result.effects.some(event=>typeof event!=='object'))throw new Error('Combat returned a presentation callback');
-            const serialized=JSON.stringify(result.effects,(key,value)=>{
+            const serialized=JSON.stringify(legacyEffects,(key,value)=>{
+                if(key==='hit')return undefined;
                 if(key==='epoch')return 0;
                 if(key==='missileId'&&value!==undefined){if(!missileIds.has(value))missileIds.set(value,missileIds.size);return missileIds.get(value);}
                 return value;
@@ -54,7 +60,10 @@
             eventHash=hash(serialized,eventHash);renderHash=hash(String(result.needsRender),renderHash);
             pruneVoidMissilePresentations();
         }
-        return{state:hash(JSON.stringify({state,damage:getDamageBreakdown()})).toString(16),rolls,events,eventOrder:eventHash.toString(16),render:renderHash.toString(16)};
+        if(state.pendingReapAttacks.length)throw new Error('A legacy combat scenario queued Reap');
+        // The new empty queue is additive save state, not a legacy combat change.
+        const serializedState=JSON.stringify({state,damage:getDamageBreakdown()},(key,value)=>key==='pendingReapAttacks'?undefined:value);
+        return{state:hash(serializedState).toString(16),rolls,events,eventOrder:eventHash.toString(16),render:renderHash.toString(16)};
     }
     try{
         for(const scenario of cases){

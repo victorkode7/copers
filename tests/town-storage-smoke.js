@@ -6,28 +6,28 @@
         await document.fonts.ready;
         const base=fresh();
         check('base Town caps cover Logs, Planks, Ore and Bars',TownProgression.capacity(base,'wood')===50000&&TownProgression.capacity(base,'planks')===50000&&TownProgression.capacity(base,'ore')===100000&&TownProgression.capacity(base,'bars')===10000);
-        state.townProgress=TownProgression.defaults();state.townProgress.buildings.townHall={tier:2,level:10};state.gold=500000;state.townProgress.resources={wood:49999,planks:40000,ore:90000};state.currentView='townPage';state.isInTown=true;state.combatPaused=true;resetCombatClock();render();
+        state.townProgress=TownProgression.defaults();state.townProgress.buildings.townHall={tier:2,level:10};state.gold=500000;state.townProgress.resources={wood:49999,planks:40000,ore:90000,bars:10000};state.currentView='townPage';state.isInTown=true;state.combatPaused=true;resetCombatClock();render();
         $('townWorldList').firstElementChild.click();const depot=$('townBuildingGrid').children[4];
         check('building 5 remains a placeholder before Town Hall T3',depot.querySelector('h3').textContent==='Building 5'&&!TownProgression.can(state,'purchase','timberDepot'));
         state.townProgress.buildings.townHall={tier:3,level:1};render();const buy=depot.querySelector('button');
-        check('Town Hall T3 reveals Timber Depot and its full purchase costs',depot.dataset.building==='timberDepot'&&depot.querySelector('h3').textContent==='Timber Depot'&&!buy.hidden&&depot.querySelector('[aria-label="250,000 gold"]')&&depot.querySelector('[aria-label="10,000 Planks"]')&&depot.querySelector('[aria-label="25,000 Ore"]'));
+        check('Town Hall T3 reveals Storage Facility and its full purchase costs',depot.dataset.building==='timberDepot'&&depot.querySelector('h3').textContent==='Storage Facility'&&!buy.hidden&&depot.querySelector('[aria-label="250,000 gold"]')&&depot.querySelector('[aria-label="10,000 Planks"]')&&depot.querySelector('[aria-label="1,000 Bars"]'));
         const missing=fresh();missing.townProgress=TownProgression.clone(state.townProgress);missing.townProgress.resources.planks=9999;const poorBefore=JSON.stringify(missing);
         check('purchase rechecks material affordability without partial spending',!TownProgression.apply(missing,'purchase','timberDepot')&&JSON.stringify(missing)===poorBefore);
         const progress=JSON.stringify(state.townProgress),gold=state.gold;
         Storage.prototype.setItem=function(key,value){if(key===saveKey)throw new Error('Storage full');return originalWrite.call(this,key,value);};buy.click();Storage.prototype.setItem=originalWrite;
-        check('failed Depot saves preserve all costs, ownership and base capacity',JSON.stringify(state.townProgress)===progress&&state.gold===gold&&!state.townProgress.buildings.timberDepot&&TownProgression.capacity(state,'wood')===50000);
+        check('failed Facility saves preserve all costs, ownership and base capacity',JSON.stringify(state.townProgress)===progress&&state.gold===gold&&!state.townProgress.buildings.timberDepot&&TownProgression.capacity(state,'wood')===50000);
         buy.click();
-        check('buying the Depot spends gold, planks and Ore and doubles log capacity',state.gold===250000&&state.townProgress.resources.planks===30000&&state.townProgress.resources.ore===65000&&state.townProgress.buildings.timberDepot.level===1&&TownProgression.capacity(state,'wood')===100000);
-        check('capacity is displayed on the resource card and Depot without a production bar',$('townResourceList').querySelector('[data-resource="wood"] .town-resource-capacity').textContent==='/ 100K'&&depot.querySelector('.town-production-rate').textContent.includes('capacity: 100K')&&depot.querySelector('.town-production').hidden);
+        check('buying the Facility spends gold, planks and Bars and doubles log capacity',state.gold===250000&&state.townProgress.resources.planks===30000&&state.townProgress.resources.bars===9000&&state.townProgress.resources.ore===90000&&state.townProgress.buildings.timberDepot.level===1&&TownProgression.capacity(state,'wood')===100000);
+        check('capacity is displayed on the resource card and Facility without a production bar',$('townResourceList').querySelector('[data-resource="wood"] .town-resource-capacity').textContent==='/ 100K'&&depot.querySelector('.town-production-rate').textContent.includes('capacity: 100K')&&depot.querySelector('.town-production').hidden);
         buy.click();
-        check('Depot upgrades increase capacity and charge all three costs',state.townProgress.buildings.timberDepot.level===2&&TownProgression.capacity(state,'wood')===200000&&state.gold===150000&&state.townProgress.resources.planks===25000&&state.townProgress.resources.ore===55000);
+        check('Facility upgrades increase capacity and charge all three costs',state.townProgress.buildings.timberDepot.level===2&&TownProgression.capacity(state,'wood')===200000&&state.gold===150000&&state.townProgress.resources.planks===25000&&state.townProgress.resources.bars===8500&&state.townProgress.resources.ore===90000);
         const saved=parseGameSave(JSON.stringify(createGameSave()));applyGameSave(saved);render();
-        check('Depot level, capacity and materials survive full profile loading',state.townProgress.buildings.timberDepot.level===2&&TownProgression.capacity(state,'wood')===200000&&state.townProgress.resources.planks===25000);
+        check('Facility level, capacity and materials survive full profile loading',state.townProgress.buildings.timberDepot.level===2&&TownProgression.capacity(state,'wood')===200000&&state.townProgress.resources.planks===25000);
         const maximum=fresh();maximum.townProgress.buildings.townHall={tier:3,level:1};maximum.townProgress.buildings.timberDepot={tier:0,level:1};let feasible=true;
         for(let level=1;level<10;level++){
             const cost=TownProgression.cost('upgrade','timberDepot',maximum.townProgress.buildings.timberDepot);
-            feasible&&=cost.planks<=TownProgression.capacity(maximum,'planks')&&cost.ore<=TownProgression.capacity(maximum,'ore');
-            maximum.townProgress.resources={wood:0,planks:50000,ore:100000};feasible&&=TownProgression.apply(maximum,'upgrade','timberDepot');
+            feasible&&=cost.planks<=TownProgression.capacity(maximum,'planks')&&cost.bars<=TownProgression.capacity(maximum,'bars');
+            maximum.townProgress.resources={wood:0,planks:50000,ore:100000,bars:10000};feasible&&=TownProgression.apply(maximum,'upgrade','timberDepot');
         }
         check('every storage upgrade is affordable within the material caps',feasible&&maximum.townProgress.buildings.timberDepot.level===10&&TownProgression.capacity(maximum,'wood')===1000000&&!TownProgression.can(maximum,'upgrade','timberDepot'));
         const logs=fresh();logs.townProgress.buildings.lumberOutpost={tier:0,level:10,production:{fraction:.75,phase:.75,total:4}};logs.townProgress.resources.wood=49999;
@@ -59,7 +59,7 @@
         state.townProgress.resources={wood:50000,planks:50000,ore:100000};render();
         check('full storage is visible and stops production animations',document.querySelector('[data-building="lumberOutpost"] .town-production-rate').textContent==='Storage full'&&document.querySelector('[data-building="lumberOutpost"] .town-production-bar span').getAnimations().length===0&&document.querySelector('[data-resource="wood"]').classList.contains('is-full'));
         const legacy=JSON.parse(JSON.stringify(saved));delete legacy.townProgress.buildings.timberDepot;
-        check('older profiles load with base capacity without granting the Depot',!parseGameSave(JSON.stringify(legacy)).townProgress.buildings.timberDepot&&TownProgression.capacity({townProgress:parseGameSave(JSON.stringify(legacy)).townProgress},'wood')===50000);
+        check('older profiles load with base capacity without granting the Facility',!parseGameSave(JSON.stringify(legacy)).townProgress.buildings.timberDepot&&TownProgression.capacity({townProgress:parseGameSave(JSON.stringify(legacy)).townProgress},'wood')===50000);
         check('layout fits the viewport',document.documentElement.scrollWidth<=innerWidth);
         check('no runtime errors',!smokeErrors.length);checks.push('SMOKE PASSED');
     }catch(error){checks.push('ERROR '+error.stack);}finally{Storage.prototype.setItem=originalWrite;}

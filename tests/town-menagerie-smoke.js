@@ -4,11 +4,12 @@
     try{
         await document.fonts.ready;
         state.townProgress=TownProgression.defaults();state.gold=1e8;state.combatPaused=true;state.currentView='townPage';state.isInTown=true;resetCombatClock();render();
+        $('townWorldList').children[0].click();
         const plot=$('townBuildingGrid').children[3];
         state.townProgress.buildings.townHall={tier:1,level:10};render();
-        check('plot 4 remains hidden before Town Hall T2',plot.querySelector('h3').textContent==='Building 4'&&!TownProgression.can(state,'purchase','menagerie'));
+        check('W1 plot 4 remains hidden before Town Hall T2',plot.querySelector('h3').textContent==='Building 4'&&!TownProgression.can(state,'purchase','menagerie'));
         state.townProgress.buildings.townHall={tier:2,level:1};render();
-        check('Town Hall T2 reveals the Menagerie in plot 4',plot.dataset.building==='menagerie'&&plot.querySelector('h3').textContent==='Menagerie'&&plot.querySelector('.town-building-preview').textContent.includes('Unlock W1 Mastery tree'));
+        check('Town Hall T2 reveals the Menagerie in W1 plot 4',plot.dataset.building==='menagerie'&&plot.querySelector('h3').textContent==='Menagerie'&&plot.querySelector('.town-building-preview').textContent.includes('Unlock W1 Mastery tree'));
         const map=mapData.find(map=>worldData[0].mapIds.includes(map.id));
         state.selectedMap=map.id;state.selectedWorld=worldData[0].id;
         state.mapMastery={[map.id]:{earned:2,nodes:['wealth1']}};

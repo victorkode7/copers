@@ -51,7 +51,7 @@
             check('crossing the threshold recalculates XP within the same reward', state.level === 15 && state.experience === 5 && state.skillPoints === 15);
             awardExperience(experienceForNextLevel(15)*10-50);
             check('leveling past the cap cannot grant extra skill points', state.level === 16 && state.skillPoints === 15);
-            elements.increaseLevel.click();
+            DeveloperTools.setMode(true);$('increaseLevelButton').click();DeveloperTools.setMode(false);
             check('developer level increases also respect the skill point cap', state.level === 17 && state.skillPoints === 15);
             check('XP penalty and skill point cap are visible', !$('experiencePenalty').hidden && $('experiencePenalty').textContent.includes('99%') && elements.skillPoints.textContent === 'Skill points: 15 / 15');
             fresh(18); state.combatPaused = false;

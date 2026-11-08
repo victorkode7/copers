@@ -1,0 +1,359 @@
+{
+    "grid":  4,
+    "frames":  16,
+    "durationMs":  600,
+    "weapon":  {
+                   "source":  "scythe-ccw-270-4x4.png",
+                   "size":  [
+                                3072,
+                                3072
+                            ],
+                   "cell":  [
+                                768,
+                                768
+                            ],
+                   "pivot":  [
+                                 0.5,
+                                 0.5
+                             ],
+                   "modified":  false,
+                   "finalFramesIdentical":  true,
+                   "outerAnglesDegrees":  [
+                                              -95.6,
+                                              -118.1,
+                                              -140.7,
+                                              -163,
+                                              -185.5,
+                                              -207.9,
+                                              -230.4,
+                                              -252.9,
+                                              -275.4,
+                                              -298.2,
+                                              -320.4,
+                                              -343.2,
+                                              -365.8,
+                                              -365.8,
+                                              -365.8,
+                                              -365.8
+                                          ]
+               },
+    "blood":  {
+                  "source":  "blood-4x4-source.png",
+                  "size":  [
+                               1254,
+                               1254
+                           ],
+                  "prepared":  "blood-4x4-normalized.png",
+                  "preparedCell":  [
+                                       512,
+                                       512
+                                   ],
+                  "gutterPx":  4,
+                  "rotationDegrees":  -85,
+                  "scale":  0.92,
+                  "firstVisibleFrame":  3,
+                  "fadeFrames":  [
+                                     13,
+                                     14,
+                                     15
+                                 ],
+                  "progressiveReveal":  "Measured outer blade edge, -115 - 22.5 * min(frame,12) degrees",
+                  "frames":  [
+                                 {
+                                     "frame":  0,
+                                     "source":  [
+                                                    0,
+                                                    0,
+                                                    314,
+                                                    314
+                                                ],
+                                     "destination":  [
+                                                         4,
+                                                         4,
+                                                         504,
+                                                         504
+                                                     ],
+                                     "sourceEdgeContacts":  [
+
+                                                            ]
+                                 },
+                                 {
+                                     "frame":  1,
+                                     "source":  [
+                                                    314,
+                                                    0,
+                                                    313,
+                                                    314
+                                                ],
+                                     "destination":  [
+                                                         517,
+                                                         4,
+                                                         502,
+                                                         504
+                                                     ],
+                                     "sourceEdgeContacts":  [
+
+                                                            ]
+                                 },
+                                 {
+                                     "frame":  2,
+                                     "source":  [
+                                                    627,
+                                                    0,
+                                                    314,
+                                                    314
+                                                ],
+                                     "destination":  [
+                                                         1028,
+                                                         4,
+                                                         504,
+                                                         504
+                                                     ],
+                                     "sourceEdgeContacts":  [
+
+                                                            ]
+                                 },
+                                 {
+                                     "frame":  3,
+                                     "source":  [
+                                                    941,
+                                                    0,
+                                                    313,
+                                                    314
+                                                ],
+                                     "destination":  [
+                                                         1541,
+                                                         4,
+                                                         502,
+                                                         504
+                                                     ],
+                                     "sourceEdgeContacts":  [
+
+                                                            ]
+                                 },
+                                 {
+                                     "frame":  4,
+                                     "source":  [
+                                                    0,
+                                                    314,
+                                                    314,
+                                                    313
+                                                ],
+                                     "destination":  [
+                                                         4,
+                                                         517,
+                                                         504,
+                                                         502
+                                                     ],
+                                     "sourceEdgeContacts":  [
+
+                                                            ]
+                                 },
+                                 {
+                                     "frame":  5,
+                                     "source":  [
+                                                    314,
+                                                    314,
+                                                    313,
+                                                    313
+                                                ],
+                                     "destination":  [
+                                                         516,
+                                                         516,
+                                                         504,
+                                                         504
+                                                     ],
+                                     "sourceEdgeContacts":  [
+
+                                                            ]
+                                 },
+                                 {
+                                     "frame":  6,
+                                     "source":  [
+                                                    627,
+                                                    314,
+                                                    314,
+                                                    313
+                                                ],
+                                     "destination":  [
+                                                         1028,
+                                                         517,
+                                                         504,
+                                                         502
+                                                     ],
+                                     "sourceEdgeContacts":  [
+                                                                "right"
+                                                            ]
+                                 },
+                                 {
+                                     "frame":  7,
+                                     "source":  [
+                                                    941,
+                                                    314,
+                                                    313,
+                                                    313
+                                                ],
+                                     "destination":  [
+                                                         1540,
+                                                         516,
+                                                         504,
+                                                         504
+                                                     ],
+                                     "sourceEdgeContacts":  [
+                                                                "left"
+                                                            ]
+                                 },
+                                 {
+                                     "frame":  8,
+                                     "source":  [
+                                                    0,
+                                                    627,
+                                                    314,
+                                                    314
+                                                ],
+                                     "destination":  [
+                                                         4,
+                                                         1028,
+                                                         504,
+                                                         504
+                                                     ],
+                                     "sourceEdgeContacts":  [
+
+                                                            ]
+                                 },
+                                 {
+                                     "frame":  9,
+                                     "source":  [
+                                                    314,
+                                                    627,
+                                                    313,
+                                                    314
+                                                ],
+                                     "destination":  [
+                                                         517,
+                                                         1028,
+                                                         502,
+                                                         504
+                                                     ],
+                                     "sourceEdgeContacts":  [
+                                                                "right"
+                                                            ]
+                                 },
+                                 {
+                                     "frame":  10,
+                                     "source":  [
+                                                    627,
+                                                    627,
+                                                    314,
+                                                    314
+                                                ],
+                                     "destination":  [
+                                                         1028,
+                                                         1028,
+                                                         504,
+                                                         504
+                                                     ],
+                                     "sourceEdgeContacts":  [
+                                                                "left",
+                                                                "right"
+                                                            ]
+                                 },
+                                 {
+                                     "frame":  11,
+                                     "source":  [
+                                                    941,
+                                                    627,
+                                                    313,
+                                                    314
+                                                ],
+                                     "destination":  [
+                                                         1541,
+                                                         1028,
+                                                         502,
+                                                         504
+                                                     ],
+                                     "sourceEdgeContacts":  [
+                                                                "left"
+                                                            ]
+                                 },
+                                 {
+                                     "frame":  12,
+                                     "source":  [
+                                                    0,
+                                                    941,
+                                                    314,
+                                                    313
+                                                ],
+                                     "destination":  [
+                                                         4,
+                                                         1541,
+                                                         504,
+                                                         502
+                                                     ],
+                                     "sourceEdgeContacts":  [
+
+                                                            ]
+                                 },
+                                 {
+                                     "frame":  13,
+                                     "source":  [
+                                                    314,
+                                                    941,
+                                                    313,
+                                                    313
+                                                ],
+                                     "destination":  [
+                                                         516,
+                                                         1540,
+                                                         504,
+                                                         504
+                                                     ],
+                                     "sourceEdgeContacts":  [
+
+                                                            ]
+                                 },
+                                 {
+                                     "frame":  14,
+                                     "source":  [
+                                                    627,
+                                                    941,
+                                                    314,
+                                                    313
+                                                ],
+                                     "destination":  [
+                                                         1028,
+                                                         1541,
+                                                         504,
+                                                         502
+                                                     ],
+                                     "sourceEdgeContacts":  [
+                                                                "left"
+                                                            ]
+                                 },
+                                 {
+                                     "frame":  15,
+                                     "source":  [
+                                                    941,
+                                                    941,
+                                                    313,
+                                                    313
+                                                ],
+                                     "destination":  [
+                                                         1540,
+                                                         1540,
+                                                         504,
+                                                         504
+                                                     ],
+                                     "sourceEdgeContacts":  [
+
+                                                            ]
+                                 }
+                             ]
+              },
+    "notes":  [
+                  "The located weapon is 3072x3072, not the stated 2048x2048. It is preserved without resampling.",
+                  "Weapon angles were measured from the outer blade pixels; frames 12-15 hold the final pose.",
+                  "The blood sheet is independently generated and is not an exact spatial/temporal match. Its faint starting particles are about 135 degrees away from the weapon; a single starting-angle correction is insufficient because the blood accumulates differently. The fitted correction is -85 degrees on blood only, with wind-up frames suppressed and a progressive reveal following the measured cutting edge. Weapon pixels are never rotated.",
+                  "Normalization copies every source cell pixel, fits it uniformly and adds transparent gutters. Source effects already touching cell boundaries cannot be reconstructed; contacts are recorded per frame."
+              ]
+}

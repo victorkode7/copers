@@ -40,6 +40,7 @@
             });
             rules.tickPendingEruptions(elapsed);
             rules.tickPendingVoidMissiles(elapsed);
+            rules.tickPendingReapAttacks?.(elapsed);
             rules.tryShieldSlam();
             rules.tickPlayerMana(elapsed);
             if (!state.combatPaused) {
@@ -76,32 +77,7 @@
                     state.attackTimer += elapsed;
                     while (state.attackTimer >= attackInterval && !state.combatPaused) {
                         state.attackTimer -= attackInterval;
-                        const arrowTarget = rules.activeMonster();
-                        const arrowDamage = rules.getDamage();
-                        const attackTargets = rules.getPlayerAttackTargets();
-                        const extraEruptionTargets = [];
-                        for (let attackIndex = 0; attackIndex < attackTargets.length; attackIndex++) {
-                            const attackTarget = attackTargets[attackIndex];
-                            if (attackTarget.hp <= 0) continue;
-                            if (random() * 100 < rules.getHitChance(rules.getPlayerAccuracy(), rules.monsterDefinition(attackTarget, map).evasion)) {
-                                const hitDamage = rules.getDamage();
-                                if (attackIndex > 0) rules.showMonsterHitBadge(attackTarget.id, 'MULTI-HIT', true);
-                                rules.applyDamageToMonster(attackTarget, hitDamage, 'physical');
-                                // Basic attacks also roll Bleed, including multihits.
-                                rules.tryApplyBleed(attackTarget, hitDamage);
-                                rules.tryApplyPoison(attackTarget);
-                                rules.triggerShockwaveSlash(attackTarget, hitDamage);
-                                if (attackIndex > 0) extraEruptionTargets.push({target: attackTarget, damage: hitDamage});
-                            } else {
-                                rules.emitCombatEvent('monsterDodged', {monsterId: attackTarget.id});
-                            }
-                        }
-                        if (arrowTarget) {
-                            rules.triggerVolcanicEruption(arrowTarget, arrowDamage);
-                            extraEruptionTargets.forEach(hit => rules.triggerVolcanicEruption(hit.target, hit.damage));
-                            rules.triggerAttackArrowSkills(arrowTarget, arrowDamage);
-                            rules.triggerAttackSpells();
-                        }
+                        rules.performPlayerAttack();
                     }
                 }
             } else {

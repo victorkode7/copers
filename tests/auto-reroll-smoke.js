@@ -6,6 +6,7 @@
     const until=async predicate=>{const deadline=performance.now()+1800;while(!predicate()&&performance.now()<deadline)await sleep(15);if(!predicate())throw new Error('Timed out waiting for auto roll');};
     const originalRandom=Math.random, originalWrite=Storage.prototype.setItem;
     try {
+        state.townProgress = TownProgression.defaults(); state.townProgress.buildings.anvil = {tier:0,level:1};
         const base=itemData.items.find(item=>item.slot==='weapon'&&item.crafting);
         const item={...base,id:'testAutoWeapon',name:'Auto roll test weapon',equipmentType:undefined,tier:undefined,stats:{damage:20,multiHit:1},recipe:null,
             crafting:{slots:2,cost:{gold:1000,materials:{gel:2}},pool:[{stat:'damage',min:10,max:20,step:1},{stat:'multiHit',min:1,max:3,step:1},{stat:'mana',min:10,max:20,step:1},{stat:'health',min:10,max:20,step:1}]}};

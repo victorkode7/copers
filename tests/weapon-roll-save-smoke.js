@@ -5,6 +5,7 @@
     const check = (name,ok) => {checks.push((ok?'PASS ':'FAIL ')+name);if(!ok)throw new Error(name);};
     const originalWrite = Storage.prototype.setItem, originalRandom = Math.random, originalConfirm = window.confirm;
     try {
+        state.townProgress = TownProgression.defaults(); state.townProgress.buildings.anvil = {tier:0,level:1};
         const base = itemData.items.find(item=>item.slot==='weapon'&&item.crafting);
         const makeWeapon = (id,name) => ({...base,id,name,equipmentType:undefined,tier:undefined,stats:{spellDamage:10},recipe:null,
             crafting:{slots:2,cost:{gold:1000,materials:{gel:1}},pool:[{stat:'mana',min:20,max:20,step:1},{stat:'health',min:50,max:50,step:1},{stat:'damage',min:10,max:10,step:1},{stat:'attackSpeedMultiplier',min:1.2,max:1.2,step:.1}]}});
@@ -50,7 +51,28 @@
         check('saving a reclaimed roll purchases a fresh snapshot',ItemCrafting.saveRoll(wand.id).ok);
         Math.random=()=>0;ItemCrafting.reroll(bow.id);const wandSave=clone(state.itemRollSaves[wand.id]);
         check('each weapon has its own independent saved roll',ItemCrafting.saveRoll(bow.id).ok&&same(state.itemRollSaves[wand.id],wandSave)&&same(state.itemRollSaves[bow.id],state.itemCrafts[bow.id]));
-        pick(armor);check('armor has no weapon snapshot controls and cannot buy or restore one',$('weaponRollSave').hidden&&!ItemCrafting.saveRoll(armor.id).ok&&!ItemCrafting.restoreRoll(armor.id).ok);
+        const savedEquipment = [armor,...itemData.slots.filter(slot=>slot.id!=='weapon'&&slot.id!==armor.slot).map(slot=>{
+            const item={...makeWeapon('testSaved_'+slot.id,'Saved '+slot.name),slot:slot.id};
+            itemData.items.push(item);itemById[item.id]=item;state.ownedItemIds.push(item.id);return item;
+        })];
+        for(const item of savedEquipment){
+            Math.random=()=>0;
+            check(item.slot+' can craft stats before saving',ItemCrafting.reroll(item.id).ok);
+            render();pick(item);
+            check(item.slot+' shows saved-roll controls',!$('weaponRollSave').hidden&&!$('saveWeaponRoll').disabled);
+            const original=clone(state.itemCrafts[item.id]),beforeSaveGold=state.gold;
+            $('saveWeaponRoll').click();
+            check(item.slot+' saves its own independent roll for 10000 gold',state.gold===beforeSaveGold-10000&&same(state.itemRollSaves[item.id],original)&&state.itemRollSaves[item.id]!==state.itemCrafts[item.id]&&same(state.itemRollSaves[wand.id],wandSave));
+            Math.random=()=>.999999;ItemCrafting.reroll(item.id);render();
+            check(item.slot+' keeps its saved roll after rerolling',!same(state.itemCrafts[item.id],original)&&same(state.itemRollSaves[item.id],original)&&!$('restoreWeaponRoll').disabled);
+            const beforeRestoreGold=state.gold;
+            $('restoreWeaponRoll').click();
+            check(item.slot+' restores for free and consumes the snapshot',state.gold===beforeRestoreGold&&same(state.itemCrafts[item.id],original)&&!Object.hasOwn(state.itemRollSaves,item.id));
+            check(item.slot+' can save again for profile export',ItemCrafting.saveRoll(item.id).ok);
+        }
+        const noCraft={...armor,id:'testNoSavedSlots',crafting:undefined};itemData.items.push(noCraft);itemById[noCraft.id]=noCraft;state.ownedItemIds.push(noCraft.id);
+        check('equipment without crafted slots cannot save or restore',!ItemCrafting.saveRoll(noCraft.id).ok&&!ItemCrafting.restoreRoll(noCraft.id).ok);
+        Math.random=()=>0;
         pick(wand);state.itemCrafts={...state.itemCrafts,[wand.id]:clone(first)};state.gold=9999;const poor=clone(createGameSave());
         check('insufficient funds preserve gold, current stats and the previous saved roll',!ItemCrafting.saveRoll(wand.id).ok&&same(createGameSave(),poor));
         state.gold=1000000;ItemCrafting.reroll(wand.id);
@@ -65,7 +87,7 @@
         transfer.items.add(new File([JSON.stringify({format:'idle-adventure-profile',version:1,save:profile})],'weapon-rolls.json',{type:'application/json'}));
         state.itemRollSaves={};$('importProfileFile').files=transfer.files;$('importProfileFile').dispatchEvent(new Event('change'));
         for(let i=0;$('importProfile').disabled&&i<200;i++)await new Promise(resolve=>setTimeout(resolve,5));
-        check('profile imports recover saved rolls for every weapon',same(state.itemRollSaves,profile.itemRollSaves));
+        check('profile imports recover saved rolls for every equipment slot',same(state.itemRollSaves,profile.itemRollSaves)&&savedEquipment.every(item=>same(state.itemRollSaves[item.id],profile.itemRollSaves[item.id])));
         const legacy=clone(profile);delete legacy.itemRollSaves;
         check('older saves start with no snapshots and preserve other progress',Object.keys(parseGameSave(JSON.stringify(legacy)).itemRollSaves).length===0&&parseGameSave(JSON.stringify(legacy)).gold===profile.gold);
         const future=clone(profile);future.itemRollSaves.futureWeapon=[{stat:'futureStat',value:7},null];

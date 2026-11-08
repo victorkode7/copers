@@ -12,6 +12,7 @@ for (const name of ['window','document','performance','localStorage','setTimeout
     Object.defineProperty(sandbox,name,{get(){throw new Error('Unexpected browser dependency: '+name);}});
 }
 vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../js/combat-simulation.js'),'utf8'),sandbox);
+vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../js/combat-abilities.js'),'utf8'),sandbox);
 const {create} = sandbox.CombatSimulation;
 const checks=[];
 function test(label,run){run();checks.push('PASS '+label);}
@@ -20,7 +21,7 @@ function close(actual,expected){assert.ok(Math.abs(actual-expected)<1e-8,`${actu
 function encounter({paused=false,enemyTimer=.9,playerTimer=.9,hitChance=100,enemyHitChance=100,roll=0,freezeDelay=3,poisonDamage=0}={}) {
     const map={id:'test'};
     const monster={id:'mob',hp:100,attackTimer:enemyTimer,freezeRemaining:0,respawnRemaining:0,bleed:null};
-    const state={kills:{test:0},monsterStates:[monster],targetMonsterId:monster.id,playerHp:paused?0:100,combatPaused:paused,attackTimer:playerTimer};
+    const state={skillRanks:{},kills:{test:0},monsterStates:[monster],targetMonsterId:monster.id,playerHp:paused?0:100,combatPaused:paused,attackTimer:playerTimer};
     const calls=[],events=[];let rolls=0;
     const rules={
         tickTown(profile,elapsed){assert.equal(profile,state);profile.townSeconds=(profile.townSeconds||0)+elapsed;calls.push('town');},
@@ -40,13 +41,21 @@ function encounter({paused=false,enemyTimer=.9,playerTimer=.9,hitChance=100,enem
         tryApplyBleed(){calls.push('bleedHit');},tryApplyPoison(){calls.push('poisonHit');},triggerShockwaveSlash(){calls.push('shockwave');},
         triggerVolcanicEruption(){calls.push('eruptionHit');},triggerAttackArrowSkills(){calls.push('arrows');},triggerAttackSpells(){calls.push('spells');}
     };
-    const simulation=create({state,rules,freezeDelay,random(){rolls++;return roll;}});
+    const rng=()=>{rolls++;return roll;};
+    const abilities=sandbox.CombatAbilities.create({state,random:rng,settings:{},rules:{...rules,
+        getMultiHit:()=>1,
+        getBleedChance(){calls.push('bleedHit');return 0;},getPoisonChance(){calls.push('poisonHit');return 0;},
+        getSkillNodeRank(id){if(id==='volcanicEruption')calls.push('eruptionHit');if(id==='piercingArrow')calls.push('arrows');return 0;},
+        getPlayerMaxMana(){calls.push('spells');return 0;}
+    }});
+    rules.performPlayerAttack=()=>abilities.performPlayerAttack();
+    const simulation=create({state,rules,freezeDelay,random:rng});
     return{simulation,state,monster,rules,calls,events,get rolls(){return rolls;}};
 }
 
 test('the combat module loads and runs without browser globals or global randomness',()=>{
     const battle=encounter(),result=battle.simulation.step(.1);
-    assert.equal(battle.state.playerHp,99);assert.equal(battle.monster.hp,90);assert.equal(battle.rolls,2);assert.equal(result.needsRender,false);
+    assert.equal(battle.state.playerHp,99);assert.equal(battle.monster.hp,90);assert.equal(battle.rolls,3);assert.equal(result.needsRender,false);
     assert.ok(battle.calls.indexOf('enemyHit')<battle.calls.indexOf('playerHit'));
     assert.ok(battle.calls.indexOf('missiles')<battle.calls.indexOf('poison'));
     close(battle.state.townSeconds,.1);
