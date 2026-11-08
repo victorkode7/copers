@@ -1,48 +1,38 @@
-/* Keep the category artwork while the inventory uses its original game.css UI. */
 .idle-adventure #inventoryView .inventory-tabs {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 1rem;
+    gap: 0.4rem;
+    margin-bottom: 0.65rem;
 }
 .idle-adventure #inventoryView .inventory-tab {
-    min-width: 88px;
-    padding: 0 4px 8px;
+    min-width: 0;
+    padding: 0.35rem 0.7rem;
     border: 0;
-    border-bottom: 2px solid transparent;
-    background: none;
+    border-radius: 6px;
+    background: var(--adventure-panel);
     color: var(--adventure-muted);
     font: inherit;
-    font-size: .68rem;
+    font-size: 0.78rem;
     cursor: pointer;
 }
-.idle-adventure #inventoryView .inventory-tab::before {
-    content: '';
-    display: block;
-    width: 78px;
-    height: 68px;
-    margin: 0 auto 6px;
-    background: center / contain no-repeat;
-    image-rendering: pixelated;
-}
-.idle-adventure #inventoryView [data-inventory-category="all"]::before {
-    background-image: url('../assets/ui/icon-bag.png');
-}
-.idle-adventure #inventoryView [data-inventory-category="weapons"]::before {
-    background-image: url('../assets/ui/icon-sword.png');
-}
-.idle-adventure #inventoryView [data-inventory-category="armor"]::before {
-    background-image: url('../assets/ui/icon-helmet.png');
-}
-.idle-adventure #inventoryView [data-inventory-category="materials"]::before {
-    background-image: url('../assets/ui/icon-herb.png');
-}
 .idle-adventure #inventoryView .inventory-tab:is(:hover, [aria-pressed="true"]) {
-    border-bottom-color: var(--adventure-green);
+    background: var(--adventure-raised);
     color: var(--adventure-text);
+}
+.idle-adventure #inventoryView .inventory-tab[aria-pressed="true"] {
+    box-shadow: inset 0 -2px var(--adventure-green);
 }
 .idle-adventure #inventoryView .inventory-tab:focus-visible {
     outline: 2px solid var(--adventure-green);
     outline-offset: 3px;
+}
+.idle-adventure #inventoryView > .section-heading {
+    margin-bottom: 0.5rem;
+}
+.idle-adventure #inventoryView > .section-heading h1 {
+    margin: 0;
+}
+.idle-adventure #inventoryView .town-section > h2 {
+    margin-bottom: 0.4rem;
 }
 .idle-adventure #inventoryView [hidden] { display: none !important; }

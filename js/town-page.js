@@ -2,9 +2,9 @@
     'use strict';
     const $=id=>document.getElementById(id),resources=new Map(),buildingCards=[];
     const themes=[
-        {accent:'#b5d296',page:'#14251a',surface:'24 43 29',border:'#64775a',muted:'#c0cfb0'},
-        {accent:'#b3d5eb',page:'#182735',surface:'28 46 63',border:'#708ca2',muted:'#c4d6e3'},
-        {accent:'#98d1dc',page:'#102b37',surface:'17 45 58',border:'#4d8799',muted:'#b3d5df'}
+        {accent:'#9bea64',page:'#09261f',surface:'14 57 43',border:'#45896f',muted:'#bde5cf'},
+        {accent:'#72dbff',page:'#091f3b',surface:'17 54 88',border:'#4d91b9',muted:'#c1e2f5'},
+        {accent:'#5af1ce',page:'#072832',surface:'9 60 68',border:'#439ba4',muted:'#bde9e5'}
     ];
     const accents=themes.map(theme=>theme.accent);
     const compact=new Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1});
@@ -117,7 +117,7 @@
             const page=$('townPageView'),theme=themes[index%themes.length];
             page.style.setProperty('--town-accent',theme.accent);page.style.setProperty('--town-surface-rgb',theme.surface);page.style.setProperty('--town-border',theme.border);page.style.setProperty('--town-muted',theme.muted);
             document.body.style.setProperty('--town-page-background',theme.page);
-            WorldContent.applyBackground(page,world.background?{...world.background,fit:'cover',dim:.38}:null);
+            WorldContent.applyBackground(page,world.background?{...world.background,fit:'cover',dim:.28}:null);
             backgroundWorld=world;
         }
         updateCombatText($('townBuildingsHeading'),world.name);

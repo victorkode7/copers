@@ -115,8 +115,6 @@ let pendingSkillRanks = {};
 let skillTreePanning = false;
 let skillTreePanStartX = 0;
 let skillTreePanStartY = 0;
-let renderedLoot;
-let renderedLootMessage;
 let displayedSkillPointCap = null;
 let animatedSkillPointCap = null;
 let skillPointCapAnimationTimer;
@@ -187,7 +185,6 @@ const elements = {
     skillPoints: document.querySelector('#skillPointDisplay'),
     skillPointTotal: document.querySelector('#skillPointTotal'),
     skillPointCap: document.querySelector('#skillPointCapValue'),
-    increaseLevel: document.querySelector('#increaseLevelButton'),
     damage: document.querySelector('#damageDisplay'),
     multiHit: document.querySelector('#multiHitDisplay'),
     poisonChance: document.querySelector('#poisonChanceDisplay'),
@@ -225,7 +222,6 @@ const elements = {
     resumeCombat: document.querySelector('#resumeCombat'),
     combatStatus: document.querySelector('#combatStatus'),
     combatStatusLabel: document.querySelector('#combatStatusLabel'),
-    lastDrop: document.querySelector('#lastDrop'),
     townView: document.querySelector('#townView'),
     upgradesView: document.querySelector('#upgradesView'),
     mapView: document.querySelector('#mapView'),
@@ -239,7 +235,6 @@ const elements = {
     gear: document.querySelector('#gearSummary'),
     gearSelectionHeading: document.querySelector('#gearSelectionHeading'),
     gearSelectionHint: document.querySelector('#gearSelectionHint'),
-    lootLog: document.querySelector('#lootLog'),
     progressSummary: document.querySelector('#mapProgressSummary'),
     tutorialNotifications: document.querySelector('#tutorialNotifications')
 };
@@ -429,6 +424,9 @@ function presentCombatEvent(event) {
     if (event.type === 'voidMissileCancelled') {presentVoidMissileCancelled(event);return;}
     if (document.hidden) return;
     switch (event.type) {
+        case 'levelUp':
+            triggerLevelUpEffect(event);
+            break;
         case 'poisonTransferred':
             if (event.mapId !== state.selectedMap || !isCombatView()) break;
             presentPoisonTransfer(event);
@@ -626,7 +624,6 @@ let recentEnemyDamage = 0;
 const dodgeFlashTimeouts = new Map();
 const monsterProcTimers = new WeakMap();
 const shockwaveHitTimers = new WeakMap();
-const shownTutorialNotifications = new Set();
 const enemyDamageIndicatorTimers = new WeakMap();
 elements.combatArt.addEventListener('error', () => {
     elements.combatArt.hidden = true;
@@ -1629,6 +1626,7 @@ function refreshMaterialLocations(container) {
 function travelToMap(mapId) {
     const access = mapTravelAccess(mapId);
     if (!access.unlocked) return false;
+    window.MapMastery?.close(false);
     const {map: selected, world} = access;
     const changedMap = state.selectedMap !== selected.id;
     const tutorialNextMap = state.tutorials.firstNextMapPending || state.tutorials.firstMapGoalPending ? nextUnlockedMap() : null;
@@ -2301,7 +2299,7 @@ function renderMaps() {
     elements.mapPanel.classList.toggle('is-collapsed', !state.mapListExpanded);
     updateCombatAttribute(elements.mapSelectorLock,'aria-pressed',String(state.mapListLocked));
     elements.mapSelectorLock.title=state.mapListLocked?'Unlock map selector to allow collapsing':'Lock map selector open';
-    elements.mapSelectionHint.textContent = state.mapListLocked?'Map selector locked open.':state.mapListExpanded
+    elements.mapSelectionHint.textContent = window.MapMastery?.isOpen()?'Click the current map to return to combat.':state.mapListLocked?'Map selector locked open.':state.mapListExpanded
         ? 'Click the current map to browse destinations.'
         : 'Click your current map to change destination.';
     elements.mapSelectionHint.setAttribute('aria-hidden', String(!state.mapListExpanded));
@@ -2322,7 +2320,7 @@ function renderMaps() {
         button.setAttribute('aria-pressed', String(state.selectedMap === map.id));
         button.setAttribute('aria-label', map.name + '. ' +
             (unlocked ? (completed ? progress + ' kills' : progress + ' / ' + map.goal + ' kills') : 'Unlock after ' + maps[index - 1].goal + ' kills') +
-            (state.selectedMap === map.id ? '. Current map.' + (state.mapListLocked?'':' Click to ' +
+            (state.selectedMap === map.id ? '. Current map.' + (window.MapMastery?.isOpen()?' Click to return to combat.':state.mapListLocked?'':' Click to ' +
                 (state.mapListExpanded ? 'collapse' : 'show all maps') + '.') : '.'));
         button.querySelector('strong').textContent = map.name;
         button.querySelector('span').textContent =
@@ -2400,6 +2398,25 @@ function renderUpgrades() {
         links.setAttribute('preserveAspectRatio', 'none');
         links.setAttribute('aria-hidden', 'true');
 
+        // Clip connector strokes outside every node, including unrelated nodes
+        // crossed by a long link. Vector clipping avoids a large raster mask.
+        const namespace='http://www.w3.org/2000/svg';
+        const defs=document.createElementNS(namespace,'defs'),clip=document.createElementNS(namespace,'clipPath');
+        clip.id='skill-tree-node-cutouts';clip.setAttribute('clipPathUnits','userSpaceOnUse');
+        const clipPath=document.createElementNS(namespace,'path');clipPath.setAttribute('clip-rule','evenodd');
+        clip.append(clipPath);defs.append(clip);links.append(defs);
+        const linkLayer=document.createElementNS(namespace,'g');linkLayer.setAttribute('clip-path','url(#skill-tree-node-cutouts)');links.append(linkLayer);
+        const cutouts=new Map(),boundsPath='M0 0H'+gridColumnCount*160+'V'+gridRowCount*160+'H0Z';
+        const cutoutFor=node=>{
+            const x=(gridColumn(node)-.5)*160,y=(gridRow(node)-.5)*160;
+            const cutout={x,y,radius:39*([1,1.25,1.5].includes(Number(node.size))?Number(node.size):1)+2};
+            cutouts.set(node.id,cutout);return cutout;
+        };
+        skillNodes.forEach(cutoutFor);
+        const refreshCutouts=()=>clipPath.setAttribute('d',boundsPath+[...cutouts.values()].map(({x,y,radius:r})=>
+            'M'+(x-r)+' '+y+'a'+r+' '+r+' 0 1 0 '+(r*2)+' 0a'+r+' '+r+' 0 1 0 '+(-r*2)+' 0Z').join(''));
+        refreshCutouts();
+
         skillNodes.forEach(node => {
             node.requires.forEach(requiredId => {
                 const requiredNode = skillNodeById[requiredId];
@@ -2411,7 +2428,7 @@ function renderUpgrades() {
                 link.dataset.skillNodeSource = requiredId;
                 link.dataset.skillNodeLink = node.id;
                 link.classList.add('skill-tree-link');
-                links.appendChild(link);
+                linkLayer.appendChild(link);
             });
         });
         board.appendChild(links);
@@ -2425,6 +2442,7 @@ function renderUpgrades() {
             button.style.width = 78 * size + 'px';
             button.style.height = 78 * size + 'px';
             button.dataset.skillNode = node.id;
+            button.skillLinkCutout={cutout:cutouts.get(node.id),refresh:refreshCutouts};
 
             const icon = SkillSprites.icon(node, 'skill-node-icon');
             button.appendChild(icon);
@@ -2637,6 +2655,8 @@ function renderCrafting() {
             const name = document.createElement('h4');
             name.className = 'craft-card-copy';
             name.textContent = recipe.name;
+            name.title = recipe.description;
+            name.setAttribute('aria-description', recipe.description);
             const slotTag = document.createElement('span');
             slotTag.className = 'craft-slot-tag';
             slotTag.textContent = recipe.slot;
@@ -2645,10 +2665,6 @@ function renderCrafting() {
             const effect = document.createElement('p');
             effect.className = 'craft-card-effect';
             effect.textContent = recipe.crafting ? ItemCrafting.describe(recipe) : recipe.effect;
-            const description = document.createElement('p');
-            description.className = 'craft-card-description';
-            description.textContent = recipe.description;
-
             const materials = document.createElement('ul');
             materials.className = 'craft-materials';
             const requirements=[];
@@ -2712,7 +2728,7 @@ function renderCrafting() {
             button.disabled = !canCraft || crafted;
             button.textContent = crafted ? 'Already crafted' : ownsItem(recipe.id) ? 'Already owned' : canCraft ? 'Craft item' : 'Missing materials';
 
-            item.append(cardHeading, effect, description, materials, button);
+            item.append(cardHeading, effect, materials, button);
             view={element:item,button,effect,requirements,structure};recipeViews.set(recipe.id,view);
             }
             view.element.classList.toggle('is-crafted',crafted);view.element.classList.toggle('is-craftable',canCraft&&!crafted);
@@ -2842,7 +2858,8 @@ function renderInventory() {
         const label = document.createElement('span');
         label.className = 'equipment-slot-label';
         label.textContent = slot.name;
-        const icon = EquipmentSpritePreview.createIcon(equippedItem, slot.icon);
+        // Equipped icons belong to the slot button; they must not intercept clicks to zoom.
+        const icon = Equipment.createIcon(equippedItem, slot.icon);
         icon.classList.add('equipment-slot-icon');
         window.EquipmentEffects?.apply(icon);
         const name = document.createElement('strong');
@@ -2880,12 +2897,12 @@ function renderInventory() {
         : inventoryCategory === 'weapons' ? 'Weapons' : inventoryCategory === 'armor' ? 'Armor' : 'Your gear';
     const matchingTutorialSlot = state.tutorials.firstGearPending &&
         state.tutorials.firstGearSlot === selectedSlot.id;
+    elements.gearSelectionHint.hidden = !matchingTutorialSlot;
     elements.gearSelectionHint.textContent = matchingTutorialSlot
         ? state.tutorials.firstGearSlotSelected
             ? 'Now click Equip on the highlighted item.'
             : 'Click the highlighted ' + selectedSlot.name.toLowerCase() + ' slot on the left to view your new item.'
-        : inventoryCategory === 'slot' ? 'Choose an owned ' + selectedSlot.name.toLowerCase() + ' to equip.'
-            : 'Compare your owned gear and choose what to equip.';
+        : '';
     elements.gearInventory.innerHTML = '';
     const slotGear = itemData.items.filter(item => ownsItem(item.id) && state.gear[item.slot] !== item.id &&
         (inventoryCategory !== 'slot' || item.slot === selectedSlot.id) &&
@@ -3042,24 +3059,22 @@ function renderTutorialNotifications() {
             notice = document.createElement('div');
             notice.className = 'tutorial-notice';
             notice.dataset.tutorialNotification = notification.id;
-            if (!shownTutorialNotifications.has(notification.id)) {
-                notice.classList.add('tutorial-notice--flash');
-                shownTutorialNotifications.add(notification.id);
-            }
+            notice.tabIndex = 0;
+            notice.title = 'Click to dismiss';
+            notice.addEventListener('keydown', event => {
+                if (event.target === notice && (event.key === 'Enter' || event.key === ' ')) {
+                    event.preventDefault();notice.click();
+                }
+            });
             const message = document.createElement('p');
             const dismiss = document.createElement('button');
             dismiss.className = 'tutorial-dismiss';
             dismiss.type = 'button';
             notice.append(message, dismiss);
             elements.tutorialNotifications.appendChild(notice);
-            if (notice.classList.contains('tutorial-notice--flash')) {
-                window.setTimeout(() => {
-                    notice.classList.remove('tutorial-notice--flash');
-                    notice.classList.add('tutorial-notice--pulse');
-                }, 1100);
-            }
         }
         notice.setAttribute('role', 'status');
+        notice.dataset.dismissTutorial = notification.dismissed;
         notice.querySelector('p').textContent = notification.message;
         const dismiss = notice.querySelector('.tutorial-dismiss');
         dismiss.dataset.dismissTutorial = notification.dismissed;
@@ -3255,73 +3270,6 @@ function normalizeLootNotice(value) {
             .map(entry => ({id: entry.id, amount: Math.floor(entry.amount)})),
         equipment: [...new Set(value.equipment.filter(id => typeof id === 'string' && Object.hasOwn(itemById, id) && !itemById[id].developerOnly))]
     };
-}
-
-function renderLootNotice() {
-    const loot = state.lastLoot;
-    if (renderedLoot === loot && renderedLootMessage === state.lastDrop) return;
-    const animate = renderedLoot !== undefined && loot !== null;
-    renderedLoot = loot;
-    renderedLootMessage = state.lastDrop;
-    const heading = document.createElement('p');
-    heading.className = 'loot-notice-title';
-    heading.textContent = 'Latest loot';
-    if (!loot) {
-        const empty = document.createElement('p');
-        empty.className = 'loot-empty';
-        empty.textContent = state.lastDrop;
-        elements.lastDrop.replaceChildren(heading, empty);
-        return;
-    }
-    const equipmentKey = JSON.stringify(loot.equipment);
-    let equipment = elements.lastDrop.querySelector('.loot-equipment');
-    const newEquipment = equipment?.dataset.items !== equipmentKey;
-    if (newEquipment) {
-        equipment = document.createElement('div');
-        equipment.className = 'loot-equipment';
-        equipment.dataset.items = equipmentKey;
-        loot.equipment.forEach(id => {
-            const item = itemById[id];
-            if (!item) return;
-            const card = document.createElement('div');
-            card.className = 'loot-equipment-drop';
-            card.dataset.rarity = item.rarity || 'common';
-            const copy = document.createElement('div');
-            copy.className = 'loot-equipment-copy';
-            const name = document.createElement('strong');
-            name.textContent = item.name;
-            const caption = document.createElement('span');
-            caption.textContent = 'Latest equipment · ' + item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1);
-            copy.append(name, caption);
-            card.append(Equipment.createIcon(item), copy);
-            equipment.append(card);
-        });
-    }
-    const rewards = document.createElement('div');
-    rewards.className = 'loot-rewards';
-    const reward = (name, amount, gold = false) => {
-        const chip = document.createElement('span');
-        chip.className = 'loot-reward' + (gold ? ' loot-reward--gold' : '');
-        const label = document.createElement('span');
-        label.textContent = name;
-        const quantity = document.createElement('strong');
-        quantity.textContent = (gold ? '+' : '×') + formatAmount(amount);
-        chip.append(label, quantity);
-        rewards.append(chip);
-    };
-    if (loot.gold > 0) reward('Gold', loot.gold, true);
-    loot.materials.forEach(entry => reward(materialNames[entry.id], entry.amount));
-    if (!rewards.childElementCount) {
-        const empty = document.createElement('span');
-        empty.className = 'loot-empty';
-        empty.textContent = 'No gold or materials this time.';
-        rewards.append(empty);
-    }
-    elements.lastDrop.replaceChildren(heading, ...(loot.equipment.length ? [equipment] : []), rewards);
-    if (animate && combatEffectEnabled() && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        rewards.animate([{opacity: 0.3, transform: 'translateY(5px)'}, {opacity: 1, transform: 'translateY(0)'}], {duration: 260, easing: 'ease-out'});
-        if (newEquipment && loot.equipment.length && combatEffectEnabled('glows')) equipment.animate([{opacity: 0.3, transform: 'scale(0.97)', filter: 'brightness(1.6)'}, {opacity: 1, transform: 'scale(1)', filter: 'brightness(1)'}], {duration: 650, easing: 'ease-out'});
-    }
 }
 
 function renderMonsterArt(definition) {
@@ -3531,7 +3479,6 @@ function renderCombatContent() {
     elements.combatStatus.classList.toggle('combat-dead', state.combatPaused);
     elements.combatStatus.classList.toggle('is-fighting', !state.combatPaused && Boolean(target));
     updateCombatHidden(elements.resumeCombat, !state.combatPaused || !isCombatView());
-    renderLootNotice();
     renderDamageBreakdown();
     window.LootEffects?.sync(isCombatView(), map.id);
     window.CombatWebGL?.sync(isCombatView(), map.id);
@@ -3639,33 +3586,46 @@ function render() {
     if (state.currentView === 'inventory') renderInventory();
     renderTutorialNotifications();
     window.LiveTooltips?.refresh();
-    elements.lootLog.innerHTML = '';
-    if (state.lootLog.length === 0) {
-        const empty = document.createElement('li');
-        empty.className = 'loot-empty';
-        empty.textContent = 'Loot from defeated enemies will appear here.';
-        elements.lootLog.appendChild(empty);
-    }
-    state.lootLog.forEach(message => {
-        const entry = document.createElement('li');
-        if (itemData.items.some(item => item.rarity === 'unique' && message.includes(item.name))) {
-            entry.className = 'unique-drop';
-        }
-        entry.textContent = message;
-        elements.lootLog.appendChild(entry);
-    });
 }
 
 function rollRange(range) {
     return Math.floor(Math.random() * (range[1] - range[0] + 1)) + range[0];
 }
 
+function triggerLevelUpEffect({level = state.level, skillPoints = 0} = {}) {
+    if (document.hidden || !combatEffectEnabled('glows')) return;
+    triggerLevelUpEffect.cleanup?.();
+    const targets = [elements.experienceBar, elements.experienceTrack, elements.level];
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const celebration = window.LevelUpCelebration?.show({level,skillPoints,reduced});
+    let cleanupTimer;
+    const cleanup = () => {
+        clearTimeout(cleanupTimer);
+        celebration?.clear();
+        targets.forEach(element => element.classList.remove('level-up-active'));
+        elements.level.removeEventListener('animationend', onEnd);
+        if (triggerLevelUpEffect.cleanup === cleanup) triggerLevelUpEffect.cleanup = null;
+    };
+    const onEnd = event => {
+        if (event.target === elements.level && event.animationName === 'level-up-duration') cleanup();
+    };
+    void elements.experienceTrack.offsetWidth;
+    targets.forEach(element => element.classList.add('level-up-active'));
+    elements.level.addEventListener('animationend', onEnd);
+    cleanupTimer = setTimeout(cleanup, 8200);
+    triggerLevelUpEffect.cleanup = cleanup;
+}
 function awardExperience(amount, map = currentMap()) {
     const previousLevel = state.level;
+    const previousPoints = getEarnedSkillPoints();
     const levelsGained = Progression.awardExperience(state, amount, worldData.findIndex(world => world.mapIds.includes(map.id)), experienceForNextLevel);
     if (levelsGained) syncSkillPoints();
     if (previousLevel === 0 && state.level > 0) state.tutorials.firstSkillPointPending = true;
     if (levelsGained && combatStatCache) combatStatCache.clear();
+    if (levelsGained) {
+        const reward = {level:state.level,skillPoints:Math.max(0,getEarnedSkillPoints()-previousPoints)};
+        emitCombatEvent('levelUp', reward);
+    }
     return levelsGained;
 }
 
@@ -3943,6 +3903,7 @@ document.querySelector('#upgradesButton').addEventListener('click', function() {
 });
 
 document.querySelector('#mapButton').addEventListener('click', function() {
+    window.MapMastery?.close(false);
     state.tutorials.firstNextMapPending = false;
     state.currentView = 'map';
     state.isInTown = false;
@@ -4065,6 +4026,7 @@ elements.mapList.addEventListener('click', function(event) {
     const selected = mapsForWorld(state.selectedWorld).find(map => map.id === button.dataset.map);
     if (!selected) return;
     if (selected.id === state.selectedMap) {
+        if(window.MapMastery?.isOpen()){window.MapMastery.close();return;}
         if(state.mapListLocked)return;
         state.mapListExpanded = !state.mapListExpanded;
         renderMaps();
@@ -4254,15 +4216,6 @@ elements.gearInventory.addEventListener('click', function(event) {
         state.tutorials.firstGearPending = false;
         state.tutorials.firstGearDismissed = false;
     }
-    render();
-    saveGame();
-});
-
-elements.increaseLevel.addEventListener('click', function() {
-    state.level++;
-    state.experience = 0;
-    state.experienceRemainder = 0;
-    syncSkillPoints();
     render();
     saveGame();
 });
@@ -4549,6 +4502,10 @@ function updateSkillTreeNodeSize(button, node) {
     const displayedNodeSize = node.start
         ? Math.min(130, baseNodeSize / Math.max(skillTreeZoom, 0.1)) : baseNodeSize;
     const size = displayedNodeSize + 'px';
+    const linkClip=button.skillLinkCutout;
+    if(linkClip&&linkClip.cutout.radius!==displayedNodeSize/2+2){
+        linkClip.cutout.radius=displayedNodeSize/2+2;linkClip.refresh();
+    }
     for (const property of ['width', 'height', 'minWidth', 'minHeight']) {
         if (button.style[property] !== size) button.style[property] = size;
     }
@@ -4570,9 +4527,8 @@ function updateSkillTreeTransform(viewport, board, resizeOrigin = false) {
     const transform = 'translate(' + skillTreePanX + 'px, ' + skillTreePanY + 'px) scale(' + skillTreeZoom + ')';
     if (board.style.transform !== transform) {
         board.style.transform = transform;
-        // A tooltip belongs to the previous camera position until hovered again.
         const tooltip = viewport.querySelector('#skillNodeTooltip');
-        if (tooltip && !tooltip.hidden) tooltip.hidden = true;
+        if (tooltip && !tooltip.hidden) tooltip.refreshSkillNodeTooltip?.();
     }
 }
 
@@ -4609,21 +4565,15 @@ function initSkillTreePan(viewport) {
     const tooltipTitle = tooltip.querySelector('strong');
     const tooltipDescription = tooltip.querySelector('span');
     const tooltipTag = tooltip.querySelector('.ability-tag');
-    function showNodeTooltip(button) {
-        const node = skillNodeById[button.dataset.skillNode];
-        if (!node) return;
-        tooltipTitle.textContent = node.name;
-        tooltipDescription.textContent = SkillDescriptions.describe(node);
-        const tag = SkillDescriptions.abilityTagLabel(node);
-        tooltipTag.textContent = tag;
-        tooltipTag.dataset.targeting = SkillDescriptions.getAbilityTargeting(node) || '';
-        tooltipTag.hidden = !tag;
-        tooltip.classList.toggle('is-righteous-fire', righteousFireNodeIds.some(id => resolveSkillNodeId(id) === node.id));
-        tooltip.hidden = false;
-        tooltip.style.left = '0px';
-        tooltip.style.top = '0px';
+    let activeButton = null;
+    function positionTooltip() {
+        if (!activeButton?.isConnected) {
+            tooltip.hidden = true;
+            activeButton = null;
+            return;
+        }
         const viewportRect = viewport.getBoundingClientRect();
-        const nodeRect = button.getBoundingClientRect();
+        const nodeRect = activeButton.getBoundingClientRect();
         const left = Math.max(8, Math.min(
             viewport.clientWidth - tooltip.offsetWidth - 8,
             nodeRect.left - viewportRect.left + (nodeRect.width - tooltip.offsetWidth) / 2
@@ -4633,8 +4583,24 @@ function initSkillTreePan(viewport) {
         tooltip.style.left = Math.max(8, left) + 'px';
         tooltip.style.top = Math.max(8, top) + 'px';
     }
+    tooltip.refreshSkillNodeTooltip = positionTooltip;
+    function showNodeTooltip(button) {
+        const node = skillNodeById[button.dataset.skillNode];
+        if (!node) return;
+        activeButton = button;
+        tooltipTitle.textContent = node.name;
+        tooltipDescription.textContent = SkillDescriptions.describe(node);
+        const tag = SkillDescriptions.abilityTagLabel(node);
+        tooltipTag.textContent = tag;
+        tooltipTag.dataset.targeting = SkillDescriptions.getAbilityTargeting(node) || '';
+        tooltipTag.hidden = !tag;
+        tooltip.classList.toggle('is-righteous-fire', righteousFireNodeIds.some(id => resolveSkillNodeId(id) === node.id));
+        tooltip.hidden = false;
+        positionTooltip();
+    }
     function hideNodeTooltip() {
         tooltip.hidden = true;
+        activeButton = null;
     }
     viewport.addEventListener('pointerover', function(event) {
         const button = event.target.closest('[data-skill-node]');
@@ -4643,7 +4609,10 @@ function initSkillTreePan(viewport) {
     });
     viewport.addEventListener('pointerout', function(event) {
         const button = event.target.closest('[data-skill-node]');
-        if (button && !(event.relatedTarget && button.contains(event.relatedTarget))) hideNodeTooltip();
+        if (!button || (event.relatedTarget && button.contains(event.relatedTarget))) return;
+        const hoveredButton = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-skill-node]');
+        if (hoveredButton) showNodeTooltip(hoveredButton);
+        else hideNodeTooltip();
     });
     viewport.addEventListener('focusin', function(event) {
         const button = event.target.closest('[data-skill-node]');

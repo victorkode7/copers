@@ -7,19 +7,23 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/nav.css">
     <link rel="stylesheet" href="css/app-nav.css">
-    <link rel="stylesheet" href="css/game.css?v=20261102-4">
-    <link rel="stylesheet" href="css/town-page.css?v=21">
+    <link rel="stylesheet" href="css/game.css?v=20261108-ui1">
+    <link rel="stylesheet" href="css/town-page.css?v=20261108-ui1">
     <link rel="stylesheet" href="css/equipment-effects.css?v=1">
     <link rel="stylesheet" href="css/equipment-sprite-preview.css?v=3">
-    <link rel="stylesheet" href="css/equipment-crafting.css?v=5">
-    <link rel="stylesheet" href="css/mastery.css?v=2">
+    <link rel="stylesheet" href="css/equipment-crafting.css?v=20261108-ui1">
+    <link rel="stylesheet" href="css/mastery.css?v=20261108-ui1">
     <link rel="stylesheet" href="css/live-tooltips.css?v=1">
     <link rel="stylesheet" href="css/elemental-skills.css?v=20261027-10">
-    <link rel="stylesheet" href="css/world-game.css?v=33">
+    <link rel="stylesheet" href="css/world-game.css?v=20261108-ui1">
+
     <link rel="stylesheet" href="css/skill-tree-background.css?v=20261021-18">
-    <link rel="stylesheet" href="css/inventory-categories.css?v=2">
+    <link rel="stylesheet" href="css/inventory-categories.css?v=20261108-ui1">
     <link rel="stylesheet" href="css/loot-effects.css?v=6">
-    <link rel="stylesheet" href="css/combat-settings.css?v=3">
+    <link rel="stylesheet" href="css/combat-settings.css?v=20261108-ui1">
+    <link rel="stylesheet" href="css/game-theme.css?v=20261108-ui1">
+    <link rel="stylesheet" href="css/level-up.css?v=20261108-ui1">
+    <link rel="stylesheet" href="css/notification-windows.css?v=20261108-ui1">
     <title>Idle Adventure</title>
 </head>
 <body class="idle-adventure">
@@ -62,7 +66,6 @@
             <strong id="levelDisplay">Level 0</strong>
             <span id="experienceText">0 / 50 XP</span>
             <span id="experiencePenalty" hidden></span>
-            <button id="increaseLevelButton" class="dev-level-button" type="button" title="Temporary testing control: gain one level; skill points respect the boss cap">Increase Level by 1</button>
             <strong id="skillPointDisplay" aria-live="polite" aria-atomic="true">Skill points: <span id="skillPointTotal">0</span> / <span id="skillPointCapValue">15</span></strong>
         </div>
         <div id="experienceTrack" class="experience-track" role="progressbar" aria-label="Experience to next level" aria-valuemin="0" aria-valuemax="50" aria-valuenow="0" aria-valuetext="0 of 50 XP to level 1">
@@ -184,13 +187,15 @@
             </section>
 
             <section id="mapMasteryPanel" class="game-panel map-mastery-panel" aria-labelledby="mapMasteryTitle" hidden>
-                <div class="mastery-heading"><div><span class="eyebrow">MONSTER MASTERY</span><h2 id="mapMasteryTitle" tabindex="-1">Map Mastery</h2><p class="subtle">Bonuses apply only on this map. Each node costs 1 mastery point.</p></div><button id="closeMapMastery" type="button">Back to combat</button></div>
-                <p id="masteryCombatStatus" class="subtle" role="status"></p><div class="mastery-progress"><strong id="mapMasteryPoints"></strong><span id="mapMasteryMilestone"></span><progress id="mapMasteryProgress" max="100" value="0"></progress></div>
-                <div class="mastery-workspace"><div id="mapMasteryTree" aria-label="Map mastery tree"></div><section class="mastery-node-details"><h3 id="masterySelectedName"></h3><p id="masterySelectedDescription"></p><h4>Bonuses</h4><ul id="masterySelectedBonuses" class="mastery-bonuses"></ul><h4>Trade-offs</h4><ul id="masterySelectedPenalties" class="mastery-bonuses mastery-penalties"></ul><p id="masteryNodeStatus" class="mastery-status" role="status"></p><div class="mastery-actions"><button id="learnMasteryNode" type="button">Learn · 1 point</button><button id="refundMasteryNode" type="button" hidden>Refund node</button><button id="resetMapMastery" type="button">Refund all</button></div></section></div>
-            </section>
-
-            <section id="lastDrop" class="loot-notice" aria-label="Latest loot" aria-live="polite" aria-atomic="true">
-                <p class="loot-empty">Defeat enemies to find loot.</p>
+                <div class="mastery-heading"><div><span class="eyebrow">MONSTER MASTERY</span><h2 id="mapMasteryTitle" tabindex="-1">Map Mastery</h2></div></div>
+                <div class="mastery-workspace">
+                    <div id="mapMasteryTree" aria-label="Map mastery tree"></div>
+                    <aside class="mastery-sidebar">
+                        <div class="mastery-progress"><strong id="mapMasteryPoints"></strong><span id="mapMasteryMilestone"></span><progress id="mapMasteryProgress" max="100" value="0"></progress><p class="mastery-scope-note">Bonuses apply only on this map.</p></div>
+                        <button id="closeMapMastery" class="mastery-return-button" type="button">Back to combat</button>
+                        <section class="mastery-node-details"><h3 id="masterySelectedName"></h3><p id="masterySelectedDescription"></p><h4>Bonuses</h4><ul id="masterySelectedBonuses" class="mastery-bonuses"></ul><h4>Trade-offs</h4><ul id="masterySelectedPenalties" class="mastery-bonuses mastery-penalties"></ul><p id="masteryNodeStatus" class="mastery-status" role="status"></p><div class="mastery-actions"><button id="learnMasteryNode" type="button">Learn · 1 point</button><button id="refundMasteryNode" type="button" hidden>Refund node</button><button id="resetMapMastery" type="button">Refund all</button></div></section>
+                    </aside>
+                </div>
             </section>
 
             <details class="loot-table-panel">
@@ -203,47 +208,64 @@
 
         <section id="townView" class="game-panel crafting-view page-view" hidden>
             <div class="section-heading">
-                <div>
-                    <span class="eyebrow">THE WORKSHOP</span>
-                    <h1>Crafting</h1>
-                </div>
-                <p class="subtle">Shape your equipment with materials gathered on your adventures.</p>
+                <h1>Crafting</h1>
             </div>
             <div class="crafting-mode-tabs" role="group" aria-label="Crafting pages" hidden>
-                <button type="button" data-crafting-mode="stats" aria-pressed="false" hidden>Crafted stats</button>
+                <button type="button" data-crafting-mode="stats" aria-pressed="false" hidden>Anvil</button>
                 <button type="button" data-crafting-mode="recipes" aria-pressed="true">Gear recipes</button>
             </div>
-            <section id="statCrafting" aria-label="Craft equipment stats" hidden>
+            <section id="statCrafting" aria-label="Anvil" hidden>
                 <div id="rerollWorkbench" class="reroll-workbench">
                     <section class="reroll-item-panel" aria-labelledby="rerollItemName">
-                        <div class="reroll-item-heading"><div id="rerollItemArt"></div><div><span class="eyebrow">ON THE WORKBENCH</span><h2 id="rerollItemName"></h2><p id="rerollItemMeta" class="subtle"></p></div></div>
-                        <div class="reroll-permanent-heading"><span class="permanent-lock" aria-hidden="true"></span><h3>Permanent stats</h3></div>
-                        <ul id="rerollPermanentStats" class="reroll-permanent-stats"></ul>
-                        <div id="rerollSlots" class="reroll-slots" aria-label="Crafted stat slots"></div>
+                        <div class="reroll-item-heading"><div id="rerollItemArt"></div><div><h2 id="rerollItemName"></h2><p id="rerollItemMeta" class="subtle"></p></div></div>
+                        <div id="rerollItemStats" class="reroll-item-stats">
+                            <div id="rerollStatContent" class="reroll-stat-content">
+                                <div class="reroll-permanent-heading"><h3>Permanent</h3></div>
+                                <ul id="rerollPermanentStats" class="reroll-permanent-stats"></ul>
+                                <div id="rerollSlots" class="reroll-slots" aria-label="Anvil slots"></div>
+                            </div>
+                        </div>
                         <section id="weaponRollSave" class="weapon-roll-save" aria-labelledby="weaponRollSaveHeading" hidden>
-                            <h3 id="weaponRollSaveHeading">Saved weapon roll</h3>
-                            <p>Keep one roll per weapon. Saving or replacing it costs 10,000 gold. Reclaim it once for free; this consumes the saved roll.</p>
+                            <h3 id="weaponRollSaveHeading">Saved roll</h3>
                             <ul id="savedWeaponRolls" class="saved-weapon-rolls" aria-label="Saved crafted stats"></ul>
-                            <div class="weapon-roll-save-actions"><button id="saveWeaponRoll" type="button" disabled>Save current roll · 10,000 gold</button><button id="restoreWeaponRoll" type="button" disabled>Restore saved roll · Free</button></div>
+                            <div class="weapon-roll-save-actions"><button id="saveWeaponRoll" type="button" disabled><span id="saveWeaponRollLabel">Save current roll</span><span class="weapon-roll-save-price">10,000 gold</span></button><button id="restoreWeaponRoll" type="button" disabled>Restore saved roll · Free</button></div>
                             <p id="weaponRollSaveStatus" role="status" aria-live="polite"></p>
                         </section>
                     </section>
                     <section class="reroll-recipe-panel" aria-label="Reroll cost and outcomes">
-                        <h3>Cost per craft</h3><ul id="rerollCost" class="reroll-cost"></ul>
+                        <h3>Cost</h3><ul id="rerollCost" class="reroll-cost"></ul>
                         <button id="rerollEquipment" class="action-button reroll-action" type="button" disabled>Craft stats</button>
                         <button id="autoRollEquipment" class="action-button reroll-action auto-roll-action" type="button" aria-pressed="false" disabled>Auto roll</button>
-                        <p id="autoRollSelection" class="auto-roll-selection"></p>
                         <p id="rerollStatus" class="reroll-status" role="status" aria-live="polite"></p>
-                        <h3>Potential rolls</h3><ul id="potentialRolls" class="potential-rolls"></ul><p id="rollPoolHint" class="subtle"></p>
+                        <h3>Potential rolls</h3><ul id="potentialRolls" class="potential-rolls"></ul>
+                    </section>
+                    <section class="reroll-gear-selection" aria-labelledby="rerollGearHeading">
+                        <div class="reroll-gear-heading"><h2 id="rerollGearHeading">Equipment</h2><span id="rerollSlotSummary" class="subtle"></span></div>
+                        <div id="rerollEquippedSlots" class="reroll-equipment-slots" role="group" aria-label="Equipped equipment slots"></div>
+                        <h3 class="reroll-equipment-subheading">Other equipment</h3>
+                        <div class="reroll-gear-filters">
+                            <label for="rerollGearSlot">Slot
+                                <select id="rerollGearSlot">
+                                    <option value="all">All slots</option>
+                                </select>
+                            </label>
+                            <label for="rerollGearSort">Sort
+                                <select id="rerollGearSort">
+                                    <option value="equipped">Equipped first</option>
+                                    <option value="rarity">Rarity</option>
+                                    <option value="name">Name</option>
+                                </select>
+                            </label>
+                        </div>
+                        <p id="rerollGearEmpty" class="subtle reroll-gear-empty" hidden></p>
+                        <div id="rerollGearList" class="reroll-gear-list"></div>
                     </section>
                 </div>
                 <p id="rerollEmpty" class="subtle" hidden>No rerollable equipment is available yet.</p>
-                <section class="reroll-gear-selection" aria-labelledby="rerollGearHeading"><div class="section-heading"><h2 id="rerollGearHeading">Choose your equipment</h2><span id="rerollSlotSummary" class="subtle"></span></div><div id="rerollGearList" class="reroll-gear-list"></div></section>
             </section>
             <section id="recipeCrafting" aria-label="Craft new equipment">
             <div class="crafting-heading">
                 <h2>Gear recipes</h2>
-                <p class="subtle">Crafted items go to your inventory. Equip them when you are ready.</p>
             </div>
             <div id="craftingTools" class="crafting-tools">
                 <div class="craft-category-filters" role="group" aria-label="Filter recipes by gear category">
@@ -298,11 +320,7 @@
 
         <section id="inventoryView" class="game-panel inventory-view page-view" hidden>
             <div class="section-heading">
-                <div>
-                    <span class="eyebrow">YOUR ADVENTURER</span>
-                    <h1>Inventory</h1>
-                </div>
-                <p class="subtle">Choose what to equip and watch your combat stats improve.</p>
+                <h1>Inventory</h1>
             </div>
             <div id="inventoryTools" class="inventory-tools">
                 <div class="inventory-tabs" role="group" aria-label="Inventory categories">
@@ -315,30 +333,22 @@
             <div class="gear-workspace">
                 <section class="town-section equipment-panel" aria-labelledby="equippedGearHeading">
                     <h2 id="equippedGearHeading">Equipped gear</h2>
-                    <p class="subtle">Select a slot to browse gear for that piece.</p>
                     <div id="gearSummary" class="gear-summary" aria-label="Equipped gear slots"></div>
                 </section>
                 <section class="town-section gear-picker" aria-labelledby="gearSelectionHeading">
                     <h2 id="gearSelectionHeading">Weapon selection</h2>
-                    <p id="gearSelectionHint" class="subtle">Choose an owned weapon to equip.</p>
+                    <p id="gearSelectionHint" class="subtle" hidden></p>
                     <div id="gearInventory" class="item-list"></div>
                 </section>
             </div>
             <section class="town-section materials-panel" aria-labelledby="materialsHeading">
                 <h2 id="materialsHeading">Materials</h2>
-                <p class="subtle">Select a material for its description and drop locations. Only owned materials are shown.</p>
                 <div id="inventoryList" class="inventory-list"></div>
             </section>
         </section>
 
       </div>
       <div class="combat-report-stack">
-      <details class="side-panel loot-panel">
-          <summary class="loot-panel-toggle" aria-label="Toggle loot drops">
-              <span class="eyebrow">LOOT DROPS</span>
-          </summary>
-          <ol id="lootLog" class="loot-list loot-panel-content" aria-live="polite"></ol>
-      </details>
       <section class="side-panel damage-breakdown" aria-labelledby="damageBreakdownHeading">
           <div class="damage-breakdown-heading">
               <h2 id="damageBreakdownHeading">Damage breakdown</h2>
@@ -428,7 +438,7 @@
     <script src="js/world-content.js?v=20261101-1"></script>
     <script src="js/world-system.js?v=20261031-2"></script>
     <script src="js/mastery-system.js?v=3"></script>
-    <script src="js/mastery-tree.js?v=2"></script>
+    <script src="js/mastery-tree.js?v=20261108-ui1"></script>
     <script src="js/loot-effects.js?v=8"></script>
     <script src="js/combat-buffs.js?v=1"></script>
     <script src="js/combat-health.js?v=1"></script>
@@ -441,16 +451,18 @@
     <script src="js/damage-breakdown.js?v=20261027-6"></script>
     <script src="js/save-compat.js?v=20261102-1"></script>
     <script src="js/equipment-sprite-preview.js?v=3"></script>
-    <script src="js/equipment-crafting.js?v=13"></script>
+    <script src="js/equipment-crafting.js?v=20261108-ui1"></script>
     <script src="js/progression.js?v=1"></script>
     <script src="js/live-tooltips.js?v=1"></script>
     <script src="js/town-content.js?v=32"></script>
     <script src="js/town-progression.js?v=13"></script>
     <script src="js/combat-abilities.js?v=1"></script>
     <script src="js/combat-simulation.js?v=1"></script>
-    <script src="js/game.js?v=20261106-16"></script>
-    <script src="js/town-page.js?v=34"></script>
-    <script src="js/map-mastery.js?v=5"></script>
+    <script src="js/notification-windows.js?v=20261108-ui1"></script>
+    <script src="js/level-up-celebration.js?v=20261108-ui1"></script>
+    <script src="js/game.js?v=20261108-ui1"></script>
+    <script src="js/town-page.js?v=20261108-ui1"></script>
+    <script src="js/map-mastery.js?v=20261108-ui1"></script>
     <script src="js/skill-builds.js?v=20261031-1"></script>
     <script src="js/game-profiles.js?v=20261102-1"></script>
     <script src="js/offline-play.js?v=20261025-1"></script>

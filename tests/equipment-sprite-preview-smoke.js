@@ -56,11 +56,11 @@
         check('clicking elsewhere closes the preview', !preview());
         elements.gearInventory.querySelector('[data-equip="testAmulet"]').click();
         check('Equip still works after closing the preview', state.gear.necklace === 'testAmulet');
-        icon = elements.gear.querySelector('.equipment-sprite-trigger');
-        const selectionBefore = selectedGearSlot;
-        await openAndCheck(icon);
-        check('equipped sprite preview does not select or change gear', selectedGearSlot === selectionBefore && state.gear.necklace === 'testAmulet');
-        document.body.click();
+        selectedGearSlot = 'weapon';renderInventory();
+        icon = elements.gear.querySelector('[data-gear-slot="necklace"] .equipment-slot-icon');
+        check('equipped sprites are not separate zoom controls',!!icon.querySelector('img')&&!icon.classList.contains('equipment-sprite-trigger')&&icon.getAttribute('role')!=='button');
+        icon.querySelector('img').click();
+        check('clicking an equipped sprite selects its slot without zooming or changing gear',selectedGearSlot==='necklace'&&state.gear.necklace==='testAmulet'&&!preview()&&elements.gear.querySelector('[data-gear-slot="necklace"]').getAttribute('aria-pressed')==='true');
         state.currentView = 'town'; state.isInTown = true;
         // Keep the test recipe available independently of the edited world's drops.
         materialSources.gel = [{mapId: mapData[0].id}];

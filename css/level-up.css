@@ -1,0 +1,116 @@
+.idle-adventure .experience-bar { position:relative; overflow:hidden; }
+.idle-adventure .experience-track { position:relative; }
+.idle-adventure .experience-track.level-up-active {
+    /* Scaling thickens the track without moving nearby labels. */
+    transform:scaleY(2.5); overflow:hidden;
+    animation:level-up-xp-pulse 1s ease-in-out 8;
+}
+.idle-adventure .experience-bar.level-up-active {
+    background:linear-gradient(90deg,#df9700,#ffd700 40%,#fff9c2 75%,#ffea00);
+}
+.idle-adventure .experience-bar.level-up-active::after,
+.idle-adventure .experience-track.level-up-active::after {
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(110deg,transparent 28%,#fff9 44%,#fff 50%,#fff9 56%,transparent 72%);
+    animation:level-up-shine 1s ease-in-out 8;
+}
+/* Temporary completion ribbon stays visible even at zero XP. */
+.idle-adventure .experience-track.level-up-active::before {
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(90deg,#ffd70099,#fff5b8cc,#ffea0099);
+    animation:level-up-ribbon 8s ease-out both;
+}
+.idle-adventure #levelDisplay.level-up-active {
+    display:inline-block; transform-origin:left center;
+    color:#ffea00; text-shadow:0 0 8px #ffd700,0 0 18px #ffd70099;
+    animation:level-up-label 700ms ease-out,level-up-duration 8s linear;
+}
+@keyframes level-up-shine {
+    0% { transform:translateX(-100%); opacity:0; }
+    15%,75% { opacity:1; }
+    100% { transform:translateX(100%); opacity:0; }
+}
+@keyframes level-up-xp-pulse {
+    0%,100% { filter:brightness(1.15); opacity:.88; box-shadow:0 0 10px #ffd700aa,0 0 22px #ffd70055; }
+    45% { filter:brightness(1.65); opacity:1; box-shadow:0 0 15px #ffea00,0 0 30px #ffd700aa; }
+}
+@keyframes level-up-ribbon { 0%,90% { opacity:.85; } 100% { opacity:0; } }
+@keyframes level-up-label { 0%,100% { transform:scale(1); } 35% { transform:scale(1.16); } }
+/* One end event owns cleanup independently of the repeated shine. */
+@keyframes level-up-duration { from { outline-color:transparent; } to { outline-color:transparent; } }
+.idle-adventure .level-up-celebration {
+    position:fixed; inset:0; z-index:101; pointer-events:none; overflow:hidden;
+}
+.level-up-announcement {
+    position:absolute; width:340px; max-width:calc(100vw - 32px); padding:18px 24px;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    border:1px solid #ffd70099; border-radius:8px;
+    background:radial-gradient(ellipse at center,#493a16ee,#10213bed 72%);
+    box-shadow:0 0 28px #ffd70066,inset 0 0 18px #ffd70022;
+    text-align:center; transform:translateX(-50%);
+    animation:level-up-announce 3.2s cubic-bezier(.16,1,.3,1) both;
+}
+.level-up-title {
+    font-size:clamp(1.5rem,4vw,2.5rem); letter-spacing:.08em; line-height:1.1;
+    color:#fff6bc; text-shadow:0 0 8px #ffea00,0 0 24px #ffd700aa,0 2px 0 #705300;
+}
+.level-up-subtitle { color:#fff8dc; font-size:1.1rem; font-weight:700; }
+.level-up-reward { color:#a6ffb2; font-size:.9rem; text-shadow:0 0 10px #79ed8466; }
+.level-up-reward[hidden] { display:none; }
+.level-up-xp-burst { position:absolute; width:0; height:0; }
+.level-up-container-surge { position:absolute; pointer-events:none; }
+.level-up-container-surge[hidden] { display:none; }
+.level-up-xp-burst::before,.level-up-container-surge::before,
+.level-up-container-surge::after {
+    content:""; position:absolute; pointer-events:none; border-radius:50%;
+    border:2px solid #fff3ad; box-shadow:0 0 14px #ffd700,inset 0 0 12px #ffd70099;
+    animation:level-up-ring 1.1s ease-out both;
+}
+.level-up-xp-burst::before {
+    width:180px; height:28px; left:-90px; top:-14px;
+    background:radial-gradient(ellipse,#fff9d0aa,transparent 70%);
+}
+.level-up-container-surge::before,.level-up-container-surge::after {
+    inset:0; border-radius:inherit;
+    animation:level-up-container-ring 1.4s ease-out both;
+}
+.level-up-container-surge::after { animation-delay:180ms; border-color:#ffd700; }
+.level-up-particle {
+    position:absolute; left:-2px; top:-2px; width:4px; height:4px;
+    background:#fff9d0; border-radius:1px; box-shadow:0 0 7px #ffea00;
+    animation:level-up-sparks 1.4s ease-out var(--delay) both;
+}
+@keyframes level-up-announce {
+    0% { opacity:0; transform:translate(-50%,14px) scale(.65); filter:brightness(2); }
+    12% { opacity:1; transform:translate(-50%,-4px) scale(1.06); filter:brightness(1.3); }
+    24%,82% { opacity:1; transform:translate(-50%,0) scale(1); filter:brightness(1); }
+    100% { opacity:0; transform:translate(-50%,-14px) scale(.98); }
+}
+@keyframes level-up-ring {
+    0% { opacity:0; transform:scale(.65); }
+    12% { opacity:1; }
+    100% { opacity:0; transform:scale(2.2); }
+}
+@keyframes level-up-container-ring {
+    0% { opacity:0; inset:0; }
+    12% { opacity:1; }
+    100% { opacity:0; inset:-22px; }
+}
+@keyframes level-up-sparks {
+    0% { opacity:0; transform:translate(0,0) scale(1.7); }
+    10% { opacity:1; }
+    100% { opacity:0; transform:translate(var(--dx),var(--dy)) scale(.15); }
+}
+.level-up-celebration.is-reduced .level-up-announcement { animation:level-up-quiet 3.2s ease-out both; }
+.level-up-celebration.is-reduced :is(.level-up-xp-burst,.level-up-container-surge) { display:none; }
+@keyframes level-up-quiet { 0%,82% { opacity:1; } 100% { opacity:0; } }
+@media (prefers-reduced-motion:reduce) {
+
+
+    .idle-adventure .experience-track.level-up-active {
+        transform:none; animation:none; box-shadow:0 0 12px #ffd70099;
+    }
+    .idle-adventure .experience-bar.level-up-active::after,
+    .idle-adventure .experience-track.level-up-active::after { animation:none; display:none; }
+    .idle-adventure #levelDisplay.level-up-active { animation:level-up-duration 8s linear; }
+}

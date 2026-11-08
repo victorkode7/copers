@@ -78,6 +78,15 @@
         const label=document.getElementById('resetTownStatus');label.hidden=false;label.textContent=ok?'Town reset.':'Could not save. Town progress kept.';
         return ok;
     }
+    function increaseLevel(){
+        if(!allows('travel',state))return false;
+        const previousPoints=getEarnedSkillPoints();
+        const ok=transact(()=>{
+            state.level++;state.experience=0;state.experienceRemainder=0;syncSkillPoints();
+        },'Character level increased by 1.');
+        if(ok)triggerLevelUpEffect({level:state.level,skillPoints:Math.max(0,getEarnedSkillPoints()-previousPoints)});
+        return ok;
+    }
     function copyPlaytest(){
         if(!writable()||!window.confirm('Copy your playtest profile into this development slot? The playtest profile stays untouched. Current development progress will be backed up.'))return false;
         try{
@@ -101,6 +110,7 @@
         grantButton.disabled=locked||!picker.value||ownsItem(picker.value);deleteButton.disabled=locked||!state.ownedItemIds.includes(picker.value);
         document.getElementById('developerCopyPlaytest').disabled=locked;
         document.getElementById('resetTownProgress').disabled=locked;
+        document.getElementById('increaseLevelButton').disabled=locked||!active;
     }
     function mount(){
         if(root)return;
@@ -118,6 +128,8 @@
         function checkbox(id,text,handler){const label=node('label'),input=node('input',undefined,id);input.type='checkbox';input.addEventListener('change',()=>handler(input.checked));label.append(input,document.createTextNode(' '+text));details.append(label);return input;}
         details.append(summary,info);mode=checkbox('developerTravel','Developer mode',setMode);equipment=checkbox('developerItems','Enable developer equipment',setEquipment);
         tools=node('div');tools.style.cssText='max-width:48rem;padding:.75rem 0';
+        const level=node('button','Increase Level by 1','increaseLevelButton');level.type='button';level.className='dev-level-button';
+        level.title='Gain one level; skill points respect the boss cap';level.addEventListener('click',increaseLevel);tools.append(level);
         const searchLabel=node('label','Find normal equipment');search=node('input',undefined,'developerEquipmentSearch');search.type='search';search.placeholder='Name, slot, or item ID';searchLabel.append(search);
         const pickerLabel=node('label','Equipment');picker=node('select',undefined,'developerEquipmentPicker');picker.style.maxWidth='100%';pickerLabel.append(picker);
         grantButton=node('button','Add equipment','developerGrantItem');deleteButton=node('button','Delete equipment','developerDeleteItem');

@@ -5,11 +5,14 @@ param(
     [string]$ReportPath,
     [string]$ScreenshotPath,
     [string]$WindowSize = '1440,1000',
+    [ValidatePattern('^\d+,\d+$')][string]$ViewportSize,
     [int]$TimeoutSeconds = 25,
     [string]$ProjectRoot,
     [switch]$WithoutDeveloperTools,
     [switch]$MissingDeveloperModule,
-    [switch]$EnableGpu
+    [switch]$ReducedMotion,
+    [switch]$EnableGpu,
+    [switch]$RestrictFileAccess
 )
 $ErrorActionPreference = 'Stop'
 $workspacePath = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -57,12 +60,17 @@ try {
     $realtime = $realtime -or $TestScript -eq 'tests/world-progression-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/black-sun-smoke.js'
     $realtime = $realtime -or $TestScript -in @('tests/monster-mastery-smoke.js','tests/mastery-editor-smoke.js')
+    $realtime = $realtime -or $TestScript -eq 'tests/mastery-gestures-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/equipment-crafting-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/weapon-roll-save-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/auto-reroll-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/persistent-tooltips-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/retired-town-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/town-page-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/game-theme-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/skill-node-states-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/skill-link-clipping-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/void-vortex-visuals-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/town-production-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/town-sawmill-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/town-mine-smoke.js'
@@ -93,15 +101,30 @@ try {
     $realtime = $realtime -or $TestScript -eq 'tests/combat-simulation-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-effects-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/combat-effect-batch-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-projectiles-smoke.js' -or [bool]$ScreenshotPath
     $realtime = $realtime -or $TestScript -eq 'tests/equipment-sprite-preview-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/level-up-smoke.js'
+    $realtime = $realtime -or $TestScript -eq 'tests/notification-windows-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-preview-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-sprite-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-cone-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-geometry-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-redraw-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-echo-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/reap-local-file-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/scythe-reap-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/world-project-load-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/spell-skills-smoke.js'
     $realtime = $realtime -or ($Page -eq 'skill-tree-editor.html' -and $TestScript -eq 'tests/shield-expansion-smoke.js')
+    $realtime = $realtime -or [bool]$ViewportSize -or [bool]$ReducedMotion
+    $realtime = $realtime -or $TestScript -like 'tests/game-theme-smoke.js*'
     if ($realtime) {
-        $processInfo.Arguments = '--headless --disable-gpu --no-first-run --allow-file-access-from-files --remote-debugging-port=0 --user-data-dir="' + $profilePath + '" "' + ([uri]$fixturePath).AbsoluteUri + '"'
+        $startUrl = if ($ViewportSize -or $ReducedMotion) { 'about:blank' } else { ([uri]$fixturePath).AbsoluteUri }
+        $processInfo.Arguments = '--headless --disable-gpu --no-first-run --allow-file-access-from-files --remote-debugging-port=0 --user-data-dir="' + $profilePath + '" "' + $startUrl + '"'
     }
     if ($EnableGpu) { $processInfo.Arguments = $processInfo.Arguments.Replace('--disable-gpu ', '') }
+    if ($RestrictFileAccess) { $processInfo.Arguments = $processInfo.Arguments.Replace('--allow-file-access-from-files ', '') }
     $processInfo.UseShellExecute = $false
     $processInfo.Arguments += ' --window-size=' + $WindowSize
     $processInfo.CreateNoWindow = $true
@@ -114,8 +137,17 @@ try {
         # Real time allows IndexedDB draft/sprite operations to finish, including across navigation.
         $deadline = [DateTime]::UtcNow.AddSeconds(20)
         $portFile = Join-Path $profilePath 'DevToolsActivePort'
-        while (!(Test-Path -LiteralPath $portFile) -and [DateTime]::UtcNow -lt $deadline) { Start-Sleep -Milliseconds 100 }
-        $port = ([IO.File]::ReadAllLines($portFile))[0]
+        $port=0
+        while (!$port -and [DateTime]::UtcNow -lt $deadline) {
+            if (Test-Path -LiteralPath $portFile) {
+                try {
+                    $portLines=[IO.File]::ReadAllLines($portFile)
+                    if ($portLines.Length -ge 2) { $port=[int]$portLines[0] }
+                } catch [IO.IOException] { } # Chrome may still be writing the file.
+            }
+            if (!$port) { Start-Sleep -Milliseconds 100 }
+        }
+        if (!$port) { throw 'Browser debugging port did not become ready.' }
         $targets = Invoke-RestMethod -Uri ('http://127.0.0.1:' + $port + '/json/list')
         $target = $targets | Where-Object { $_.type -eq 'page' } | Select-Object -First 1
         $socket = [Net.WebSockets.ClientWebSocket]::new()
@@ -123,6 +155,34 @@ try {
         try {
             $null = $socket.ConnectAsync([uri]$target.webSocketDebuggerUrl, $cancellation.Token).GetAwaiter().GetResult()
             $messageId = 0
+            if ($ViewportSize -or $ReducedMotion) {
+                # Chrome's minimum desktop window can exceed phone widths.
+                # Set the actual viewport before loading the page and its tests.
+                $startupCommands = @()
+                if ($ViewportSize) {
+                    $dimensions = $ViewportSize.Split(',')
+                    $startupCommands += @{method='Emulation.setDeviceMetricsOverride'; params=@{width=[int]$dimensions[0]; height=[int]$dimensions[1]; deviceScaleFactor=1; mobile=$true}}
+                }
+                if ($ReducedMotion) { $startupCommands += @{method='Emulation.setEmulatedMedia'; params=@{features=@(@{name='prefers-reduced-motion';value='reduce'})}} }
+                $startupCommands += @{method='Page.navigate'; params=@{url=([uri]$fixturePath).AbsoluteUri}}
+                foreach ($startup in $startupCommands) {
+                    $messageId++
+                    $command = @{id=$messageId; method=$startup.method; params=$startup.params} | ConvertTo-Json -Depth 6 -Compress
+                    $commandBytes = [Text.Encoding]::UTF8.GetBytes($command)
+                    $null = $socket.SendAsync([ArraySegment[byte]]::new($commandBytes), [Net.WebSockets.WebSocketMessageType]::Text, $true, $cancellation.Token).GetAwaiter().GetResult()
+                    do {
+                        $message = [IO.MemoryStream]::new()
+                        do {
+                            $buffer = [byte[]]::new(16384)
+                            $received = $socket.ReceiveAsync([ArraySegment[byte]]::new($buffer), $cancellation.Token).GetAwaiter().GetResult()
+                            $message.Write($buffer, 0, $received.Count)
+                        } while (!$received.EndOfMessage)
+                        $reply = [Text.Encoding]::UTF8.GetString($message.ToArray()) | ConvertFrom-Json
+                        $message.Dispose()
+                    } while ($reply.id -ne $messageId)
+                    if ($reply.error) { throw ('Viewport setup failed: ' + $reply.error.message) }
+                }
+            }
             $outputText = $null
             while (!$outputText -and [DateTime]::UtcNow -lt $deadline) {
                 $messageId++
