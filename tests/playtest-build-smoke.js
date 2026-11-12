@@ -8,6 +8,8 @@
         check('changing developer flags cannot grant admin equipment',itemData.items.filter(item=>item.developerOnly).every(item=>!ownsItem(item.id)));
         check('changing flags cannot bypass travel or spending',!worldIsUnlocked(1)&&!GameResources.canSpend(state,{gold:1})&&!GameResources.spend(state,{gel:1}));
         check('Town purchases retain normal costs',!TownProgression.can(state,'purchase','lumberOutpost'));
+        Alchemy.unlock(state);state.materials.gel=3;state.alchemy.liquids.moonwater.amount=0;
+        check('Alchemy liquids stay finite without the optional developer module',!Alchemy.infiniteLiquids(state)&&Alchemy.maxBrewAmount(state,'moonveil')===0&&!Alchemy.brew(state,'moonveil'));
         const save=createGameSave();delete save.profileEnvironment;save.developerItemsEnabled=true;save.developerTravelEnabled=true;
         const admin=itemData.items.find(item=>item.developerOnly);save.gear[admin.slot]=admin.id;
         const parsed=parseGameSave(JSON.stringify(save));

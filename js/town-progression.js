@@ -44,6 +44,7 @@
     }
     function available(profile,kind,id){
         const def=definition(id,profile.townProgress.buildings[id]?.tier||0);if(!def)return false;
+        if(kind==='purchase'&&def.purchaseAvailable&&!def.purchaseAvailable(profile))return false;
         const required=requirements(profile,kind,id);
         return Object.entries(required).every(([building,minimum])=>{const data=profile.townProgress.buildings[building];return data&&(data.tier>minimum.tier||data.tier===minimum.tier&&data.level>=(minimum.level||1));});
     }
@@ -56,7 +57,7 @@
     }
     function apply(profile,kind,id){
         if(!can(profile,kind,id))return false;
-        if(kind==='purchase'){GameResources.spend(profile,cost('purchase',id),profile.townProgress.resources);profile.townProgress.buildings[id]={tier:0,level:1};}
+        if(kind==='purchase'){GameResources.spend(profile,cost('purchase',id),profile.townProgress.resources);profile.townProgress.buildings[id]={tier:0,level:1};definition(id).onPurchase?.(profile);}
         else{
             const data=profile.townProgress.buildings[id];
             GameResources.spend(profile,cost(kind,id,data),profile.townProgress.resources);

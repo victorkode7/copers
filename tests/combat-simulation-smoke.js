@@ -61,8 +61,8 @@
             pruneVoidMissilePresentations();
         }
         if(state.pendingReapAttacks.length)throw new Error('A legacy combat scenario queued Reap');
-        // The new empty queue is additive save state, not a legacy combat change.
-        const serializedState=JSON.stringify({state,damage:getDamageBreakdown()},(key,value)=>key==='pendingReapAttacks'?undefined:value);
+        // Empty Reap/locked Alchemy state is additive, not a legacy combat change.
+        const serializedState=JSON.stringify({state,damage:getDamageBreakdown()},(key,value)=>['pendingReapAttacks','alchemy'].includes(key)?undefined:value);
         return{state:hash(serializedState).toString(16),rolls,events,eventOrder:eventHash.toString(16),render:renderHash.toString(16)};
     }
     try{

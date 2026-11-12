@@ -78,15 +78,18 @@
                     color=mix(vec3(0.18,0.025,0.035),vec3(1.0,0.48,0.12),max(core,halo));
                     color=mix(color,vec3(1.0,0.83,0.42),core);
                 } else {
-                    if(v_uv.x>head && (style<13.5 || style>15.5)) discard;
+                    if(v_uv.x>head && (style<13.5 || style>15.5 && style<16.5)) discard;
                     // Widths and blur radii are CSS pixels, independent of the
                     // padded strip needed to keep the glow from being clipped.
                     float lateral=edge*(v_size.x+v_size.y*3.0);
-                    float along=style>13.5 && style<15.5 ? max(0.0,max(head-0.14-v_uv.x,v_uv.x-head))*v_pathLength : 0.0;
+                    float tail=style>16.5?0.38:0.14;
+                    float along=style>13.5 && style<15.5 || style>16.5 ? max(0.0,max(head-tail-v_uv.x,v_uv.x-head))*v_pathLength : 0.0;
                     float distance=length(vec2(lateral,along));
                     float core=1.0-smoothstep(v_size.x-0.5,v_size.x+0.5,distance);
                     float halo=exp(-0.5*pow(max(0.0,distance-v_size.x)/v_size.y,2.0))*0.55*u_glow;
-                    if(style>15.5) {
+                    if(style>16.5) {
+                        fade=smoothstep(0.0,0.04,t)*(1.0-smoothstep(0.72,1.0,t));
+                    } else if(style>15.5) {
                         float lifetime=duration*0.5+v_uv.x*(duration*0.5-flight);
                         fade=1.0-smoothstep(lifetime*0.45,lifetime,max(0.0,arrival));
                     } else if(style>13.5) {
@@ -237,7 +240,7 @@
         }
         ambient=next;if(changed)wake();
     }
-    function trail({points,flight=400,duration=flight,delay=0,width=6,strokeWidth=3,glowRadius=4,style=12,color=[1,1,1],glowColor=color,category='projectiles',type='trail',parametric=false}) {
+    function trail({points,flight=400,duration=flight,delay=0,width=6,strokeWidth=3,glowRadius=4,style=12,color=[1,1,1],glowColor=color,opacity=1,category='projectiles',type='trail',parametric=false}) {
         const halfStroke=strokeWidth/2,blur=Math.max(1,glowRadius);
         if(style!==13)width=halfStroke+blur*3;
         const distances=[0];for(let i=1;i<points.length;i++)distances.push(distances[i-1]+Math.hypot(points[i].x-points[i-1].x,points[i].y-points[i-1].y));
@@ -246,7 +249,7 @@
             const before=points[Math.max(0,index-1)],after=points[Math.min(points.length-1,index+1)];
             const dx=after.x-before.x,dy=after.y-before.y,size=Math.hypot(dx,dy)||1;
             return [-1,1].map(side=>[point.x-dy/size*side*width,point.y+dx/size*side*width,halfStroke,blur,
-                0,0,flight/1000,0,...glowColor,length,born,duration/1000,0,style,...color,1,parametric?index/(points.length-1):distances[index]/length,side,0,1]);
+                0,0,flight/1000,0,...glowColor,length,born,duration/1000,0,style,...color,opacity,parametric?index/(points.length-1):distances[index]/length,side,0,1]);
         });
         const vertices=new Float32Array((points.length-1)*144);let offset=0;
         for(let i=1;i<strip.length;i++)for(const vertex of [strip[i-1][0],strip[i-1][1],strip[i][0],strip[i][0],strip[i-1][1],strip[i][1]]){vertices.set(vertex,offset);offset+=24;}

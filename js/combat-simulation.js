@@ -7,6 +7,7 @@
     function create({state, rules, random, freezeDelay}) {
         function step(elapsed) {
             rules.tickTown(state,elapsed);
+            rules.tickAlchemy?.(state,elapsed);
             const map = rules.currentMap();
             rules.tickFury(elapsed);
             rules.tickGatheringPower(elapsed);

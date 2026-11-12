@@ -5,10 +5,12 @@
     // Saved flags are preferences, not an authorization boundary or anti-cheat.
     const saveKey='idleAdventureSave:development';
     let root,status,picker,search,mode,equipment,tools,grantButton,deleteButton,message='',lastCatalogue='';
+    let infiniteAlchemyLiquids=false;
     const node=(tag,text,id)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(id)el.id=id;return el;};
     function allows(capability,profile){
         if(!profile)return false;
         if(capability==='equipment')return profile.developerItemsEnabled===true;
+        if(capability==='alchemyLiquids')return profile.developerTravelEnabled===true&&infiniteAlchemyLiquids;
         if(capability==='travel'||capability==='resources')return profile.developerTravelEnabled===true;
         return false;
     }
@@ -28,6 +30,7 @@
             // previous live state for rollback if browser storage rejects it.
             state.ownedItemIds=[...state.ownedItemIds];state.gear={...state.gear};
             state.townProgress=TownProgression.clone(state.townProgress);
+            state.alchemy=Alchemy.clone(state.alchemy);
             state.tutorials={...state.tutorials};
             change();refresh();localStorage.setItem(saveKey,JSON.stringify(createGameSave()));message=success;
         }catch{
@@ -72,6 +75,17 @@
     function setEquipment(enabled){
         return transact(()=>{state.developerItemsEnabled=Boolean(enabled);if(!enabled)for(const slot of gearSlots)if(itemById[state.gear[slot]]?.developerOnly)state.gear[slot]=null;},'Developer equipment preference saved.');
     }
+    function setAlchemyInfiniteLiquids(enabled){
+        if(!writable()||!allows('travel',state))return false;
+        try{localStorage.setItem(saveKey+':alchemy',JSON.stringify({infiniteLiquids:Boolean(enabled)}));}
+        catch{message='Could not save the Alchemy preference.';window.render();return false;}
+        infiniteAlchemyLiquids=Boolean(enabled);message=enabled?'Infinite Alchemy liquids enabled.':'Normal Alchemy liquid costs restored.';
+        window.render();return true;
+    }
+    function discoverAlchemyRecipes(){
+        if(!allows('travel',state)||!state.alchemy.unlocked)return false;
+        return transact(()=>{state.alchemy.discovered=Object.keys(AlchemyContent.recipes);},'All Alchemy recipes discovered.');
+    }
     function resetTown(){
         if(!writable()||!window.confirm('Reset all Town buildings and materials? Adventure progress and gold will be kept.'))return false;
         const ok=transact(()=>{state.townProgress=TownProgression.defaults();},'Town reset.');
@@ -112,9 +126,13 @@
         document.getElementById('resetTownProgress').disabled=locked;
         document.getElementById('increaseLevelButton').disabled=locked||!active;
         document.getElementById('previewScytheReap').disabled=locked||!active;
+        document.getElementById('developerInfiniteLiquids').checked=infiniteAlchemyLiquids;
+        document.getElementById('developerInfiniteLiquids').disabled=locked||!active;
+        document.getElementById('developerDiscoverAlchemy').disabled=locked||!active||!state.alchemy.unlocked;
     }
     function mount(){
         if(root)return;
+        try{infiniteAlchemyLiquids=JSON.parse(localStorage.getItem(saveKey+':alchemy')||'null')?.infiniteLiquids===true;}catch{/* Default to finite liquids. */}
         const interfaceLabel=node('label');interfaceLabel.className='interface-setting';
         const navigationToggle=node('input',undefined,'hideDeveloperNavigation');navigationToggle.type='checkbox';
         const navigationCopy=node('span','Hide developer navigation');navigationCopy.append(node('small','Hide the top Game and editor links. Settings and the game navigation remain available.'));
@@ -126,7 +144,7 @@
         root=node('footer');root.className='developer-options';root.id='developerTools';
         const details=node('details'),summary=node('summary','Developer tools · separate development save');
         const info=node('p','Development build. Developer mode makes spending free; resource balances and normal production stay unchanged.');
-        function checkbox(id,text,handler){const label=node('label'),input=node('input',undefined,id);input.type='checkbox';input.addEventListener('change',()=>handler(input.checked));label.append(input,document.createTextNode(' '+text));details.append(label);return input;}
+        function checkbox(id,text,handler,parent=details){const label=node('label'),input=node('input',undefined,id);input.type='checkbox';input.addEventListener('change',()=>handler(input.checked));label.append(input,document.createTextNode(' '+text));parent.append(label);return input;}
         details.append(summary,info);mode=checkbox('developerTravel','Developer mode',setMode);equipment=checkbox('developerItems','Enable developer equipment',setEquipment);
         tools=node('div');tools.style.cssText='max-width:48rem;padding:.75rem 0';
         const level=node('button','Increase Level by 1','increaseLevelButton');level.type='button';level.className='dev-level-button';
@@ -136,6 +154,8 @@
             if(!allows('travel',state))return;document.getElementById('mapButton').click();
             window.ReapSprite?.ready.then(()=>window.ReapSprite.show(state.targetMonsterId||state.monsterStates[0]?.id));
         });tools.append(preview);
+        checkbox('developerInfiniteLiquids','Infinite Alchemy liquids',setAlchemyInfiniteLiquids,tools);
+        const discover=node('button','Discover all Alchemy recipes','developerDiscoverAlchemy');discover.type='button';discover.addEventListener('click',discoverAlchemyRecipes);tools.append(discover);
         const searchLabel=node('label','Find normal equipment');search=node('input',undefined,'developerEquipmentSearch');search.type='search';search.placeholder='Name, slot, or item ID';searchLabel.append(search);
         const pickerLabel=node('label','Equipment');picker=node('select',undefined,'developerEquipmentPicker');picker.style.maxWidth='100%';pickerLabel.append(picker);
         grantButton=node('button','Add equipment','developerGrantItem');deleteButton=node('button','Delete equipment','developerDeleteItem');
@@ -147,5 +167,5 @@
         status=node('p','','developerToolsStatus');status.setAttribute('role','status');
         details.append(tools,copy,reset,resetStatus,status);root.append(details);document.body.append(root);render();
     }
-    window.DeveloperTools=Object.freeze({saveKey,environment:'development',allows,owns,mount,render,grant,remove,setMode,setEquipment,resetTown,copyPlaytest,setBusy:active=>{if(root)root.inert=active;}});
+    window.DeveloperTools=Object.freeze({saveKey,environment:'development',allows,owns,mount,render,grant,remove,setMode,setEquipment,setAlchemyInfiniteLiquids,discoverAlchemyRecipes,resetTown,copyPlaytest,setBusy:active=>{if(root)root.inert=active;}});
 }());

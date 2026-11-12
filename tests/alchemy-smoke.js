@@ -1,0 +1,181 @@
+(async function () {
+    const checks=[], $=id=>document.getElementById(id),clone=value=>JSON.parse(JSON.stringify(value));
+    const check=(name,ok)=>{checks.push((ok?'PASS ':'FAIL ')+name);if(!ok)throw new Error(name);};
+    const originalWrite=Storage.prototype.setItem,originalRandom=Math.random;
+    const snapshot=()=>JSON.stringify([state.gold,state.materials,state.alchemy,state.townProgress,state.professions]);
+    const finishQueue=()=>{const seconds=state.alchemy.queue.reduce((sum,job)=>sum+job.remaining*AlchemyContent.recipes[job.id].brewSeconds-job.work/1000000,0);Alchemy.tick(state,seconds);render();};
+    const failure=run=>{Storage.prototype.setItem=function(key,value){if(key===saveKey)throw new Error('Storage full');return originalWrite.call(this,key,value);};try{run();}finally{Storage.prototype.setItem=originalWrite;}};
+    const select=(ids,material)=>{
+        $('alchemyLiquids').querySelectorAll('[data-select-liquid]').forEach(node=>{if(ids.includes(node.dataset.selectLiquid)!==(node.getAttribute('aria-pressed')==='true'))node.click();});
+        const node=$('alchemyMaterials').querySelector('[data-select-material="'+material+'"]');if(node.getAttribute('aria-pressed')!=='true')node.click();
+    };
+    try {
+        await document.fonts.ready;clearOfflineRecap();resetCombatClock();
+        state.alchemy=Alchemy.defaults();state.townProgress=TownProgression.defaults();state.unlockedWorldIds=[];
+        // Existing workshop checks use a trained alchemist; training has its own suite.
+        state.professions=Professions.defaults();state.professions.xp.alchemy=Professions.xpForLevel(20);
+        state.level=0;state.skillPoints=0;state.skillRanks={};state.experience=0;state.experienceRemainder=0;state.tutorials=createTutorialState();
+        state.gear=createEmptyGear();state.upgrades={strength:0,haste:0,evasion:0};state.gold=1000000;
+        state.materials=Object.fromEntries(Object.keys(materialNames).map(id=>[id,100]));state.kills=Object.fromEntries(mapData.map(map=>[map.id,0]));
+        state.combatPaused=true;state.playerHp=0;render();
+        check('Alchemy starts locked and combat has no potion slot',state.alchemy.equipped===null&&$('alchemyNavItem').hidden&&$('combatPotion').hidden);
+        check('W3 access is required for the apothecary',!TownProgression.can(state,'purchase','apothecary'));
+        $('townPageButton').click();$('townWorldList').children[0].click();
+        check('W1 Town does not contain the Alchemy unlock',!$('townBuildingGrid').querySelector('[data-building="apothecary"]'));
+        $('townWorldList').children[1].click();
+        check('W2 Town does not contain the Alchemy unlock',!$('townBuildingGrid').querySelector('[data-building="apothecary"]'));
+        state.unlockedWorldIds=[AlchemyContent.unlockWorld];$('townWorldList').children[2].click();
+        const unlock=$('townBuildingGrid').querySelector('[data-building="apothecary"] button'),cost=TownProgression.cost('purchase','apothecary').gold;
+        check('W3 Town offers the one-time Alchemy unlock',Boolean(unlock)&&unlock.textContent==='Buy');
+        state.gold=cost-1;render();unlock.click();check('the full unlock cost is required',!state.alchemy.unlocked&&unlock.disabled);
+        state.gold=1000000;render();const locked=snapshot();failure(()=>unlock.click());
+        check('failed unlock save restores gold, Town ownership and Alchemy',snapshot()===locked&&!state.alchemy.unlocked);
+        unlock.click();
+        check('buying the apothecary unlocks Alchemy and one slot',state.alchemy.unlocked&&state.gold===1000000-cost&&!$('alchemyNavItem').hidden&&AlchemyContent.potionSlots===1);
+        check('unlock persists and cannot be bought twice',parseGameSave(localStorage.getItem(saveKey)).alchemy.unlocked&&!TownProgression.can(state,'purchase','apothecary'));
+        check('apothecary has no production, upgrades or prestige',!TownProgression.production('apothecary',state.townProgress.buildings.apothecary,state)&&!TownProgression.can(state,'upgrade','apothecary')&&!TownProgression.can(state,'prestige','apothecary'));
+        $('alchemyButton').click();
+        check('Alchemy opens its own page',state.currentView==='alchemy'&&!$('alchemyView').hidden&&elements.mapView.hidden&&$('alchemyButton').getAttribute('aria-pressed')==='true');
+        check('clickable liquid containers replace the old recipe tabs',$('alchemyLiquids').querySelectorAll('[data-select-liquid]').length===2&&!$('alchemyRecipes')&&!state.alchemy.liquids.emberOil.unlocked);
+        check('unused ingredient field is removed',!$('alchemyMixture'));
+        const shelf=$('alchemyLiquids'),extraStills=Array.from({length:4},()=>shelf.firstElementChild.cloneNode(true));extraStills.forEach(node=>shelf.append(node));
+        check('liquid shelf accommodates additional stills without page overflow',document.documentElement.scrollWidth<=innerWidth&&(innerWidth<=650?shelf.scrollWidth>shelf.clientWidth:shelf.scrollHeight>shelf.clientHeight));
+        extraStills.forEach(node=>node.remove());shelf.scrollLeft=0;shelf.scrollTop=0;
+        check('materials appear as selectable sprites without visible names or amounts',$('alchemyMaterials').children.length>0&&Array.from($('alchemyMaterials').children).every(node=>node.querySelector('.item-sprite')&&node.getAttribute('aria-label')===materialNames[node.dataset.selectMaterial]&&node.textContent.trim().length<=1));
+        const scene=$('alchemyScene'),tray=$('alchemyMaterials'),moonMeter=$('alchemyLiquids').querySelector('[data-liquid="moonwater"] progress');
+        check('full material list stays beside the liquid containers',tray.closest('.alchemy-liquids')!==null&&!scene.contains(tray));
+        check('liquid storage starts with an accurate empty bar',moonMeter.value===0&&moonMeter.max===120&&moonMeter.getAttribute('aria-label')==='Moonwater storage');
+        const bottleAmount=moonMeter.closest('.alchemy-liquid').querySelector('.alchemy-bottle-amount');
+        check('bottle shows current liquid and capacity',bottleAmount.textContent==='0/120');
+        check('unselected cauldron is empty',$('alchemyBrewTint').hidden&&scene.getAttribute('aria-label').startsWith('Empty cauldron'));
+        check('undiscovered recipes stay hidden',Array.from($('alchemyPotions').children).every(node=>node.hidden)&&!$('alchemyEmpty').hidden);
+        for(let step=0;step<300;step++)simulateCombatStep(.1,false);
+        check('simulation generates Moonwater while dead and away from the Map',state.alchemy.liquids.moonwater.amount===1&&state.alchemy.liquids.emberOil.amount===0);
+        AlchemyPage.render();check('liquid bar updates as production advances',moonMeter.value===1);
+        check('bottle amount follows passive production',bottleAmount.textContent==='1/120');
+        simulateCombatStep(100000,false);render();
+        check('large offline steps cap production and discard surplus work',state.alchemy.liquids.moonwater.amount===120&&state.alchemy.liquids.moonwater.work===0);
+        check('full liquid storage fills the bar',moonMeter.value===moonMeter.max);
+        select(['moonwater'],'fang');const invalidMix=snapshot();$('alchemyBrew').click();
+        check('unknown combinations do not invent a material cost',$('alchemySelectedMaterials').querySelector('.alchemy-material-cost').textContent==='?');
+        check('Moonwater uses the blue liquid sprite',!$('alchemyBrewTint').hidden&&$('alchemyLiquidSheet').getAttribute('href').includes('cauldron-blue-liquid-4x2.png'));
+        $('alchemyLiquids').querySelector('[data-select-liquid="moonwater"]').click();
+        check('removing the liquid empties the cauldron and hides bubbles and steam',$('alchemyBrewTint').hidden&&scene.getAttribute('aria-label').startsWith('Empty cauldron'));
+        select(['moonwater'],'fang');$('alchemyBrew').click();
+        check('unknown combinations do not spend ingredients or reveal recipes',snapshot()===invalidMix&&$('alchemyStatus').textContent==='No recipe found.');
+        select(['moonwater'],'gel');
+        const selectedSprites=$('alchemySelectedMaterials');
+        check('selecting ingredients does not reveal an undiscovered potion',$('alchemyBrewHeading').textContent==='Unknown mixture');
+        check('single brew shows only the required amount',selectedSprites.querySelector('.alchemy-material-cost').textContent==='3'&&selectedSprites.querySelector('.alchemy-material-owned').hidden);
+        check('only the selected material sprite appears above the cauldron',scene.contains(selectedSprites)&&selectedSprites.children.length===1&&selectedSprites.querySelector('img').getAttribute('src')===itemData.materialDetails.gel.sprite&&selectedSprites.getBoundingClientRect().bottom<scene.getBoundingClientRect().top+scene.getBoundingClientRect().height*.57);
+        check('material sprites have no tile backgrounds',getComputedStyle(selectedSprites.querySelector('button')).backgroundColor==='rgba(0, 0, 0, 0)'&&getComputedStyle(tray.querySelector('button')).backgroundColor==='rgba(0, 0, 0, 0)'&&getComputedStyle(selectedSprites.querySelector('button')).borderTopWidth==='0px');
+        const spriteBounds=selectedSprites.querySelector('.item-sprite').getBoundingClientRect(),costBounds=selectedSprites.querySelector('.alchemy-material-cost').getBoundingClientRect();
+        check('material cost sits at the top right of the sprite',costBounds.right>=spriteBounds.right&&costBounds.top<=spriteBounds.top);
+        selectedSprites.querySelector('button').click();
+        check('clicking the sprite removes its ingredient selection',selectedSprites.hidden&&$('alchemyMaterials').querySelector('[data-select-material="gel"]').getAttribute('aria-pressed')==='false');
+        select(['moonwater'],'gel');
+        const beforeBrew=snapshot();failure(()=>$('alchemyBrew').click());
+        check('failed brewing save keeps liquids, mob materials and potion reserve',snapshot()===beforeBrew&&$('alchemyStatus').textContent.includes('Could not save'));
+        const moonStart=state.alchemy.liquids.moonwater.amount,gelStart=state.materials.gel;
+        $('alchemyBatch').querySelector('[data-batch="custom"]').click();$('alchemyCustomAmount').value='2';$('alchemyCustomAmount').dispatchEvent(new Event('input'));
+        $('alchemyBrew').click();finishQueue();$('alchemyBatch').querySelector('[data-batch="1"]').click();
+        check('Moonveil brewing spends Moonwater and Slime and accumulates duration',state.alchemy.potions.moonveil===1200&&state.alchemy.liquids.moonwater.amount===moonStart-10&&state.materials.gel===gelStart-6);
+        check('a successful combination reveals its saved recipe on the right',state.alchemy.discovered.join(',')==='moonveil'&&!$('alchemyPotions').querySelector('[data-potion="moonveil"]').hidden&&$('alchemyPotions').querySelector('[data-potion="moonveil"] .alchemy-formula').children.length===2&&$('alchemyPotions').querySelector('[data-potion="emberheart"]').hidden);
+        const moonCard=$('alchemyLiquids').querySelector('[data-liquid="moonwater"]');
+        const upgradeButtons=Array.from(moonCard.querySelectorAll('.alchemy-upgrades button'));
+        check('upgrade buttons stay easy to click without making two liquids scroll',upgradeButtons.length===2&&upgradeButtons.every(button=>{const rect=button.getBoundingClientRect();return rect.height>=56&&rect.height<=68&&rect.width>=76;})&&(innerWidth<=650||shelf.scrollHeight<=shelf.clientHeight));
+        check('upgrade buttons show liquid costs without gold',upgradeButtons.every(button=>!button.querySelector('.alchemy-upgrade-gold')&&!/gold/i.test(button.title)&&button.querySelector('.alchemy-upgrade-cost').textContent==='10'));
+        const beforeUpgrade=snapshot();failure(()=>moonCard.querySelector('[data-upgrade="rate"]').click());
+        check('failed upgrade save keeps balances and upgrade levels',snapshot()===beforeUpgrade);
+        const goldBeforeUpgrades=state.gold;moonCard.querySelector('[data-upgrade="rate"]').click();moonCard.querySelector('[data-upgrade="capacity"]').click();
+        check('liquid rate and capacity upgrades work inside Alchemy',Alchemy.perHour(state.alchemy,'moonwater')===150&&Alchemy.capacity(state.alchemy,'moonwater')===240);
+        check('liquid upgrades spend no gold',state.gold===goldBeforeUpgrades);
+        check('storage upgrades update the bar capacity',moonMeter.max===240&&moonMeter.value===state.alchemy.liquids.moonwater.amount);
+        check('bottle label follows spending and capacity upgrades',bottleAmount.textContent===formatAmount(state.alchemy.liquids.moonwater.amount)+'/240');
+        $('alchemyLiquids').querySelector('[data-liquid="emberOil"] [data-upgrade="unlock"]').click();simulateCombatStep(600,false);render();
+        check('Ember Oil unlocks inside Alchemy and produces independently',state.alchemy.liquids.emberOil.unlocked&&state.alchemy.liquids.emberOil.amount===10);
+        check('opening another liquid still also spends no gold',state.gold===goldBeforeUpgrades);
+        select(['emberOil'],'fang');$('alchemyBrew').click();finishQueue();
+        check('Ember Oil uses the red liquid sprite',$('alchemyLiquidSheet').getAttribute('href').includes('cauldron-red-liquid-4x2.png'));
+        check('Emberheart uses Ember Oil and Sharp Fangs',state.alchemy.potions.emberheart===600&&state.materials.fang===97);
+        select(['moonwater','emberOil'],'crystal');
+        check('both liquid containers can be selected for mixed recipes',selectedSprites.children.length===1&&$('alchemyLiquids').querySelectorAll('[aria-pressed="true"]').length===2);
+        check('selecting both liquids uses the mixed recipe color',scene.style.getPropertyValue('--brew-color')==='rgb(195, 162, 239)');
+        $('alchemyBrew').click();finishQueue();check('mixed brewing adds its own duration',state.alchemy.potions.twilight===900);
+        check('discovered mixed recipe shows both liquids and material costs',$('alchemyPotions').querySelector('[data-potion="twilight"] .alchemy-formula').children.length===3);
+        simulateCombatStep(100000,false);render();
+        $('alchemyPotions').querySelector('[data-load-recipe="moonveil"]').click();
+        check('clicking a discovery restores its ingredients',$('alchemyBrewHeading').textContent==='Moonveil'&&$('alchemyMaterials').querySelector('[data-select-material="gel"]').getAttribute('aria-pressed')==='true');
+        $('alchemyBatch').querySelector('[data-batch="10"]').click();const beforeTen=state.alchemy.potions.moonveil;
+        check('batch ten shows only the required amount',selectedSprites.querySelector('.alchemy-material-cost').textContent==='30'&&selectedSprites.querySelector('.alchemy-material-owned').hidden);$('alchemyBrew').click();finishQueue();
+        check('batch 10 brews exactly ten potions',state.alchemy.potions.moonveil===beforeTen+6000);
+        $('alchemyBatch').querySelector('[data-batch="custom"]').click();
+        for(const invalid of ['',0,-1,1.5,'9007199254740992']){$('alchemyCustomAmount').value=invalid;$('alchemyCustomAmount').dispatchEvent(new Event('input'));check('invalid custom quantity is disabled',!$('alchemyCustomAmount').hidden&&$('alchemyBrew').disabled&&['?/64','0/64'].includes(selectedSprites.querySelector('.alchemy-material-cost').textContent));}
+        $('alchemyCustomAmount').value='3';$('alchemyCustomAmount').dispatchEvent(new Event('input'));const beforeCustom=state.alchemy.potions.moonveil;
+        check('custom mode shows required and owned amounts while typing',selectedSprites.querySelector('.alchemy-material-cost').textContent==='9/64'&&!selectedSprites.querySelector('.alchemy-material-owned').hidden);
+        state.materials.gel+=5;AlchemyPage.render();check('material inventory refreshes without changing the typed amount',selectedSprites.querySelector('.alchemy-material-cost').textContent==='9/69');state.materials.gel-=5;AlchemyPage.render();
+        $('alchemyBrew').click();finishQueue();check('material counter refreshes after brewing',selectedSprites.querySelector('.alchemy-material-cost').textContent==='9/55');
+        check('custom amount brews the requested number',state.alchemy.potions.moonveil===beforeCustom+1800);
+        $('alchemyBatch').querySelector('[data-batch="max"]').click();const maximum=Alchemy.maxBrewAmount(state,'moonveil'),beforeMax=state.alchemy.potions.moonveil;
+        check('maximum batch hides inventory again',selectedSprites.querySelector('.alchemy-material-cost').textContent===formatAmount(maximum*3)&&selectedSprites.querySelector('.alchemy-material-owned').hidden);
+        const beforeBatchSave=snapshot();failure(()=>$('alchemyBrew').click());check('failed batch save preserves ingredients and discoveries',snapshot()===beforeBatchSave);
+        $('alchemyBrew').click();finishQueue();check('maximum respects the limiting material',maximum>0&&state.alchemy.potions.moonveil===beforeMax+600*maximum&&Alchemy.maxBrewAmount(state,'moonveil')===0&&$('alchemyBrew').disabled);
+        $('alchemyBatch').querySelector('[data-batch="1"]').click();
+        $('alchemyPotions').querySelector('[data-equip="moonveil"]').click();const firstReserve=state.alchemy.potions.moonveil;
+        const beforeEquip=snapshot();failure(()=>$('alchemyPotions').querySelector('[data-equip="twilight"]').click());
+        check('failed equipment save preserves the previous potion',snapshot()===beforeEquip&&state.alchemy.equipped==='moonveil');
+        $('alchemyPotions').querySelector('[data-equip="twilight"]').click();
+        check('equipping replaces the single slot and keeps unused duration',state.alchemy.equipped==='twilight'&&state.alchemy.potions.moonveil===firstReserve);
+        $('mapButton').click();$('combatPotionSlot').click();
+        check('combat potion slot opens an accessible native picker',$('alchemyPotionPicker').open&&$('alchemyPickerChoices').children.length===3);
+        $('alchemyPickerChoices').querySelector('[data-equip-potion="emberheart"]').click();
+        check('combat selection equips immediately without using a charge',!$('alchemyPotionPicker').open&&state.alchemy.equipped==='emberheart'&&state.alchemy.potions.emberheart===600);
+        $('combatPotionSlot').click();$('alchemyUnequip').click();check('unequipping preserves all remaining time',state.alchemy.equipped===null&&state.alchemy.potions.emberheart===600);
+        const map=currentMap();map.spawns=[{id:'alchemyMob',monsterId:worldContent.monsters[0].id,count:1,overrides:{health:100000,attackDamage:0,attackInterval:1000,evasion:0,respawnSeconds:100,gold:[0,0],experience:0,drops:[],itemDrops:[]}}];
+        resetMonsterStates(map);state.playerHp=getPlayerMaxHealth();state.combatPaused=false;state.attackTimer=0;state.alchemy.potions.moonveil=2;Alchemy.equip(state,'moonveil');
+        const simulationBase=parseGameSave(JSON.stringify(createGameSave()));
+        function run(visual,equipped=true,view='map'){
+            applyGameSave(clone(simulationBase));state.currentView=view;state.isInTown=view!=='map';if(!equipped)Alchemy.equip(state,null);let rolls=0;Math.random=()=>{rolls++;return 0;};
+            for(let step=0;step<30;step++){const result=simulateCombatStep(.1,visual);if(visual)flushCombatEffects(result.effects);}
+            return JSON.stringify([state.alchemy,state.monsterStates.map(monster=>monster.hp),state.playerHp,state.gold,rolls]);
+        }
+        check('foreground and offline production, combat and potion expiry agree',run(false)===run(true));
+        check('expiry clears the slot without consuming another potion',state.alchemy.equipped===null&&state.alchemy.potions.moonveil===0&&state.alchemy.potions.emberheart===600);
+        check('placeholder potions do not change combat damage, health, gold or RNG',JSON.stringify(JSON.parse(run(false)).slice(1))===JSON.stringify(JSON.parse(run(false,false)).slice(1)));
+        for(const view of ['town','townPage','upgrades','inventory','alchemy']){
+            check(view+' combat drains and expires potions equally in foreground and offline simulation',run(false,true,view)===run(true,true,view)&&state.alchemy.potions.moonveil===0&&state.alchemy.equipped===null);
+        }
+        Alchemy.equip(state,'emberheart');state.currentView='alchemy';state.isInTown=true;const reserve=state.alchemy.potions.emberheart;simulateCombatStep(.1,false);
+        check('visiting Alchemy keeps consuming equipped duration during combat',Math.abs(state.alchemy.potions.emberheart-(reserve-.1))<1e-8);
+        const liveDocument=document.getElementById;document.getElementById=()=>{throw new Error('DOM access during simulation');};
+        try{simulateCombatStep(.1,false);}finally{document.getElementById=liveDocument;}
+        check('Alchemy simulation has no DOM dependency',true);
+        const save=parseGameSave(JSON.stringify(createGameSave())),alchemy=JSON.stringify(state.alchemy);applyGameSave(save);
+        check('partial production, upgrades, potion reserves, equipment and page survive loading',JSON.stringify(state.alchemy)===alchemy&&state.currentView==='alchemy');
+        const legacy=clone(save);delete legacy.alchemy;
+        check('older saves default to locked Alchemy',!parseGameSave(JSON.stringify(legacy)).alchemy.unlocked);
+        const olderAlchemy=clone(save);delete olderAlchemy.alchemy.discovered;
+        check('older potion reserves migrate into discoveries',parseGameSave(JSON.stringify(olderAlchemy)).alchemy.discovered.includes('emberheart'));
+        for(const corrupt of [null,{...save.alchemy,equipped:'missing'},{...save.alchemy,potions:{...save.alchemy.potions,moonveil:-1}}]){
+            let rejected=false;try{parseGameSave(JSON.stringify({...save,alchemy:corrupt}));}catch{rejected=true;}
+            check('malformed Alchemy save data is rejected',rejected);
+        }
+        const beforeTownReset=JSON.stringify(state.alchemy);state.townProgress=TownProgression.defaults();
+        check('Alchemy remains unlocked and independent after a Town-only reset',JSON.stringify(state.alchemy)===beforeTownReset&&state.alchemy.unlocked);
+        check('a Town-only reset cannot charge for the Alchemy unlock again',!TownProgression.can(state,'purchase','apothecary'));
+        render();
+        check('there is no horizontal page overflow',document.documentElement.scrollWidth<=innerWidth);
+        const art=new Image();art.src='assets/alchemy/cauldron-pixel-idle.png';await art.decode();
+        check('apothecary illustration loads',art.naturalWidth>0);
+        const sample=document.createElement('canvas');sample.width=192;sample.height=192;const context=sample.getContext('2d');context.drawImage(art,0,0,192,192);
+        const emptyColor=context.getImageData(96,86,1,1).data;
+        check('empty cauldron artwork has a dark interior instead of liquid',Math.max(emptyColor[0],emptyColor[1],emptyColor[2])<45);
+        // Synthetic simulation and image decoding can leave the wall clock behind.
+        resetCombatClock();render();
+        $('alchemyLiquids').querySelectorAll('[data-select-liquid][aria-pressed="true"]').forEach(button=>button.click());
+        check('deselecting all liquids returns the cauldron to its empty state',$('alchemyBrewTint').hidden&&scene.getAttribute('aria-label').startsWith('Empty cauldron'));
+        check('no browser errors',!smokeErrors.length);checks.push('SMOKE PASSED');
+    }catch(error){checks.push('ERROR '+error.stack);}
+    finally{Storage.prototype.setItem=originalWrite;Math.random=originalRandom;}
+    const report=document.createElement('pre');report.id='smoke-results';report.textContent=checks.join('\n');document.body.append(report);
+}());

@@ -87,14 +87,23 @@
             sparks('shield',rect,colors.shield,6,delay);
         }return true;
     }
-    function vortex(targetIds,delay) {
-        if(!available())return false;
-        const boxes=targetIds.map(id=>getCombatEffectCard(id)).filter(Boolean).map(card=>box(card));if(!boxes.length)return true;
-        const left=Math.min(...boxes.map(b=>b.x-b.width/2)),right=Math.max(...boxes.map(b=>b.x+b.width/2));
-        const top=Math.min(...boxes.map(b=>b.y-b.height/2)),bottom=Math.max(...boxes.map(b=>b.y+b.height/2));
-        for(let i=0;i<3;i++)emit('vortex',{x:(left+right)/2,y:(top+bottom)/2,width:(right-left)*(1-i*.15)*1.3,height:(bottom-top)*(1-i*.2)*1.3,
-            style:10,rotation:(i-1)*.16,color:colors.void,duration:650,delay:delay+i*70,startScale:1.15,scale:.05});
-        return true;
+    function vortex(plan) {
+        if(plan.reduced || !available())return false;
+        const handles=[];
+        for(const {points,local} of plan.paths)for(const layer of ['shadow','edge']) {
+            const edge=layer==='edge';
+            handles.push(gpu().trail({points,flight:plan.duration,duration:plan.duration,delay:plan.delay,
+                strokeWidth:edge?2.5:5.5,glowRadius:1.5,style:local?17:14,color:edge?[.78,.63,1]:[.22,.06,.42],
+                glowColor:[.46,.2,.8],opacity:(edge?.9:.72)*(local?1:.55),category:'abilities',type:'vortex'}));
+        }
+        for(const target of plan.targets) {
+            const radius=target.radius*(plan.echo?.75:1);
+            handles.push(emit('vortexImpact',{x:target.x,y:target.y,width:radius*2/.75,height:radius*2/.75,
+                style:1,color:[.82,.69,1],opacity:.96,duration:plan.impactDuration,startScale:.72,scale:1.16}));
+            handles.push(emit('vortexImpact',{x:target.x,y:target.y,width:12,height:12,
+                style:3,color:[.9,.8,1],opacity:.95,duration:110}));
+        }
+        return {remove(){for(const handle of handles)handle.remove();}};
     }
     function bezierPoints(start,end,a,b) {
         const points=[];for(let i=0;i<=24;i++){const t=i/24,q=1-t;points.push({x:q*q*q*start.x+3*q*q*t*a.x+3*q*t*t*b.x+t*t*t*end.x,y:q*q*q*start.y+3*q*q*t*a.y+3*q*t*t*b.y+t*t*t*end.y});}return points;

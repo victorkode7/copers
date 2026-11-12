@@ -18,6 +18,7 @@
         const paths=['M18 63V34L50 13L82 34V63ZM11 35L50 8L89 35M42 63V43H58V63M25 40H34V49H25ZM66 40H75V49H66Z','M15 63V32H85V63ZM9 32L25 15H75L91 32M28 63V43H42V63M59 42H73V54H59ZM68 15V7H78V15','M20 63V25H80V63M14 25L50 9L86 25M38 63V42Q50 28 62 42V63M28 31H35M65 31H72','M16 63V31L50 15L84 31V63M10 32L50 10L90 32M28 63V43H42V63M54 44H72V55H54','M19 63V29L50 13L81 29V63M12 30L50 8L88 30M40 63V42H60V63M27 35H33M67 35H73'];
         paths.menagerie='M12 65V29L50 10L88 29V65ZM18 29H82M27 65V29M42 65V29M58 65V29M73 65V29M12 48H88M45 21H55M34 55Q39 43 46 51L53 45L64 56M35 56V63M59 56V63';
         paths.anvil='M14 24H86L76 36H59V47L73 59V65H27V59L41 47V36H28L14 28ZM41 36H59M29 24V16H77V24';
+        paths.apothecary='M18 55Q13 29 50 29Q87 29 82 55Q79 69 50 69Q21 69 18 55M17 33H83M27 64L21 75M73 64L79 75M36 23Q25 15 38 8M52 22Q65 14 51 5M65 24Q76 18 69 12';
         paths.timberDepot='M12 65V29L50 10L88 29V65M7 29H93M21 65V36H79V65M27 60H73M32 51H68M37 42H63M27 57A3 3 0 1 0 27 63A3 3 0 1 0 27 57M32 48A3 3 0 1 0 32 54A3 3 0 1 0 32 48M37 39A3 3 0 1 0 37 45A3 3 0 1 0 37 39';
         paths.smeltery='M14 65V30H64V65M9 30H69M56 30V10H73V65M53 10H76M25 65V47Q39 30 53 47V65M31 61Q25 52 37 43Q35 52 43 54Q49 45 49 57Q51 63 45 65M78 52H94L89 63H76ZM83 45L87 39M85 31L90 25';
         const ground=document.createElementNS(svg.namespaceURI,'path');ground.setAttribute('d','M8 69H92M19 75H81');ground.setAttribute('class','town-art-ground');svg.append(ground);
@@ -51,10 +52,11 @@
     }
     function perform(kind,id){
         if(state.currentView!=='townPage'||TownContent.buildings[id]?.world!==selectedWorld||SaveCompatibility.protection.blocked||simulatingCombat||!TownProgression.can(state,kind,id))return false;
-        const priorGold=state.gold,priorProgress=state.townProgress;
+        const priorGold=state.gold,priorProgress=state.townProgress,priorAlchemy=state.alchemy;
         state.townProgress=TownProgression.clone(priorProgress);
+        state.alchemy=Alchemy.clone(priorAlchemy);
         try{TownProgression.apply(state,kind,id);localStorage.setItem(saveKey,JSON.stringify(createGameSave()));unlockMessage='';}
-        catch{state.gold=priorGold;state.townProgress=priorProgress;unlockMessage={id,text:'Could not save. Resources kept.'};window.render();return false;}
+        catch{state.gold=priorGold;state.townProgress=priorProgress;state.alchemy=priorAlchemy;unlockMessage={id,text:'Could not save. Resources kept.'};window.render();return false;}
         window.render();return true;
     }
     function stopBar(view){view.barAnimation?.cancel();view.barAnimation=null;}

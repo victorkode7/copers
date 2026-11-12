@@ -26,7 +26,7 @@ $prelude = '<script>window.smokeErrors=[];window.smokeIntervals=[];window.addEve
 $html = $html.Replace('<head>', '<head>' + $prelude)
 $html = [regex]::Replace($html, '<script src="https://ajax.googleapis.com[^>]+></script>', '')
 if ($WithoutDeveloperTools) { $html = [regex]::Replace($html, '<script[^>]*data-developer-module[^>]*></script>', '') }
-if ($MissingDeveloperModule) { $html = $html.Replace('src="dev/developer-tools.js"', 'src="dev/missing-developer-tools.js"') }
+if ($MissingDeveloperModule) { $html = [regex]::Replace($html, 'src="dev/developer-tools\.js(?:\?[^"]*)?"', 'src="dev/missing-developer-tools.js"') }
 if ($Page -eq 'index.html') {
     # These suites inspect retained SVG paths and CSS timelines explicitly.
     # GPU pixels, timing, switches and fallback have dedicated WebGL suites.
@@ -100,6 +100,7 @@ try {
     $realtime = $realtime -or $TestScript -eq 'tests/shield-slam-events-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-lifecycle-events-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-simulation-smoke.js'
+    $realtime = $realtime -or $TestScript.Split('?')[0] -eq 'tests/alchemy-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-webgl-effects-smoke.js'
     $realtime = $realtime -or $TestScript -eq 'tests/combat-effect-batch-smoke.js'

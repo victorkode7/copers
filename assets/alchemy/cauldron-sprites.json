@@ -1,0 +1,9 @@
+{
+  "scene": {"file": "apothecary-background.png", "width": 300, "height": 300, "backgroundScale": 1.12, "backgroundPosition": "center", "cauldronCanvasBounds": [97,105,120,120], "notes": "Square scene zooms the room independently; cauldron and effects rest on the ash inside the widened stone hearth."},
+  "cauldron": {"file": "cauldron-pixel-idle.png", "width": 64, "height": 64, "canvasWidth": 192, "canvasHeight": 192},
+  "sheets": {"columns": 4, "rows": 2, "fps": 8, "playback": [0,1,2,3,4,5,6,7]},
+  "liquid": {"blueFile": "cauldron-blue-liquid-4x2.png", "redFile": "cauldron-red-liquid-4x2.png", "frameWidth": 64, "frameHeight": 64, "source": [0, 0, 64, 64], "target": [0, 0, 192, 192], "openingClipPath": "M51 0H156V84C147 110 57 110 51 84Z", "notes": "Blue for Moonwater, red for Ember Oil; mixed recipes tint the blue sheet to the recipe color. Upper mask preserves rising bubbles."},
+  "foreground": {"file": "cauldron-pixel-idle.png", "clipPath": "M0 84H51C57 110 147 110 156 84H192V192H0Z"},
+  "fire": {"file": "cauldron-fire-4x2.png", "frameWidth": 443.5, "frameHeight": 443.5, "source": [40, 225, 364, 202], "target": [46, 142, 112, 42]},
+  "notes": "Original PNG bytes are preserved. Source and target rectangles register the artwork within transparent frame padding; index.html uses these coordinates in SVG viewports. CSS advances each original sheet using its own native frame size."
+}

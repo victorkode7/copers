@@ -1,0 +1,176 @@
+.idle-adventure #alchemyNavItem[hidden],.idle-adventure .alchemy-page [hidden],.idle-adventure .alchemy-page[hidden],.idle-adventure .combat-potion[hidden],.alchemy-picker [hidden] { display:none; }
+.idle-adventure #alchemyButton { --view-accent:#bda6ef; }
+.idle-adventure.alchemy-open { background:#101c27; }
+.idle-adventure.alchemy-open .side-panel-stack,.idle-adventure.alchemy-open .combat-report-stack { display:none; }
+.idle-adventure .alchemy-page { --alchemy-border:#455061; --alchemy-muted:#adbac9; padding:0; overflow:hidden; border-color:#616076; background:#17212de8; font-family:"Segoe UI",sans-serif; }
+.alchemy-heading { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:22px 26px; border-bottom:1px solid var(--alchemy-border); background:linear-gradient(110deg,#252b3e,#152b34); }
+.alchemy-heading .eyebrow { color:#ccb4f2; letter-spacing:.17em; font-size:.65rem; }
+.alchemy-level-info { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 14px; margin-top:10px; font-size:.75rem; color:var(--alchemy-muted,#adbac9); }
+.alchemy-level-info strong { color:#ccb4f2; }
+.alchemy-level-progress { display:block; width:100%; max-width:300px; height:7px; margin-top:8px; accent-color:#ccb4f2; }
+.alchemy-heading h1 { margin:5px 0 0; font-family:Georgia,serif; font-size:1.8rem; font-weight:500; color:#f4e4c2; }
+.alchemy-slot-count { flex-shrink:0; padding:9px 12px; border:1px solid #726485; border-radius:5px; color:#e4d3fb; font-size:.75rem; }
+.alchemy-workshop { display:grid; grid-template-columns:minmax(235px,1.1fr) minmax(280px,1.8fr) minmax(220px,1.1fr); align-items:start; }
+.alchemy-liquids,.alchemy-shelf { min-width:0; padding:20px 16px; }
+.alchemy-liquids { border-right:1px solid var(--alchemy-border); }
+.alchemy-shelf { border-left:1px solid var(--alchemy-border); }
+.alchemy-queue { padding:16px 20px; border-bottom:1px solid var(--alchemy-border); }
+.alchemy-queue p { margin:8px 0 0; }
+.alchemy-queue-heading { display:flex; align-items:baseline; gap:10px; margin-bottom:8px; }
+.alchemy-queue .alchemy-queue-heading h2,.alchemy-queue .alchemy-queue-heading p { margin:0; }
+.alchemy-queue .alchemy-queue-heading #alchemyQueueResult { margin-left:auto; text-align:right; white-space:nowrap; font-size:clamp(.55rem,1.2vw,.7rem); }
+.alchemy-queue p:empty,.alchemy-queue ol:empty { display:none; }
+.alchemy-queue progress { display:block; box-sizing:border-box; width:100%; height:16px; appearance:none; border:1px solid #526479; border-radius:5px; overflow:hidden; background:#08111c; accent-color:var(--brew-progress-color,#ccb4f2); }
+.alchemy-queue progress::-webkit-progress-bar { background:#08111c; }
+.alchemy-queue progress::-webkit-progress-value { background:var(--brew-progress-color,#ccb4f2); }
+.alchemy-queue progress::-moz-progress-bar { background:var(--brew-progress-color,#ccb4f2); }
+.alchemy-queue progress[hidden] { display:none; }
+.alchemy-queue ol { margin:12px 0; padding-left:20px; font-size:.75rem; line-height:1.6; overflow-wrap:anywhere; }
+.alchemy-queue li + li { margin-top:8px; }
+.alchemy-workshop h2 { margin:0 0 14px; color:#eee3cd; font-size:1rem; }
+.alchemy-muted { color:var(--alchemy-muted,#adbac9); font-size:.75rem; line-height:1.6; }
+.alchemy-page button,.alchemy-picker button { box-sizing:border-box; min-height:36px; padding:8px 10px; border:1px solid #64718a; border-radius:4px; background:#2a3749; color:#e1e9ec; font:600 .75rem/1.4 "Segoe UI",sans-serif; cursor:pointer; }
+.alchemy-page button:hover:enabled,.alchemy-picker button:hover:enabled { border-color:#cfb4ed; background:#3c405a; }
+.alchemy-page button:focus-visible,.alchemy-picker button:focus-visible,.alchemy-page summary:focus-visible,.combat-potion button:focus-visible { outline:2px solid #debcff; outline-offset:3px; }
+.alchemy-page button:disabled,.alchemy-picker button:disabled { opacity:.45; cursor:default; }
+#alchemyLiquids { display:grid; grid-template-columns:minmax(0,1fr); gap:16px; max-height:520px; overflow-y:auto; overflow-x:hidden; padding:3px 5px 8px 0; scrollbar-width:thin; scrollbar-color:#786f8b transparent; }
+.alchemy-liquid { display:grid; grid-template-columns:76px minmax(0,1fr); align-items:center; gap:10px; min-width:0; position:relative; padding:8px 0 15px; border-bottom:2px solid #82705a66; background:linear-gradient(0deg,#7e684b12,transparent 40%); }
+.alchemy-page .alchemy-liquid-container { display:flex; align-items:flex-end; justify-content:center; position:relative; width:76px; height:116px; padding:0 0 8px; background:none; border:0; border-radius:12px; }
+.alchemy-page .alchemy-liquid-container:hover:enabled { background:radial-gradient(ellipse at bottom,color-mix(in srgb,var(--liquid),transparent 88%),transparent 65%); }
+.alchemy-liquid-container::before { content:""; position:absolute; top:8px; left:27px; width:20px; height:30px; border:2px solid #bfd6dfaa; border-top:7px solid #b49b6d; border-radius:4px 4px 0 0; background:linear-gradient(90deg,#ddefff33,#172c3a55,#ddefff22); box-shadow:0 -3px 0 #4e4033; }
+.alchemy-glass { position:relative; box-sizing:border-box; display:block; width:72px; height:75px; border:2px solid #b2d4e2bb; border-radius:45% 45% 42% 42%; background:linear-gradient(90deg,#ccefff22,transparent 40%,#ccefff11); overflow:hidden; box-shadow:inset 7px 0 7px #ccefff22,0 5px 8px #0005; }
+.alchemy-glass::after { content:""; position:absolute; inset:10px auto 15px 9px; width:5px; border-radius:8px; background:#e2f7ff55; transform:rotate(12deg); }
+.alchemy-liquid[data-vessel="pear"] .alchemy-glass { width:64px; height:80px; border-radius:45% 45% 30% 30% / 62% 62% 27% 27%; }
+.alchemy-liquid[data-vessel="angular"] .alchemy-glass { width:61px; height:76px; border-radius:12px 12px 22px 22px; }
+.alchemy-glass-fill { position:absolute; inset:auto 0 0; height:8%; background:linear-gradient(0deg,var(--liquid),color-mix(in srgb,var(--liquid),transparent 35%)); border-top:2px solid color-mix(in srgb,var(--liquid),white 40%); box-shadow:0 -4px 18px var(--liquid); }
+.alchemy-bottle-amount { position:absolute; left:50%; bottom:33px; z-index:1; transform:translateX(-50%); color:#fff6df; font-size:.62rem; font-weight:750; font-variant-numeric:tabular-nums; line-height:1.3; white-space:nowrap; text-shadow:1px 1px 2px #08121d,-1px -1px 2px #08121d,0 0 4px #08121d; pointer-events:none; }
+.alchemy-page button[aria-pressed="true"] { border-color:#d5b5f4; background-color:#3e3550; box-shadow:0 0 0 1px #d5b5f455,inset 0 0 16px #ac86cc22; }
+.alchemy-page .alchemy-liquid-container[aria-pressed="true"] { border:0; box-shadow:none; background:radial-gradient(ellipse at bottom,color-mix(in srgb,var(--liquid),transparent 82%),transparent 70%); }
+.alchemy-liquid-container[aria-pressed="true"] .alchemy-glass { filter:drop-shadow(0 0 5px color-mix(in srgb,var(--liquid),transparent 35%)); border-color:var(--liquid); }
+.alchemy-liquid-container[aria-pressed="true"]::after { content:"✓"; position:absolute; right:0; top:8px; color:#f0dcff; font-size:.9rem; }
+.alchemy-liquid.is-locked .alchemy-glass { filter:grayscale(1); }
+.alchemy-still-copy { min-width:0; }
+.alchemy-still-copy h3 { margin:0; color:var(--liquid); font:500 1rem/1.3 Georgia,serif; }
+.alchemy-still-rate { margin:5px 0 6px; color:#b5c6cf; font-size:.65rem; }
+.alchemy-liquid-meter { display:block; width:100%; height:6px; margin:7px 0 9px; border:0; border-radius:4px; background:#0b1521; accent-color:var(--liquid); }
+.alchemy-liquid-meter::-webkit-progress-bar { background:#0b1521; border-radius:4px; }
+.alchemy-liquid-meter::-webkit-progress-value { background:var(--liquid); border-radius:4px; }
+.alchemy-still-copy>[data-upgrade="unlock"] { width:100%; margin-top:6px; font-size:.65rem; }
+.alchemy-upgrades { grid-column:1/-1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.alchemy-page .alchemy-upgrades button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; width:100%; min-width:0; min-height:64px; height:64px; padding:6px; border:1px solid #7d8293; border-radius:2px; background:#25364a; box-shadow:inset 0 1px 0 #ffffff0d; }
+.alchemy-page .alchemy-upgrades button:hover:enabled { background:#33465d; border-color:var(--liquid); }
+.alchemy-upgrade-label { color:#eee3cc; font-size:.85rem; }
+.alchemy-upgrade-level { color:#adbdcd; font-size:.65rem; }
+.alchemy-upgrade-cost { display:flex; align-items:center; justify-content:center; gap:5px; color:var(--liquid); font-size:.8rem; }
+.alchemy-upgrade-cost .alchemy-liquid-icon { width:11px; height:18px; margin:0; border-top-width:3px; }
+.alchemy-materials { margin-top:22px; padding-top:18px; border-top:1px solid var(--alchemy-border); }
+.alchemy-material-tray { display:grid; grid-template-columns:repeat(auto-fill,minmax(41px,1fr)); gap:7px; min-height:65px; }
+.alchemy-page .alchemy-material { display:grid; place-items:center; aspect-ratio:1; width:100%; min-height:42px; padding:4px; }
+.alchemy-page .alchemy-material,.alchemy-page .alchemy-material:hover:enabled,.alchemy-page .alchemy-material[aria-pressed="true"],.alchemy-page .alchemy-selected-materials button,.alchemy-page .alchemy-selected-materials button:hover:enabled { background:none; border:0; box-shadow:none; }
+.alchemy-material[aria-pressed="true"] .item-sprite { filter:drop-shadow(0 0 5px #d8b4ff); }
+.alchemy-material:hover:enabled .item-sprite { transform:translateY(-2px); }
+.alchemy-material-tray .item-sprite,.alchemy-formula .item-sprite,.alchemy-selected-materials .item-sprite { display:grid; place-items:center; width:32px; height:32px; margin:0; padding:0; }
+.alchemy-material-tray img,.alchemy-formula img,.alchemy-selected-materials img { display:block; width:100%; height:100%; object-fit:contain; image-rendering:pixelated; }
+.alchemy-brewing { min-width:0; }
+.alchemy-scene { --alchemy-scene:url('../assets/alchemy/apothecary-background.png'); position:relative; aspect-ratio:1; background:var(--alchemy-scene) center/112% 112% no-repeat,#11232c; border-bottom:1px solid var(--alchemy-border); image-rendering:pixelated; }
+/* Zoom the room independently to widen the hearth around the pot. The shared
+   cauldron canvas occupies (97,105,120,120) in a 300 x 300 scene. */
+.alchemy-cauldron { position:absolute; left:32.333333%; top:35%; width:40%; height:40%; pointer-events:none; }
+.alchemy-cauldron,.alchemy-cauldron svg,.alchemy-cauldron image { image-rendering:pixelated; }
+.alchemy-cauldron-body { display:block; width:100%; height:100%; }
+.alchemy-brew-tint { position:absolute; inset:0; pointer-events:none; }
+.alchemy-brew-tint > svg { display:block; width:100%; height:100%; }
+.alchemy-fire-overlay { position:absolute; inset:0; width:100%; height:100%; visibility:hidden; }
+.alchemy-scene.is-brewing .alchemy-fire-overlay { visibility:visible; }
+.alchemy-liquid-sheet { --sprite-frame-size:64px; }
+.alchemy-fire-sheet { --sprite-frame-size:443.5px; }
+.alchemy-scene.is-brewing .alchemy-liquid-sheet { animation:alchemy-liquid-frames 1s steps(1,end) infinite; }
+.alchemy-scene.is-brewing .alchemy-fire-sheet { animation:alchemy-sprite-frames 1s steps(1,end) infinite; }
+/* Repaint the liquid's frame coordinates instead of compositing a translated
+   sheet through nested SVG masks/filters, which can leave clipped stale areas. */
+@keyframes alchemy-liquid-frames {
+    0% { x:0; y:0; }
+    12.5% { x:-64px; y:0; }
+    25% { x:-128px; y:0; }
+    37.5% { x:-192px; y:0; }
+    50% { x:0; y:-64px; }
+    62.5% { x:-64px; y:-64px; }
+    75% { x:-128px; y:-64px; }
+    87.5%,100% { x:-192px; y:-64px; }
+}
+/* Original sheets: four columns, two rows, with independent native cell sizes.
+   Preserve the fire sheet's fractional frame spacing. SVG viewports
+   register the artwork within its transparent padding; PNGs stay unchanged.
+   Play frames 0 through 7 in order, then repeat. */
+@keyframes alchemy-sprite-frames {
+    0% { transform:translate(0,0); }
+    12.5% { transform:translate(calc(var(--sprite-frame-size) * -1),0); }
+    25% { transform:translate(calc(var(--sprite-frame-size) * -2),0); }
+    37.5% { transform:translate(calc(var(--sprite-frame-size) * -3),0); }
+    50% { transform:translate(0,calc(var(--sprite-frame-size) * -1)); }
+    62.5% { transform:translate(calc(var(--sprite-frame-size) * -1),calc(var(--sprite-frame-size) * -1)); }
+    75% { transform:translate(calc(var(--sprite-frame-size) * -2),calc(var(--sprite-frame-size) * -1)); }
+    87.5%,100% { transform:translate(calc(var(--sprite-frame-size) * -3),calc(var(--sprite-frame-size) * -1)); }
+}
+.alchemy-selected-materials { position:absolute; left:53.5%; top:44%; transform:translate(-50%,-50%); z-index:1; display:flex; gap:8px; }
+.alchemy-page .alchemy-selected-materials button { position:relative; display:grid; place-items:center; width:60px; height:60px; padding:6px; }
+.alchemy-selected-materials .item-sprite { width:46px; height:46px; }
+.alchemy-material-cost { position:absolute; right:-6px; top:-2px; color:#ffe4a0; font-size:.85rem; font-weight:750; font-variant-numeric:tabular-nums; line-height:1.2; white-space:nowrap; text-shadow:1px 1px 2px #07101c,-1px -1px 2px #07101c,0 0 5px #07101c; pointer-events:none; }
+.alchemy-material-cost.is-missing { color:#ff9e8f; }
+.alchemy-material-owned { font-size:.72em; font-weight:500; }
+.alchemy-brew-panel { padding:20px; }
+.alchemy-brew-panel h2 { margin-bottom:15px; font-family:Georgia,serif; font-weight:500; font-size:1.4rem; }
+.alchemy-liquid-icon { display:block; box-sizing:border-box; width:18px; height:27px; margin:3px 6px; border:1px solid #c4dbe5; border-top:4px solid #ba9b73; border-radius:4px 4px 7px 7px; background:linear-gradient(0deg,var(--liquid) 70%,transparent 72%); }
+.alchemy-batch { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+.alchemy-batch button { flex:1; padding:7px 6px; }
+.alchemy-batch input { box-sizing:border-box; width:100%; min-width:0; border:1px solid #a891c2; border-radius:4px; background:#101b28; color:#f3e8fa; padding:8px 10px; font:inherit; }
+.alchemy-page .alchemy-primary { width:100%; border-color:#b8a47e; background:#675333; color:#fff0c8; }
+.alchemy-potion { margin-top:12px; padding:13px 10px; border:1px solid #48546b; border-radius:5px; background:#101c2888; }
+.alchemy-potion-header { display:flex; align-items:center; gap:8px; }
+.alchemy-potion-header>div { flex:1; min-width:0; }
+.alchemy-page .alchemy-recipe-name { border:0; box-shadow:none; background:none; padding:0; min-height:28px; font-size:.85rem; color:#f2e5ce; text-align:left; }
+.alchemy-page .alchemy-recipe-name:hover:enabled { background:none; color:#dec1ff; }
+.alchemy-potion-time { margin:2px 0 0; color:#c7cdd7; font-size:.65rem; font-variant-numeric:tabular-nums; }
+.alchemy-potion.is-equipped { border-color:var(--liquid); }
+.alchemy-page [data-equip] { padding:5px 7px; font-size:.65rem; }
+.alchemy-formula { display:flex; flex-wrap:wrap; gap:8px; padding-top:12px; margin-top:12px; border-top:1px solid #46516a; }
+.alchemy-recipe-ingredient { display:flex; align-items:center; gap:2px; color:#c9d3df; font-size:.7rem; }
+.alchemy-formula .item-sprite { width:24px; height:24px; }
+.alchemy-formula .alchemy-liquid-icon { width:14px; height:22px; margin:0 4px; }
+.alchemy-yield { display:block; margin-top:9px; color:#aaaec7; font-size:.65rem; }
+.alchemy-bottle { position:relative; display:block; flex:0 0 22px; height:27px; margin:7px 2px 0; border:1px solid #a6c5d1; border-radius:5px 5px 9px 9px; background:linear-gradient(0deg,var(--liquid) 65%,#18304499 66%); box-shadow:inset 4px 0 0 #ffffff26; }
+.alchemy-bottle::before { content:""; position:absolute; top:-8px; left:5px; width:10px; height:8px; border:1px solid #a6c5d1; border-top:3px solid #a58055; background:#273d48; }
+.alchemy-equipped { margin-top:24px; padding-top:19px; border-top:1px solid var(--alchemy-border); }
+.alchemy-equipped>.eyebrow { color:#d7bb91; font-size:.6rem; }
+.alchemy-page .alchemy-slot { width:100%; margin-top:10px; padding:13px 9px; border-style:dashed; }
+.alchemy-status { margin:0; padding:0 20px 18px; color:#e9d6ac; font-size:.8rem; }
+.alchemy-status:empty { padding:0; }
+.combat-potion { display:flex; align-items:center; flex-wrap:wrap; gap:9px; margin:12px 0; }
+.combat-potion .eyebrow { font-size:.6rem; color:#d1b0ee; }
+.combat-potion .alchemy-slot { padding:7px 11px; border:1px solid #8d75a8; border-radius:4px; background:#242335; color:#e5d7f5; font:500 .75rem "Segoe UI",sans-serif; cursor:pointer; }
+.alchemy-picker { box-sizing:border-box; width:min(430px,calc(100vw - 28px)); max-height:85vh; padding:22px; border:1px solid #a68bbc; border-radius:9px; background:#1c2635; color:#eee3cd; font-family:"Segoe UI",sans-serif; }
+.alchemy-picker::backdrop { background:#060e18ba; }
+.alchemy-picker header { display:flex; gap:15px; align-items:center; justify-content:space-between; }
+.alchemy-picker h2 { margin:0; font-family:Georgia,serif; font-size:1.45rem; font-weight:500; }
+.alchemy-picker p { font-size:.8rem; line-height:1.6; }
+#alchemyPickerChoices { display:grid; gap:10px; margin:18px 0; }
+#alchemyPickerChoices button { padding:13px; text-align:left; }
+#alchemyUnequip { width:100%; }
+.alchemy-coming { color:#b9accb; font-size:.7rem; }
+@media(max-width:1100px) {
+    .alchemy-workshop { grid-template-columns:minmax(235px,1fr) minmax(260px,1.5fr); }
+    .alchemy-shelf { grid-column:1/-1; border-left:0; border-top:1px solid var(--alchemy-border); }
+    #alchemyPotions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+}
+@media(max-width:650px) {
+    .alchemy-heading { padding:18px 15px; gap:10px; }.alchemy-heading h1 { font-size:1.5rem; }
+    .alchemy-slot-count { padding:7px; font-size:.65rem; }
+    .alchemy-workshop { display:flex; flex-direction:column; }
+    .alchemy-liquids,.alchemy-shelf,.alchemy-brewing { box-sizing:border-box; width:100%; }
+    .alchemy-liquids { border-right:0; border-bottom:1px solid var(--alchemy-border); padding:16px 12px; }
+    #alchemyLiquids { display:flex; gap:14px; max-height:none; overflow-x:auto; overflow-y:hidden; padding:4px 3px 14px; scroll-snap-type:x proximity; }
+    .alchemy-liquid { flex:0 0 225px; scroll-snap-align:start; }
+    .alchemy-materials { margin-top:12px; padding-top:14px; }
+    #alchemyPotions { grid-template-columns:1fr; }
+}
+@media(prefers-reduced-motion:reduce) { .alchemy-page *, .alchemy-picker * { animation:none!important; transition:none!important; } }

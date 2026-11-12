@@ -129,6 +129,98 @@ function castVoidVortex() {
     return combatAbilities.castVoidVortex();
 }
 
+// Cosmetic phase and lifetimes deliberately stay independent of combat RNG.
+const voidVortexVisuals=new Set();
+let voidVortexVisualSequence=0;
+const voidVortexMotion=matchMedia('(prefers-reduced-motion: reduce)');
+function clearVoidVortexVisuals() {
+    for (const visual of [...voidVortexVisuals]) visual.remove();
+}
+function syncVoidVortexVisuals() {
+    for (const visual of [...voidVortexVisuals]) {
+        if (!isCombatView() || visual.mapId!==state.selectedMap || !combatEffectEnabled('abilities')) visual.remove();
+    }
+}
+addEventListener('combat-webgl-clear',clearVoidVortexVisuals);
+addEventListener('combat-settings-change',clearVoidVortexVisuals);
+addEventListener('resize',clearVoidVortexVisuals);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clearVoidVortexVisuals();});
+voidVortexMotion.addEventListener('change',clearVoidVortexVisuals);
+
+function createVoidVortexPlan(targetIds,delay) {
+    const frame=getCombatEffectBounds(elements.combatPanel);
+    if (!frame.width || !frame.height) return null;
+    const targets=[...new Set(targetIds)].map(id=>{
+        const card=getCombatEffectCard(id);if(!card)return null;
+        const mark=card.querySelector('.enemy-mark'),rect=getCombatEffectBounds(mark||card);
+        if(!rect.width||!rect.height)return null;
+        return {id,x:rect.left+rect.width/2-frame.left,y:rect.top+rect.height/2-frame.top,
+            radius:Math.max(12,Math.min(30,rect.width*.32,rect.height*.32))};
+    }).filter(Boolean);
+    if(!targets.length)return null;
+    const phase=(voidVortexVisualSequence++%8)*Math.PI/4;
+    const left=Math.min(...targets.map(t=>t.x-t.radius)),right=Math.max(...targets.map(t=>t.x+t.radius));
+    const top=Math.min(...targets.map(t=>t.y-t.radius)),bottom=Math.max(...targets.map(t=>t.y+t.radius));
+    const cx=(left+right)/2,cy=(top+bottom)/2,rx=(right-left)/2+10,ry=Math.min(26,(bottom-top)/2+6);
+    const paths=[];
+    // The group spiral follows the actual sprite bounds, never the health bars
+    // or the whole card. Stroke widths stay fixed even across a wide row.
+    for(let arm=0;arm<2;arm++) {
+        const points=[];
+        for(let step=0;step<=40;step++) {
+            const t=step/40,angle=phase+arm*Math.PI+t*Math.PI*2.1,shrink=1-t*.86;
+            points.push({x:cx+Math.cos(angle)*rx*shrink,y:cy+Math.sin(angle)*ry*shrink});
+        }
+        paths.push({points,local:false});
+    }
+    // Small curls retain the recognizable spiral silhouette even when the
+    // connecting sweep spans a long row or targets have irregular spacing.
+    targets.forEach((target,index)=>{
+        for(let arm=0;arm<2;arm++) {
+            const points=[];
+            for(let step=0;step<=28;step++) {
+                const t=step/28,angle=phase+index*.7+arm*Math.PI+t*Math.PI*2.4;
+                const radius=(target.radius+4)*(1-t*.84);
+                points.push({x:target.x+Math.cos(angle)*radius,y:target.y+Math.sin(angle)*radius});
+            }
+            paths.push({points,local:true});
+        }
+    });
+    return {frame,targets,paths,delay:Math.max(0,Math.min(180,delay)),duration:560,impactDuration:220,
+        echo:delay>0,reduced:matchMedia('(prefers-reduced-motion: reduce)').matches};
+}
+
+function renderVoidVortexSvg(plan) {
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.classList.add('spell-effect','spell-void-vortex');
+    svg.dataset.spell='voidVortex';svg.dataset.echo=String(plan.echo);svg.setAttribute('aria-hidden','true');
+    elements.combatPanel.append(svg);
+    const frame=getCombatOverlayBounds(svg);
+    svg.setAttribute('viewBox',[frame.left-plan.frame.left,frame.top-plan.frame.top,frame.width,frame.height].join(' '));
+    const add=(tag,attributes)=>{
+        const node=document.createElementNS(svg.namespaceURI,tag);
+        for(const [key,value] of Object.entries(attributes))node.setAttribute(key,value);
+        svg.append(node);return node;
+    };
+    if(!plan.reduced)for(const {points,local} of plan.paths) {
+        const d=points.map((p,i)=>(i?'L':'M')+p.x.toFixed(2)+','+p.y.toFixed(2)).join(' ');
+        for(const layer of ['shadow','edge']) {
+            const path=add('path',{d,pathLength:1,class:'vortex-stream vortex-stream-'+layer+(local?' vortex-curl':' vortex-link')});
+            path.style.animationDuration=plan.duration+'ms';path.style.animationDelay=plan.delay+'ms';
+        }
+    }
+    for(const target of plan.targets) {
+        const ring=add('circle',{cx:target.x,cy:target.y,r:target.radius*(plan.echo?.75:1),
+            class:'vortex-contact','data-target-id':target.id});
+        ring.style.animationDuration=plan.impactDuration+'ms';
+        // Echo damage is already synchronous in combat. Contact has no visual
+        // delay; only the swirling aftermath is staggered by the existing delay.
+        add('polygon',{points:`${target.x},${target.y-6} ${target.x+6},${target.y} ${target.x},${target.y+6} ${target.x-6},${target.y}`,
+            class:'vortex-contact-core'});
+    }
+    return {remove:()=>svg.remove()};
+}
+
 function showVoidVortex(targetIds,visualDelay=0) {
     if(combatEffects===null || !targetIds.length)return;
     emitCombatEvent('voidVortexCast', {mapId:state.selectedMap,targetIds:[...targetIds],visualDelay});
@@ -138,28 +230,14 @@ function presentVoidVortexCast({targetIds,visualDelay}) {
     if(!combatEffectEnabled('abilities'))return;
     const validIds=targetIds.filter(id=>getCombatEffectMonster(id) && getCombatEffectCard(id));
     if(!validIds.length)return;
-    if(window.CombatWebGLEffects?.vortex(validIds,visualDelay))return;
-    const cards=validIds.map(id=>getCombatEffectCard(id));
-    if (!cards.length) return;
-    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-    svg.classList.add('spell-effect','spell-void-vortex');
-    svg.dataset.spell='voidVortex';svg.setAttribute('aria-hidden','true');
-    elements.combatPanel.append(svg);
-    const frame=getCombatOverlayBounds(svg);
-    if (!frame.width || !frame.height) {svg.remove();return;}
-    svg.setAttribute('viewBox','0 0 '+frame.width+' '+frame.height);
-    const bounds=cards.map(card=>getCombatEffectBounds(card));
-    const left=Math.min(...bounds.map(box=>box.left)),right=Math.max(...bounds.map(box=>box.right));
-    const top=Math.min(...bounds.map(box=>box.top)),bottom=Math.max(...bounds.map(box=>box.bottom));
-    for (let ring=0;ring<3;ring++) {
-        const ellipse=document.createElementNS(svg.namespaceURI,'ellipse');
-        ellipse.setAttribute('cx',(left+right)/2-frame.left);
-        ellipse.setAttribute('cy',(top+bottom)/2-frame.top);
-        ellipse.setAttribute('rx',Math.max(12,(right-left)/2)*(1-ring*.15));
-        ellipse.setAttribute('ry',Math.max(10,(bottom-top)/2)*(1-ring*.2));
-        ellipse.style.animationDelay=(visualDelay+ring*70)+'ms';svg.append(ellipse);
-    }
-    setTimeout(()=>svg.remove(),900+visualDelay);
+    const plan=createVoidVortexPlan(validIds,visualDelay);if(!plan)return;
+    syncVoidVortexVisuals();
+    // Keep presentation bounded during fast attacks and overlapping echoes.
+    while(voidVortexVisuals.size>=4)voidVortexVisuals.values().next().value.remove();
+    const drawing=window.CombatWebGLEffects?.vortex(plan)||renderVoidVortexSvg(plan);
+    const visual={mapId:state.selectedMap,remove(){clearTimeout(visual.timer);drawing.remove();voidVortexVisuals.delete(visual);}};
+    voidVortexVisuals.add(visual);
+    visual.timer=setTimeout(()=>visual.remove(),plan.reduced?plan.impactDuration:plan.duration+plan.delay+20);
 }
 
 function tickPlayerMana(elapsed) {

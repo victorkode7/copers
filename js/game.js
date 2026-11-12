@@ -145,6 +145,8 @@ const state = {
     itemCrafts: {},
     itemRollSaves: {},
     townProgress: TownProgression.defaults(),
+    alchemy: Alchemy.defaults(),
+    professions: Professions.defaults(),
     tutorials: createTutorialState(),
     selectedWorld: worldData[0].id,
     lastMapByWorld: Object.fromEntries(worldData.map(world => [world.id, world.mapIds[0]])),
@@ -1732,6 +1734,8 @@ function createGameSave() {
         itemCrafts: state.itemCrafts,
         itemRollSaves: state.itemRollSaves,
         townProgress: TownProgression.clone(state.townProgress),
+        alchemy: Alchemy.clone(state.alchemy),
+        professions: Professions.normalize(state.professions),
         tutorials: state.tutorials,
         selectedWorld: state.selectedWorld,
         lastMapByWorld: state.lastMapByWorld,
@@ -1913,6 +1917,10 @@ function parseGameSave(rawSave) {
     if (saved.itemRollSaves === undefined) saved.itemRollSaves = {};
     ItemCrafting.validateSave(saved.itemRollSaves);
     saved.townProgress=TownProgression.normalize(saved.townProgress,saved.townUnlocks);delete saved.townUnlocks;
+    saved.alchemy=Alchemy.normalize(saved.alchemy);
+    saved.professions=Professions.normalize(saved.professions);
+    // The temporary Skills page was removed; keep profiles saved there loadable.
+    if(saved.currentView==='professions')saved.currentView=saved.alchemy.unlocked?'alchemy':'townPage';
     // Retire the Town prototype without carrying its temporary encounter onto a map.
     const retiredTownView=saved.currentView==='settlement';
     const retiredTownBattle=saved.settlement?.battle?.active===true||
@@ -1983,7 +1991,7 @@ function parseGameSave(rawSave) {
             saved.lastMapByWorld === null ||
             Array.isArray(saved.lastMapByWorld)
         )) ||
-        (saved.currentView !== undefined && !['map', 'town', 'townPage', 'upgrades', 'inventory'].includes(saved.currentView)) ||
+        (saved.currentView !== undefined && !['map', 'town', 'townPage', 'alchemy', 'upgrades', 'inventory'].includes(saved.currentView)) ||
         !Number.isFinite(saved.enemyHp) || saved.enemyHp < 0 ||
         (saved.enemyHp === 0 && !(Number.isFinite(saved.enemyRespawnRemaining) &&
             saved.enemyRespawnRemaining > 0)) ||
@@ -2099,6 +2107,8 @@ function applyGameSave(saved) {
     state.itemCrafts = saved.itemCrafts;
     state.itemRollSaves = saved.itemRollSaves;
     state.townProgress = TownProgression.normalize(saved.townProgress);
+    state.alchemy = Alchemy.normalize(saved.alchemy);
+    state.professions = Professions.normalize(saved.professions);
     state.tutorials = saved.tutorials;
     state.selectedMap = saved.selectedMap;
     const savedMapWorld = worldForMap(saved.selectedMap) || worldData[0];
@@ -2132,6 +2142,7 @@ function applyGameSave(saved) {
     }
     state.lastMapByWorld[state.selectedWorld] = state.selectedMap;
     state.currentView = saved.currentView || (saved.isInTown === false ? 'map' : 'town');
+    if(state.currentView==='alchemy'&&!state.alchemy.unlocked)state.currentView='townPage';
     state.isInTown = state.currentView !== 'map';
     state.monsterStates = selectedMapChanged
         ? createMonsterStates(currentMap())
@@ -3506,6 +3517,7 @@ function renderCombatContent() {
     updateCombatText(elements.playerHealthText, displayedPlayerHp + ' / ' + maxHealth + ' HP');
     renderCombatBuffs();
     renderPlayerMana();
+    window.AlchemyPage?.renderCombatSlot();
     updateCombatText(elements.combatStatusLabel, state.combatPaused ? 'Dead' : target ? 'Auto-battling' : 'Waiting for respawn');
     elements.combatStatus.classList.toggle('combat-dead', state.combatPaused);
     elements.combatStatus.classList.toggle('is-fighting', !state.combatPaused && Boolean(target));
@@ -3542,6 +3554,7 @@ function renderSkillPointDisplay() {
 }
 
 function render() {
+    syncVoidVortexVisuals();
     window.DeveloperTools?.render();
     if (state.currentView !== 'town') window.ItemCrafting?.stopAuto('Auto rolling stopped after leaving crafting.');
     const speedBonus = Math.round((getAttackSpeedMultiplier() - 1) * 10000) / 100;
@@ -3583,10 +3596,13 @@ function render() {
     elements.mapView.hidden = state.currentView !== 'map';
     elements.inventoryView.hidden = state.currentView !== 'inventory';
     const townPageOpen=state.currentView==='townPage';
+    const alchemyOpen=state.currentView==='alchemy';
+    document.body.classList.toggle('alchemy-open',alchemyOpen);
+    document.querySelector('#alchemyView').hidden=!alchemyOpen;
     document.body.classList.toggle('town-page-open',townPageOpen);
     document.querySelector('#townPageView').hidden=!townPageOpen;
     document.querySelector('#townPageButton').setAttribute('aria-pressed',String(townPageOpen));
-    elements.worldPanel.hidden = townPageOpen || !worldSelectorIsUnlocked();
+    elements.worldPanel.hidden = townPageOpen || alchemyOpen || !worldSelectorIsUnlocked();
     document.querySelector('#mapButton').setAttribute('aria-pressed', String(state.currentView === 'map'));
     document.querySelector('#townButton').setAttribute('aria-pressed', String(state.currentView === 'town'));
     document.querySelector('#upgradesButton').setAttribute('aria-pressed', String(state.currentView === 'upgrades'));
@@ -3609,6 +3625,7 @@ function render() {
     renderWorlds();
     renderMaps();
     window.TownPage?.render();
+    window.AlchemyPage?.render();
     renderCombat();
     // Refresh a panel when it is visible; switching views calls render() again
     // with current game state, so hidden panels do not need combat updates.
@@ -4001,6 +4018,8 @@ document.querySelector('#resetGame').addEventListener('click', function() {
     state.itemCrafts = {};
     state.itemRollSaves = {};
     state.townProgress = TownProgression.defaults();
+    state.alchemy = Alchemy.defaults();
+    state.professions = Professions.defaults();
     state.tutorials = createTutorialState();
     state.selectedWorld = worldData[0].id;
     state.lastMapByWorld = Object.fromEntries(worldData.map(world => [world.id, world.mapIds[0]]));
@@ -4362,6 +4381,7 @@ const combatSimulation = CombatSimulation.create({
     freezeDelay: arrowSkillSettings.freezeDelay,
     rules: {
         tickTown: (profile, elapsed) => TownProgression.tick(profile, elapsed),
+        tickAlchemy: (profile, elapsed) => Alchemy.tick(profile, elapsed),
         currentMap: () => currentMap(),
         tickFury: (elapsed) => tickFury(elapsed),
         tickGatheringPower: (elapsed) => tickGatheringPower(elapsed),
@@ -4502,7 +4522,7 @@ function processCombatBacklog() {
         if (!document.hidden) {
             flushCombatEffects(effects);
             if (combatNeedsFullRender || combatCatchingUp) render();
-            else {renderCombat();window.TownPage?.renderProduction();}
+            else {renderCombat();window.TownPage?.renderProduction();window.AlchemyPage?.render();}
             combatNeedsFullRender = false;
         }
         const finishedCatchup=combatCatchingUp;

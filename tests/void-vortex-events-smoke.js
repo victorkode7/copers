@@ -2,7 +2,7 @@
     const checks=[],check=(label,ok)=>{checks.push((ok?'PASS ':'FAIL ')+label);if(!ok)throw new Error(label);};
     const near=(a,b)=>Math.abs(a-b)<1e-7;
     const random=Math.random,show=showVoidVortex,enabled=CombatSettings.enabled,create=document.createElementNS;
-    const getCard=getCombatEffectCard,getBounds=getCombatEffectBounds,now=performance.now,emit=CombatWebGL.emit;
+    const getCard=getCombatEffectCard,getBounds=getCombatEffectBounds,now=performance.now,emit=CombatWebGL.emit,trail=CombatWebGL.trail;
     const hidden=Object.getOwnPropertyDescriptor(document,'hidden'),stats=itemById.testAmulet.stats;
     const matchMedia=window.matchMedia,setTimeout=window.setTimeout;
     const restoreHidden=()=>{if(hidden)Object.defineProperty(document,'hidden',hidden);else delete document.hidden;};
@@ -35,18 +35,18 @@
         check('Vortex retains 75 percent row damage, its twenty-mana cost and capped charges',state.monsterStates.slice(0,3).every(monster=>monster.hp===1000-damage)&&state.monsterStates.slice(3).every(monster=>monster.hp===1000)&&state.playerMana===mana-20&&state.voidCharges===5);
         check('collecting a Vortex draws no spell overlay',!elements.combatPanel.querySelector('.spell-effect'));
         const before=JSON.stringify(state);Math.random=()=>{throw new Error('Vortex presentation consumed combat randomness');};flushCombatEffects(queued);
-        let svg=elements.combatPanel.querySelector('.spell-void-vortex'),ellipses=[...svg.querySelectorAll('ellipse')];
-        const boxes=event.targetIds.map(id=>getCombatEffectBounds(getCombatEffectCard(id))),frame=getCombatEffectBounds(svg);
-        const left=Math.min(...boxes.map(box=>box.left)),right=Math.max(...boxes.map(box=>box.right)),top=Math.min(...boxes.map(box=>box.top)),bottom=Math.max(...boxes.map(box=>box.bottom));
-        check('SVG Vortex preserves three concentric row-sized rings without changing combat state',JSON.stringify(state)===before&&ellipses.length===3&&ellipses.every((ring,index)=>near(Number(ring.getAttribute('cx')),(left+right)/2-frame.left)&&near(Number(ring.getAttribute('cy')),(top+bottom)/2-frame.top)&&near(Number(ring.getAttribute('rx')),Math.max(12,(right-left)/2)*(1-index*.15))&&near(Number(ring.getAttribute('ry')),Math.max(10,(bottom-top)/2)*(1-index*.2))&&near(parseFloat(ring.style.animationDelay),index*70)));
+        let svg=elements.combatPanel.querySelector('.spell-void-vortex');
+        const boxes=event.targetIds.map(id=>getCombatEffectBounds(getCombatEffectCard(id).querySelector('.enemy-mark'))),frame=getCombatEffectBounds(elements.combatPanel);
+        const contacts=[...svg.querySelectorAll('.vortex-contact')],streams=[...svg.querySelectorAll('.vortex-stream')];
+        check('SVG Vortex draws styled inward spirals and sprite-centered contacts without changing combat state',JSON.stringify(state)===before&&streams.length===16&&contacts.length===3&&!svg.querySelector('ellipse')&&contacts.every((ring,index)=>ring.dataset.targetId===ids[index]&&near(Number(ring.getAttribute('cx')),boxes[index].left+boxes[index].width/2-frame.left)&&near(Number(ring.getAttribute('cy')),boxes[index].top+boxes[index].height/2-frame.top))&&getComputedStyle(svg.querySelector('.vortex-stream-edge')).stroke==='rgb(199, 161, 255)'&&getComputedStyle(svg.querySelector('.vortex-curl')).animationName==='vortex-inward-curl');
 
         fresh();state.skillRanks.echoingVoid=1;Math.random=()=>.329;const echoed=guarded(()=>castVoidVortex()),casts=echoed.filter(effect=>effect.type==='voidVortexCast');
         check('Echoing Void repeats once for one mana payment and keeps its 180 ms visual delay',casts.length===2&&casts[0].visualDelay===0&&casts[1].visualDelay===180&&state.playerMana===mana-20&&state.monsterStates.slice(0,3).every(monster=>monster.hp===1000-damage*2)&&state.voidCharges===5);
         const timeouts=[];window.setTimeout=(callback,delay,...args)=>{timeouts.push({callback,delay});return setTimeout(callback,delay,...args);};
         try{flushCombatEffects(casts);}finally{window.setTimeout=setTimeout;}
         const overlays=[...elements.combatPanel.querySelectorAll('.spell-void-vortex')];
-        check('the echo keeps its original ring staggering and overlay lifetimes',overlays.length===2&&[...overlays[1].querySelectorAll('ellipse')].every((ring,index)=>near(parseFloat(ring.style.animationDelay),180+index*70))&&timeouts.some(timer=>timer.delay===900)&&timeouts.some(timer=>timer.delay===1080));
-        timeouts.find(timer=>timer.delay===900).callback();check('the first Vortex cleanup leaves the echoed overlay intact',!overlays[0].isConnected&&overlays[1].isConnected);timeouts.find(timer=>timer.delay===1080).callback();
+        check('echo spirals retain their 180 ms delay while contacts remain immediate',overlays.length===2&&[...overlays[1].querySelectorAll('.vortex-stream')].every(path=>near(parseFloat(path.style.animationDelay),180))&&[...overlays[1].querySelectorAll('.vortex-contact')].every(ring=>getComputedStyle(ring).animationDelay==='0s')&&timeouts.some(timer=>timer.delay===580)&&timeouts.some(timer=>timer.delay===760));
+        timeouts.find(timer=>timer.delay===580).callback();check('the first Vortex cleanup leaves the echoed overlay intact',!overlays[0].isConnected&&overlays[1].isConnected);timeouts.find(timer=>timer.delay===760).callback();
         fresh();state.skillRanks.echoingVoid=1;Math.random=()=>.33;
         check('the 33 percent boundary does not trigger an echo',collect(()=>castVoidVortex()).filter(effect=>effect.type==='voidVortexCast').length===1&&state.monsterStates[0].hp===1000-damage);
         fresh();state.skillRanks.echoingVoid=1;state.monsterStates[0].hp=1;Math.random=()=>0;const lethal=collect(()=>castVoidVortex()).filter(effect=>effect.type==='voidVortexCast');
@@ -58,14 +58,14 @@
 
         fresh();const rawIds=ids.slice(0,3),snapshot=JSON.parse(JSON.stringify(collect(()=>showVoidVortex(rawIds,180))[0]));rawIds.splice(0,3,ids[6]);state.skillRanks={};state.targetMonsterId=ids[6];
         flushCombatEffects([snapshot]);svg=elements.combatPanel.querySelector('.spell-void-vortex');
-        check('target arrays and delay are copied before caller, skill or active-target changes',snapshot.targetIds.join(',')===ids.slice(0,3).join(',')&&near(Number(svg.querySelector('ellipse').getAttribute('cx')),(left+right)/2-frame.left)&&parseFloat(svg.querySelector('ellipse').style.animationDelay)===180);
-        clear();choose('webgl');const specs=[];CombatWebGL.emit=spec=>{specs.push(spec);return emit(spec);};
-        try{Math.random=()=>{throw new Error('GPU presentation consumed combat randomness');};flushCombatEffects([snapshot]);}finally{CombatWebGL.emit=emit;}
-        check('GPU Vortex keeps three shrinking purple rings, rotation and echo timing on one surface',specs.length===3&&specs.every((spec,index)=>spec.type==='vortex'&&spec.style===10&&spec.duration===650&&near(spec.delay,180+index*70)&&near(spec.rotation,(index-1)*.16)&&near(spec.width,(right-left)*(1-index*.15)*1.3)&&near(spec.height,(bottom-top)*(1-index*.2)*1.3)&&spec.color.join(',')===[.76,.46,1].join(',')&&spec.startScale===1.15&&spec.scale===.05)&&!elements.combatPanel.querySelector('.spell-effect')&&document.querySelectorAll('.combat-webgl-layer').length===1);
+        check('target arrays and delay are copied before caller, skill or active-target changes',snapshot.targetIds.join(',')===ids.slice(0,3).join(',')&&svg.querySelector('.vortex-contact').dataset.targetId===ids[0]&&parseFloat(svg.querySelector('.vortex-stream').style.animationDelay)===180);
+        clear();choose('webgl');const specs=[],trails=[];CombatWebGL.emit=spec=>{specs.push(spec);return emit(spec);};CombatWebGL.trail=spec=>{trails.push(spec);return trail(spec);};
+        try{Math.random=()=>{throw new Error('GPU presentation consumed combat randomness');};flushCombatEffects([snapshot]);}finally{CombatWebGL.emit=emit;CombatWebGL.trail=trail;}
+        check('GPU Vortex draws shared spiral trails and immediate contacts instead of old shrinking rings',trails.length===16&&trails.filter(spec=>spec.style===17).length===12&&trails.every(spec=>spec.type==='vortex'&&spec.category==='abilities'&&spec.duration===560&&spec.delay===180&&spec.opacity>0&&spec.opacity<=1)&&specs.length===6&&specs.every(spec=>spec.type==='vortexImpact'&&spec.style!==10)&&!elements.combatPanel.querySelector('.spell-effect')&&document.querySelectorAll('.combat-webgl-layer').length===1);
         clear();const adapter=CombatWebGLEffects.vortex;CombatWebGLEffects.vortex=()=>false;
-        try{flushCombatEffects([snapshot]);check('an unavailable GPU adapter keeps SVG fallback and echo timing',!!elements.combatPanel.querySelector('.spell-void-vortex')&&parseFloat(elements.combatPanel.querySelector('ellipse').style.animationDelay)===180);}finally{CombatWebGLEffects.vortex=adapter;}
+        try{flushCombatEffects([snapshot]);check('an unavailable GPU adapter keeps SVG fallback and echo timing',!!elements.combatPanel.querySelector('.spell-void-vortex')&&parseFloat(elements.combatPanel.querySelector('.vortex-stream').style.animationDelay)===180);}finally{CombatWebGLEffects.vortex=adapter;}
         clear();choose('svg');window.matchMedia=query=>query==='(prefers-reduced-motion: reduce)'?{matches:true}:matchMedia.call(window,query);
-        try{flushCombatEffects([snapshot]);check('Vortex remains available on the reduced-motion SVG path',!!elements.combatPanel.querySelector('.spell-void-vortex'));}finally{window.matchMedia=matchMedia;}
+        try{flushCombatEffects([snapshot]);check('reduced-motion Vortex shows contact flashes without moving spirals',!!elements.combatPanel.querySelector('.vortex-contact')&&!elements.combatPanel.querySelector('.vortex-stream'));}finally{window.matchMedia=matchMedia;}
         for(const renderer of ['svg','webgl']){
             choose(renderer);clear();toggle('projectiles',false);flushCombatEffects([snapshot]);
             check(renderer+' Vortex remains independent of the projectile switch',renderer==='svg'?!!elements.combatPanel.querySelector('.spell-void-vortex'):CombatWebGL.status().types.includes('vortex'));toggle('projectiles',true);
@@ -95,6 +95,6 @@
         check('offline Vortex combat matches live results without retaining visual events',offline.value===live.value&&offline.rolls===live.rolls&&offline.count===0);
         check('no browser script errors',!smokeErrors.length);checks.push('SMOKE PASSED');
     }catch(error){checks.push(error.stack||String(error));}
-    finally{Math.random=random;showVoidVortex=show;CombatSettings.enabled=enabled;document.createElementNS=create;getCombatEffectCard=getCard;getCombatEffectBounds=getBounds;performance.now=now;CombatWebGL.emit=emit;restoreHidden();itemById.testAmulet.stats=stats;window.matchMedia=matchMedia;window.setTimeout=setTimeout;clear();}
+    finally{Math.random=random;showVoidVortex=show;CombatSettings.enabled=enabled;document.createElementNS=create;getCombatEffectCard=getCard;getCombatEffectBounds=getBounds;performance.now=now;CombatWebGL.emit=emit;CombatWebGL.trail=trail;restoreHidden();itemById.testAmulet.stats=stats;window.matchMedia=matchMedia;window.setTimeout=setTimeout;clear();}
     const report=document.createElement('pre');report.id='smoke-results';report.textContent=checks.join('\n');document.body.append(report);
 }());

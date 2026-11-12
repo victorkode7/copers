@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" fill="none">
+  <defs>
+    <linearGradient id="room" x2="0" y2="480" gradientUnits="userSpaceOnUse"><stop stop-color="#132635"/><stop offset="1" stop-color="#0d1721"/></linearGradient>
+    <radialGradient id="moon"><stop stop-color="#a3d9ee" stop-opacity=".4"/><stop offset="1" stop-color="#82c5df" stop-opacity="0"/></radialGradient>
+    <radialGradient id="fire"><stop stop-color="#ffbe65" stop-opacity=".55"/><stop offset="1" stop-color="#ff7e43" stop-opacity="0"/></radialGradient>
+    <linearGradient id="pot" x2="0" y2="1"><stop stop-color="#435967"/><stop offset=".45" stop-color="#253642"/><stop offset="1" stop-color="#101e29"/></linearGradient>
+    <radialGradient id="emptyPot"><stop stop-color="#101722"/><stop offset="1" stop-color="#070e16"/></radialGradient>
+    <g id="bottle"><path d="M-7-25H7V-10L17 0V30Q0 38-17 30V0L-7-10Z" fill="currentColor" fill-opacity=".65" stroke="#a1b8bb" stroke-opacity=".5" stroke-width="2"/><path d="M-8-28H8V-20H-8Z" fill="#a18057"/><path d="M-10 4V24" stroke="#e3f4eb" stroke-opacity=".3" stroke-width="3"/></g>
+  </defs>
+  <path fill="url(#room)" d="M0 0H640V480H0Z"/>
+  <path stroke="#7e919c" stroke-opacity=".08" stroke-width="2" d="M0 70H640M0 140H640M0 210H640M0 280H640M0 350H640M80 0V70M200 0V70M450 0V70M560 0V70M30 70V140M140 70V140M500 70V140M610 70V140M80 140V210M210 140V210M450 140V210M560 140V210"/>
+  <ellipse cx="320" cy="160" rx="235" ry="215" fill="url(#moon)"/>
+  <path d="M250 208V84Q320 9 390 84V208Z" fill="#0d1c2a" stroke="#526c7b" stroke-width="8"/>
+  <path d="M261 196V88Q320 26 379 88V196Z" fill="#24495c"/>
+  <path d="M343 75A28 28 0 1 0 350 122A24 24 0 0 1 343 75Z" fill="#c6dfd9"/>
+  <path d="M320 53V202M255 136H385" stroke="#526c7b" stroke-width="6"/>
+  <g fill="#c6dbe2"><circle cx="278" cy="105" r="1.5"/><circle cx="369" cy="160" r="2"/><circle cx="297" cy="175" r="1"/></g>
+  <g stroke="#4f4240" stroke-width="10"><path d="M24 159H218M431 159H620M36 246H215M430 246H607"/></g>
+  <g stroke="#b69a71" stroke-opacity=".35" stroke-width="2"><path d="M24 153H218M431 153H620M36 240H215M430 240H607"/></g>
+  <g transform="translate(64 114)" color="#80b9d8"><use href="#bottle"/></g>
+  <g transform="translate(115 119) scale(.8)" color="#ac9cd3"><use href="#bottle"/></g>
+  <g transform="translate(169 108) scale(1.1)" color="#75c3b2"><use href="#bottle"/></g>
+  <g transform="translate(469 112)" color="#e9a355"><use href="#bottle"/></g>
+  <g transform="translate(519 119) scale(.8)" color="#d5b36e"><use href="#bottle"/></g>
+  <g transform="translate(571 108) scale(1.1)" color="#c57e86"><use href="#bottle"/></g>
+  <g transform="translate(77 204)" color="#b4c97f"><use href="#bottle"/></g>
+  <g transform="translate(173 201)" color="#91b9c7"><use href="#bottle"/></g>
+  <g transform="translate(477 206) scale(.9)" color="#cf9a74"><use href="#bottle"/></g>
+  <g transform="translate(574 201)" color="#a698ce"><use href="#bottle"/></g>
+  <path d="M0 401L220 367H420L640 401V480H0Z" fill="#1b2429"/>
+  <path d="M0 435H640M75 401L45 480M175 386L160 480M465 386L480 480M565 401L595 480" stroke="#70808a" stroke-opacity=".1" stroke-width="2"/>
+  <ellipse cx="320" cy="405" rx="170" ry="88" fill="url(#fire)"/>
+  <path d="M266 414L359 396M279 394L374 421" stroke="#6d4c38" stroke-width="14" stroke-linecap="round"/>
+  <path d="M294 416Q267 395 299 374Q294 394 310 397Q330 373 323 355Q361 389 340 416Z" fill="#dd8a46"/>
+  <path d="M306 415Q295 398 312 387Q314 400 328 393Q341 408 330 416Z" fill="#ffd08a"/>
+  <path d="M232 331L213 407M406 331L425 407" stroke="#3b4a55" stroke-width="14" stroke-linecap="round"/>
+  <path d="M208 286Q191 351 242 376Q320 417 398 376Q449 351 432 286Z" fill="url(#pot)" stroke="#657780" stroke-width="3"/>
+  <path d="M215 302Q183 278 178 315Q179 342 207 337M425 302Q457 278 462 315Q461 342 433 337" stroke="#6b7b83" stroke-width="9"/>
+  <ellipse cx="320" cy="285" rx="113" ry="34" fill="#152931" stroke="#70858d" stroke-width="8"/>
+  <ellipse cx="320" cy="284" rx="103" ry="25" fill="url(#emptyPot)"/>
+  <path d="M382 279L415 220" stroke="#927955" stroke-width="7" stroke-linecap="round"/>
+  <path d="M241 320Q252 350 275 359" stroke="#adc4c9" stroke-opacity=".13" stroke-width="9" stroke-linecap="round"/>
+  <g fill="#ffcb7b"><circle cx="273" cy="397" r="2"/><circle cx="365" cy="391" r="2"/><circle cx="351" cy="426" r="1.5"/></g>
+</svg>
