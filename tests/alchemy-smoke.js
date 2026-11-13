@@ -56,12 +56,12 @@
         simulateCombatStep(100000,false);render();
         check('large offline steps cap production and discard surplus work',state.alchemy.liquids.moonwater.amount===120&&state.alchemy.liquids.moonwater.work===0);
         check('full liquid storage fills the bar',moonMeter.value===moonMeter.max);
-        select(['moonwater'],'fang');const invalidMix=snapshot();$('alchemyBrew').click();
+        select(['moonwater'],'material_985927188da978e5f7fa3e5c');const invalidMix=snapshot();$('alchemyBrew').click();
         check('unknown combinations do not invent a material cost',$('alchemySelectedMaterials').querySelector('.alchemy-material-cost').textContent==='?');
         check('Moonwater uses the blue liquid sprite',!$('alchemyBrewTint').hidden&&$('alchemyLiquidSheet').getAttribute('href').includes('cauldron-blue-liquid-4x2.png'));
         $('alchemyLiquids').querySelector('[data-select-liquid="moonwater"]').click();
         check('removing the liquid empties the cauldron and hides bubbles and steam',$('alchemyBrewTint').hidden&&scene.getAttribute('aria-label').startsWith('Empty cauldron'));
-        select(['moonwater'],'fang');$('alchemyBrew').click();
+        select(['moonwater'],'material_985927188da978e5f7fa3e5c');$('alchemyBrew').click();
         check('unknown combinations do not spend ingredients or reveal recipes',snapshot()===invalidMix&&$('alchemyStatus').textContent==='No recipe found.');
         select(['moonwater'],'gel');
         const selectedSprites=$('alchemySelectedMaterials');
@@ -95,14 +95,16 @@
         $('alchemyLiquids').querySelector('[data-liquid="emberOil"] [data-upgrade="unlock"]').click();simulateCombatStep(600,false);render();
         check('Ember Oil unlocks inside Alchemy and produces independently',state.alchemy.liquids.emberOil.unlocked&&state.alchemy.liquids.emberOil.amount===10);
         check('opening another liquid still also spends no gold',state.gold===goldBeforeUpgrades);
-        select(['emberOil'],'fang');$('alchemyBrew').click();finishQueue();
+        select(['emberOil'],'material_985927188da978e5f7fa3e5c');$('alchemyBrew').click();finishQueue();
         check('Ember Oil uses the red liquid sprite',$('alchemyLiquidSheet').getAttribute('href').includes('cauldron-red-liquid-4x2.png'));
-        check('Emberheart uses Ember Oil and Sharp Fangs',state.alchemy.potions.emberheart===600&&state.materials.fang===97);
+        check('Moonspring uses Ember Oil and a later boss material',state.alchemy.potions.moonspring===600&&state.materials.material_985927188da978e5f7fa3e5c===99);
+        select(['moonwater'],'material_0e547cc411cb91fce7c30162');$('alchemyBrew').click();finishQueue();
+        check('Emberheart uses Moonwater and Tusk',state.alchemy.potions.emberheart===600&&state.materials.material_0e547cc411cb91fce7c30162===97);
         select(['moonwater','emberOil'],'crystal');
         check('both liquid containers can be selected for mixed recipes',selectedSprites.children.length===1&&$('alchemyLiquids').querySelectorAll('[aria-pressed="true"]').length===2);
-        check('selecting both liquids uses the mixed recipe color',scene.style.getPropertyValue('--brew-color')==='rgb(195, 162, 239)');
-        $('alchemyBrew').click();finishQueue();check('mixed brewing adds its own duration',state.alchemy.potions.twilight===900);
-        check('discovered mixed recipe shows both liquids and material costs',$('alchemyPotions').querySelector('[data-potion="twilight"] .alchemy-formula').children.length===3);
+        check('selecting both liquids still tints the cauldron',scene.style.getPropertyValue('--brew-color').startsWith('rgb('));
+        select(['moonwater'],'hide');$('alchemyBrew').click();finishQueue();check('Twilight brewing adds its own duration',state.alchemy.potions.twilight===900);
+        check('Twilight recipe shows Moonwater and Wolf Fur costs',$('alchemyPotions').querySelector('[data-potion="twilight"] .alchemy-formula').children.length===2);
         simulateCombatStep(100000,false);render();
         $('alchemyPotions').querySelector('[data-load-recipe="moonveil"]').click();
         check('clicking a discovery restores its ingredients',$('alchemyBrewHeading').textContent==='Moonveil'&&$('alchemyMaterials').querySelector('[data-select-material="gel"]').getAttribute('aria-pressed')==='true');
@@ -127,7 +129,7 @@
         $('alchemyPotions').querySelector('[data-equip="twilight"]').click();
         check('equipping replaces the single slot and keeps unused duration',state.alchemy.equipped==='twilight'&&state.alchemy.potions.moonveil===firstReserve);
         $('mapButton').click();$('combatPotionSlot').click();
-        check('combat potion slot opens an accessible native picker',$('alchemyPotionPicker').open&&$('alchemyPickerChoices').children.length===3);
+        check('combat potion slot opens an accessible native picker',$('alchemyPotionPicker').open&&$('alchemyPickerChoices').children.length===Object.keys(AlchemyContent.recipes).length);
         $('alchemyPickerChoices').querySelector('[data-equip-potion="emberheart"]').click();
         check('combat selection equips immediately without using a charge',!$('alchemyPotionPicker').open&&state.alchemy.equipped==='emberheart'&&state.alchemy.potions.emberheart===600);
         $('combatPotionSlot').click();$('alchemyUnequip').click();check('unequipping preserves all remaining time',state.alchemy.equipped===null&&state.alchemy.potions.emberheart===600);
@@ -141,7 +143,7 @@
         }
         check('foreground and offline production, combat and potion expiry agree',run(false)===run(true));
         check('expiry clears the slot without consuming another potion',state.alchemy.equipped===null&&state.alchemy.potions.moonveil===0&&state.alchemy.potions.emberheart===600);
-        check('placeholder potions do not change combat damage, health, gold or RNG',JSON.stringify(JSON.parse(run(false)).slice(1))===JSON.stringify(JSON.parse(run(false,false)).slice(1)));
+        check('health regeneration potion at full life does not change damage, gold or RNG',JSON.stringify(JSON.parse(run(false)).slice(1))===JSON.stringify(JSON.parse(run(false,false)).slice(1)));
         for(const view of ['town','townPage','upgrades','inventory','alchemy']){
             check(view+' combat drains and expires potions equally in foreground and offline simulation',run(false,true,view)===run(true,true,view)&&state.alchemy.potions.moonveil===0&&state.alchemy.equipped===null);
         }

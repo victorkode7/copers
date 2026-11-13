@@ -97,7 +97,7 @@ function getPlayerManaRegen() {
     return cachedCombatStat('getPlayerManaRegen', () => Math.max(0,
         getSkillStat('manaRegen') + getGearStat('manaRegen') + getPlayerMaxMana() *
         (getSkillStat('manaRegenPercent') + getGearStat('manaRegenPercent'))) * Math.max(0,
-        1 + getSkillStat('manaRegenIncrease') + getGearStat('manaRegenIncrease')));
+        1 + getSkillStat('manaRegenIncrease') + getGearStat('manaRegenIncrease')) * (Alchemy.effects(state).manaRegenMultiplier || 1));
 }
 
 function getSpellDamage() {

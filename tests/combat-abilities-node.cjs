@@ -187,4 +187,53 @@ test('Righteous Fire reserves healing and snapshots its split before awarding le
     const w=world({count:3,ranks:{righteousFire:1},stats:{healthRegen:20}});w.state.playerHp=30;w.state.monsterStates[0].hp=1;w.engine.tickPlayerRegeneration(1);
     assert.equal(w.state.playerHp,30);close(w.state.monsterStates[1].hp,100-10/3);close(w.state.monsterStates[2].hp,100-10/3);assert.equal(w.state.kills,1);assert.equal(w.events.at(-1).ids.length,3);
 });
+test('Corpse Bloom instantly damages only adjacent living enemies and spends ten mana',()=>{
+    const w=world({ranks:{corpseBloom:1}}),m=w.state.monsterStates,corpse=m[4];
+    w.rules.monsterDefinition=()=>({health:100});corpse.hp=0;corpse.respawnRemaining=5;
+    assert.equal(w.engine.activateCorpseBloom(corpse),true);assert.equal(w.state.playerMana,90);
+    assert.equal(w.hits.map(h=>h.id).join(','),'m1,m3,m5,m7');
+    assert.ok(w.hits.every(h=>h.damage===20&&h.type==='spell'&&h.ability==='corpseBloom'));
+    assert.equal(corpse.hp,50);assert.equal(corpse.respawnRemaining,0);assert.equal(corpse.attackTimer,0);
+    assert.equal(w.events.filter(event=>event.type==='monsterRevived'&&event.monsterId===corpse.id).length,1);
+    assert.equal(w.events.filter(e=>e.type==='elemental'&&e.element==='fire'&&e.explosion).length,1);
+});
+
+test('Corpse Bloom requires an allocated skill, sufficient mana, a corpse and active combat',()=>{
+    const w=world({count:2,ranks:{corpseBloom:1}}),corpse=w.state.monsterStates[0];
+    w.rules.monsterDefinition=()=>({health:100});corpse.respawnRemaining=5;
+    assert.equal(w.engine.activateCorpseBloom(corpse),false);corpse.hp=0;
+    w.state.playerMana=9;assert.equal(w.engine.activateCorpseBloom(corpse),false);
+    w.state.playerMana=10;w.state.skillRanks={};assert.equal(w.engine.activateCorpseBloom(corpse),false);
+    w.state.skillRanks.corpseBloom=1;w.state.combatPaused=true;assert.equal(w.engine.activateCorpseBloom(corpse),false);
+    w.state.combatPaused=false;assert.equal(w.engine.activateCorpseBloom(corpse),true);
+    assert.equal(w.state.playerMana,0);assert.equal(w.hits.length,1);assert.equal(w.hits[0].damage,20);
+});
+
+test('Corpse Bloom revives at the exact healing threshold and cannot heal from overkill',()=>{
+    const w=world({ranks:{corpseBloom:1}}),m=w.state.monsterStates,corpse=m[4];
+    w.rules.monsterDefinition=()=>({health:100});corpse.hp=0;corpse.respawnRemaining=5;
+    m[1].hp=20;m[3].hp=20;m[5].hp=10;m[7].hp=0;
+    w.engine.activateCorpseBloom(corpse);assert.equal(corpse.hp,50);assert.equal(corpse.respawnRemaining,0);
+    const other=world({ranks:{corpseBloom:1}}),neighbors=other.state.monsterStates,source=neighbors[4];
+    other.rules.monsterDefinition=()=>({health:100});source.hp=0;source.respawnRemaining=5;
+    for(const index of [1,3,5,7])neighbors[index].hp=1;
+    other.engine.activateCorpseBloom(source);
+    assert.equal(other.hits.reduce((sum,hit)=>sum+hit.damage,0),4);
+    assert.equal(source.hp,0);assert.equal(source.respawnRemaining,5);
+    assert.equal(other.events.filter(event=>event.type==='monsterRevived').length,0);
+});
+
+test('Corpse Bloom drains lethal chain explosions instantly without recursive damage calls',()=>{
+    const w=world({count:4,columns:4,hp:10,ranks:{corpseBloom:1}}),m=w.state.monsterStates;
+    w.rules.monsterDefinition=()=>({health:100});m[0].hp=0;m[0].respawnRemaining=5;
+    const damage=w.rules.applyDamageToMonster;let depth=0,maxDepth=0;
+    w.rules.applyDamageToMonster=(target,...args)=>{
+        depth++;maxDepth=Math.max(maxDepth,depth);
+        try {const died=damage(target,...args);if(died){target.respawnRemaining=5;w.engine.activateCorpseBloom(target);}return died;}
+        finally {depth--;}
+    };
+    w.engine.activateCorpseBloom(m[0]);
+    assert.ok(m.every(monster=>monster.hp===0));assert.equal(w.state.kills,3);
+    assert.equal(w.state.playerMana,60);assert.equal(w.hits.length,3);assert.equal(maxDepth,1);
+});
 console.log(checks.join('\n')+'\nABILITY TESTS PASSED');

@@ -28,14 +28,17 @@
     }
     function mutate(action,success) {
         if (SaveCompatibility.protection.blocked || simulatingCombat || combatCatchingUp || !state.alchemy.unlocked) return false;
-        const before = {gold:state.gold,materials:state.materials,alchemy:state.alchemy,professions:state.professions};
+        const before = {gold:state.gold,materials:state.materials,alchemy:state.alchemy,professions:state.professions,playerHp:state.playerHp,shieldStacks:state.shieldStacks};
         state.materials = {...state.materials};state.alchemy = Alchemy.clone(state.alchemy);
         state.professions = Professions.normalize(state.professions);
         try {
             if (!action()) {Object.assign(state,before);return false;}
+            if (combatStatCache) combatStatCache.clear();
+            state.playerHp = Math.min(state.playerHp,getPlayerMaxHealth());
+            state.shieldStacks = Math.min(state.shieldStacks,getPlayerMaxShields());
             localStorage.setItem(saveKey,JSON.stringify(createGameSave()));message = typeof success === 'function' ? success() : success;
         } catch {
-            Object.assign(state,before);message = 'Could not save. Ingredients and progress kept.';render();return false;
+            Object.assign(state,before);if (combatStatCache) combatStatCache.clear();message = 'Could not save. Ingredients and progress kept.';render();return false;
         }
         window.render();return true;
     }
@@ -69,7 +72,7 @@
         const item = element('span','alchemy-recipe-ingredient');item.title = (kind === 'liquids' ? content.liquids[id].name : materialNames[id] || id) + ' × ' + amount;
         item.setAttribute('aria-label',item.title);item.append(kind === 'liquids' ? liquidIcon(id) : materialIcon(id),element('span','','×' + amount));return item;
     }
-    for (const [id,recipe] of Object.entries(content.recipes)) {
+    for (const [id,recipe] of Object.entries(content.recipes).sort((a,b) => a[1].level - b[1].level)) {
         const card = element('article','alchemy-potion');card.dataset.potion = id;card.style.setProperty('--liquid',recipe.color);card.hidden = true;
         const header = element('div','alchemy-potion-header'), bottle = element('span','alchemy-bottle');bottle.setAttribute('aria-hidden','true');
         const copy = element('div'), name = button(recipe.name,() => changeSelection(() => {
@@ -79,11 +82,12 @@
         const equip = button('Equip',() => mutate(() => Alchemy.equip(state,id),recipe.name + ' equipped.'));equip.dataset.equip = id;header.append(bottle,copy,equip);
         const formula = element('div','alchemy-formula');formula.setAttribute('aria-label',recipe.name + ' recipe');
         for (const kind of ['liquids','materials']) for (const [key,amount] of Object.entries(recipe[kind])) formula.append(recipeIcon(kind,key,amount));
-        const yieldText = element('small','alchemy-yield',recipe.brewSeconds + 's brew · +' + duration(recipe.seconds) + ' / success');
+        const yieldText = element('small','alchemy-yield',recipe.brewSeconds + 's brew');
         const training = element('small','alchemy-yield');
-        card.append(header,formula,yieldText,training);$('alchemyPotions').append(card);potions.set(id,{card,remaining,equip,training});
+        const details = element('div','alchemy-potion-details');details.append(yieldText,training);
+        card.append(header,element('p','alchemy-potion-effect',recipe.description),formula,details);$('alchemyPotions').append(card);potions.set(id,{card,remaining,equip,training});
         const choice = button('',() => {if(mutate(() => Alchemy.equip(state,id),recipe.name + ' equipped.'))$('alchemyPotionPicker').close();});
-        choice.dataset.equipPotion = id;choice.hidden = true;$('alchemyPickerChoices').append(choice);choices.set(id,choice);
+        choice.dataset.equipPotion = id;choice.title = recipe.description;choice.hidden = true;$('alchemyPickerChoices').append(choice);choices.set(id,choice);
     }
     function renderMaterials(blocked) {
         if (selectedMaterial && !Alchemy.materialUnlocked(state,selectedMaterial)) selectedMaterial = null;
@@ -146,14 +150,19 @@
         node.title = materialNames[selectedMaterial] + ' · ' + (knownCost ? 'Cost: ' + label : 'Unknown cost') + ' · Owned: ' + ownedLabel;
         node.setAttribute('aria-label','Remove ' + materialNames[selectedMaterial] + '. ' + (knownCost ? 'Cost: ' + label : 'Cost unknown') + '. Owned: ' + ownedLabel);
     }
-    const selectedRecipe = () => Alchemy.matchingRecipe([...selectedLiquids],selectedMaterial);
+    const selectedRecipe = () => {
+        const id = Alchemy.matchingRecipe([...selectedLiquids],selectedMaterial);
+        // An undiscovered, level-locked formula must look like any other
+        // unknown combination, including its costs and Combine button.
+        return id && (state.alchemy.discovered.includes(id) || Alchemy.recipeUnlocked(state,id)) ? id : null;
+    };
     function batchAmount(id) {return batch === 'max' ? id ? Alchemy.maxBrewAmount(state,id) : 1 : batch === 'custom' ? $('alchemyCustomAmount').valueAsNumber : Number(batch);}
     function renderCombatSlot() {
         const data = state.alchemy;$('combatPotion').hidden = !data.unlocked;
         if (!data.unlocked) return;
         const id = data.equipped, recipe = content.recipes[id];
         text($('combatPotionSlot'),recipe ? recipe.name + ' · ' + duration(data.potions[id]) : '+ Equip potion');
-        $('combatPotionSlot').title = recipe ? Alchemy.fighting(state) ? 'Potion active' : 'Potion paused' : 'Choose a potion';
+        $('combatPotionSlot').title = recipe ? recipe.description + '\n' + (Alchemy.fighting(state) ? 'Potion active' : 'Potion paused') : 'Choose a potion';
     }
     function renderQueue() {
         const data = state.alchemy, active = data.queue[0], list = $('alchemyQueueList');
@@ -213,7 +222,10 @@
                 view.bar.hidden = !liquid.unlocked;view.bar.max = limit;view.bar.value = infinite ? limit : liquid.amount;view.bar.title = infinite ? 'Infinite (Developer mode)' : formatAmount(liquid.amount) + ' / ' + limit;
                 text(view.rate,!liquid.unlocked ? 'Sealed still' : infinite ? 'Infinite · Dev' : Alchemy.perHour(data,id) + ' / h');
                 view.unlock.hidden = liquid.unlocked;view.upgrades.hidden = !liquid.unlocked;
-                const cost = Alchemy.upgradeCost(data,id,'unlock');view.unlock.title = costText(cost);view.unlock.disabled = blocked || !Alchemy.affordable(state,cost);
+                const cost = Alchemy.upgradeCost(data,id,'unlock'), levelReady = Alchemy.canUnlockLiquid(state,id);
+                text(view.unlock,levelReady ? 'Unlock' : 'Level ' + content.liquids[id].unlockLevel);
+                view.unlock.title = (levelReady ? '' : 'Requires Alchemy level ' + content.liquids[id].unlockLevel + ' · ') + costText(cost);
+                view.unlock.disabled = blocked || !levelReady || !Alchemy.affordable(state,cost);
                 for (const [kind,action] of Object.entries(view.actions)) {
                     const price = Alchemy.upgradeCost(data,id,kind), level = liquid[kind === 'rate' ? 'rateLevel' : 'capacityLevel'];
                     text(action.level,'Lv ' + level);action.action.disabled = blocked || !Alchemy.affordable(state,price);

@@ -2,7 +2,7 @@
     const checks=[],check=(name,ok)=>{if(!ok)throw new Error(name);checks.push('PASS '+name);};
     const A=Alchemy,P=Professions,C=AlchemyContent,copy=value=>JSON.parse(JSON.stringify(value));
     function profile(level=1) {
-        const p={gold:0,materials:{gel:1000,fang:1000,crystal:1000},alchemy:A.defaults(),professions:P.defaults(),combatPaused:true,playerHp:0,monsterStates:[]};
+        const p={gold:0,materials:Object.fromEntries(Object.keys(materialNames).map(id=>[id,1000])),alchemy:A.defaults(),professions:P.defaults(),combatPaused:true,playerHp:0,monsterStates:[]};
         p.professions.xp.alchemy=P.xpForLevel(level);p.alchemy.unlocked=true;p.alchemy.rngState=1234;
         for(const liquid of Object.values(p.alchemy.liquids)){liquid.unlocked=true;liquid.amount=120;}
         return p;

@@ -454,6 +454,16 @@ function presentCombatEvent(event) {
             if (event.mapId !== state.selectedMap || !isCombatView()) break;
             presentMonsterDefeat(event);
             break;
+        case 'monsterRevived': {
+            if (event.mapId !== state.selectedMap || !isCombatView() || !combatEffectEnabled('glows')) break;
+            const monster = getCombatEffectMonster(event.monsterId);
+            const card = monster?.hp > 0 && getCombatEffectCard(event.monsterId);
+            if (card) {
+                card.classList.remove('is-defeating');
+                restartCombatAnimation(card, 'is-reviving');
+            }
+            break;
+        }
         case 'enemyDamageCleared':
             if (event.mapId === state.selectedMap && combatEffectEnabled()) presentEnemyDamageIndicatorReset();
             break;
@@ -561,7 +571,7 @@ function cachedCombatStat(key, calculate) {
 
 function restartCombatAnimation(element, className) {
     const category = ['is-defeating', 'is-shockwave-splashed'].includes(className) ? 'shaking'
-        : ['is-applying', 'is-proccing', 'is-releasing', 'is-damaged', 'is-dodging', 'is-shockwave-hit', 'is-shield-blocking'].includes(className) ? 'glows' : 'general';
+        : ['is-applying', 'is-proccing', 'is-releasing', 'is-damaged', 'is-dodging', 'is-shockwave-hit', 'is-shield-blocking', 'is-reviving'].includes(className) ? 'glows' : 'general';
     if (!combatEffectEnabled(category)) return;
     if(category==='glows'&&window.CombatWebGLEffects?.pulse(element,className))return;
     element.classList.remove(className);
@@ -1082,8 +1092,19 @@ function getGearStat(stat) {
 }
 
 function getPlayerMaxHealth() {
-    return CombatHealth.getMaxHealth(basePlayerMaxHealth + getSkillStat('health') + getGearStat('health'),
-        getSkillMultiplier('healthMultiplier'), getGearStat('healthMultiplier'));
+    return Math.max(1,Math.round(getEquipmentDefenceTotal(getHealthWithGear)));
+}
+
+function getHealthWithGear(gear) {
+    return (basePlayerMaxHealth + getSkillStat('health') + gear('health')) *
+        getSkillMultiplier('healthMultiplier') * gear('healthMultiplier');
+}
+
+function getEquipmentDefenceTotal(calculate) {
+    const total = calculate(getGearStat);
+    if (!Alchemy.effects(state).equipmentDefenceMultiplier) return total;
+    const baseline = calculate(stat => Equipment.stats[stat]?.default ?? 0);
+    return Alchemy.equipmentDefence(state,total,baseline);
 }
 
 function getPlayerMaxFury() {
@@ -1108,8 +1129,8 @@ function presentPlayerCombatBuffsCleared() {
 
 function getPlayerMaxShields() {
     return cachedCombatStat('getPlayerMaxShields', () => Math.max(0, Math.round(
-        (basePlayerMaxShields + getSkillStat('maxShields') + getGearStat('maxShields')) *
-        getSkillMultiplier('maxShieldsMultiplier') * getGearStat('maxShieldsMultiplier'))));
+        getEquipmentDefenceTotal(gear => (basePlayerMaxShields + getSkillStat('maxShields') + gear('maxShields')) *
+        getSkillMultiplier('maxShieldsMultiplier') * gear('maxShieldsMultiplier')))));
 }
 
 function hasShieldGeneration() {
@@ -1266,10 +1287,11 @@ function presentVoidVolleyBuffProc({mapId}) {
 }
 
 function getPlayerHealthRegen() {
-    const flat = getSkillStat('healthRegen') + getGearStat('healthRegen');
-    const maximumHealthRate = getSkillStat('healthRegenPercent') + getGearStat('healthRegenPercent');
-    const increase = getSkillStat('healthRegenIncrease') + getGearStat('healthRegenIncrease');
-    return CombatHealth.getHealthRegeneration(getPlayerMaxHealth(), flat, maximumHealthRate, increase);
+    const potion = Alchemy.effects(state);
+    return getEquipmentDefenceTotal(gear => CombatHealth.getHealthRegeneration(Math.max(1,Math.round(getHealthWithGear(gear))),
+        getSkillStat('healthRegen') + gear('healthRegen'),
+        getSkillStat('healthRegenPercent') + gear('healthRegenPercent') + (potion.healthRegenPercent || 0),
+        getSkillStat('healthRegenIncrease') + gear('healthRegenIncrease'))) * (potion.healthRegenMultiplier || 1);
 }
 
 function hasFireOfTheRighteous() {
@@ -1355,8 +1377,8 @@ function getAttackSpeed() {
 }
 
 function getPlayerEvasion() {
-    return Math.max(0, Math.round((basePlayerEvasion + state.upgrades.evasion * 5 + getGearStat('evasion') +
-        getSkillStat('evasion')) * getSkillMultiplier('evasionMultiplier') * getGearStat('evasionMultiplier')));
+    return Math.max(0, Math.round(getEquipmentDefenceTotal(gear => (basePlayerEvasion + state.upgrades.evasion * 5 + gear('evasion') +
+        getSkillStat('evasion')) * getSkillMultiplier('evasionMultiplier') * gear('evasionMultiplier'))));
 }
 
 function getHitChance(accuracy, evasion) {
@@ -1384,7 +1406,7 @@ function setAccuracyClass(element, hitChance, isPlayerAttack) {
 
 function getGoldMultiplier() {
     return Math.max(0, (1 + getGearStat('goldBonus') + getSkillStat('goldBonus')) *
-        getSkillMultiplier('goldBonusMultiplier') * getGearStat('goldBonusMultiplier'));
+        getSkillMultiplier('goldBonusMultiplier') * getGearStat('goldBonusMultiplier')) * (Alchemy.effects(state).goldMultiplier || 1);
 }
 
 function renderDetailedStats() {
@@ -3295,6 +3317,7 @@ function createEnemyCard(definition) {
         dotStatus, dotCount, bleedStatus, respawn, freezeStatus,freezeCount,card,elementalRow,...brandStatuses});
     card.addEventListener('animationend', event => {
         if (event.animationName === 'enemy-death-shake') card.classList.remove('is-defeating');
+        if (event.animationName === 'enemy-revive-flash') card.classList.remove('is-reviving');
         if (event.animationName === 'poison-stack-proc' || event.animationName === 'bleed-stack-proc') event.target.classList.remove('is-applying');
         if (event.animationName === 'shockwave-card-hit') event.target.classList.remove('is-shockwave-splashed');
         if (event.animationName === 'shockwave-health-impact' && event.target.classList.contains('is-shockwave-hit')) {
@@ -3777,10 +3800,12 @@ function finishMonsterDefeat(monster,definition,remainingPoison) {
     monster.attackTimer = 0;
     monster.freezeRemaining = 0;
     clearElementalDebuffs(monster);
+    combatAbilities.activateCorpseBloom(monster);
     selectNextMonsterTarget(monster);
     syncLegacyEnemyState();
     transferPoisonOnDeath(monster, remainingPoison);
     gainShieldFromKill();
+    Alchemy.onKill(state,getPlayerMaxHealth());
 }
 
 function transferPoisonOnDeath(monster, stacks) {
@@ -4381,7 +4406,15 @@ const combatSimulation = CombatSimulation.create({
     freezeDelay: arrowSkillSettings.freezeDelay,
     rules: {
         tickTown: (profile, elapsed) => TownProgression.tick(profile, elapsed),
-        tickAlchemy: (profile, elapsed) => Alchemy.tick(profile, elapsed),
+        tickAlchemy: (profile, elapsed) => {
+            const previous = profile.alchemy?.equipped;
+            Alchemy.tick(profile, elapsed);
+            if (previous !== profile.alchemy?.equipped) {
+                if (combatStatCache) combatStatCache.clear();
+                profile.playerHp = Math.min(profile.playerHp,getPlayerMaxHealth());
+                profile.shieldStacks = Math.min(profile.shieldStacks,getPlayerMaxShields());
+            }
+        },
         currentMap: () => currentMap(),
         tickFury: (elapsed) => tickFury(elapsed),
         tickGatheringPower: (elapsed) => tickGatheringPower(elapsed),

@@ -1,5 +1,6 @@
 const damageBreakdownMeter = {mapId:null, sources:new Map(), revision:0};
 const damageBreakdownStyles = Object.freeze({
+    corpseBloom:['Corpse Bloom','#a4d576'],
     reapPreview:['Reap', '#ed5063'],
     attacks:['Attacks', '#88c7df'], poison:['Poison', '#73d892'], bleed:['Bleed', '#ef8090'],
     poisonExecute:['Poison Execute', '#b6e769'], righteousFire:['Fire of the Righteous', '#ff9459'],

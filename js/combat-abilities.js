@@ -115,6 +115,45 @@
             ready.forEach(resolveReapAttack);
         }
 
+        // Drain chained explosions iteratively so a large pack cannot overflow the stack.
+        const pendingCorpseBlooms = [];
+        let resolvingCorpseBlooms = false;
+        function activateCorpseBloom(monster) {
+            if (rules.getSkillNodeRank('corpseBloom') <= 0 || state.combatPaused || state.playerHp <= 0 ||
+                monster.hp > 0 || monster.respawnRemaining <= 0) return false;
+            normalizePlayerMana();
+            if (state.playerMana + 1e-8 < 10) return false;
+            state.playerMana = Math.max(0, state.playerMana - 10);
+            const health = rules.monsterDefinition(monster).health;
+            pendingCorpseBlooms.push({source: monster, health, damage: health * .2,
+                targets: getElementalExplosionTargets(monster)});
+            if (resolvingCorpseBlooms) return true;
+            resolvingCorpseBlooms = true;
+            try {
+                while (pendingCorpseBlooms.length) {
+                    const blast = pendingCorpseBlooms.shift();
+                    let healing = 0;
+                    rules.showElementalBurst([blast.source.id, ...blast.targets.map(target => target.id)], 'fire', true);
+                    for (const target of blast.targets) {
+                        if (target.hp <= 0) continue;
+                        const previousHp = target.hp;
+                        rules.applyDamageToMonster(target, blast.damage, 'spell', 'corpseBloom');
+                        healing += Math.max(0, previousHp - target.hp);
+                    }
+                    if (healing + 1e-8 >= blast.health * .5) {
+                        blast.source.hp = blast.health * .5;
+                        blast.source.respawnRemaining = 0;
+                        blast.source.attackTimer = 0;
+                        rules.emitCombatEvent('monsterRevived', {monsterId: blast.source.id});
+                    }
+                }
+            } finally {
+                resolvingCorpseBlooms = false;
+                pendingCorpseBlooms.length = 0;
+            }
+            return true;
+        }
+
         // Arrows and formation
 
         function getMonsterGridPosition(monster) {
@@ -809,6 +848,7 @@
             tickPendingVoidMissiles,
             queueReapAttack,
             tickPendingReapAttacks,
+            activateCorpseBloom,
             castVoidBolt,
             castVoidVortex,
             tickPlayerMana,

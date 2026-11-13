@@ -3,6 +3,24 @@ window.adventureSkillTree = {
     "experiencePerLevel": 100,
     "nodes": [
         {
+            "id": "corpseBloom",
+            "name": "Corpse Bloom",
+            "icon": "✿",
+            "effect": "On kill: spend 10 mana to instantly explode the corpse, dealing 20% of its maximum HP as damage to its four adjacent enemies.\nActual damage dealt heals the corpse. If it heals at least 50% of its maximum HP, it immediately revives with 50% HP; otherwise it respawns normally.",
+            "requires": ["baseMana1"],
+            "requiresMode": "all",
+            "column": 14,
+            "row": -6,
+            "maxRank": 1,
+            "stats": {},
+            "size": 1.5,
+            "start": false,
+            "customDescription": true,
+            "sprite": "",
+            "abilityTargeting": "aoe",
+            "type": "mana"
+        },
+        {
             "id": "reapPreview",
             "name": "Reap",
             "icon": "☾",

@@ -34,6 +34,8 @@
                 !integer(liquid.capacityLevel) || liquid.capacityLevel > content.maximumUpgradeLevel ||
                 liquid.amount > capacity(data,id) || !liquid.unlocked && (liquid.amount || liquid.work || liquid.rateLevel || liquid.capacityLevel)) fail();
         }
+        // New formulas start with no reserve in existing profiles.
+        for (const id of Object.keys(content.recipes)) if (!Object.hasOwn(data.potions,id)) data.potions[id] = 0;
         if (Object.keys(content.recipes).some(id => !Number.isFinite(data.potions[id]) || data.potions[id] < 0 || data.potions[id] > Number.MAX_SAFE_INTEGER)) fail();
         // Earlier saves did not track discoveries; an existing reserve proves
         // the player has already brewed that formula.
@@ -190,6 +192,7 @@
     }
     function upgrade(profile,id,kind) {
         if (!profile.alchemy) return false;
+        if (kind === 'unlock' && !canUnlockLiquid(profile,id)) return false;
         const cost = upgradeCost(profile.alchemy,id,kind);
         if (!spend(profile,cost)) return false;
         const liquid = profile.alchemy.liquids[id];
@@ -218,6 +221,7 @@
             ...Object.entries(recipe.materials).map(([key,amount]) => (profile.materials?.[key] || 0) / amount))));
     }
     const level = profile => root.Professions.progress(profile.professions || root.Professions.defaults(),'alchemy').level;
+    const canUnlockLiquid = (profile,id) => Boolean(profile.alchemy?.unlocked && Object.hasOwn(content.liquids,id) && level(profile) >= (content.liquids[id].unlockLevel || 1));
     const recipeUnlocked = (profile,id) => typeof id === 'string' && Object.hasOwn(content.recipes,id) && level(profile) >= content.recipes[id].level;
     function materialUnlocked(profile,id) {
         return Object.entries(content.recipes).some(([key,recipe]) => recipeUnlocked(profile,key) && Object.hasOwn(recipe.materials,id));
@@ -266,5 +270,28 @@
         profile.alchemy.equipped = id;
         return true;
     }
-    root.Alchemy = Object.freeze({defaults,normalize,clone,canUnlock,unlock,capacity,perHour,workPerUnit,fighting,tick,upgradeCost,affordable,upgrade,matchingRecipe,maxBrewAmount,level,recipeUnlocked,materialUnlocked,successChance,xpPerBrew,brewBatch,brew,cancel,combine,equip,infiniteLiquids});
+    function effects(profile) {
+        const data = profile.alchemy;
+        return data?.unlocked && data.equipped && data.potions[data.equipped] > 0
+            ? content.recipes[data.equipped].effects || {} : {};
+    }
+    // Scale the final contribution, never both flat stats and their multipliers.
+    function equipmentDefence(profile,withEquipment,withoutEquipment) {
+        return withoutEquipment + (withEquipment - withoutEquipment) * (effects(profile).equipmentDefenceMultiplier || 1);
+    }
+    function onKill(profile,maximumHealth) {
+        if (profile.playerHp <= 0 || profile.combatPaused) return 0;
+        const active = effects(profile), data = profile.alchemy;
+        for (const [id,amount] of Object.entries(active.liquidsOnKill || {})) {
+            const liquid = data.liquids[id];
+            if (!liquid?.unlocked) continue;
+            liquid.amount = Math.min(capacity(data,id),liquid.amount + amount);
+            if (liquid.amount === capacity(data,id)) liquid.work = 0;
+        }
+        // Instant recovery is separate from regeneration and its special caps.
+        const recovered = Math.max(0,Math.min(maximumHealth - profile.playerHp,maximumHealth * (active.lifeOnKill || 0)));
+        profile.playerHp += recovered;
+        return recovered;
+    }
+    root.Alchemy = Object.freeze({defaults,normalize,clone,canUnlock,unlock,canUnlockLiquid,capacity,perHour,workPerUnit,fighting,tick,upgradeCost,affordable,upgrade,matchingRecipe,maxBrewAmount,level,recipeUnlocked,materialUnlocked,successChance,xpPerBrew,brewBatch,brew,cancel,combine,equip,infiniteLiquids,effects,equipmentDefence,onKill});
 }(globalThis));

@@ -6,7 +6,7 @@
         shockwaveSlash:'aoe', piercingArrow:'aoe', forkingArrow:'aoe', multiShot:'singleTarget',
         volcanicEruption:'aoe', shieldSlam:'singleTarget', overflowingSlam:'aoe',
         righteousFire:'aoe', fireOfTheRighteous:'aoe',voidBolt:'singleTarget',voidVolley:'aoe',voidVortex:'aoe',
-        rimeBrand:'singleTarget',emberBrand:'singleTarget',glacialRupture:'aoe',cinderRupture:'aoe'
+        rimeBrand:'singleTarget',emberBrand:'singleTarget',glacialRupture:'aoe',cinderRupture:'aoe',corpseBloom:'aoe'
     });
 
     function getAbilityTargeting(node) {

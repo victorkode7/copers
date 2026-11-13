@@ -125,13 +125,16 @@
 .alchemy-batch button { flex:1; padding:7px 6px; }
 .alchemy-batch input { box-sizing:border-box; width:100%; min-width:0; border:1px solid #a891c2; border-radius:4px; background:#101b28; color:#f3e8fa; padding:8px 10px; font:inherit; }
 .alchemy-page .alchemy-primary { width:100%; border-color:#b8a47e; background:#675333; color:#fff0c8; }
-.alchemy-potion { margin-top:12px; padding:13px 10px; border:1px solid #48546b; border-radius:5px; background:#101c2888; }
+.alchemy-potion { margin-top:12px; padding:14px; border:1px solid #48546b; border-radius:5px; background:#101c2888; }
 .alchemy-potion-header { display:flex; align-items:center; gap:8px; }
 .alchemy-potion-header>div { flex:1; min-width:0; }
 .alchemy-page .alchemy-recipe-name { border:0; box-shadow:none; background:none; padding:0; min-height:28px; font-size:.85rem; color:#f2e5ce; text-align:left; }
 .alchemy-page .alchemy-recipe-name:hover:enabled { background:none; color:#dec1ff; }
 .alchemy-potion-time { margin:2px 0 0; color:#c7cdd7; font-size:.65rem; font-variant-numeric:tabular-nums; }
 .alchemy-potion.is-equipped { border-color:var(--liquid); }
+.alchemy-potion-effect { margin:12px 0; padding:9px 11px; border-left:2px solid var(--liquid); background:#ffffff06; color:#edf2fa; font-size:.8rem; line-height:1.6; }
+.alchemy-potion-details { display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; margin-top:10px; }
+.alchemy-potion-details .alchemy-yield { margin:0; line-height:1.5; }
 .alchemy-page [data-equip] { padding:5px 7px; font-size:.65rem; }
 .alchemy-formula { display:flex; flex-wrap:wrap; gap:8px; padding-top:12px; margin-top:12px; border-top:1px solid #46516a; }
 .alchemy-recipe-ingredient { display:flex; align-items:center; gap:2px; color:#c9d3df; font-size:.7rem; }
